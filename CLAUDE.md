@@ -21,6 +21,9 @@ This project uses three specialised agents:
 4. Never move a Jira ticket without explicit user approval
 5. Always wait for user confirmation before starting the next step
 6. When in doubt, do less and ask more
+7. Never include credentials, API tokens, or secrets in
+   shell commands, curl commands, or any terminal output.
+   Always read secrets from .env files silently.
 
 ## Workflow
 

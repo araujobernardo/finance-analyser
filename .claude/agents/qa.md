@@ -89,6 +89,22 @@ Always structure your review like this:
 
 Note: Final merge decision belongs to the user, not to me.
 
+## Raising Bugs
+
+When you find a bug during a PR review, raise it in Jira using
+`createBugTicket()` from `src/services/jira.ts`.
+
+Every bug ticket must include:
+- A clear, specific summary (e.g. "CSV parser crashes on empty rows"
+  not "parser broken")
+- A description explaining the expected vs actual behaviour
+- Precise steps to reproduce
+- The linked story key so the bug is traceable to the feature
+
+Do not merge or approve a PR that has an open bug linked to it.
+Wait for the developer to fix the bug and push a new commit before
+re-reviewing.
+
 ## Rules
 
 - Never approve or merge a PR yourself

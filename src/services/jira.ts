@@ -78,7 +78,7 @@ async function jiraFetch<T>(
 export async function createTicket(
   summary: string,
   description: string,
-  issueType: string
+  issueType: "Epic" | "Story" | "Bug" | "Task"
 ): Promise<string> {
   const config = getConfig();
 
@@ -215,6 +215,63 @@ export async function linkTickets(
     },
     config
   );
+}
+
+/**
+ * Creates a Bug ticket in Jira.
+ *
+ * Use this when a defect or unexpected behaviour has been identified during
+ * development or QA. The stepsToReproduce are appended to the description
+ * under a "Steps to reproduce:" heading so they are easy to find in Jira.
+ * If the bug was found while working on a story, pass linkedStoryKey to
+ * create a "relates to" link between the two tickets.
+ */
+export async function createBugTicket(
+  summary: string,
+  description: string,
+  stepsToReproduce: string,
+  linkedStoryKey?: string
+): Promise<string> {
+  const config = getConfig();
+
+  const data = await jiraFetch<JiraCreateResponse>(
+    `${config.baseUrl}/rest/api/3/issue`,
+    {
+      method: "POST",
+      body: JSON.stringify({
+        fields: {
+          project: { key: config.projectKey },
+          summary,
+          description: {
+            type: "doc",
+            version: 1,
+            content: [
+              {
+                type: "paragraph",
+                content: [{ type: "text", text: description }],
+              },
+              {
+                type: "paragraph",
+                content: [{ type: "text", text: "Steps to reproduce:", marks: [{ type: "strong" }] }],
+              },
+              {
+                type: "paragraph",
+                content: [{ type: "text", text: stepsToReproduce }],
+              },
+            ],
+          },
+          issuetype: { name: "Bug" },
+        },
+      }),
+    },
+    config
+  );
+
+  if (linkedStoryKey) {
+    await linkTickets(data.key, linkedStoryKey, "relates to");
+  }
+
+  return data.key;
 }
 
 export async function getTicket(

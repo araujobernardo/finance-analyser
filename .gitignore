@@ -17,6 +17,9 @@ dist-ssr
 .env.*
 !.env.example
 
+# One-shot scripts — not for version control
+scripts/create-jira-tickets.mjs
+
 # Editor directories and files
 .vscode/*
 !.vscode/extensions.json
