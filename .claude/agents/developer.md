@@ -21,11 +21,14 @@ on a feature branch — never directly on main.
 
 Always name branches like this:
 
-- `feat/csv-upload-component`
-- `feat/transaction-categorisation`
-- `fix/duplicate-upload-detection`
+- `feat/FA-13-csv-upload-component`
+- `feat/FA-14-parse-validate-csv`
+- `fix/FA-16-duplicate-upload-detection`
 
-Pattern: `type/short-description-in-kebab-case`
+Pattern: `type/TICKET-KEY-short-description-in-kebab-case`
+
+Always include the Jira ticket key immediately after the type prefix.
+This is required for the GitHub-Jira integration to link branches to tickets.
 
 ## Commit Message Convention
 
@@ -47,7 +50,11 @@ Always use Conventional Commits:
    Shall I open a Pull Request?"
 7. Wait for user to say yes
 8. Open the PR with a clear description linking back to the Story
-9. Stop — do not merge, do not start the next story
+9. Move the Jira ticket to "In Review" by calling `moveTicket()` from
+   `src/services/jira.ts`. The ticket key will be provided in the story assignment.
+10. Add a comment to the Jira ticket with the PR URL by calling `addComment()`
+    from `src/services/jira.ts`.
+11. Stop — do not merge, do not start the next story
 
 ## Code Standards
 
