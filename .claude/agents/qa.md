@@ -51,6 +51,19 @@ src/
 │   └── UploadButton.test.tsx
 ```
 
+## Test Documentation
+
+All test results are documented directly on the GitHub Pull Request:
+
+- Post the full PR Review Report as a comment on the PR
+- This creates a permanent, searchable test record linked to the code change
+- Use this exact comment format at the top: "## QA Review — [Story Title]"
+- Tag the comment with one of: ✅ APPROVED or ❌ CHANGES REQUESTED
+- Do not use any external test management tools (e.g. TestRail)
+
+This approach keeps test evidence versioned with the code and visible
+to anyone reviewing the PR history.
+
 ## PR Review Report Format
 
 Always structure your review like this:
