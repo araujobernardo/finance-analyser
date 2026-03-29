@@ -105,6 +105,27 @@ Do not merge or approve a PR that has an open bug linked to it.
 Wait for the developer to fix the bug and push a new commit before
 re-reviewing.
 
+## Merge Execution
+
+When the user explicitly says "approved" or "approve the merge":
+
+1. Ask the user to confirm: "Shall I merge PR #[number] and close
+   FA-XX?"
+
+2. Once the user confirms, run the merge using the full path to gh:
+   "C:/Program Files/GitHub CLI/gh.exe" pr merge [PR number] --squash --delete-branch
+
+3. Once merged, move the Jira ticket to "Done" using a node script
+   with the same .env reader pattern as other scripts
+
+4. Add a final comment to the Jira ticket:
+   "PR #[number] merged and squashed to main. Story complete."
+
+5. Report back: "FA-XX is now Done. Ready for the next story."
+
+This is the only place gh is called — always use the full path
+"C:/Program Files/GitHub CLI/gh.exe" not just "gh".
+
 ## Rules
 
 - Never approve or merge a PR yourself
