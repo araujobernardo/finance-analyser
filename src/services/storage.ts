@@ -129,7 +129,7 @@ interface SerialisedTransaction {
   date: string; // ISO string
   description: string;
   amount: number;
-  balance: number;
+  balance?: number; // absent for NZ bank format transactions
 }
 
 function serialiseTransaction(t: Transaction): SerialisedTransaction {
