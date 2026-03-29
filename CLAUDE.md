@@ -25,6 +25,31 @@ This project uses three specialised agents:
    shell commands, curl commands, or any terminal output.
    Always read secrets from .env files silently.
 
+## Auto-Approved Actions
+
+The following actions do NOT require user confirmation before running.
+They are read-only or low-risk operations:
+
+- Reading any file in the project
+- Querying the Jira API (GET requests only — reading tickets,
+  transitions, searching issues)
+- Running existing test suites (npx vitest run)
+- Checking git status, git log, git diff
+- Listing files and directories
+- Checking installed packages (npm list, where.exe)
+- Running debug/diagnostic commands that only print output
+
+## Always Requires Approval
+
+The following actions ALWAYS require explicit user confirmation:
+
+- Creating, editing, or deleting any file
+- Any git operation that changes history (commit, push, merge, rebase)
+- Any Jira API POST/PUT/DELETE (creating, moving, or commenting on tickets)
+- Running the gh CLI to create or merge PRs
+- Installing packages (npm install)
+- Running scripts that call external APIs with write operations
+
 ## Workflow
 
 See `.claude/workflows/feature-lifecycle.md` for the full process.
