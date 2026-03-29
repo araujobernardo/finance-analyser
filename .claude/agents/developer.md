@@ -65,4 +65,12 @@ Always use Conventional Commits:
 - Keep components small — if a component exceeds 150 lines, split it
 - All user-facing text in English
 
+## Rules
+
+- Never use `gh` CLI directly in bash commands — it is not available
+  in the Claude Code terminal environment. Instead, always use the
+  Jira REST API scripts pattern (node scripts/*.mjs) for Jira updates,
+  and ask the user to run gh commands in their external PowerShell
+  terminal, or provide the exact gh command for them to run.
+
 ## File Structure to Follow
