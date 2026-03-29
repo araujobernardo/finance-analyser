@@ -164,6 +164,59 @@ export async function addComment(issueKey: string, comment: string): Promise<voi
   );
 }
 
+interface JiraIssueLinkRequest {
+  type: { name: string };
+  inwardIssue: { key: string };
+  outwardIssue: { key: string };
+}
+
+/**
+ * Links two Jira issues together.
+ *
+ * - "blocks": fromIssueKey blocks toIssueKey (fromIssue is the blocker)
+ * - "is blocked by": fromIssueKey is blocked by toIssueKey (toIssue is the blocker;
+ *   inward/outward are swapped so the semantic direction matches the Jira "Blocks" link type)
+ * - "relates to": a non-directional relationship between the two issues
+ */
+export async function linkTickets(
+  fromIssueKey: string,
+  toIssueKey: string,
+  linkType: "blocks" | "is blocked by" | "relates to"
+): Promise<void> {
+  const config = getConfig();
+
+  let body: JiraIssueLinkRequest;
+
+  if (linkType === "blocks") {
+    body = {
+      type: { name: "Blocks" },
+      inwardIssue: { key: fromIssueKey },
+      outwardIssue: { key: toIssueKey },
+    };
+  } else if (linkType === "is blocked by") {
+    body = {
+      type: { name: "Blocks" },
+      inwardIssue: { key: toIssueKey },
+      outwardIssue: { key: fromIssueKey },
+    };
+  } else {
+    body = {
+      type: { name: "Relates" },
+      inwardIssue: { key: fromIssueKey },
+      outwardIssue: { key: toIssueKey },
+    };
+  }
+
+  await jiraFetch<undefined>(
+    `${config.baseUrl}/rest/api/3/issueLink`,
+    {
+      method: "POST",
+      body: JSON.stringify(body),
+    },
+    config
+  );
+}
+
 export async function getTicket(
   issueKey: string
 ): Promise<{ status: string; summary: string }> {

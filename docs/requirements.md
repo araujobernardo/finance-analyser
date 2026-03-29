@@ -45,6 +45,9 @@ with about their finances.
 
 ### 3.3 Interactive Dashboard
 
+- A persistent app shell with a top navigation bar linking to three views:
+  Dashboard, Budget, and Chat. The active view is highlighted.
+  The shell renders on all pages and does not re-mount between navigation.
 - Month filter uses toggle buttons — each month individually
   selectable/deselectable
 - Show total income vs total spend for selected period
