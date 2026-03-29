@@ -27,28 +27,36 @@ This project uses three specialised agents:
 
 ## Auto-Approved Actions
 
-The following actions do NOT require user confirmation before running.
-They are read-only or low-risk operations:
+The following actions run automatically without asking for user
+confirmation:
 
 - Reading any file in the project
-- Querying the Jira API (GET requests only — reading tickets,
-  transitions, searching issues)
-- Running existing test suites (npx vitest run)
+- Querying the Jira API (GET requests only)
+- Running any existing test suite (npx vitest run)
 - Checking git status, git log, git diff
 - Listing files and directories
 - Checking installed packages (npm list, where.exe)
 - Running debug/diagnostic commands that only print output
+- Installing npm packages (npm install)
+- Writing scripts to the scripts/ folder
+- Running scripts/ files that only perform Jira reads or test runs
+- Fetching full Jira ticket details before starting work
+- Checking available Jira transitions before moving a ticket
 
 ## Always Requires Approval
 
-The following actions ALWAYS require explicit user confirmation:
+The following actions ALWAYS require explicit user confirmation
+before proceeding:
 
-- Creating, editing, or deleting any file
-- Any git operation that changes history (commit, push, merge, rebase)
-- Any Jira API POST/PUT/DELETE (creating, moving, or commenting on tickets)
-- Running the gh CLI to create or merge PRs
-- Installing packages (npm install)
-- Running scripts that call external APIs with write operations
+- Creating or editing any file inside src/
+- Creating or editing any config file (vite.config.ts, tsconfig,
+  package.json, eslint, prettier)
+- Any git commit or push
+- Creating a PR via gh CLI
+- Merging a PR via gh CLI
+- Any Jira POST/PUT that changes state (moving tickets, adding
+  comments, creating issues)
+- Deleting any file
 
 ## Workflow
 
