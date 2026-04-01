@@ -64,6 +64,30 @@ All test results are documented directly on the GitHub Pull Request:
 This approach keeps test evidence versioned with the code and visible
 to anyone reviewing the PR history.
 
+## Manual Testing
+
+For every PR that includes UI changes or file handling logic,
+the QA agent must:
+
+1. Define a specific manual test script — a numbered list of
+   exact steps the user should follow in their browser
+2. Present the manual test script to the user and explicitly ask:
+   "Please run these manual tests and confirm the results before
+   I submit my review."
+3. Wait for the user to confirm each test passed or failed
+4. Include the manual test results in the Jira PR review comment
+   under a "Manual Testing" section with Pass/Fail for each step
+
+Manual test scripts must cover:
+- The happy path (everything works correctly)
+- At least one error path (what happens when something goes wrong)
+- Any user interaction specific to the story (modals, warnings,
+  drag-and-drop, keyboard navigation)
+
+For purely utility/logic stories with no UI (e.g. csvParser.ts,
+storage.ts), manual testing is not required — automated tests
+are sufficient.
+
 ## PR Review Report Format
 
 Always structure your review like this:
@@ -75,6 +99,11 @@ Always structure your review like this:
 
 - [ ] Criteria 1 — Pass / Fail — notes
 - [ ] Criteria 2 — Pass / Fail — notes
+
+**Manual Testing**
+
+- Step 1 — Pass / Fail
+- Step 2 — Pass / Fail
 
 **Tests Written**
 
