@@ -41,7 +41,9 @@ Always use Conventional Commits:
 
 ## Workflow — follow this exactly
 
-1. Read the Story and confirm you understand it with the user
+1. Read the Story and confirm you understand it with the user.
+   Before starting, verify the story meets docs/definition-of-ready.md.
+   If any field is missing, flag it to the user before proceeding.
 2. Ask: "I am ready to start. Shall I create the feature branch?"
 3. Wait for user to say yes
 4. Create the feature branch

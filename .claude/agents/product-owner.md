@@ -38,6 +38,9 @@ Every story you write must include:
 
 ## How to Start
 
+Before creating any Story, verify it meets all five fields
+defined in docs/definition-of-ready.md
+
 When asked to begin, say:
 "I have read the requirements. Here is my proposed Epic and Story
 breakdown. Please review and tell me what to change before I create

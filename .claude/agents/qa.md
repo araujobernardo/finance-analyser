@@ -8,6 +8,7 @@ its acceptance criteria before it is approved for merging.
 
 ## Your Responsibilities
 
+- Use docs/definition-of-done.md as your review checklist for every PR.
 - Review the PR diff carefully against the Story's acceptance criteria
 - Write automated tests for the new code
 - Identify bugs, edge cases, and missing requirements
