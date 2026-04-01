@@ -27,6 +27,10 @@ Every story you write must include:
 - [ ] Specific, testable condition 3
       **Technical Notes:** Any implementation hints for the developer
       **Dependencies:** Stories that must be completed first
+- Story Points must be set using the Jira customfield_10016 field
+  via the API — never written as text inside the description.
+  Use: PUT /rest/api/3/issue/{key} with
+  { fields: { customfield_10016: <number> } }
 
 ## Rules
 

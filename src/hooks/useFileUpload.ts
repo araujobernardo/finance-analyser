@@ -2,6 +2,7 @@ import { useState } from "react";
 import { parseCsv } from "../utils/csvParser";
 import type { ParseError, Transaction } from "../utils/csvParser";
 import { getStoredMonths, monthKeyFromDate, saveTransactions } from "../services/storage";
+import { categoriseTransactions } from "../services/categorisation";
 
 interface PendingUpload {
   monthKey: string;
@@ -13,6 +14,7 @@ export interface UseFileUploadResult {
   parseErrors: ParseError[];
   isDuplicate: boolean;
   duplicateMonth: string | null;
+  isCategorising: boolean;
   handleFile: (file: File) => void;
   confirmReplace: () => void;
   cancelReplace: () => void;
@@ -29,6 +31,17 @@ export function useFileUpload(): UseFileUploadResult {
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [parseErrors, setParseErrors] = useState<ParseError[]>([]);
   const [pending, setPending] = useState<PendingUpload | null>(null);
+  const [isCategorising, setIsCategorising] = useState(false);
+
+  async function saveWithCategories(monthKey: string, transactions: Transaction[]): Promise<void> {
+    setIsCategorising(true);
+    try {
+      const categorised = await categoriseTransactions(transactions);
+      saveTransactions(monthKey, categorised);
+    } finally {
+      setIsCategorising(false);
+    }
+  }
 
   function handleFile(file: File): void {
     const reader = new FileReader();
@@ -48,7 +61,7 @@ export function useFileUpload(): UseFileUploadResult {
       if (storedMonths.includes(monthKey)) {
         setPending({ monthKey, transactions });
       } else {
-        saveTransactions(monthKey, transactions);
+        void saveWithCategories(monthKey, transactions);
         setPending(null);
       }
     };
@@ -57,7 +70,7 @@ export function useFileUpload(): UseFileUploadResult {
 
   function confirmReplace(): void {
     if (pending) {
-      saveTransactions(pending.monthKey, pending.transactions);
+      void saveWithCategories(pending.monthKey, pending.transactions);
       setPending(null);
     }
   }
@@ -72,6 +85,7 @@ export function useFileUpload(): UseFileUploadResult {
     parseErrors,
     isDuplicate: pending !== null,
     duplicateMonth: pending ? formatMonthKey(pending.monthKey) : null,
+    isCategorising,
     handleFile,
     confirmReplace,
     cancelReplace,
