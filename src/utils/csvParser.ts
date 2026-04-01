@@ -3,6 +3,7 @@ export interface Transaction {
   description: string;
   amount: number;
   balance?: number; // present in legacy format; absent in NZ bank format
+  category?: string; // assigned by auto-categorisation; overridable by user
 }
 
 export interface ParseResult {
