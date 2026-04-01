@@ -112,7 +112,10 @@ describe('useFileUpload — confirmReplace', () => {
 
     expect(result.current.isDuplicate).toBe(true);
 
-    act(() => { result.current.confirmReplace(); });
+    await act(async () => {
+      result.current.confirmReplace();
+      await new Promise(r => setTimeout(r, 50));
+    });
 
     expect(saveSpy).toHaveBeenCalledWith('2024-03', expect.any(Array));
     expect(result.current.isDuplicate).toBe(false);
