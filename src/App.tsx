@@ -9,13 +9,16 @@ import "./App.css";
 
 function App() {
   const [count, setCount] = useState(0);
-  const { selectedFile, isDuplicate, duplicateMonth, handleFile, confirmReplace, cancelReplace } = useFileUpload();
+  const { selectedFile, isDuplicate, duplicateMonth, isCategorising, handleFile, confirmReplace, cancelReplace } = useFileUpload();
 
   return (
     <>
       <section id="center">
         <CsvUpload onFileSelected={handleFile} />
-        {selectedFile && !isDuplicate && (
+        {isCategorising && (
+          <p style={{ fontSize: "0.8rem", color: "#6b7280" }}>Categorising transactions…</p>
+        )}
+        {selectedFile && !isDuplicate && !isCategorising && (
           <p style={{ fontSize: "0.8rem", color: "#6b7280" }}>Stored: {selectedFile.name}</p>
         )}
         {isDuplicate && duplicateMonth && (
