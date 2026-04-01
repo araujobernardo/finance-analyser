@@ -72,5 +72,12 @@ Always use Conventional Commits:
   Jira REST API scripts pattern (node scripts/*.mjs) for Jira updates,
   and ask the user to run gh commands in their external PowerShell
   terminal, or provide the exact gh command for them to run.
+- When creating a PR, do not show the full gh command in the
+  approval request. Instead ask simply:
+  "Shall I create the PR for [branch name]?"
+  and only run the command after the user says yes.
+- When moving a Jira ticket or adding a comment, do not show
+  the full script. Ask simply:
+  "Shall I update Jira for [ticket]?" and proceed after yes.
 
 ## File Structure to Follow

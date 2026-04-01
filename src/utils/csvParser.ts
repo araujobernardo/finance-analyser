@@ -2,7 +2,7 @@ export interface Transaction {
   date: Date;
   description: string;
   amount: number;
-  balance: number;
+  balance?: number; // present in legacy format; absent in NZ bank format
 }
 
 export interface ParseResult {
@@ -16,41 +16,91 @@ export interface ParseError {
   raw: string;
 }
 
-const EXPECTED_HEADERS = ["date", "description", "amount", "balance"];
-
 /**
- * Parses a NZ bank CSV string into typed Transaction objects.
+ * Parses a CSV exported from a NZ bank or in the legacy flat format.
  *
- * Expected columns (case-insensitive): Date, Description, Amount, Balance
- * Date format: DD/MM/YYYY
- * Amount: negative = debit, positive = credit
+ * Legacy format (flat):
+ *   Columns: Date, Description, Amount, Balance
+ *   Date:    DD/MM/YYYY
  *
- * Returns all valid transactions plus a list of row-level errors so the
- * caller can report skipped rows to the user without throwing.
+ * NZ bank format (e.g. Westpac NZ):
+ *   6 metadata lines, then:
+ *   Columns: Date, Unique Id, Tran Type, Cheque Number, Payee, Memo, Amount
+ *   Date:    YYYY/MM/DD
+ *   Description is built from Payee + Memo (non-empty parts joined by a space).
+ *
+ * Format is auto-detected from column headers: if Payee or Memo is present the
+ * NZ bank format is used; otherwise the legacy format is used.
  */
 export function parseCsv(csvText: string): ParseResult {
-  const transactions: Transaction[] = [];
-  const errors: ParseError[] = [];
-
   const lines = csvText.split(/\r?\n/).filter(line => line.trim() !== "");
 
   if (lines.length === 0) {
-    return { transactions, errors: [{ row: 0, message: "File is empty.", raw: "" }] };
+    return { transactions: [], errors: [{ row: 0, message: "File is empty.", raw: "" }] };
   }
 
-  // ── Validate headers ──────────────────────────────────────────────────────
+  // ── Find header line ──────────────────────────────────────────────────────
+  // The first line whose comma-separated columns (lowercased, unquoted) include
+  // "date" is the column header row — everything before it is metadata.
 
-  const headers = lines[0].split(",").map(h => h.trim().toLowerCase());
+  let headerLineIndex = -1;
+  let headers: string[] = [];
 
-  const missingHeaders = EXPECTED_HEADERS.filter(h => !headers.includes(h));
-  if (missingHeaders.length > 0) {
+  for (let i = 0; i < lines.length; i++) {
+    const cols = lines[i]
+      .split(",")
+      .map(h => h.trim().replace(/^"|"$/g, "").toLowerCase());
+    if (cols.includes("date")) {
+      headerLineIndex = i;
+      headers = cols;
+      break;
+    }
+  }
+
+  if (headerLineIndex === -1) {
+    return {
+      transactions: [],
+      errors: [
+        {
+          row: 1,
+          message: "Missing required columns: date. No column header row found.",
+          raw: lines[0],
+        },
+      ],
+    };
+  }
+
+  // ── Detect format ─────────────────────────────────────────────────────────
+
+  const isNzFormat = headers.includes("payee") || headers.includes("memo");
+
+  if (isNzFormat) {
+    return parseNzFormat(lines, headerLineIndex, headers);
+  }
+  return parseLegacyFormat(lines, headerLineIndex, headers);
+}
+
+// ── Legacy format ─────────────────────────────────────────────────────────────
+
+const LEGACY_REQUIRED = ["date", "description", "amount", "balance"];
+
+function parseLegacyFormat(
+  lines: string[],
+  headerLineIndex: number,
+  headers: string[],
+): ParseResult {
+  const transactions: Transaction[] = [];
+  const errors: ParseError[] = [];
+
+  const missing = LEGACY_REQUIRED.filter(h => !headers.includes(h));
+  if (missing.length > 0) {
     return {
       transactions,
       errors: [
         {
-          row: 1,
-          message: `Missing required columns: ${missingHeaders.join(", ")}. Found: ${headers.join(", ")}`,
-          raw: lines[0],
+          row: headerLineIndex + 1,
+          message: `Missing required columns: ${missing.join(", ")}. Found: ${headers.join(", ")}`,
+          raw: lines[headerLineIndex],
         },
       ],
     };
@@ -61,14 +111,12 @@ export function parseCsv(csvText: string): ParseResult {
   const amountIdx      = headers.indexOf("amount");
   const balanceIdx     = headers.indexOf("balance");
 
-  // ── Parse rows ────────────────────────────────────────────────────────────
-
-  for (let i = 1; i < lines.length; i++) {
+  for (let i = headerLineIndex + 1; i < lines.length; i++) {
     const rowNumber = i + 1;
     const raw = lines[i];
     const cols = splitCsvRow(raw);
 
-    if (cols.length < EXPECTED_HEADERS.length) {
+    if (cols.length < LEGACY_REQUIRED.length) {
       errors.push({ row: rowNumber, message: `Expected at least 4 columns, found ${cols.length}.`, raw });
       continue;
     }
@@ -78,27 +126,23 @@ export function parseCsv(csvText: string): ParseResult {
     const rawAmount      = cols[amountIdx].trim();
     const rawBalance     = cols[balanceIdx].trim();
 
-    // Date — DD/MM/YYYY
     const date = parseDdMmYyyy(rawDate);
     if (date === null) {
       errors.push({ row: rowNumber, message: `Invalid date "${rawDate}". Expected DD/MM/YYYY.`, raw });
       continue;
     }
 
-    // Description
     if (rawDescription === "") {
       errors.push({ row: rowNumber, message: "Description is empty.", raw });
       continue;
     }
 
-    // Amount
     const amount = parseNumber(rawAmount);
     if (amount === null) {
       errors.push({ row: rowNumber, message: `Invalid amount "${rawAmount}".`, raw });
       continue;
     }
 
-    // Balance
     const balance = parseNumber(rawBalance);
     if (balance === null) {
       errors.push({ row: rowNumber, message: `Invalid balance "${rawBalance}".`, raw });
@@ -106,6 +150,82 @@ export function parseCsv(csvText: string): ParseResult {
     }
 
     transactions.push({ date, description: rawDescription, amount, balance });
+  }
+
+  return { transactions, errors };
+}
+
+// ── NZ bank format ────────────────────────────────────────────────────────────
+
+const NZ_REQUIRED = ["date", "amount"];
+
+function parseNzFormat(
+  lines: string[],
+  headerLineIndex: number,
+  headers: string[],
+): ParseResult {
+  const transactions: Transaction[] = [];
+  const errors: ParseError[] = [];
+
+  const missing = NZ_REQUIRED.filter(h => !headers.includes(h));
+  if (missing.length > 0) {
+    return {
+      transactions,
+      errors: [
+        {
+          row: headerLineIndex + 1,
+          message: `Missing required columns: ${missing.join(", ")}. Found: ${headers.join(", ")}`,
+          raw: lines[headerLineIndex],
+        },
+      ],
+    };
+  }
+
+  const dateIdx   = headers.indexOf("date");
+  const amountIdx = headers.indexOf("amount");
+  const payeeIdx  = headers.indexOf("payee");  // -1 if absent
+  const memoIdx   = headers.indexOf("memo");   // -1 if absent
+
+  const minCols = Math.max(dateIdx, amountIdx, payeeIdx, memoIdx) + 1;
+
+  for (let i = headerLineIndex + 1; i < lines.length; i++) {
+    const rowNumber = i + 1;
+    const raw = lines[i];
+    const cols = splitCsvRow(raw);
+
+    if (cols.length < minCols) {
+      errors.push({
+        row: rowNumber,
+        message: `Expected at least ${minCols} columns, found ${cols.length}.`,
+        raw,
+      });
+      continue;
+    }
+
+    const rawDate   = cols[dateIdx].trim();
+    const rawAmount = cols[amountIdx].trim();
+    const payee     = payeeIdx >= 0 ? cols[payeeIdx].trim() : "";
+    const memo      = memoIdx  >= 0 ? cols[memoIdx].trim()  : "";
+
+    const date = parseYyyyMmDd(rawDate);
+    if (date === null) {
+      errors.push({ row: rowNumber, message: `Invalid date "${rawDate}". Expected YYYY/MM/DD.`, raw });
+      continue;
+    }
+
+    const description = [payee, memo].filter(s => s !== "").join(" ");
+    if (description === "") {
+      errors.push({ row: rowNumber, message: "Description is empty.", raw });
+      continue;
+    }
+
+    const amount = parseNumber(rawAmount);
+    if (amount === null) {
+      errors.push({ row: rowNumber, message: `Invalid amount "${rawAmount}".`, raw });
+      continue;
+    }
+
+    transactions.push({ date, description, amount });
   }
 
   return { transactions, errors };
@@ -127,7 +247,27 @@ function parseDdMmYyyy(value: string): Date | null {
 
   const date = new Date(year, month - 1, day);
 
-  // Guard against dates like 31/02/2024 which JS silently rolls over
+  if (date.getFullYear() !== year || date.getMonth() !== month - 1 || date.getDate() !== day) {
+    return null;
+  }
+
+  return date;
+}
+
+/** Parses YYYY/MM/DD into a Date. Returns null if invalid. */
+function parseYyyyMmDd(value: string): Date | null {
+  const match = /^(\d{4})\/(\d{2})\/(\d{2})$/.exec(value);
+  if (!match) return null;
+
+  const year  = parseInt(match[1], 10);
+  const month = parseInt(match[2], 10);
+  const day   = parseInt(match[3], 10);
+
+  if (month < 1 || month > 12) return null;
+  if (day < 1 || day > 31)     return null;
+
+  const date = new Date(year, month - 1, day);
+
   if (date.getFullYear() !== year || date.getMonth() !== month - 1 || date.getDate() !== day) {
     return null;
   }
