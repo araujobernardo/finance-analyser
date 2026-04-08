@@ -1,0 +1,59 @@
+.category-badge-container {
+  position: relative;
+  display: inline-block;
+}
+
+.category-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 2px 8px;
+  border-radius: 12px;
+  border: 1px solid #d1d5db;
+  background: #f3f4f6;
+  color: #374151;
+  font-size: 0.75rem;
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+.category-badge:hover {
+  background: #e5e7eb;
+  border-color: #9ca3af;
+}
+
+.category-badge-arrow {
+  font-size: 0.6rem;
+  color: #6b7280;
+}
+
+.category-dropdown {
+  position: absolute;
+  top: calc(100% + 4px);
+  left: 0;
+  z-index: 100;
+  min-width: 140px;
+  margin: 0;
+  padding: 4px 0;
+  list-style: none;
+  background: #ffffff;
+  border: 1px solid #d1d5db;
+  border-radius: 6px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.12);
+}
+
+.category-option {
+  padding: 6px 12px;
+  font-size: 0.8rem;
+  color: #374151;
+  cursor: pointer;
+}
+
+.category-option:hover {
+  background: #f3f4f6;
+}
+
+.category-option.selected {
+  font-weight: 600;
+  color: #111827;
+}

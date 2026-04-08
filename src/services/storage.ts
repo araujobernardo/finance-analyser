@@ -112,6 +112,24 @@ export function getStoredMonths(): string[] {
 }
 
 /**
+ * Updates the category of a single transaction within a stored month.
+ * Transactions are matched by index. Returns a SaveResult.
+ */
+export function updateTransactionCategory(
+  monthKey: string,
+  index: number,
+  newCategory: string,
+): SaveResult {
+  const { transactions, error } = loadTransactions(monthKey);
+  if (error) return { success: false, error };
+  if (index < 0 || index >= transactions.length) {
+    return { success: false, error: { type: "unavailable", message: `Index ${index} out of range.` } };
+  }
+  transactions[index] = { ...transactions[index], category: newCategory };
+  return saveTransactions(monthKey, transactions);
+}
+
+/**
  * Removes a month's transactions from localStorage.
  */
 export function removeMonth(monthKey: string): void {

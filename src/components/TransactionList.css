@@ -1,0 +1,62 @@
+.txn-list-wrapper {
+  width: 100%;
+  overflow-x: auto;
+  margin-top: 1rem;
+}
+
+.txn-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.85rem;
+  text-align: left;
+}
+
+.txn-table th {
+  padding: 8px 12px;
+  border-bottom: 2px solid #e5e7eb;
+  color: #6b7280;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.txn-table td {
+  padding: 8px 12px;
+  border-bottom: 1px solid #f3f4f6;
+  vertical-align: middle;
+}
+
+.txn-table tbody tr:hover {
+  background: #f9fafb;
+}
+
+.txn-date {
+  white-space: nowrap;
+  color: #6b7280;
+}
+
+.txn-desc {
+  max-width: 280px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.txn-amount {
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+.txn-positive {
+  color: #16a34a;
+}
+
+.txn-negative {
+  color: #dc2626;
+}
+
+.txn-empty {
+  color: #6b7280;
+  font-size: 0.85rem;
+  margin-top: 1rem;
+}

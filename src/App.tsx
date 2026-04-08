@@ -1,15 +1,25 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import reactLogo from "./assets/react.svg";
 import viteLogo from "./assets/vite.svg";
 import heroImg from "./assets/hero.png";
 import { CsvUpload } from "./components/CsvUpload";
 import { DuplicateWarningModal } from "./components/DuplicateWarningModal";
+import { TransactionList } from "./components/TransactionList";
 import { useFileUpload } from "./hooks/useFileUpload";
+import type { Transaction } from "./utils/csvParser";
 import "./App.css";
 
 function App() {
   const [count, setCount] = useState(0);
-  const { selectedFile, isDuplicate, duplicateMonth, isCategorising, handleFile, confirmReplace, cancelReplace } = useFileUpload();
+  const {
+    selectedFile, isDuplicate, duplicateMonth, isCategorising,
+    savedMonthKey, savedTransactions, handleFile, confirmReplace, cancelReplace,
+  } = useFileUpload();
+  const [displayedTransactions, setDisplayedTransactions] = useState<Transaction[]>([]);
+
+  useEffect(() => {
+    setDisplayedTransactions(savedTransactions);
+  }, [savedTransactions]);
 
   return (
     <>
@@ -20,6 +30,13 @@ function App() {
         )}
         {selectedFile && !isDuplicate && !isCategorising && (
           <p style={{ fontSize: "0.8rem", color: "#6b7280" }}>Stored: {selectedFile.name}</p>
+        )}
+        {savedMonthKey && displayedTransactions.length > 0 && !isCategorising && (
+          <TransactionList
+            monthKey={savedMonthKey}
+            transactions={displayedTransactions}
+            onTransactionsChange={setDisplayedTransactions}
+          />
         )}
         {isDuplicate && duplicateMonth && (
           <DuplicateWarningModal

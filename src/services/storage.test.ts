@@ -6,6 +6,7 @@ import {
   getStoredMonths,
   removeMonth,
   monthKeyFromDate,
+  updateTransactionCategory,
 } from './storage';
 import type { Transaction } from '../utils/csvParser';
 
@@ -202,5 +203,52 @@ describe('removeMonth', () => {
     removeMonth(MARCH_2024);
     expect(getStoredMonths()).toEqual([APRIL_2024]);
     expect(loadTransactions(APRIL_2024).transactions).toHaveLength(1);
+  });
+});
+
+// ── updateTransactionCategory ─────────────────────────────────────────────
+
+describe('updateTransactionCategory', () => {
+  it('updates the category at the given index and persists it', () => {
+    saveTransactions(MARCH_2024, [
+      makeTransaction({ category: 'Groceries' }),
+      makeTransaction({ category: 'Transport' }),
+    ]);
+    updateTransactionCategory(MARCH_2024, 0, 'Dining');
+    const { transactions } = loadTransactions(MARCH_2024);
+    expect(transactions[0].category).toBe('Dining');
+    expect(transactions[1].category).toBe('Transport');
+  });
+
+  it('returns success: true on a valid update', () => {
+    saveTransactions(MARCH_2024, [makeTransaction()]);
+    const result = updateTransactionCategory(MARCH_2024, 0, 'Dining');
+    expect(result.success).toBe(true);
+  });
+
+  it('returns an error for an out-of-range index', () => {
+    saveTransactions(MARCH_2024, [makeTransaction()]);
+    const result = updateTransactionCategory(MARCH_2024, 99, 'Dining');
+    expect(result.success).toBe(false);
+    expect(result.error).toBeDefined();
+  });
+
+  it('returns an error for a month that does not exist', () => {
+    const result = updateTransactionCategory('2099-01', 0, 'Dining');
+    expect(result.success).toBe(false);
+  });
+
+  it('does not modify other transactions in the month', () => {
+    const txns = [
+      makeTransaction({ description: 'A', category: 'Groceries' }),
+      makeTransaction({ description: 'B', category: 'Transport' }),
+      makeTransaction({ description: 'C', category: 'Utilities' }),
+    ];
+    saveTransactions(MARCH_2024, txns);
+    updateTransactionCategory(MARCH_2024, 1, 'Dining');
+    const { transactions } = loadTransactions(MARCH_2024);
+    expect(transactions[0].category).toBe('Groceries');
+    expect(transactions[1].category).toBe('Dining');
+    expect(transactions[2].category).toBe('Utilities');
   });
 });
