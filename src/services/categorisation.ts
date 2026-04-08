@@ -34,11 +34,14 @@ export async function categoriseTransactions(
   const apiKey = import.meta.env.VITE_ANTHROPIC_API_KEY as string | undefined;
 
   // Separate already-categorised from those needing classification.
-  const needsCategory = transactions.filter(t => !t.category);
+  const needsCategory = transactions.filter((t) => !t.category);
 
   if (!apiKey || needsCategory.length === 0) {
     // Respect existing categories; fall back to "Uncategorised" only for unset ones.
-    return transactions.map(t => ({ ...t, category: t.category ?? "Uncategorised" }));
+    return transactions.map((t) => ({
+      ...t,
+      category: t.category ?? "Uncategorised",
+    }));
   }
 
   try {
@@ -54,11 +57,14 @@ export async function categoriseTransactions(
 
     // Merge classified results back into the original order.
     let classifiedIdx = 0;
-    return transactions.map(t =>
-      t.category ? t : classified[classifiedIdx++]
+    return transactions.map((t) =>
+      t.category ? t : classified[classifiedIdx++],
     );
   } catch {
-    return transactions.map(t => ({ ...t, category: t.category ?? "Uncategorised" }));
+    return transactions.map((t) => ({
+      ...t,
+      category: t.category ?? "Uncategorised",
+    }));
   }
 }
 
@@ -114,10 +120,6 @@ async function categoriseBatch(
       ? c
       : "Uncategorised",
   );
-}
-
-function uncategorised(transactions: Transaction[]): Transaction[] {
-  return transactions.map((t) => ({ ...t, category: "Uncategorised" }));
 }
 
 function fallback(length: number): string[] {
