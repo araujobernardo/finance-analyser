@@ -130,14 +130,15 @@ interface SerialisedTransaction {
   description: string;
   amount: number;
   balance?: number; // absent for NZ bank format transactions
+  category?: string;
 }
 
 function serialiseTransaction(t: Transaction): SerialisedTransaction {
-  return { date: t.date.toISOString(), description: t.description, amount: t.amount, balance: t.balance };
+  return { date: t.date.toISOString(), description: t.description, amount: t.amount, balance: t.balance, category: t.category };
 }
 
 function deserialiseTransaction(s: SerialisedTransaction): Transaction {
-  return { date: new Date(s.date), description: s.description, amount: s.amount, balance: s.balance };
+  return { date: new Date(s.date), description: s.description, amount: s.amount, balance: s.balance, category: s.category };
 }
 
 function updateMonthsIndex(monthKey: string, action: "add" | "remove"): void {

@@ -18,7 +18,7 @@ This project uses three specialised agents:
 1. Never make assumptions — if something is unclear, stop and ask the user
 2. Never push directly to `main` — all changes go through a PR
 3. Never merge a PR without explicit user approval
-4. Never move a Jira ticket without explicit user approval
+4. Never merge a PR without explicit user approval
 5. Always wait for user confirmation before starting the next step
 6. When in doubt, do less and ask more
 7. Never include credentials, API tokens, or secrets in
@@ -45,6 +45,8 @@ confirmation:
 - Running scripts/ files that only perform Jira reads or test runs
 - Fetching full Jira ticket details before starting work
 - Checking available Jira transitions before moving a ticket
+- Moving a Jira ticket to a new status
+- Adding a comment to a Jira ticket
 
 ## Always Requires Approval
 
@@ -57,8 +59,7 @@ before proceeding:
 - Any git commit or push
 - Creating a PR via gh CLI
 - Merging a PR via gh CLI
-- Any Jira POST/PUT that changes state (moving tickets, adding
-  comments, creating issues)
+- Creating Jira issues
 - Deleting any file
 
 ## Workflow

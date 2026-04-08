@@ -20,6 +20,7 @@ const EMPTY_DATA_CSV = 'Date,Description,Amount,Balance\n';
 beforeEach(() => {
   localStorage.clear();
   vi.restoreAllMocks();
+  vi.stubEnv("VITE_ANTHROPIC_API_KEY", ""); // force instant fallback — no real API calls in hook tests
 });
 
 // ── handleFile — happy path ────────────────────────────────────────────────
@@ -112,7 +113,10 @@ describe('useFileUpload — confirmReplace', () => {
 
     expect(result.current.isDuplicate).toBe(true);
 
-    act(() => { result.current.confirmReplace(); });
+    await act(async () => {
+      result.current.confirmReplace();
+      await new Promise(r => setTimeout(r, 50));
+    });
 
     expect(saveSpy).toHaveBeenCalledWith('2024-03', expect.any(Array));
     expect(result.current.isDuplicate).toBe(false);

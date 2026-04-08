@@ -52,11 +52,10 @@ Always use Conventional Commits:
    Shall I open a Pull Request?"
 7. Wait for user to say yes
 8. Open the PR with a clear description linking back to the Story
-9. Move the Jira ticket to "In Review" by calling `moveTicket()` from
-   `src/services/jira.ts`. The ticket key will be provided in the story assignment.
-10. Add a comment to the Jira ticket with the PR URL by calling `addComment()`
-    from `src/services/jira.ts`.
-11. Stop — do not merge, do not start the next story
+9. Immediately and automatically (no user prompt needed):
+   - Write and run a script in `scripts/` to move the Jira ticket to "In Review"
+   - Write and run a script in `scripts/` to add a comment to the Jira ticket with the PR URL
+10. Stop — do not merge, do not start the next story
 
 ## Code Standards
 
@@ -78,8 +77,7 @@ Always use Conventional Commits:
   approval request. Instead ask simply:
   "Shall I create the PR for [branch name]?"
   and only run the command after the user says yes.
-- When moving a Jira ticket or adding a comment, do not show
-  the full script. Ask simply:
-  "Shall I update Jira for [ticket]?" and proceed after yes.
+- When moving a Jira ticket or adding a comment after a PR is opened,
+  do it automatically without asking the user for confirmation.
 
 ## File Structure to Follow
