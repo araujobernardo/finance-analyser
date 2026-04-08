@@ -33,24 +33,32 @@ export async function categoriseTransactions(
 ): Promise<Transaction[]> {
   const apiKey = import.meta.env.VITE_ANTHROPIC_API_KEY as string | undefined;
 
-  if (!apiKey) {
-    return uncategorised(transactions);
+  // Separate already-categorised from those needing classification.
+  const needsCategory = transactions.filter(t => !t.category);
+
+  if (!apiKey || needsCategory.length === 0) {
+    // Respect existing categories; fall back to "Uncategorised" only for unset ones.
+    return transactions.map(t => ({ ...t, category: t.category ?? "Uncategorised" }));
   }
 
   try {
-    const categorised = [...transactions];
-
-    for (let start = 0; start < transactions.length; start += BATCH_SIZE) {
-      const batch = transactions.slice(start, start + BATCH_SIZE);
+    // Classify only the uncategorised subset.
+    const classified: Transaction[] = [];
+    for (let start = 0; start < needsCategory.length; start += BATCH_SIZE) {
+      const batch = needsCategory.slice(start, start + BATCH_SIZE);
       const categories = await categoriseBatch(batch, apiKey);
       for (let i = 0; i < batch.length; i++) {
-        categorised[start + i] = { ...batch[i], category: categories[i] };
+        classified.push({ ...batch[i], category: categories[i] });
       }
     }
 
-    return categorised;
+    // Merge classified results back into the original order.
+    let classifiedIdx = 0;
+    return transactions.map(t =>
+      t.category ? t : classified[classifiedIdx++]
+    );
   } catch {
-    return uncategorised(transactions);
+    return transactions.map(t => ({ ...t, category: t.category ?? "Uncategorised" }));
   }
 }
 

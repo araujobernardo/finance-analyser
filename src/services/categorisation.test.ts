@@ -198,6 +198,49 @@ describe("categoriseTransactions", () => {
     expect(result.every((t) => t.category === "Other")).toBe(true);
   });
 
+  // Preserves existing categories ───────────────────────────────────────────────
+
+  it("does not overwrite a transaction that already has a category", async () => {
+    const txns = [
+      makeTransaction("COUNTDOWN", -50),
+      { ...makeTransaction("PETROL", -80), category: "Transport" }, // already set
+    ];
+    mockFetchSuccess(["Groceries"]); // API should only be called for the first
+
+    const result = await categoriseTransactions(txns);
+
+    expect(result[0].category).toBe("Groceries");
+    expect(result[1].category).toBe("Transport"); // preserved
+  });
+
+  it("skips the API entirely when all transactions already have categories", async () => {
+    const fetchSpy = vi.fn();
+    vi.stubGlobal("fetch", fetchSpy);
+    const txns = [
+      { ...makeTransaction("A"), category: "Groceries" },
+      { ...makeTransaction("B"), category: "Dining" },
+    ];
+
+    const result = await categoriseTransactions(txns);
+
+    expect(fetchSpy).not.toHaveBeenCalled();
+    expect(result[0].category).toBe("Groceries");
+    expect(result[1].category).toBe("Dining");
+  });
+
+  it("falls back to Uncategorised only for unset categories, preserving set ones", async () => {
+    vi.stubEnv("VITE_ANTHROPIC_API_KEY", "");
+    const txns = [
+      makeTransaction("A"), // no category
+      { ...makeTransaction("B"), category: "Healthcare" }, // already set
+    ];
+
+    const result = await categoriseTransactions(txns);
+
+    expect(result[0].category).toBe("Uncategorised");
+    expect(result[1].category).toBe("Healthcare");
+  });
+
   // CATEGORIES export ───────────────────────────────────────────────────────────
 
   it("exports a non-empty CATEGORIES list containing known categories", () => {
