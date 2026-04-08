@@ -20,6 +20,7 @@ const EMPTY_DATA_CSV = 'Date,Description,Amount,Balance\n';
 beforeEach(() => {
   localStorage.clear();
   vi.restoreAllMocks();
+  vi.stubEnv("VITE_ANTHROPIC_API_KEY", ""); // force instant fallback — no real API calls in hook tests
 });
 
 // ── handleFile — happy path ────────────────────────────────────────────────

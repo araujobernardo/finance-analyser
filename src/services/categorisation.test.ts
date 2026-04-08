@@ -41,7 +41,7 @@ describe("categoriseTransactions", () => {
   beforeEach(() => {
     vi.unstubAllGlobals();
     // Provide a fake API key so the service doesn't short-circuit
-    vi.stubEnv("VITE_CLAUDE_API_KEY", "test-key");
+    vi.stubEnv("VITE_ANTHROPIC_API_KEY", "test-key");
   });
 
   // Happy path ─────────────────────────────────────────────────────────────────
@@ -117,7 +117,7 @@ describe("categoriseTransactions", () => {
   // No API key ──────────────────────────────────────────────────────────────────
 
   it("falls back to Uncategorised when VITE_CLAUDE_API_KEY is not set", async () => {
-    vi.stubEnv("VITE_CLAUDE_API_KEY", "");
+    vi.stubEnv("VITE_ANTHROPIC_API_KEY", "");
     const fetchSpy = vi.fn();
     vi.stubGlobal("fetch", fetchSpy);
 

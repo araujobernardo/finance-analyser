@@ -31,7 +31,7 @@ const MAX_DESC_LENGTH = 200;
 export async function categoriseTransactions(
   transactions: Transaction[],
 ): Promise<Transaction[]> {
-  const apiKey = import.meta.env.VITE_CLAUDE_API_KEY as string | undefined;
+  const apiKey = import.meta.env.VITE_ANTHROPIC_API_KEY as string | undefined;
 
   if (!apiKey) {
     return uncategorised(transactions);
