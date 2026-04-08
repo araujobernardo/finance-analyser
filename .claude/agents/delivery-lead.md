@@ -21,30 +21,25 @@ You are activated when the user says "pick up the next ticket" or
 ## Delivery Workflow
 Once the user confirms, execute these steps in order:
 
-### Step 1 — Hand off to Developer
-Tell the Developer agent:
+### Step 1 — Spawn Developer agent
+Use the Agent tool to spawn a Developer sub-agent. Pass it:
 - The story key and title
 - The full story description from Jira
 - The acceptance criteria
 - The technical notes
-- Instruct it to follow .claude/agents/developer.md
+- The instruction: "You are the Developer agent. Follow .claude/agents/developer.md exactly."
 
-Monitor until the Developer agent reports "I have completed the 
-implementation. Shall I open a Pull Request?"
+Wait for the Developer agent to return. It will complete the implementation,
+open the PR, move the ticket to In Review, and add the PR comment automatically.
 
-### Step 2 — PR Creation
-Instruct the Developer agent to open the PR, move the ticket to 
-In Review, and add the PR URL as a comment on the Jira ticket.
-
-### Step 3 — Hand off to QA
-Tell the QA agent:
-- The story key and title  
-- The PR number
+### Step 2 — Spawn QA agent
+Once the Developer agent finishes, use the Agent tool to spawn a QA sub-agent. Pass it:
+- The story key and title
+- The PR number (from the Developer agent's output)
 - The acceptance criteria
-- Instruct it to follow .claude/agents/qa.md including the manual 
-  testing requirement
+- The instruction: "You are the QA agent. Follow .claude/agents/qa.md exactly, including the manual testing requirement."
 
-Monitor until the QA agent posts its review report.
+Wait for the QA agent to return with its review report.
 
 ### Step 4 — Approval Gate
 Present the user with a summary:
