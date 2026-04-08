@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { parseCsv } from "../utils/csvParser";
 import type { ParseError, Transaction } from "../utils/csvParser";
-import { getStoredMonths, monthKeyFromDate, saveTransactions } from "../services/storage";
+import { getStoredMonths, loadTransactions, monthKeyFromDate, saveTransactions } from "../services/storage";
 import { categoriseTransactions } from "../services/categorisation";
 
 interface PendingUpload {
@@ -15,6 +15,8 @@ export interface UseFileUploadResult {
   isDuplicate: boolean;
   duplicateMonth: string | null;
   isCategorising: boolean;
+  savedMonthKey: string | null;
+  savedTransactions: Transaction[];
   handleFile: (file: File) => void;
   confirmReplace: () => void;
   cancelReplace: () => void;
@@ -32,12 +34,27 @@ export function useFileUpload(): UseFileUploadResult {
   const [parseErrors, setParseErrors] = useState<ParseError[]>([]);
   const [pending, setPending] = useState<PendingUpload | null>(null);
   const [isCategorising, setIsCategorising] = useState(false);
+  const [savedMonthKey, setSavedMonthKey] = useState<string | null>(null);
+  const [savedTransactions, setSavedTransactions] = useState<Transaction[]>([]);
 
   async function saveWithCategories(monthKey: string, transactions: Transaction[]): Promise<void> {
     setIsCategorising(true);
     try {
-      const categorised = await categoriseTransactions(transactions);
+      // Preserve any manually-set categories already in storage for this month.
+      // Match by description + amount so overrides survive a re-upload.
+      const { transactions: stored } = loadTransactions(monthKey);
+      const storedCats = new Map(
+        stored.map(t => [`${t.description}|||${t.amount}`, t.category])
+      );
+      const withPreserved = transactions.map(t => {
+        const existing = storedCats.get(`${t.description}|||${t.amount}`);
+        return existing ? { ...t, category: existing } : t;
+      });
+
+      const categorised = await categoriseTransactions(withPreserved);
       saveTransactions(monthKey, categorised);
+      setSavedMonthKey(monthKey);
+      setSavedTransactions(loadTransactions(monthKey).transactions);
     } finally {
       setIsCategorising(false);
     }
@@ -86,6 +103,8 @@ export function useFileUpload(): UseFileUploadResult {
     isDuplicate: pending !== null,
     duplicateMonth: pending ? formatMonthKey(pending.monthKey) : null,
     isCategorising,
+    savedMonthKey,
+    savedTransactions,
     handleFile,
     confirmReplace,
     cancelReplace,
