@@ -28,7 +28,7 @@ export interface AllTransactionsResult {
  * Use this to group and key transactions by month.
  */
 export function monthKeyFromDate(date: Date): string {
-  const year  = date.getFullYear();
+  const year = date.getFullYear();
   const month = String(date.getMonth() + 1).padStart(2, "0");
   return `${year}-${month}`;
 }
@@ -37,7 +37,10 @@ export function monthKeyFromDate(date: Date): string {
  * Saves a month's transactions to localStorage, overwriting any existing
  * data for that month key.
  */
-export function saveTransactions(monthKey: string, transactions: Transaction[]): SaveResult {
+export function saveTransactions(
+  monthKey: string,
+  transactions: Transaction[],
+): SaveResult {
   try {
     const storageKey = STORAGE_PREFIX + monthKey;
     const serialised = JSON.stringify(transactions.map(serialiseTransaction));
@@ -48,12 +51,19 @@ export function saveTransactions(monthKey: string, transactions: Transaction[]):
     if (err instanceof DOMException && err.name === "QuotaExceededError") {
       return {
         success: false,
-        error: { type: "quota_exceeded", message: "Storage quota exceeded. Please clear some data and try again." },
+        error: {
+          type: "quota_exceeded",
+          message:
+            "Storage quota exceeded. Please clear some data and try again.",
+        },
       };
     }
     return {
       success: false,
-      error: { type: "unavailable", message: `Failed to save data: ${String(err)}` },
+      error: {
+        type: "unavailable",
+        message: `Failed to save data: ${String(err)}`,
+      },
     };
   }
 }
@@ -72,7 +82,10 @@ export function loadTransactions(monthKey: string): LoadResult {
   } catch (err) {
     return {
       transactions: [],
-      error: { type: "parse_error", message: `Failed to load data for ${monthKey}: ${String(err)}` },
+      error: {
+        type: "parse_error",
+        message: `Failed to load data for ${monthKey}: ${String(err)}`,
+      },
     };
   }
 }
@@ -123,7 +136,10 @@ export function updateTransactionCategory(
   const { transactions, error } = loadTransactions(monthKey);
   if (error) return { success: false, error };
   if (index < 0 || index >= transactions.length) {
-    return { success: false, error: { type: "unavailable", message: `Index ${index} out of range.` } };
+    return {
+      success: false,
+      error: { type: "unavailable", message: `Index ${index} out of range.` },
+    };
   }
   transactions[index] = { ...transactions[index], category: newCategory };
   return saveTransactions(monthKey, transactions);
@@ -152,11 +168,23 @@ interface SerialisedTransaction {
 }
 
 function serialiseTransaction(t: Transaction): SerialisedTransaction {
-  return { date: t.date.toISOString(), description: t.description, amount: t.amount, balance: t.balance, category: t.category };
+  return {
+    date: t.date.toISOString(),
+    description: t.description,
+    amount: t.amount,
+    balance: t.balance,
+    category: t.category,
+  };
 }
 
 function deserialiseTransaction(s: SerialisedTransaction): Transaction {
-  return { date: new Date(s.date), description: s.description, amount: s.amount, balance: s.balance, category: s.category };
+  return {
+    date: new Date(s.date),
+    description: s.description,
+    amount: s.amount,
+    balance: s.balance,
+    category: s.category,
+  };
 }
 
 function updateMonthsIndex(monthKey: string, action: "add" | "remove"): void {
@@ -167,7 +195,7 @@ function updateMonthsIndex(monthKey: string, action: "add" | "remove"): void {
       localStorage.setItem(MONTHS_INDEX_KEY, JSON.stringify(months));
     }
   } else {
-    const filtered = months.filter(m => m !== monthKey);
+    const filtered = months.filter((m) => m !== monthKey);
     localStorage.setItem(MONTHS_INDEX_KEY, JSON.stringify(filtered));
   }
 }
