@@ -26,26 +26,50 @@ describe("TransactionList", () => {
       makeTransaction({ description: "COUNTDOWN" }),
       makeTransaction({ description: "UBER EATS", category: "Dining" }),
     ];
-    render(<TransactionList monthKey={MONTH_KEY} transactions={txns} onTransactionsChange={vi.fn()} />);
+    render(
+      <TransactionList
+        monthKey={MONTH_KEY}
+        transactions={txns}
+        onTransactionsChange={vi.fn()}
+      />,
+    );
     expect(screen.getByText("COUNTDOWN")).toBeInTheDocument();
     expect(screen.getByText("UBER EATS")).toBeInTheDocument();
   });
 
   it("shows an empty state message when there are no transactions", () => {
-    render(<TransactionList monthKey={MONTH_KEY} transactions={[]} onTransactionsChange={vi.fn()} />);
+    render(
+      <TransactionList
+        monthKey={MONTH_KEY}
+        transactions={[]}
+        onTransactionsChange={vi.fn()}
+      />,
+    );
     expect(screen.getByText(/no transactions/i)).toBeInTheDocument();
   });
 
   it("displays negative amounts in a negative style", () => {
     const txns = [makeTransaction({ amount: -50 })];
-    render(<TransactionList monthKey={MONTH_KEY} transactions={txns} onTransactionsChange={vi.fn()} />);
+    render(
+      <TransactionList
+        monthKey={MONTH_KEY}
+        transactions={txns}
+        onTransactionsChange={vi.fn()}
+      />,
+    );
     const amountCell = screen.getByText("-50.00");
     expect(amountCell).toHaveClass("txn-negative");
   });
 
   it("displays positive amounts in a positive style with a + prefix", () => {
     const txns = [makeTransaction({ amount: 3000 })];
-    render(<TransactionList monthKey={MONTH_KEY} transactions={txns} onTransactionsChange={vi.fn()} />);
+    render(
+      <TransactionList
+        monthKey={MONTH_KEY}
+        transactions={txns}
+        onTransactionsChange={vi.fn()}
+      />,
+    );
     const amountCell = screen.getByText("+3000.00");
     expect(amountCell).toHaveClass("txn-positive");
   });
@@ -55,17 +79,31 @@ describe("TransactionList", () => {
       makeTransaction({ category: "Groceries" }),
       makeTransaction({ category: "Transport" }),
     ];
-    render(<TransactionList monthKey={MONTH_KEY} transactions={txns} onTransactionsChange={vi.fn()} />);
+    render(
+      <TransactionList
+        monthKey={MONTH_KEY}
+        transactions={txns}
+        onTransactionsChange={vi.fn()}
+      />,
+    );
     expect(screen.getByText("Groceries")).toBeInTheDocument();
     expect(screen.getByText("Transport")).toBeInTheDocument();
   });
 
   it("calls updateTransactionCategory and onTransactionsChange when category is changed", () => {
-    const updateSpy = vi.spyOn(storage, "updateTransactionCategory").mockReturnValue({ success: true });
+    const updateSpy = vi
+      .spyOn(storage, "updateTransactionCategory")
+      .mockReturnValue({ success: true });
     const onChange = vi.fn();
     const txns = [makeTransaction({ category: "Groceries" })];
 
-    render(<TransactionList monthKey={MONTH_KEY} transactions={txns} onTransactionsChange={onChange} />);
+    render(
+      <TransactionList
+        monthKey={MONTH_KEY}
+        transactions={txns}
+        onTransactionsChange={onChange}
+      />,
+    );
 
     // Open the dropdown for the first badge
     fireEvent.click(screen.getByRole("button", { name: /groceries/i }));
@@ -74,13 +112,21 @@ describe("TransactionList", () => {
 
     expect(updateSpy).toHaveBeenCalledWith(MONTH_KEY, 0, "Dining");
     expect(onChange).toHaveBeenCalledWith(
-      expect.arrayContaining([expect.objectContaining({ category: "Dining" })])
+      expect.arrayContaining([expect.objectContaining({ category: "Dining" })]),
     );
   });
 
   it("shows Uncategorised badge for transactions with no category", () => {
     const txns = [makeTransaction({ category: undefined })];
-    render(<TransactionList monthKey={MONTH_KEY} transactions={txns} onTransactionsChange={vi.fn()} />);
-    expect(screen.getByRole("button", { name: /uncategorised/i })).toBeInTheDocument();
+    render(
+      <TransactionList
+        monthKey={MONTH_KEY}
+        transactions={txns}
+        onTransactionsChange={vi.fn()}
+      />,
+    );
+    expect(
+      screen.getByRole("button", { name: /uncategorised/i }),
+    ).toBeInTheDocument();
   });
 });

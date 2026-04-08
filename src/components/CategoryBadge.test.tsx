@@ -3,7 +3,9 @@ import { render, screen, fireEvent } from "@testing-library/react";
 import { CategoryBadge } from "./CategoryBadge";
 
 function renderBadge(category = "Groceries", onChange = vi.fn()) {
-  return render(<CategoryBadge category={category} onCategoryChange={onChange} />);
+  return render(
+    <CategoryBadge category={category} onCategoryChange={onChange} />,
+  );
 }
 
 describe("CategoryBadge", () => {

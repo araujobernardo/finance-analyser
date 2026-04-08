@@ -9,9 +9,17 @@ interface Props {
   onTransactionsChange: (updated: Transaction[]) => void;
 }
 
-const DATE_FMT = new Intl.DateTimeFormat("en-NZ", { day: "2-digit", month: "short", year: "numeric" });
+const DATE_FMT = new Intl.DateTimeFormat("en-NZ", {
+  day: "2-digit",
+  month: "short",
+  year: "numeric",
+});
 
-export function TransactionList({ monthKey, transactions, onTransactionsChange }: Props) {
+export function TransactionList({
+  monthKey,
+  transactions,
+  onTransactionsChange,
+}: Props) {
   if (transactions.length === 0) {
     return <p className="txn-empty">No transactions to display.</p>;
   }
@@ -19,7 +27,7 @@ export function TransactionList({ monthKey, transactions, onTransactionsChange }
   function handleCategoryChange(index: number, newCategory: string) {
     updateTransactionCategory(monthKey, index, newCategory);
     const updated = transactions.map((t, i) =>
-      i === index ? { ...t, category: newCategory } : t
+      i === index ? { ...t, category: newCategory } : t,
     );
     onTransactionsChange(updated);
   }
@@ -40,7 +48,9 @@ export function TransactionList({ monthKey, transactions, onTransactionsChange }
             <tr key={i}>
               <td className="txn-date">{DATE_FMT.format(t.date)}</td>
               <td className="txn-desc">{t.description}</td>
-              <td className={`txn-amount ${t.amount >= 0 ? "txn-positive" : "txn-negative"}`}>
+              <td
+                className={`txn-amount ${t.amount >= 0 ? "txn-positive" : "txn-negative"}`}
+              >
                 {t.amount >= 0 ? "+" : ""}
                 {t.amount.toFixed(2)}
               </td>

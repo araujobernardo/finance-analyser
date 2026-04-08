@@ -18,7 +18,9 @@
   background-color: #1f2937;
   color: #9ca3af;
   cursor: pointer;
-  transition: border-color 0.15s ease, background-color 0.15s ease;
+  transition:
+    border-color 0.15s ease,
+    background-color 0.15s ease;
   outline: none;
 }
 

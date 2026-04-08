@@ -32,12 +32,14 @@ function getConfig(): JiraConfig {
   const baseUrl = import.meta.env.VITE_JIRA_BASE_URL as string | undefined;
   const email = import.meta.env.VITE_JIRA_EMAIL as string | undefined;
   const apiToken = import.meta.env.VITE_JIRA_API_TOKEN as string | undefined;
-  const projectKey = import.meta.env.VITE_JIRA_PROJECT_KEY as string | undefined;
+  const projectKey = import.meta.env.VITE_JIRA_PROJECT_KEY as
+    | string
+    | undefined;
 
   if (!baseUrl || !email || !apiToken || !projectKey) {
     throw new Error(
       "Missing Jira credentials. Ensure VITE_JIRA_BASE_URL, VITE_JIRA_EMAIL, " +
-        "VITE_JIRA_API_TOKEN, and VITE_JIRA_PROJECT_KEY are set."
+        "VITE_JIRA_API_TOKEN, and VITE_JIRA_PROJECT_KEY are set.",
     );
   }
 
@@ -56,7 +58,7 @@ function authHeaders(config: JiraConfig): HeadersInit {
 async function jiraFetch<T>(
   url: string,
   options: RequestInit,
-  config: JiraConfig
+  config: JiraConfig,
 ): Promise<T> {
   const response = await fetch(url, {
     ...options,
@@ -65,7 +67,9 @@ async function jiraFetch<T>(
 
   if (!response.ok) {
     const body = await response.text();
-    throw new Error(`Jira API error ${response.status} ${response.statusText}: ${body}`);
+    throw new Error(
+      `Jira API error ${response.status} ${response.statusText}: ${body}`,
+    );
   }
 
   if (response.status === 204) {
@@ -78,7 +82,7 @@ async function jiraFetch<T>(
 export async function createTicket(
   summary: string,
   description: string,
-  issueType: "Epic" | "Story" | "Bug" | "Task"
+  issueType: "Epic" | "Story" | "Bug" | "Task",
 ): Promise<string> {
   const config = getConfig();
 
@@ -104,29 +108,32 @@ export async function createTicket(
         },
       }),
     },
-    config
+    config,
   );
 
   return data.key;
 }
 
-export async function moveTicket(issueKey: string, status: string): Promise<void> {
+export async function moveTicket(
+  issueKey: string,
+  status: string,
+): Promise<void> {
   const config = getConfig();
 
   const { transitions } = await jiraFetch<JiraTransitionsResponse>(
     `${config.baseUrl}/rest/api/3/issue/${issueKey}/transitions`,
     { method: "GET" },
-    config
+    config,
   );
 
   const transition = transitions.find(
-    (t) => t.name.toLowerCase() === status.toLowerCase()
+    (t) => t.name.toLowerCase() === status.toLowerCase(),
   );
 
   if (!transition) {
     const available = transitions.map((t) => t.name).join(", ");
     throw new Error(
-      `Transition "${status}" not found for ${issueKey}. Available: ${available}`
+      `Transition "${status}" not found for ${issueKey}. Available: ${available}`,
     );
   }
 
@@ -136,11 +143,14 @@ export async function moveTicket(issueKey: string, status: string): Promise<void
       method: "POST",
       body: JSON.stringify({ transition: { id: transition.id } }),
     },
-    config
+    config,
   );
 }
 
-export async function addComment(issueKey: string, comment: string): Promise<void> {
+export async function addComment(
+  issueKey: string,
+  comment: string,
+): Promise<void> {
   const config = getConfig();
 
   await jiraFetch<unknown>(
@@ -160,7 +170,7 @@ export async function addComment(issueKey: string, comment: string): Promise<voi
         },
       }),
     },
-    config
+    config,
   );
 }
 
@@ -181,7 +191,7 @@ interface JiraIssueLinkRequest {
 export async function linkTickets(
   fromIssueKey: string,
   toIssueKey: string,
-  linkType: "blocks" | "is blocked by" | "relates to"
+  linkType: "blocks" | "is blocked by" | "relates to",
 ): Promise<void> {
   const config = getConfig();
 
@@ -213,7 +223,7 @@ export async function linkTickets(
       method: "POST",
       body: JSON.stringify(body),
     },
-    config
+    config,
   );
 }
 
@@ -230,7 +240,7 @@ export async function createBugTicket(
   summary: string,
   description: string,
   stepsToReproduce: string,
-  linkedStoryKey?: string
+  linkedStoryKey?: string,
 ): Promise<string> {
   const config = getConfig();
 
@@ -252,7 +262,13 @@ export async function createBugTicket(
               },
               {
                 type: "paragraph",
-                content: [{ type: "text", text: "Steps to reproduce:", marks: [{ type: "strong" }] }],
+                content: [
+                  {
+                    type: "text",
+                    text: "Steps to reproduce:",
+                    marks: [{ type: "strong" }],
+                  },
+                ],
               },
               {
                 type: "paragraph",
@@ -264,7 +280,7 @@ export async function createBugTicket(
         },
       }),
     },
-    config
+    config,
   );
 
   if (linkedStoryKey) {
@@ -275,14 +291,14 @@ export async function createBugTicket(
 }
 
 export async function getTicket(
-  issueKey: string
+  issueKey: string,
 ): Promise<{ status: string; summary: string }> {
   const config = getConfig();
 
   const data = await jiraFetch<JiraTicket>(
     `${config.baseUrl}/rest/api/3/issue/${issueKey}?fields=summary,status`,
     { method: "GET" },
-    config
+    config,
   );
 
   return {

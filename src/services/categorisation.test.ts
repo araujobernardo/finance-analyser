@@ -60,7 +60,12 @@ describe("categoriseTransactions", () => {
   });
 
   it("preserves all original transaction fields", async () => {
-    const txn = { date: new Date("2024-06-01"), description: "PETROL STATION", amount: -85.5, balance: 200 };
+    const txn = {
+      date: new Date("2024-06-01"),
+      description: "PETROL STATION",
+      amount: -85.5,
+      balance: 200,
+    };
     mockFetchSuccess(["Transport"]);
 
     const [result] = await categoriseTransactions([txn]);
@@ -102,7 +107,12 @@ describe("categoriseTransactions", () => {
       "fetch",
       vi.fn().mockImplementation(async (_url: string, init: RequestInit) => {
         capturedBody = init.body as string;
-        return { ok: true, json: async () => ({ content: [{ type: "text", text: '["Other"]' }] }) };
+        return {
+          ok: true,
+          json: async () => ({
+            content: [{ type: "text", text: '["Other"]' }],
+          }),
+        };
       }),
     );
 
@@ -153,7 +163,9 @@ describe("categoriseTransactions", () => {
       "fetch",
       vi.fn().mockResolvedValue({
         ok: true,
-        json: async () => ({ content: [{ type: "text", text: "not json at all" }] }),
+        json: async () => ({
+          content: [{ type: "text", text: "not json at all" }],
+        }),
       }),
     );
 
@@ -168,7 +180,9 @@ describe("categoriseTransactions", () => {
       "fetch",
       vi.fn().mockResolvedValue({
         ok: true,
-        json: async () => ({ content: [{ type: "text", text: '"Groceries"' }] }),
+        json: async () => ({
+          content: [{ type: "text", text: '"Groceries"' }],
+        }),
       }),
     );
 
@@ -181,11 +195,15 @@ describe("categoriseTransactions", () => {
   // Batching ────────────────────────────────────────────────────────────────────
 
   it("splits large sets into batches of 50 and makes multiple API calls", async () => {
-    const txns = Array.from({ length: 110 }, (_, i) => makeTransaction(`Shop ${i}`));
+    const txns = Array.from({ length: 110 }, (_, i) =>
+      makeTransaction(`Shop ${i}`),
+    );
     const fetchSpy = vi.fn().mockResolvedValue({
       ok: true,
       json: async () => ({
-        content: [{ type: "text", text: JSON.stringify(Array(50).fill("Other")) }],
+        content: [
+          { type: "text", text: JSON.stringify(Array(50).fill("Other")) },
+        ],
       }),
     });
     vi.stubGlobal("fetch", fetchSpy);
