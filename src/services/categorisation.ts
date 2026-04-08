@@ -1,4 +1,5 @@
 import type { Transaction } from "../utils/csvParser";
+import { getRuleForDescription } from "./categoryRules";
 
 export const CATEGORIES = [
   "Groceries",
@@ -33,12 +34,19 @@ export async function categoriseTransactions(
 ): Promise<Transaction[]> {
   const apiKey = import.meta.env.VITE_ANTHROPIC_API_KEY as string | undefined;
 
+  // Apply stored category rules first — rules always win over API.
+  const withRules = transactions.map((t) => {
+    if (t.category) return t;
+    const rule = getRuleForDescription(t.description);
+    return rule ? { ...t, category: rule } : t;
+  });
+
   // Separate already-categorised from those needing classification.
-  const needsCategory = transactions.filter((t) => !t.category);
+  const needsCategory = withRules.filter((t) => !t.category);
 
   if (!apiKey || needsCategory.length === 0) {
     // Respect existing categories; fall back to "Uncategorised" only for unset ones.
-    return transactions.map((t) => ({
+    return withRules.map((t) => ({
       ...t,
       category: t.category ?? "Uncategorised",
     }));
@@ -57,11 +65,9 @@ export async function categoriseTransactions(
 
     // Merge classified results back into the original order.
     let classifiedIdx = 0;
-    return transactions.map((t) =>
-      t.category ? t : classified[classifiedIdx++],
-    );
+    return withRules.map((t) => (t.category ? t : classified[classifiedIdx++]));
   } catch {
-    return transactions.map((t) => ({
+    return withRules.map((t) => ({
       ...t,
       category: t.category ?? "Uncategorised",
     }));
