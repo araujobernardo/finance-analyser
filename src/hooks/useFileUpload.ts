@@ -1,7 +1,12 @@
 import { useState } from "react";
 import { parseCsv } from "../utils/csvParser";
 import type { ParseError, Transaction } from "../utils/csvParser";
-import { getStoredMonths, loadTransactions, monthKeyFromDate, saveTransactions } from "../services/storage";
+import {
+  getStoredMonths,
+  loadTransactions,
+  monthKeyFromDate,
+  saveTransactions,
+} from "../services/storage";
 import { categoriseTransactions } from "../services/categorisation";
 
 interface PendingUpload {
@@ -37,16 +42,19 @@ export function useFileUpload(): UseFileUploadResult {
   const [savedMonthKey, setSavedMonthKey] = useState<string | null>(null);
   const [savedTransactions, setSavedTransactions] = useState<Transaction[]>([]);
 
-  async function saveWithCategories(monthKey: string, transactions: Transaction[]): Promise<void> {
+  async function saveWithCategories(
+    monthKey: string,
+    transactions: Transaction[],
+  ): Promise<void> {
     setIsCategorising(true);
     try {
       // Preserve any manually-set categories already in storage for this month.
       // Match by description + amount so overrides survive a re-upload.
       const { transactions: stored } = loadTransactions(monthKey);
       const storedCats = new Map(
-        stored.map(t => [`${t.description}|||${t.amount}`, t.category])
+        stored.map((t) => [`${t.description}|||${t.amount}`, t.category]),
       );
-      const withPreserved = transactions.map(t => {
+      const withPreserved = transactions.map((t) => {
         const existing = storedCats.get(`${t.description}|||${t.amount}`);
         return existing ? { ...t, category: existing } : t;
       });

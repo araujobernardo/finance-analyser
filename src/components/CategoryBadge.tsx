@@ -14,7 +14,10 @@ export function CategoryBadge({ category, onCategoryChange }: Props) {
   useEffect(() => {
     if (!open) return;
     function handleClickOutside(e: MouseEvent) {
-      if (containerRef.current && !containerRef.current.contains(e.target as Node)) {
+      if (
+        containerRef.current &&
+        !containerRef.current.contains(e.target as Node)
+      ) {
         setOpen(false);
       }
     }
@@ -44,16 +47,26 @@ export function CategoryBadge({ category, onCategoryChange }: Props) {
         type="button"
       >
         {category || "Uncategorised"}
-        <span className="category-badge-arrow" aria-hidden="true">▾</span>
+        <span className="category-badge-arrow" aria-hidden="true">
+          ▾
+        </span>
       </button>
       {open && (
-        <ul className="category-dropdown" role="listbox" aria-label="Select category">
+        <ul
+          className="category-dropdown"
+          role="listbox"
+          aria-label="Select category"
+        >
           {CATEGORIES.map((cat) => (
             <li
               key={cat}
               role="option"
               aria-selected={cat === category}
-              className={cat === category ? "category-option selected" : "category-option"}
+              className={
+                cat === category
+                  ? "category-option selected"
+                  : "category-option"
+              }
               onMouseDown={() => handleSelect(cat)}
             >
               {cat}

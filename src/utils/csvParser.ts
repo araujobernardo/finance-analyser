@@ -34,10 +34,13 @@ export interface ParseError {
  * NZ bank format is used; otherwise the legacy format is used.
  */
 export function parseCsv(csvText: string): ParseResult {
-  const lines = csvText.split(/\r?\n/).filter(line => line.trim() !== "");
+  const lines = csvText.split(/\r?\n/).filter((line) => line.trim() !== "");
 
   if (lines.length === 0) {
-    return { transactions: [], errors: [{ row: 0, message: "File is empty.", raw: "" }] };
+    return {
+      transactions: [],
+      errors: [{ row: 0, message: "File is empty.", raw: "" }],
+    };
   }
 
   // ── Find header line ──────────────────────────────────────────────────────
@@ -50,7 +53,7 @@ export function parseCsv(csvText: string): ParseResult {
   for (let i = 0; i < lines.length; i++) {
     const cols = lines[i]
       .split(",")
-      .map(h => h.trim().replace(/^"|"$/g, "").toLowerCase());
+      .map((h) => h.trim().replace(/^"|"$/g, "").toLowerCase());
     if (cols.includes("date")) {
       headerLineIndex = i;
       headers = cols;
@@ -64,7 +67,8 @@ export function parseCsv(csvText: string): ParseResult {
       errors: [
         {
           row: 1,
-          message: "Missing required columns: date. No column header row found.",
+          message:
+            "Missing required columns: date. No column header row found.",
           raw: lines[0],
         },
       ],
@@ -93,7 +97,7 @@ function parseLegacyFormat(
   const transactions: Transaction[] = [];
   const errors: ParseError[] = [];
 
-  const missing = LEGACY_REQUIRED.filter(h => !headers.includes(h));
+  const missing = LEGACY_REQUIRED.filter((h) => !headers.includes(h));
   if (missing.length > 0) {
     return {
       transactions,
@@ -107,10 +111,10 @@ function parseLegacyFormat(
     };
   }
 
-  const dateIdx        = headers.indexOf("date");
+  const dateIdx = headers.indexOf("date");
   const descriptionIdx = headers.indexOf("description");
-  const amountIdx      = headers.indexOf("amount");
-  const balanceIdx     = headers.indexOf("balance");
+  const amountIdx = headers.indexOf("amount");
+  const balanceIdx = headers.indexOf("balance");
 
   for (let i = headerLineIndex + 1; i < lines.length; i++) {
     const rowNumber = i + 1;
@@ -118,18 +122,26 @@ function parseLegacyFormat(
     const cols = splitCsvRow(raw);
 
     if (cols.length < LEGACY_REQUIRED.length) {
-      errors.push({ row: rowNumber, message: `Expected at least 4 columns, found ${cols.length}.`, raw });
+      errors.push({
+        row: rowNumber,
+        message: `Expected at least 4 columns, found ${cols.length}.`,
+        raw,
+      });
       continue;
     }
 
-    const rawDate        = cols[dateIdx].trim();
+    const rawDate = cols[dateIdx].trim();
     const rawDescription = cols[descriptionIdx].trim();
-    const rawAmount      = cols[amountIdx].trim();
-    const rawBalance     = cols[balanceIdx].trim();
+    const rawAmount = cols[amountIdx].trim();
+    const rawBalance = cols[balanceIdx].trim();
 
     const date = parseDdMmYyyy(rawDate);
     if (date === null) {
-      errors.push({ row: rowNumber, message: `Invalid date "${rawDate}". Expected DD/MM/YYYY.`, raw });
+      errors.push({
+        row: rowNumber,
+        message: `Invalid date "${rawDate}". Expected DD/MM/YYYY.`,
+        raw,
+      });
       continue;
     }
 
@@ -140,13 +152,21 @@ function parseLegacyFormat(
 
     const amount = parseNumber(rawAmount);
     if (amount === null) {
-      errors.push({ row: rowNumber, message: `Invalid amount "${rawAmount}".`, raw });
+      errors.push({
+        row: rowNumber,
+        message: `Invalid amount "${rawAmount}".`,
+        raw,
+      });
       continue;
     }
 
     const balance = parseNumber(rawBalance);
     if (balance === null) {
-      errors.push({ row: rowNumber, message: `Invalid balance "${rawBalance}".`, raw });
+      errors.push({
+        row: rowNumber,
+        message: `Invalid balance "${rawBalance}".`,
+        raw,
+      });
       continue;
     }
 
@@ -168,7 +188,7 @@ function parseNzFormat(
   const transactions: Transaction[] = [];
   const errors: ParseError[] = [];
 
-  const missing = NZ_REQUIRED.filter(h => !headers.includes(h));
+  const missing = NZ_REQUIRED.filter((h) => !headers.includes(h));
   if (missing.length > 0) {
     return {
       transactions,
@@ -182,10 +202,10 @@ function parseNzFormat(
     };
   }
 
-  const dateIdx   = headers.indexOf("date");
+  const dateIdx = headers.indexOf("date");
   const amountIdx = headers.indexOf("amount");
-  const payeeIdx  = headers.indexOf("payee");  // -1 if absent
-  const memoIdx   = headers.indexOf("memo");   // -1 if absent
+  const payeeIdx = headers.indexOf("payee"); // -1 if absent
+  const memoIdx = headers.indexOf("memo"); // -1 if absent
 
   const minCols = Math.max(dateIdx, amountIdx, payeeIdx, memoIdx) + 1;
 
@@ -203,18 +223,22 @@ function parseNzFormat(
       continue;
     }
 
-    const rawDate   = cols[dateIdx].trim();
+    const rawDate = cols[dateIdx].trim();
     const rawAmount = cols[amountIdx].trim();
-    const payee     = payeeIdx >= 0 ? cols[payeeIdx].trim() : "";
-    const memo      = memoIdx  >= 0 ? cols[memoIdx].trim()  : "";
+    const payee = payeeIdx >= 0 ? cols[payeeIdx].trim() : "";
+    const memo = memoIdx >= 0 ? cols[memoIdx].trim() : "";
 
     const date = parseYyyyMmDd(rawDate);
     if (date === null) {
-      errors.push({ row: rowNumber, message: `Invalid date "${rawDate}". Expected YYYY/MM/DD.`, raw });
+      errors.push({
+        row: rowNumber,
+        message: `Invalid date "${rawDate}". Expected YYYY/MM/DD.`,
+        raw,
+      });
       continue;
     }
 
-    const description = [payee, memo].filter(s => s !== "").join(" ");
+    const description = [payee, memo].filter((s) => s !== "").join(" ");
     if (description === "") {
       errors.push({ row: rowNumber, message: "Description is empty.", raw });
       continue;
@@ -222,7 +246,11 @@ function parseNzFormat(
 
     const amount = parseNumber(rawAmount);
     if (amount === null) {
-      errors.push({ row: rowNumber, message: `Invalid amount "${rawAmount}".`, raw });
+      errors.push({
+        row: rowNumber,
+        message: `Invalid amount "${rawAmount}".`,
+        raw,
+      });
       continue;
     }
 
@@ -239,16 +267,20 @@ function parseDdMmYyyy(value: string): Date | null {
   const match = /^(\d{2})\/(\d{2})\/(\d{4})$/.exec(value);
   if (!match) return null;
 
-  const day   = parseInt(match[1], 10);
+  const day = parseInt(match[1], 10);
   const month = parseInt(match[2], 10);
-  const year  = parseInt(match[3], 10);
+  const year = parseInt(match[3], 10);
 
   if (month < 1 || month > 12) return null;
-  if (day < 1 || day > 31)     return null;
+  if (day < 1 || day > 31) return null;
 
   const date = new Date(year, month - 1, day);
 
-  if (date.getFullYear() !== year || date.getMonth() !== month - 1 || date.getDate() !== day) {
+  if (
+    date.getFullYear() !== year ||
+    date.getMonth() !== month - 1 ||
+    date.getDate() !== day
+  ) {
     return null;
   }
 
@@ -260,16 +292,20 @@ function parseYyyyMmDd(value: string): Date | null {
   const match = /^(\d{4})\/(\d{2})\/(\d{2})$/.exec(value);
   if (!match) return null;
 
-  const year  = parseInt(match[1], 10);
+  const year = parseInt(match[1], 10);
   const month = parseInt(match[2], 10);
-  const day   = parseInt(match[3], 10);
+  const day = parseInt(match[3], 10);
 
   if (month < 1 || month > 12) return null;
-  if (day < 1 || day > 31)     return null;
+  if (day < 1 || day > 31) return null;
 
   const date = new Date(year, month - 1, day);
 
-  if (date.getFullYear() !== year || date.getMonth() !== month - 1 || date.getDate() !== day) {
+  if (
+    date.getFullYear() !== year ||
+    date.getMonth() !== month - 1 ||
+    date.getDate() !== day
+  ) {
     return null;
   }
 

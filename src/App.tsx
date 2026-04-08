@@ -12,10 +12,19 @@ import "./App.css";
 function App() {
   const [count, setCount] = useState(0);
   const {
-    selectedFile, isDuplicate, duplicateMonth, isCategorising,
-    savedMonthKey, savedTransactions, handleFile, confirmReplace, cancelReplace,
+    selectedFile,
+    isDuplicate,
+    duplicateMonth,
+    isCategorising,
+    savedMonthKey,
+    savedTransactions,
+    handleFile,
+    confirmReplace,
+    cancelReplace,
   } = useFileUpload();
-  const [displayedTransactions, setDisplayedTransactions] = useState<Transaction[]>([]);
+  const [displayedTransactions, setDisplayedTransactions] = useState<
+    Transaction[]
+  >([]);
 
   useEffect(() => {
     setDisplayedTransactions(savedTransactions);
@@ -26,18 +35,24 @@ function App() {
       <section id="center">
         <CsvUpload onFileSelected={handleFile} />
         {isCategorising && (
-          <p style={{ fontSize: "0.8rem", color: "#6b7280" }}>Categorising transactions…</p>
+          <p style={{ fontSize: "0.8rem", color: "#6b7280" }}>
+            Categorising transactions…
+          </p>
         )}
         {selectedFile && !isDuplicate && !isCategorising && (
-          <p style={{ fontSize: "0.8rem", color: "#6b7280" }}>Stored: {selectedFile.name}</p>
+          <p style={{ fontSize: "0.8rem", color: "#6b7280" }}>
+            Stored: {selectedFile.name}
+          </p>
         )}
-        {savedMonthKey && displayedTransactions.length > 0 && !isCategorising && (
-          <TransactionList
-            monthKey={savedMonthKey}
-            transactions={displayedTransactions}
-            onTransactionsChange={setDisplayedTransactions}
-          />
-        )}
+        {savedMonthKey &&
+          displayedTransactions.length > 0 &&
+          !isCategorising && (
+            <TransactionList
+              monthKey={savedMonthKey}
+              transactions={displayedTransactions}
+              onTransactionsChange={setDisplayedTransactions}
+            />
+          )}
         {isDuplicate && duplicateMonth && (
           <DuplicateWarningModal
             monthName={duplicateMonth}
