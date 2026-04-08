@@ -20,6 +20,9 @@ dist-ssr
 # One-shot scripts — not for version control
 scripts/create-jira-tickets.mjs
 
+# Test output
+test-results/
+
 # Editor directories and files
 .vscode/*
 !.vscode/extensions.json
