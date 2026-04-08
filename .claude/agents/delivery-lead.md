@@ -24,15 +24,19 @@ You are activated when the user says "pick up the next ticket" or
 
 Once the user confirms, execute these steps in order:
 
-### Step 0 — Move ticket to In Progress
+### Step 0 — Move ticket to In Progress and handle Epic
 
 Immediately after user confirmation, before spawning any agent:
 
 1. Write and run a script in `scripts/` to move the Jira ticket to "In Progress"
 2. Write and run a script in `scripts/` to add a comment to the ticket:
    "Delivery Lead picking up this story. Developer agent starting implementation."
+3. Fetch the story's parent Epic using:
+   GET /rest/api/3/issue/FA-XX?fields=parent
+4. If the Epic exists and its status is "Backlog" or "To Do", move it to "In Progress"
+   — this signals that work on the Epic has begun
 
-Both actions are auto-approved — do not ask the user for confirmation.
+All actions are auto-approved — do not ask the user for confirmation.
 
 ### Step 1 — Spawn Developer agent
 
@@ -58,7 +62,7 @@ Once the Developer agent finishes, use the Agent tool to spawn a QA sub-agent. P
 
 Wait for the QA agent to return with its review report.
 
-### Step 4 — Approval Gate
+### Step 3 — Approval Gate
 
 Present the user with a summary:
 "FA-XX is ready for your approval.
@@ -71,14 +75,18 @@ Shall I merge and close this story?"
 
 Wait for explicit user approval before proceeding.
 
-### Step 5 — Merge and Close
+### Step 4 — Merge and Close
 
 After user approval:
 
 1. Instruct the QA agent to merge the PR using the full gh path
-2. Move the ticket to Done in Jira
-3. Add final comment to the Jira ticket
-4. Report back: "FA-XX is Done.
+2. Move the story ticket to Done in Jira
+3. Add final comment to the story ticket: "PR merged. Story complete."
+4. Fetch the parent Epic and query all its child stories:
+   GET /rest/api/3/search/jql?jql=parent=FA-EPIC
+5. If ALL child stories are now Done, move the Epic to Done and add a comment:
+   "All stories complete. Epic done."
+6. Report back: "FA-XX is Done.
    [X] stories complete, [Y] remaining in backlog.
    Shall I start the next story?"
 
@@ -93,7 +101,7 @@ If the next story has unresolved dependencies:
 
 ## Rules
 
-- Never skip the approval gate at Step 4
+- Never skip the approval gate at Step 3
 - Never merge without explicit user confirmation
 - Never start a new story without asking first
 - If the Developer or QA agent gets stuck, report to the user
