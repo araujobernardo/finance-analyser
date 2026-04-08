@@ -1,5 +1,6 @@
 import type { Transaction } from "../utils/csvParser";
 import { updateTransactionCategory } from "../services/storage";
+import { saveRule } from "../services/categoryRules";
 import { CategoryBadge } from "./CategoryBadge";
 import "./TransactionList.css";
 
@@ -25,9 +26,11 @@ export function TransactionList({
   }
 
   function handleCategoryChange(index: number, newCategory: string) {
+    const t = transactions[index];
     updateTransactionCategory(monthKey, index, newCategory);
-    const updated = transactions.map((t, i) =>
-      i === index ? { ...t, category: newCategory } : t,
+    saveRule(t.description, newCategory);
+    const updated = transactions.map((txn, i) =>
+      i === index ? { ...txn, category: newCategory } : txn,
     );
     onTransactionsChange(updated);
   }

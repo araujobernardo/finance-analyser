@@ -5,7 +5,9 @@ import heroImg from "./assets/hero.png";
 import { CsvUpload } from "./components/CsvUpload";
 import { DuplicateWarningModal } from "./components/DuplicateWarningModal";
 import { TransactionList } from "./components/TransactionList";
+import { CategoryRulesList } from "./components/CategoryRulesList";
 import { useFileUpload } from "./hooks/useFileUpload";
+import { loadRules } from "./services/categoryRules";
 import type { Transaction } from "./utils/csvParser";
 import "./App.css";
 
@@ -25,6 +27,7 @@ function App() {
   const [displayedTransactions, setDisplayedTransactions] = useState<
     Transaction[]
   >([]);
+  const [rules, setRules] = useState<Record<string, string>>(() => loadRules());
 
   useEffect(() => {
     setDisplayedTransactions(savedTransactions);
@@ -50,9 +53,13 @@ function App() {
             <TransactionList
               monthKey={savedMonthKey}
               transactions={displayedTransactions}
-              onTransactionsChange={setDisplayedTransactions}
+              onTransactionsChange={(updated) => {
+                setDisplayedTransactions(updated);
+                setRules(loadRules());
+              }}
             />
           )}
+        <CategoryRulesList rules={rules} onRulesChange={setRules} />
         {isDuplicate && duplicateMonth && (
           <DuplicateWarningModal
             monthName={duplicateMonth}

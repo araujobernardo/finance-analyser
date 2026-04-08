@@ -259,6 +259,52 @@ describe("categoriseTransactions", () => {
     expect(result[1].category).toBe("Healthcare");
   });
 
+  // Category rules integration ──────────────────────────────────────────────────
+
+  it("applies stored category rules before calling the API", async () => {
+    localStorage.setItem(
+      "finance_analyser_category_rules",
+      JSON.stringify({ "countdown supermarket": "Groceries" }),
+    );
+    const fetchSpy = vi.fn().mockResolvedValue({
+      ok: true,
+      json: async () => ({ content: [{ type: "text", text: '["Other"]' }] }),
+    });
+    vi.stubGlobal("fetch", fetchSpy);
+
+    const txns = [
+      makeTransaction("COUNTDOWN SUPERMARKET"), // should match rule
+      makeTransaction("UNKNOWN MERCHANT"), // should go to API
+    ];
+
+    const result = await categoriseTransactions(txns);
+
+    // Rule matches: Groceries (no API call for that row)
+    expect(result[0].category).toBe("Groceries");
+    // Unknown goes to API: Other
+    expect(result[1].category).toBe("Other");
+    // API called once with only the unmatched transaction
+    expect(fetchSpy).toHaveBeenCalledTimes(1);
+    const body = JSON.parse(
+      (fetchSpy.mock.calls[0][1] as RequestInit).body as string,
+    );
+    expect(body.messages[0].content).toContain("UNKNOWN MERCHANT");
+    expect(body.messages[0].content).not.toContain("COUNTDOWN SUPERMARKET");
+  });
+
+  it("rule wins over existing category when rule exists", async () => {
+    localStorage.setItem(
+      "finance_analyser_category_rules",
+      JSON.stringify({ "petrol station": "Transport" }),
+    );
+    vi.stubGlobal("fetch", vi.fn()); // should not be called
+
+    const txns = [makeTransaction("PETROL STATION")];
+    const result = await categoriseTransactions(txns);
+
+    expect(result[0].category).toBe("Transport");
+  });
+
   // CATEGORIES export ───────────────────────────────────────────────────────────
 
   it("exports a non-empty CATEGORIES list containing known categories", () => {
