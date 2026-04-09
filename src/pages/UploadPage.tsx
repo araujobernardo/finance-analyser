@@ -2,6 +2,7 @@ import { useState } from "react";
 import { CsvUpload } from "../components/CsvUpload";
 import { DuplicateWarningModal } from "../components/DuplicateWarningModal";
 import { MonthToggleBar } from "../components/MonthToggleBar";
+import { MonthlySummary } from "../components/MonthlySummary";
 import { TransactionList } from "../components/TransactionList";
 import { CategoryRulesList } from "../components/CategoryRulesList";
 import { useFileUpload } from "../hooks/useFileUpload";
@@ -93,6 +94,7 @@ export function UploadPage() {
         selectedMonth={selectedMonth}
         onMonthSelect={setSelectedMonth}
       />
+      <MonthlySummary transactions={displayedTransactions} />
       {selectedMonth && displayedTransactions.length > 0 && !isCategorising && (
         <TransactionList
           monthKey={selectedMonth}
