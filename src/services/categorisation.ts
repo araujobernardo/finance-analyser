@@ -45,12 +45,12 @@ export async function categoriseTransactions(
   // Separate already-categorised from those needing classification.
   const needsCategory = withRules.filter((t) => !t.category);
 
-  if (!apiKey || needsCategory.length === 0) {
-    // Respect existing categories; fall back to "Uncategorised" only for unset ones.
-    return withRules.map((t) => ({
-      ...t,
-      category: t.category ?? "Uncategorised",
-    }));
+  if (!apiKey) {
+    console.warn("[categorisation] VITE_ANTHROPIC_API_KEY is not set — skipping API.");
+    return withRules.map((t) => ({ ...t, category: t.category ?? "Uncategorised" }));
+  }
+  if (needsCategory.length === 0) {
+    return withRules.map((t) => ({ ...t, category: t.category ?? "Uncategorised" }));
   }
 
   try {
