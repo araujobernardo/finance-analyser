@@ -6,3 +6,6 @@ global.ResizeObserver = class ResizeObserver {
   unobserve() {}
   disconnect() {}
 };
+
+// jsdom does not implement scrollIntoView
+window.HTMLElement.prototype.scrollIntoView = function () {};
