@@ -1,3 +1,4 @@
+import Anthropic from "@anthropic-ai/sdk";
 import type { Transaction } from "../utils/csvParser";
 import { getRuleForDescription } from "./categoryRules";
 
@@ -87,30 +88,22 @@ async function categoriseBatch(
     `Reply with ONLY a JSON array of strings, one per transaction, in the same order. No explanation.\n\n` +
     `Transactions:\n${lines}`;
 
-  const res = await fetch("https://api.anthropic.com/v1/messages", {
-    method: "POST",
-    headers: {
-      "x-api-key": apiKey,
-      "anthropic-version": "2023-06-01",
-      "anthropic-dangerous-direct-browser-access": "true",
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify({
+  const client = new Anthropic({
+    apiKey,
+    dangerouslyAllowBrowser: true,
+  });
+
+  let text: string;
+  try {
+    const message = await client.messages.create({
       model: "claude-haiku-4-5-20251001",
       max_tokens: 1024,
       messages: [{ role: "user", content: prompt }],
-    }),
-  });
-
-  if (!res.ok) {
+    });
+    text = message.content.find((c) => c.type === "text")?.text ?? "[]";
+  } catch {
     return fallback(batch.length);
   }
-
-  const data = (await res.json()) as {
-    content: Array<{ type: string; text: string }>;
-  };
-
-  const text = data.content.find((c) => c.type === "text")?.text ?? "[]";
 
   let parsed: unknown;
   try {

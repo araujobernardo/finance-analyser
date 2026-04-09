@@ -51,8 +51,12 @@ export function useFileUpload(): UseFileUploadResult {
       // Preserve any manually-set categories already in storage for this month.
       // Match by description + amount so overrides survive a re-upload.
       const { transactions: stored } = loadTransactions(monthKey);
+      // Only preserve categories that were explicitly set (not "Uncategorised"),
+      // so re-uploading retries categorisation for previously failed rows.
       const storedCats = new Map(
-        stored.map((t) => [`${t.description}|||${t.amount}`, t.category]),
+        stored
+          .filter((t) => t.category && t.category !== "Uncategorised")
+          .map((t) => [`${t.description}|||${t.amount}`, t.category]),
       );
       const withPreserved = transactions.map((t) => {
         const existing = storedCats.get(`${t.description}|||${t.amount}`);

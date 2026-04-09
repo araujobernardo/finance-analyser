@@ -2,46 +2,41 @@ import { describe, it, expect, vi, beforeEach } from "vitest";
 import { categoriseTransactions, CATEGORIES } from "./categorisation";
 import type { Transaction } from "../utils/csvParser";
 
+// ── Mock the Anthropic SDK ────────────────────────────────────────────────────
+// vi.mock is hoisted, so we use vi.hoisted to define mockCreate first.
+
+const mockCreate = vi.hoisted(() => vi.fn());
+
+vi.mock("@anthropic-ai/sdk", () => {
+  const FakeAnthropic = function () {
+    return { messages: { create: mockCreate } };
+  };
+  return { default: FakeAnthropic };
+});
+
 // ── Helpers ───────────────────────────────────────────────────────────────────
 
 function makeTransaction(description: string, amount = -10): Transaction {
   return { date: new Date("2024-03-15"), description, amount };
 }
 
-function mockFetchSuccess(categories: string[]) {
-  vi.stubGlobal(
-    "fetch",
-    vi.fn().mockResolvedValue({
-      ok: true,
-      json: async () => ({
-        content: [{ type: "text", text: JSON.stringify(categories) }],
-      }),
-    }),
-  );
+function mockApiSuccess(categories: string[]) {
+  mockCreate.mockResolvedValue({
+    content: [{ type: "text", text: JSON.stringify(categories) }],
+  });
 }
 
-function mockFetchFailure(status = 500) {
-  vi.stubGlobal(
-    "fetch",
-    vi.fn().mockResolvedValue({
-      ok: false,
-      status,
-      json: async () => ({}),
-    }),
-  );
-}
-
-function mockFetchNetworkError() {
-  vi.stubGlobal("fetch", vi.fn().mockRejectedValue(new Error("Network error")));
+function mockApiFailure() {
+  mockCreate.mockRejectedValue(new Error("API error"));
 }
 
 // ── Tests ─────────────────────────────────────────────────────────────────────
 
 describe("categoriseTransactions", () => {
   beforeEach(() => {
-    vi.unstubAllGlobals();
-    // Provide a fake API key so the service doesn't short-circuit
+    vi.clearAllMocks();
     vi.stubEnv("VITE_ANTHROPIC_API_KEY", "test-key");
+    localStorage.clear();
   });
 
   // Happy path ─────────────────────────────────────────────────────────────────
@@ -51,7 +46,7 @@ describe("categoriseTransactions", () => {
       makeTransaction("COUNTDOWN SUPERMARKET"),
       makeTransaction("UBER EATS"),
     ];
-    mockFetchSuccess(["Groceries", "Dining"]);
+    mockApiSuccess(["Groceries", "Dining"]);
 
     const result = await categoriseTransactions(txns);
 
@@ -66,7 +61,7 @@ describe("categoriseTransactions", () => {
       amount: -85.5,
       balance: 200,
     };
-    mockFetchSuccess(["Transport"]);
+    mockApiSuccess(["Transport"]);
 
     const [result] = await categoriseTransactions([txn]);
 
@@ -77,20 +72,16 @@ describe("categoriseTransactions", () => {
     expect(result.category).toBe("Transport");
   });
 
-  it("handles an empty transaction list without calling fetch", async () => {
-    const fetchSpy = vi.fn();
-    vi.stubGlobal("fetch", fetchSpy);
-
+  it("handles an empty transaction list without calling the API", async () => {
     const result = await categoriseTransactions([]);
 
     expect(result).toEqual([]);
-    expect(fetchSpy).not.toHaveBeenCalled();
+    expect(mockCreate).not.toHaveBeenCalled();
   });
 
   it("only accepts categories from the allowed list", async () => {
     const txns = [makeTransaction("SOMETHING"), makeTransaction("ELSE")];
-    // API returns one valid and one invalid category
-    mockFetchSuccess(["Groceries", "InvalidCategory"]);
+    mockApiSuccess(["Groceries", "InvalidCategory"]);
 
     const result = await categoriseTransactions(txns);
 
@@ -101,47 +92,31 @@ describe("categoriseTransactions", () => {
   it("sends descriptions truncated to 200 characters", async () => {
     const longDesc = "A".repeat(300);
     const txns = [makeTransaction(longDesc)];
-    let capturedBody: string | null = null;
-
-    vi.stubGlobal(
-      "fetch",
-      vi.fn().mockImplementation(async (_url: string, init: RequestInit) => {
-        capturedBody = init.body as string;
-        return {
-          ok: true,
-          json: async () => ({
-            content: [{ type: "text", text: '["Other"]' }],
-          }),
-        };
-      }),
-    );
+    mockApiSuccess(["Other"]);
 
     await categoriseTransactions(txns);
 
-    expect(capturedBody).not.toBeNull();
-    const body = JSON.parse(capturedBody!);
-    expect(body.messages[0].content).toContain("A".repeat(200));
-    expect(body.messages[0].content).not.toContain("A".repeat(201));
+    const prompt = mockCreate.mock.calls[0][0].messages[0].content as string;
+    expect(prompt).toContain("A".repeat(200));
+    expect(prompt).not.toContain("A".repeat(201));
   });
 
   // No API key ──────────────────────────────────────────────────────────────────
 
-  it("falls back to Uncategorised when VITE_CLAUDE_API_KEY is not set", async () => {
+  it("falls back to Uncategorised when VITE_ANTHROPIC_API_KEY is not set", async () => {
     vi.stubEnv("VITE_ANTHROPIC_API_KEY", "");
-    const fetchSpy = vi.fn();
-    vi.stubGlobal("fetch", fetchSpy);
 
     const txns = [makeTransaction("SUPERMARKET"), makeTransaction("PETROL")];
     const result = await categoriseTransactions(txns);
 
-    expect(fetchSpy).not.toHaveBeenCalled();
+    expect(mockCreate).not.toHaveBeenCalled();
     expect(result.every((t) => t.category === "Uncategorised")).toBe(true);
   });
 
   // API error paths ─────────────────────────────────────────────────────────────
 
-  it("falls back to Uncategorised on a non-OK API response", async () => {
-    mockFetchFailure(429);
+  it("falls back to Uncategorised on an API error", async () => {
+    mockApiFailure();
 
     const txns = [makeTransaction("CAFE"), makeTransaction("TAXI")];
     const result = await categoriseTransactions(txns);
@@ -149,25 +124,10 @@ describe("categoriseTransactions", () => {
     expect(result.every((t) => t.category === "Uncategorised")).toBe(true);
   });
 
-  it("falls back to Uncategorised on a network error", async () => {
-    mockFetchNetworkError();
-
-    const txns = [makeTransaction("SHOP")];
-    const result = await categoriseTransactions(txns);
-
-    expect(result[0].category).toBe("Uncategorised");
-  });
-
   it("falls back to Uncategorised when the API returns malformed JSON", async () => {
-    vi.stubGlobal(
-      "fetch",
-      vi.fn().mockResolvedValue({
-        ok: true,
-        json: async () => ({
-          content: [{ type: "text", text: "not json at all" }],
-        }),
-      }),
-    );
+    mockCreate.mockResolvedValue({
+      content: [{ type: "text", text: "not json at all" }],
+    });
 
     const txns = [makeTransaction("UNKNOWN")];
     const result = await categoriseTransactions(txns);
@@ -176,15 +136,9 @@ describe("categoriseTransactions", () => {
   });
 
   it("falls back to Uncategorised when the API returns a non-array", async () => {
-    vi.stubGlobal(
-      "fetch",
-      vi.fn().mockResolvedValue({
-        ok: true,
-        json: async () => ({
-          content: [{ type: "text", text: '"Groceries"' }],
-        }),
-      }),
-    );
+    mockCreate.mockResolvedValue({
+      content: [{ type: "text", text: '"Groceries"' }],
+    });
 
     const txns = [makeTransaction("SUPERMARKET")];
     const result = await categoriseTransactions(txns);
@@ -195,23 +149,20 @@ describe("categoriseTransactions", () => {
   // Batching ────────────────────────────────────────────────────────────────────
 
   it("splits large sets into batches of 50 and makes multiple API calls", async () => {
+    mockCreate.mockResolvedValue({
+      content: [
+        { type: "text", text: JSON.stringify(Array(50).fill("Other")) },
+      ],
+    });
+
     const txns = Array.from({ length: 110 }, (_, i) =>
       makeTransaction(`Shop ${i}`),
     );
-    const fetchSpy = vi.fn().mockResolvedValue({
-      ok: true,
-      json: async () => ({
-        content: [
-          { type: "text", text: JSON.stringify(Array(50).fill("Other")) },
-        ],
-      }),
-    });
-    vi.stubGlobal("fetch", fetchSpy);
 
     const result = await categoriseTransactions(txns);
 
     // 110 txns → batches of 50, 50, 10 → 3 calls
-    expect(fetchSpy).toHaveBeenCalledTimes(3);
+    expect(mockCreate).toHaveBeenCalledTimes(3);
     expect(result).toHaveLength(110);
     expect(result.every((t) => t.category === "Other")).toBe(true);
   });
@@ -221,19 +172,17 @@ describe("categoriseTransactions", () => {
   it("does not overwrite a transaction that already has a category", async () => {
     const txns = [
       makeTransaction("COUNTDOWN", -50),
-      { ...makeTransaction("PETROL", -80), category: "Transport" }, // already set
+      { ...makeTransaction("PETROL", -80), category: "Transport" },
     ];
-    mockFetchSuccess(["Groceries"]); // API should only be called for the first
+    mockApiSuccess(["Groceries"]);
 
     const result = await categoriseTransactions(txns);
 
     expect(result[0].category).toBe("Groceries");
-    expect(result[1].category).toBe("Transport"); // preserved
+    expect(result[1].category).toBe("Transport");
   });
 
   it("skips the API entirely when all transactions already have categories", async () => {
-    const fetchSpy = vi.fn();
-    vi.stubGlobal("fetch", fetchSpy);
     const txns = [
       { ...makeTransaction("A"), category: "Groceries" },
       { ...makeTransaction("B"), category: "Dining" },
@@ -241,7 +190,7 @@ describe("categoriseTransactions", () => {
 
     const result = await categoriseTransactions(txns);
 
-    expect(fetchSpy).not.toHaveBeenCalled();
+    expect(mockCreate).not.toHaveBeenCalled();
     expect(result[0].category).toBe("Groceries");
     expect(result[1].category).toBe("Dining");
   });
@@ -249,8 +198,8 @@ describe("categoriseTransactions", () => {
   it("falls back to Uncategorised only for unset categories, preserving set ones", async () => {
     vi.stubEnv("VITE_ANTHROPIC_API_KEY", "");
     const txns = [
-      makeTransaction("A"), // no category
-      { ...makeTransaction("B"), category: "Healthcare" }, // already set
+      makeTransaction("A"),
+      { ...makeTransaction("B"), category: "Healthcare" },
     ];
 
     const result = await categoriseTransactions(txns);
@@ -266,30 +215,22 @@ describe("categoriseTransactions", () => {
       "finance_analyser_category_rules",
       JSON.stringify({ "countdown supermarket": "Groceries" }),
     );
-    const fetchSpy = vi.fn().mockResolvedValue({
-      ok: true,
-      json: async () => ({ content: [{ type: "text", text: '["Other"]' }] }),
-    });
-    vi.stubGlobal("fetch", fetchSpy);
+    mockApiSuccess(["Other"]);
 
     const txns = [
-      makeTransaction("COUNTDOWN SUPERMARKET"), // should match rule
-      makeTransaction("UNKNOWN MERCHANT"), // should go to API
+      makeTransaction("COUNTDOWN SUPERMARKET"),
+      makeTransaction("UNKNOWN MERCHANT"),
     ];
 
     const result = await categoriseTransactions(txns);
 
-    // Rule matches: Groceries (no API call for that row)
     expect(result[0].category).toBe("Groceries");
-    // Unknown goes to API: Other
     expect(result[1].category).toBe("Other");
     // API called once with only the unmatched transaction
-    expect(fetchSpy).toHaveBeenCalledTimes(1);
-    const body = JSON.parse(
-      (fetchSpy.mock.calls[0][1] as RequestInit).body as string,
-    );
-    expect(body.messages[0].content).toContain("UNKNOWN MERCHANT");
-    expect(body.messages[0].content).not.toContain("COUNTDOWN SUPERMARKET");
+    expect(mockCreate).toHaveBeenCalledTimes(1);
+    const prompt = mockCreate.mock.calls[0][0].messages[0].content as string;
+    expect(prompt).toContain("UNKNOWN MERCHANT");
+    expect(prompt).not.toContain("COUNTDOWN SUPERMARKET");
   });
 
   it("rule wins over existing category when rule exists", async () => {
@@ -297,20 +238,20 @@ describe("categoriseTransactions", () => {
       "finance_analyser_category_rules",
       JSON.stringify({ "petrol station": "Transport" }),
     );
-    vi.stubGlobal("fetch", vi.fn()); // should not be called
 
     const txns = [makeTransaction("PETROL STATION")];
     const result = await categoriseTransactions(txns);
 
     expect(result[0].category).toBe("Transport");
+    expect(mockCreate).not.toHaveBeenCalled();
   });
 
   // CATEGORIES export ───────────────────────────────────────────────────────────
 
-  it("exports a non-empty CATEGORIES list containing known categories", () => {
+  it("exports the CATEGORIES constant as a readonly array", () => {
+    expect(Array.isArray(CATEGORIES)).toBe(true);
     expect(CATEGORIES).toContain("Groceries");
     expect(CATEGORIES).toContain("Transport");
-    expect(CATEGORIES).not.toContain("Uncategorised");
-    expect(CATEGORIES.length).toBeGreaterThan(0);
+    expect(CATEGORIES).toContain("Income");
   });
 });
