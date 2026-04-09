@@ -2,8 +2,15 @@
   margin-bottom: 1.5rem;
 }
 
-.spend-by-category__title {
+.spend-by-category__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
   margin-bottom: 0.75rem;
+}
+
+.spend-by-category__title {
+  margin: 0;
 }
 
 .spend-by-category__empty {
@@ -23,8 +30,7 @@
 .spend-row {
   position: relative;
   display: flex;
-  align-items: center;
-  gap: 1rem;
+  align-items: stretch;
   padding: 0.55rem 0.75rem;
   border: 1px solid var(--border);
   border-radius: 6px;
@@ -52,8 +58,26 @@
   background: rgba(107, 114, 128, 0.1);
 }
 
-.spend-row__name {
+.spend-row--orphaned {
+  opacity: 0.7;
+}
+
+.spend-row__content {
   position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+  flex: 1;
+  min-width: 0;
+}
+
+.spend-row__top {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+.spend-row__name {
   flex: 1;
   font-size: 0.9rem;
   color: var(--text-h);
@@ -65,18 +89,138 @@
 }
 
 .spend-row__amount {
-  position: relative;
   font-size: 0.9rem;
   font-weight: 600;
   color: var(--text-h);
   white-space: nowrap;
 }
 
+.spend-row__amount--muted {
+  font-weight: 400;
+  color: var(--text);
+  font-size: 0.85rem;
+}
+
 .spend-row__pct {
-  position: relative;
   font-size: 0.8rem;
   color: var(--text);
   white-space: nowrap;
   min-width: 3.5rem;
   text-align: right;
+}
+
+/* Budget progress bar */
+.budget-bar {
+  position: relative;
+  height: 6px;
+  background: var(--border);
+  border-radius: 3px;
+  overflow: visible;
+}
+
+.budget-bar__fill {
+  height: 100%;
+  border-radius: 3px;
+  transition: width 0.3s ease;
+}
+
+.budget-bar__fill--ok {
+  background: #22c55e;
+}
+
+.budget-bar__fill--warn {
+  background: #f59e0b;
+}
+
+.budget-bar__fill--over {
+  background: #ef4444;
+}
+
+.budget-bar__label {
+  position: absolute;
+  top: 8px;
+  right: 0;
+  font-size: 0.72rem;
+  color: var(--text);
+  white-space: nowrap;
+}
+
+/* Add budget form */
+.budget-add-btn {
+  font-size: 0.8rem;
+  padding: 0.25rem 0.6rem;
+  border: 1px solid var(--accent-border);
+  border-radius: 4px;
+  background: var(--accent-bg);
+  color: var(--accent);
+  cursor: pointer;
+}
+
+.budget-add-btn:hover {
+  opacity: 0.8;
+}
+
+.budget-form {
+  display: flex;
+  gap: 0.5rem;
+  align-items: center;
+  margin-bottom: 0.75rem;
+  flex-wrap: wrap;
+}
+
+.budget-form select,
+.budget-form input {
+  padding: 0.3rem 0.5rem;
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  background: var(--bg);
+  color: var(--text-h);
+  font-size: 0.85rem;
+}
+
+.budget-form input {
+  width: 8rem;
+}
+
+.budget-form button {
+  padding: 0.3rem 0.75rem;
+  border: 1px solid var(--accent-border);
+  border-radius: 4px;
+  background: var(--accent);
+  color: #fff;
+  font-size: 0.85rem;
+  cursor: pointer;
+}
+
+.budget-form button:hover {
+  opacity: 0.85;
+}
+
+/* Delete budget button */
+.budget-delete-btn {
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: var(--text);
+  font-size: 1rem;
+  padding: 0;
+  line-height: 1;
+  opacity: 0.4;
+}
+
+.budget-delete-btn:hover {
+  opacity: 1;
+  color: #ef4444;
+}
+
+/* Orphaned budgets section */
+.orphaned-budgets {
+  margin-top: 1rem;
+}
+
+.orphaned-budgets__title {
+  font-size: 0.85rem;
+  color: var(--text);
+  margin: 0 0 0.4rem;
+  font-weight: 500;
 }
