@@ -1,0 +1,55 @@
+.cat-trend-scroll {
+  overflow-x: auto;
+  margin-bottom: 1.5rem;
+}
+
+.cat-trend-empty {
+  color: var(--text);
+  font-size: 0.9rem;
+  margin: 1rem 0;
+}
+
+.cat-trend-tooltip {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  padding: 0.5rem 0.75rem;
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  font-size: 0.85rem;
+  box-shadow: var(--shadow);
+  color: var(--text-h);
+}
+
+.cat-trend-legend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem 1rem;
+  list-style: none;
+  margin: 0;
+  padding: 0.5rem 0 0;
+  justify-content: center;
+  font-size: 0.85rem;
+}
+
+.cat-trend-legend__item {
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+  cursor: pointer;
+  color: var(--text);
+  user-select: none;
+}
+
+.cat-trend-legend__item--hidden {
+  opacity: 0.45;
+}
+
+.cat-trend-legend__swatch {
+  display: inline-block;
+  width: 10px;
+  height: 10px;
+  border-radius: 2px;
+  flex-shrink: 0;
+}
