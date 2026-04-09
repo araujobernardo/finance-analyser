@@ -45,8 +45,16 @@ export async function categoriseTransactions(
   // Separate already-categorised from those needing classification.
   const needsCategory = withRules.filter((t) => !t.category);
 
-  if (!apiKey || needsCategory.length === 0) {
-    // Respect existing categories; fall back to "Uncategorised" only for unset ones.
+  if (!apiKey) {
+    console.warn(
+      "[categorisation] VITE_ANTHROPIC_API_KEY is not set — skipping API.",
+    );
+    return withRules.map((t) => ({
+      ...t,
+      category: t.category ?? "Uncategorised",
+    }));
+  }
+  if (needsCategory.length === 0) {
     return withRules.map((t) => ({
       ...t,
       category: t.category ?? "Uncategorised",
@@ -67,7 +75,8 @@ export async function categoriseTransactions(
     // Merge classified results back into the original order.
     let classifiedIdx = 0;
     return withRules.map((t) => (t.category ? t : classified[classifiedIdx++]));
-  } catch {
+  } catch (err) {
+    console.error("[categorisation] Unexpected error:", err);
     return withRules.map((t) => ({
       ...t,
       category: t.category ?? "Uncategorised",
@@ -100,15 +109,28 @@ async function categoriseBatch(
       max_tokens: 1024,
       messages: [{ role: "user", content: prompt }],
     });
-    text = message.content.find((c) => c.type === "text")?.text ?? "[]";
-  } catch {
+    const block = message.content.find((c) => c.type === "text");
+    text = block && "text" in block ? block.text : "[]";
+  } catch (err) {
+    console.error("[categorisation] API call failed:", err);
     return fallback(batch.length);
   }
 
+  // Strip markdown code fences if Claude wraps the response (e.g. ```json ... ```)
+  const stripped = text
+    .replace(/^```(?:json)?\s*/i, "")
+    .replace(/\s*```$/, "")
+    .trim();
+
   let parsed: unknown;
   try {
-    parsed = JSON.parse(text);
-  } catch {
+    parsed = JSON.parse(stripped);
+  } catch (err) {
+    console.error(
+      "[categorisation] JSON parse failed. Raw response:",
+      text,
+      err,
+    );
     return fallback(batch.length);
   }
 

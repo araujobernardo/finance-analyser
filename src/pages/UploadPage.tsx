@@ -11,7 +11,11 @@ import { TransactionList } from "../components/TransactionList";
 import { CategoryRulesList } from "../components/CategoryRulesList";
 import { useFileUpload } from "../hooks/useFileUpload";
 import { loadRules } from "../services/categoryRules";
-import { getStoredMonths, loadTransactions } from "../services/storage";
+import {
+  getStoredMonths,
+  loadTransactions,
+  removeMonth,
+} from "../services/storage";
 import type { Transaction } from "../utils/csvParser";
 
 export function UploadPage() {
@@ -48,10 +52,15 @@ export function UploadPage() {
 
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
 
-  // Keep displayed transactions in sync with the selected month
+  // Keep displayed transactions in sync with the selected month.
+  // Initialise from storage so transactions are visible immediately on refresh.
   const [displayedTransactions, setDisplayedTransactions] = useState<
     Transaction[]
-  >([]);
+  >(() => {
+    const months = getStoredMonths();
+    if (months.length === 0) return [];
+    return loadTransactions(months[months.length - 1]).transactions;
+  });
   const [prevSelectedMonth, setPrevSelectedMonth] = useState(selectedMonth);
   if (selectedMonth !== prevSelectedMonth) {
     setPrevSelectedMonth(selectedMonth);
@@ -82,6 +91,17 @@ export function UploadPage() {
     : displayedTransactions;
 
   const [rules, setRules] = useState<Record<string, string>>(() => loadRules());
+
+  function handleDeleteMonth(monthKey: string) {
+    removeMonth(monthKey);
+    const months = getStoredMonths();
+    setStoredMonths(months);
+    if (selectedMonth === monthKey) {
+      setSelectedMonth(months.length > 0 ? months[months.length - 1] : null);
+    }
+    setDisplayedTransactions([]);
+    setSelectedCategory(null);
+  }
 
   return (
     <div className="page-content">
@@ -137,6 +157,7 @@ export function UploadPage() {
         months={storedMonths}
         selectedMonth={selectedMonth}
         onMonthSelect={setSelectedMonth}
+        onMonthDelete={handleDeleteMonth}
       />
       <MonthlySummary transactions={filteredTransactions} />
       <SpendingDonutChart

@@ -5,6 +5,45 @@
   margin-bottom: 1rem;
 }
 
+.month-toggle-pill {
+  display: flex;
+  align-items: stretch;
+}
+
+.month-toggle-pill .month-toggle-btn {
+  border-radius: 6px 0 0 6px;
+  border-right: none;
+}
+
+.month-toggle-pill:has(.month-toggle-delete) .month-toggle-btn:only-child,
+.month-toggle-pill:not(:has(.month-toggle-delete)) .month-toggle-btn {
+  border-radius: 6px;
+  border-right: 1px solid var(--border);
+}
+
+.month-toggle-delete {
+  padding: 0 0.45rem;
+  border: 1px solid var(--border);
+  border-radius: 0 6px 6px 0;
+  background: transparent;
+  color: var(--text);
+  font-size: 1rem;
+  line-height: 1;
+  cursor: pointer;
+  opacity: 0.45;
+  transition:
+    opacity 0.15s,
+    color 0.15s,
+    background 0.15s;
+}
+
+.month-toggle-delete:hover {
+  opacity: 1;
+  color: #dc2626;
+  background: #fef2f2;
+  border-color: #fca5a5;
+}
+
 .month-toggle-btn {
   padding: 0.35rem 0.85rem;
   border-radius: 6px;
