@@ -28,9 +28,7 @@ describe("App routing", () => {
 
   it("renders HistoryPage on /history", () => {
     renderApp("/history");
-    expect(
-      screen.getByRole("heading", { name: "Transaction History" }),
-    ).toBeInTheDocument();
+    expect(screen.getByRole("heading", { name: "Trends" })).toBeInTheDocument();
   });
 
   it("renders SettingsPage on /settings", () => {
