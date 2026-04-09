@@ -42,6 +42,8 @@ export function UploadPage() {
     if (savedMonthKey) setSelectedMonth(savedMonthKey);
   }
 
+  const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
+
   // Keep displayed transactions in sync with the selected month
   const [displayedTransactions, setDisplayedTransactions] = useState<
     Transaction[]
@@ -67,8 +69,6 @@ export function UploadPage() {
     }
     setSelectedCategory(null);
   }
-
-  const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
   const filteredTransactions = selectedCategory
     ? displayedTransactions.filter(
         (t) => (t.category || "Uncategorised") === selectedCategory,
