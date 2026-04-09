@@ -26,7 +26,8 @@ Once the user confirms, execute these steps in order:
 
 ### Step 0 — Move ticket to In Progress and handle Epic
 
-Immediately after user confirmation, before spawning any agent:
+MANDATORY: execute all of these immediately after user confirmation,
+before spawning any agent. Do NOT skip or defer any sub-step.
 
 1. Write and run a script in `scripts/` to move the Jira ticket to "In Progress"
 2. Write and run a script in `scripts/` to add a comment to the ticket:
@@ -37,6 +38,7 @@ Immediately after user confirmation, before spawning any agent:
    — this signals that work on the Epic has begun
 
 All actions are auto-approved — do not ask the user for confirmation.
+Do not proceed to Step 1 until all Step 0 scripts have run successfully.
 
 ### Step 1 — Spawn Developer agent
 

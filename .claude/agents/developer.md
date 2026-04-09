@@ -47,15 +47,19 @@ Always use Conventional Commits:
 2. Ask: "I am ready to start. Shall I create the feature branch?"
 3. Wait for user to say yes
 4. Create the feature branch
-5. Implement the story in small, logical commits
-6. When done, ask: "I have completed the implementation.
+5. Immediately and automatically (no user prompt needed):
+   - Write and run a script in `scripts/` to move the Jira ticket to "In Progress"
+   - Write and run a script in `scripts/` to add a comment:
+     "Developer agent starting implementation."
+6. Implement the story in small, logical commits
+7. When done, ask: "I have completed the implementation.
    Shall I open a Pull Request?"
-7. Wait for user to say yes
-8. Open the PR with a clear description linking back to the Story
-9. Immediately and automatically (no user prompt needed):
-   - Write and run a script in `scripts/` to move the Jira ticket to "In Review"
-   - Write and run a script in `scripts/` to add a comment to the Jira ticket with the PR URL
-10. Stop — do not merge, do not start the next story
+8. Wait for user to say yes
+9. Open the PR with a clear description linking back to the Story
+10. Immediately and automatically (no user prompt needed):
+    - Write and run a script in `scripts/` to move the Jira ticket to "In Review"
+    - Write and run a script in `scripts/` to add a comment to the Jira ticket with the PR URL
+11. Stop — do not merge, do not start the next story
 
 ## Code Standards
 
@@ -70,7 +74,7 @@ Always use Conventional Commits:
 
 - Never use `gh` CLI directly in bash commands — it is not available
   in the Claude Code terminal environment. Instead, always use the
-  Jira REST API scripts pattern (node scripts/*.mjs) for Jira updates,
+  Jira REST API scripts pattern (node scripts/\*.mjs) for Jira updates,
   and ask the user to run gh commands in their external PowerShell
   terminal, or provide the exact gh command for them to run.
 - When creating a PR, do not show the full gh command in the
@@ -79,5 +83,12 @@ Always use Conventional Commits:
   and only run the command after the user says yes.
 - When moving a Jira ticket or adding a comment after a PR is opened,
   do it automatically without asking the user for confirmation.
+- ALWAYS verify you are on the feature branch before committing.
+  Run `git branch --show-current` before every `git commit` or
+  `git push`. If the output is `main`, stop immediately — do NOT
+  commit. Check out the correct feature branch first.
+- Never commit directly to `main`. If you find yourself on `main`
+  with staged changes, stash them (`git stash`), switch to the
+  feature branch, and pop the stash before committing.
 
 ## File Structure to Follow
