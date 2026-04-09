@@ -46,11 +46,19 @@ export async function categoriseTransactions(
   const needsCategory = withRules.filter((t) => !t.category);
 
   if (!apiKey) {
-    console.warn("[categorisation] VITE_ANTHROPIC_API_KEY is not set — skipping API.");
-    return withRules.map((t) => ({ ...t, category: t.category ?? "Uncategorised" }));
+    console.warn(
+      "[categorisation] VITE_ANTHROPIC_API_KEY is not set — skipping API.",
+    );
+    return withRules.map((t) => ({
+      ...t,
+      category: t.category ?? "Uncategorised",
+    }));
   }
   if (needsCategory.length === 0) {
-    return withRules.map((t) => ({ ...t, category: t.category ?? "Uncategorised" }));
+    return withRules.map((t) => ({
+      ...t,
+      category: t.category ?? "Uncategorised",
+    }));
   }
 
   try {
@@ -108,10 +116,21 @@ async function categoriseBatch(
     return fallback(batch.length);
   }
 
+  // Strip markdown code fences if Claude wraps the response (e.g. ```json ... ```)
+  const stripped = text
+    .replace(/^```(?:json)?\s*/i, "")
+    .replace(/\s*```$/, "")
+    .trim();
+
   let parsed: unknown;
   try {
-    parsed = JSON.parse(text);
-  } catch {
+    parsed = JSON.parse(stripped);
+  } catch (err) {
+    console.error(
+      "[categorisation] JSON parse failed. Raw response:",
+      text,
+      err,
+    );
     return fallback(batch.length);
   }
 
