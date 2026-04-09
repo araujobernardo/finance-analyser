@@ -1,5 +1,6 @@
 import { Routes, Route } from "react-router-dom";
 import { NavBar } from "./components/NavBar";
+import { ChatPanel } from "./components/ChatPanel";
 import { DashboardPage } from "./pages/DashboardPage";
 import { UploadPage } from "./pages/UploadPage";
 import { HistoryPage } from "./pages/HistoryPage";
@@ -20,6 +21,7 @@ function App() {
           <Route path="*" element={<NotFoundPage />} />
         </Routes>
       </main>
+      <ChatPanel />
     </>
   );
 }
