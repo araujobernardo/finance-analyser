@@ -3,6 +3,7 @@ import { CsvUpload } from "../components/CsvUpload";
 import { DuplicateWarningModal } from "../components/DuplicateWarningModal";
 import { MonthToggleBar } from "../components/MonthToggleBar";
 import { MonthlySummary } from "../components/MonthlySummary";
+import { SpendByCategory } from "../components/SpendByCategory";
 import { TransactionList } from "../components/TransactionList";
 import { CategoryRulesList } from "../components/CategoryRulesList";
 import { useFileUpload } from "../hooks/useFileUpload";
@@ -95,6 +96,7 @@ export function UploadPage() {
         onMonthSelect={setSelectedMonth}
       />
       <MonthlySummary transactions={displayedTransactions} />
+      <SpendByCategory transactions={displayedTransactions} />
       {selectedMonth && displayedTransactions.length > 0 && !isCategorising && (
         <TransactionList
           monthKey={selectedMonth}
