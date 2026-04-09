@@ -52,10 +52,15 @@ export function UploadPage() {
 
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
 
-  // Keep displayed transactions in sync with the selected month
+  // Keep displayed transactions in sync with the selected month.
+  // Initialise from storage so transactions are visible immediately on refresh.
   const [displayedTransactions, setDisplayedTransactions] = useState<
     Transaction[]
-  >([]);
+  >(() => {
+    const months = getStoredMonths();
+    if (months.length === 0) return [];
+    return loadTransactions(months[months.length - 1]).transactions;
+  });
   const [prevSelectedMonth, setPrevSelectedMonth] = useState(selectedMonth);
   if (selectedMonth !== prevSelectedMonth) {
     setPrevSelectedMonth(selectedMonth);

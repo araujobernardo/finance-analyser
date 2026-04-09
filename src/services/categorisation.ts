@@ -67,7 +67,8 @@ export async function categoriseTransactions(
     // Merge classified results back into the original order.
     let classifiedIdx = 0;
     return withRules.map((t) => (t.category ? t : classified[classifiedIdx++]));
-  } catch {
+  } catch (err) {
+    console.error("[categorisation] Unexpected error:", err);
     return withRules.map((t) => ({
       ...t,
       category: t.category ?? "Uncategorised",
@@ -100,8 +101,10 @@ async function categoriseBatch(
       max_tokens: 1024,
       messages: [{ role: "user", content: prompt }],
     });
-    text = message.content.find((c) => c.type === "text")?.text ?? "[]";
-  } catch {
+    const block = message.content.find((c) => c.type === "text");
+    text = block && "text" in block ? block.text : "[]";
+  } catch (err) {
+    console.error("[categorisation] API call failed:", err);
     return fallback(batch.length);
   }
 
