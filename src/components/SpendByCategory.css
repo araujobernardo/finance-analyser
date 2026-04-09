@@ -40,6 +40,14 @@
   transition: width 0.3s ease;
 }
 
+.spend-row--selected {
+  border-color: var(--accent-border);
+}
+
+.spend-row--selected .spend-row__bar {
+  background: var(--accent-bg);
+}
+
 .spend-row--uncategorised .spend-row__bar {
   background: rgba(107, 114, 128, 0.1);
 }
