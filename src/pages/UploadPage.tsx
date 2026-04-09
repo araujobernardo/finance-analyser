@@ -11,6 +11,7 @@ import { TransactionList } from "../components/TransactionList";
 import { CategoryRulesList } from "../components/CategoryRulesList";
 import { useFileUpload } from "../hooks/useFileUpload";
 import { loadRules } from "../services/categoryRules";
+import { loadBudgets } from "../services/budgets";
 import {
   getStoredMonths,
   loadTransactions,
@@ -91,6 +92,9 @@ export function UploadPage() {
     : displayedTransactions;
 
   const [rules, setRules] = useState<Record<string, string>>(() => loadRules());
+  const [budgets, setBudgets] = useState<Record<string, number>>(() =>
+    loadBudgets(),
+  );
 
   function handleDeleteMonth(monthKey: string) {
     removeMonth(monthKey);
@@ -169,6 +173,8 @@ export function UploadPage() {
         rows={categoryRows}
         selectedCategory={selectedCategory}
         onCategoryClick={setSelectedCategory}
+        budgets={budgets}
+        onBudgetsChange={setBudgets}
       />
       {selectedCategory && (
         <div style={{ marginBottom: "0.75rem" }}>

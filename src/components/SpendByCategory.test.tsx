@@ -1,8 +1,12 @@
-import { describe, it, expect, vi } from "vitest";
+import { describe, it, expect, vi, beforeEach } from "vitest";
 import { render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { SpendByCategory } from "./SpendByCategory";
 import type { CategoryRow } from "../utils/categoryData";
+
+beforeEach(() => {
+  localStorage.clear();
+});
 
 function row(category: string, total: number, percentage: number): CategoryRow {
   return { category, total, percentage };
@@ -10,14 +14,25 @@ function row(category: string, total: number, percentage: number): CategoryRow {
 
 function renderPanel(
   rows: CategoryRow[],
-  selectedCategory: string | null = null,
-  onCategoryClick = vi.fn(),
+  {
+    selectedCategory = null,
+    onCategoryClick = vi.fn(),
+    budgets = {},
+    onBudgetsChange = vi.fn(),
+  }: {
+    selectedCategory?: string | null;
+    onCategoryClick?: ReturnType<typeof vi.fn>;
+    budgets?: Record<string, number>;
+    onBudgetsChange?: ReturnType<typeof vi.fn>;
+  } = {},
 ) {
   return render(
     <SpendByCategory
       rows={rows}
       selectedCategory={selectedCategory}
       onCategoryClick={onCategoryClick}
+      budgets={budgets}
+      onBudgetsChange={onBudgetsChange}
     />,
   );
 }
@@ -55,7 +70,9 @@ describe("SpendByCategory", () => {
   });
 
   it("applies selected class to the active category row", () => {
-    renderPanel([row("Food", 80, 80), row("Transport", 20, 20)], "Food");
+    renderPanel([row("Food", 80, 80), row("Transport", 20, 20)], {
+      selectedCategory: "Food",
+    });
     const items = screen.getAllByRole("listitem");
     expect(items[0]).toHaveClass("spend-row--selected");
     expect(items[1]).not.toHaveClass("spend-row--selected");
@@ -63,14 +80,17 @@ describe("SpendByCategory", () => {
 
   it("calls onCategoryClick with category name when a row is clicked", async () => {
     const onCategoryClick = vi.fn();
-    renderPanel([row("Food", 100, 100)], null, onCategoryClick);
+    renderPanel([row("Food", 100, 100)], { onCategoryClick });
     await userEvent.click(screen.getByText("Food"));
     expect(onCategoryClick).toHaveBeenCalledWith("Food");
   });
 
   it("calls onCategoryClick with null when the selected row is clicked again", async () => {
     const onCategoryClick = vi.fn();
-    renderPanel([row("Food", 100, 100)], "Food", onCategoryClick);
+    renderPanel([row("Food", 100, 100)], {
+      selectedCategory: "Food",
+      onCategoryClick,
+    });
     await userEvent.click(screen.getByText("Food"));
     expect(onCategoryClick).toHaveBeenCalledWith(null);
   });
@@ -78,5 +98,139 @@ describe("SpendByCategory", () => {
   it("renders the section title", () => {
     renderPanel([]);
     expect(screen.getByText("Spend by Category")).toBeInTheDocument();
+  });
+});
+
+describe("SpendByCategory budget form", () => {
+  it("shows '+ Budget' button", () => {
+    renderPanel([row("Food", 100, 100)]);
+    expect(
+      screen.getByRole("button", { name: "+ Budget" }),
+    ).toBeInTheDocument();
+  });
+
+  it("reveals the form when '+ Budget' is clicked", async () => {
+    renderPanel([row("Food", 100, 100)]);
+    await userEvent.click(screen.getByRole("button", { name: "+ Budget" }));
+    expect(screen.getByTestId("budget-form")).toBeInTheDocument();
+  });
+
+  it("hides the form when 'Cancel' is clicked", async () => {
+    renderPanel([row("Food", 100, 100)]);
+    await userEvent.click(screen.getByRole("button", { name: "+ Budget" }));
+    await userEvent.click(screen.getByRole("button", { name: "Cancel" }));
+    expect(screen.queryByTestId("budget-form")).not.toBeInTheDocument();
+  });
+
+  it("calls onBudgetsChange when a budget is saved", async () => {
+    const onBudgetsChange = vi.fn();
+    renderPanel([row("Groceries", 200, 100)], { onBudgetsChange });
+    await userEvent.click(screen.getByRole("button", { name: "+ Budget" }));
+    await userEvent.selectOptions(
+      screen.getByRole("combobox", { name: "Category" }),
+      "Groceries",
+    );
+    await userEvent.clear(
+      screen.getByRole("spinbutton", { name: "Budget amount" }),
+    );
+    await userEvent.type(
+      screen.getByRole("spinbutton", { name: "Budget amount" }),
+      "500",
+    );
+    await userEvent.click(screen.getByRole("button", { name: "Save" }));
+    expect(onBudgetsChange).toHaveBeenCalledWith(
+      expect.objectContaining({ Groceries: 500 }),
+    );
+  });
+
+  it("does not call onBudgetsChange when amount is empty", async () => {
+    const onBudgetsChange = vi.fn();
+    renderPanel([row("Groceries", 200, 100)], { onBudgetsChange });
+    await userEvent.click(screen.getByRole("button", { name: "+ Budget" }));
+    await userEvent.click(screen.getByRole("button", { name: "Save" }));
+    expect(onBudgetsChange).not.toHaveBeenCalled();
+  });
+});
+
+describe("SpendByCategory budget progress bar", () => {
+  it("shows a budget progress bar when category has a budget", () => {
+    renderPanel([row("Groceries", 200, 100)], {
+      budgets: { Groceries: 500 },
+    });
+    expect(
+      screen.getByLabelText("Budget progress for Groceries"),
+    ).toBeInTheDocument();
+  });
+
+  it("does not show a progress bar when no budget is set", () => {
+    renderPanel([row("Groceries", 200, 100)]);
+    expect(
+      screen.queryByLabelText("Budget progress for Groceries"),
+    ).not.toBeInTheDocument();
+  });
+
+  it("shows a green bar when spend is below 80% of budget", () => {
+    renderPanel([row("Groceries", 300, 100)], {
+      budgets: { Groceries: 500 },
+    });
+    const fill = document.querySelector(".budget-bar__fill") as HTMLElement;
+    expect(fill).toHaveClass("budget-bar__fill--ok");
+  });
+
+  it("shows an amber bar when spend is 80–100% of budget", () => {
+    renderPanel([row("Groceries", 420, 100)], {
+      budgets: { Groceries: 500 },
+    });
+    const fill = document.querySelector(".budget-bar__fill") as HTMLElement;
+    expect(fill).toHaveClass("budget-bar__fill--warn");
+  });
+
+  it("shows a red bar when spend exceeds budget", () => {
+    renderPanel([row("Groceries", 600, 100)], {
+      budgets: { Groceries: 500 },
+    });
+    const fill = document.querySelector(".budget-bar__fill") as HTMLElement;
+    expect(fill).toHaveClass("budget-bar__fill--over");
+  });
+
+  it("calls onBudgetsChange when a budget delete button is clicked", async () => {
+    const onBudgetsChange = vi.fn();
+    renderPanel([row("Groceries", 200, 100)], {
+      budgets: { Groceries: 500 },
+      onBudgetsChange,
+    });
+    await userEvent.click(
+      screen.getByRole("button", { name: "Remove budget for Groceries" }),
+    );
+    expect(onBudgetsChange).toHaveBeenCalledWith({});
+  });
+});
+
+describe("SpendByCategory orphaned budgets", () => {
+  it("shows orphaned budgets section when a budget has no matching spend row", () => {
+    renderPanel([row("Groceries", 200, 100)], {
+      budgets: { Groceries: 500, Entertainment: 100 },
+    });
+    expect(screen.getByTestId("orphaned-budgets")).toBeInTheDocument();
+    expect(screen.getByText("Entertainment")).toBeInTheDocument();
+  });
+
+  it("does not show orphaned section when all budgets have matching rows", () => {
+    renderPanel([row("Groceries", 200, 100)], {
+      budgets: { Groceries: 500 },
+    });
+    expect(screen.queryByTestId("orphaned-budgets")).not.toBeInTheDocument();
+  });
+
+  it("calls onBudgetsChange when an orphaned budget is deleted", async () => {
+    const onBudgetsChange = vi.fn();
+    renderPanel([row("Groceries", 200, 100)], {
+      budgets: { Groceries: 500, Entertainment: 100 },
+      onBudgetsChange,
+    });
+    await userEvent.click(
+      screen.getByRole("button", { name: "Remove budget for Entertainment" }),
+    );
+    expect(onBudgetsChange).toHaveBeenCalledWith({ Groceries: 500 });
   });
 });
