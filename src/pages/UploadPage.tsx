@@ -6,6 +6,7 @@ import { MonthlySummary } from "../components/MonthlySummary";
 import { SpendByCategory } from "../components/SpendByCategory";
 import { SpendingDonutChart } from "../components/SpendingDonutChart";
 import { LargestTransactions } from "../components/LargestTransactions";
+import { BudgetComparisonPanel } from "../components/BudgetComparisonPanel";
 import { buildCategoryRows } from "../utils/categoryData";
 import { TransactionList } from "../components/TransactionList";
 import { CategoryRulesList } from "../components/CategoryRulesList";
@@ -95,6 +96,7 @@ export function UploadPage() {
   const [budgets, setBudgets] = useState<Record<string, number>>(() =>
     loadBudgets(),
   );
+  const [showBudgetForm, setShowBudgetForm] = useState(false);
 
   function handleDeleteMonth(monthKey: string) {
     removeMonth(monthKey);
@@ -175,6 +177,8 @@ export function UploadPage() {
         onCategoryClick={setSelectedCategory}
         budgets={budgets}
         onBudgetsChange={setBudgets}
+        showForm={showBudgetForm}
+        onShowFormChange={setShowBudgetForm}
       />
       {selectedCategory && (
         <div style={{ marginBottom: "0.75rem" }}>
@@ -224,6 +228,11 @@ export function UploadPage() {
       <LargestTransactions
         transactions={displayedTransactions}
         onCategoryClick={setSelectedCategory}
+      />
+      <BudgetComparisonPanel
+        budgets={budgets}
+        rows={categoryRows}
+        onManageBudgets={() => setShowBudgetForm(true)}
       />
       <CategoryRulesList rules={rules} onRulesChange={setRules} />
     </div>
