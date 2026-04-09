@@ -7,6 +7,7 @@ import { SpendByCategory } from "../components/SpendByCategory";
 import { SpendingDonutChart } from "../components/SpendingDonutChart";
 import { LargestTransactions } from "../components/LargestTransactions";
 import { BudgetComparisonPanel } from "../components/BudgetComparisonPanel";
+import { TransactionTable } from "../components/TransactionTable";
 import { buildCategoryRows } from "../utils/categoryData";
 import { TransactionList } from "../components/TransactionList";
 import { CategoryRulesList } from "../components/CategoryRulesList";
@@ -166,6 +167,7 @@ export function UploadPage() {
         onMonthDelete={handleDeleteMonth}
       />
       <MonthlySummary transactions={filteredTransactions} />
+      <TransactionTable transactions={displayedTransactions} />
       <SpendingDonutChart
         rows={categoryRows}
         selectedCategory={selectedCategory}
