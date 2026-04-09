@@ -24,7 +24,7 @@ You are activated when the user says "pick up the next ticket" or
 
 Once the user confirms, execute these steps in order:
 
-### Step 0 — Move ticket to In Progress and handle Epic
+### Step 0 — Move ticket to In Progress and sync Epic
 
 MANDATORY: execute all of these immediately after user confirmation,
 before spawning any agent. Do NOT skip or defer any sub-step.
@@ -32,10 +32,7 @@ before spawning any agent. Do NOT skip or defer any sub-step.
 1. Write and run a script in `scripts/` to move the Jira ticket to "In Progress"
 2. Write and run a script in `scripts/` to add a comment to the ticket:
    "Delivery Lead picking up this story. Developer agent starting implementation."
-3. Fetch the story's parent Epic using:
-   GET /rest/api/3/issue/FA-XX?fields=parent
-4. If the Epic exists and its status is "Backlog" or "To Do", move it to "In Progress"
-   — this signals that work on the Epic has begun
+3. Run the **Epic Status Sync** routine (see below)
 
 All actions are auto-approved — do not ask the user for confirmation.
 Do not proceed to Step 1 until all Step 0 scripts have run successfully.
@@ -84,13 +81,30 @@ After user approval:
 1. Instruct the QA agent to merge the PR using the full gh path
 2. Move the story ticket to Done in Jira
 3. Add final comment to the story ticket: "PR merged. Story complete."
-4. Fetch the parent Epic and query all its child stories:
-   GET /rest/api/3/search/jql?jql=parent=FA-EPIC
-5. If ALL child stories are now Done, move the Epic to Done and add a comment:
-   "All stories complete. Epic done."
-6. Report back: "FA-XX is Done.
+4. Run the **Epic Status Sync** routine (see below)
+5. Report back: "FA-XX is Done.
    [X] stories complete, [Y] remaining in backlog.
    Shall I start the next story?"
+
+## Epic Status Sync
+
+Run this routine every time a story is moved to a new status. It must
+be called from Step 0 and Step 4, and any other point where a story
+status changes.
+
+1. Fetch the story's parent Epic:
+   GET /rest/api/3/issue/FA-XX?fields=parent
+2. If no parent Epic exists, skip the remaining steps
+3. Fetch all child stories of the Epic:
+   GET /rest/api/3/search/jql?jql=parent=FA-EPIC&fields=status
+4. Determine the correct Epic status:
+   - If ALL child stories are "Done" → move Epic to "Done" and add comment:
+     "All stories complete. Epic done."
+   - If ANY child story is "In Progress" or "In Review" and Epic is not
+     already "In Progress" → move Epic to "In Progress"
+   - If Epic is already in the correct status, do nothing
+
+All actions are auto-approved — do not ask the user for confirmation.
 
 ## Blocked Story Handling
 
