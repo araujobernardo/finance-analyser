@@ -1,8 +1,8 @@
-import type { Transaction } from "../utils/csvParser";
+import type { CategoryRow } from "../utils/categoryData";
 import "./SpendByCategory.css";
 
 interface Props {
-  transactions: Transaction[];
+  rows: CategoryRow[];
   selectedCategory: string | null;
   onCategoryClick: (category: string | null) => void;
 }
@@ -13,49 +13,11 @@ const fmt = new Intl.NumberFormat("en-US", {
   minimumFractionDigits: 2,
 });
 
-interface CategoryRow {
-  category: string;
-  total: number;
-  percentage: number;
-}
-
-function buildRows(transactions: Transaction[]): CategoryRow[] {
-  const expenses = transactions.filter((t) => t.amount < 0);
-  if (expenses.length === 0) return [];
-
-  const totals: Record<string, number> = {};
-  for (const t of expenses) {
-    const cat = t.category || "Uncategorised";
-    totals[cat] = (totals[cat] ?? 0) + Math.abs(t.amount);
-  }
-
-  const grandTotal = Object.values(totals).reduce((s, v) => s + v, 0);
-
-  const rows: CategoryRow[] = Object.entries(totals)
-    .filter(([, total]) => total > 0)
-    .map(([category, total]) => ({
-      category,
-      total,
-      percentage: (total / grandTotal) * 100,
-    }));
-
-  // Sort by amount descending, Uncategorised always last
-  rows.sort((a, b) => {
-    if (a.category === "Uncategorised") return 1;
-    if (b.category === "Uncategorised") return -1;
-    return b.total - a.total;
-  });
-
-  return rows;
-}
-
 export function SpendByCategory({
-  transactions,
+  rows,
   selectedCategory,
   onCategoryClick,
 }: Props) {
-  const rows = buildRows(transactions);
-
   return (
     <div className="spend-by-category">
       <h2 className="spend-by-category__title">Spend by Category</h2>

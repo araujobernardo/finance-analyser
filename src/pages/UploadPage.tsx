@@ -4,6 +4,8 @@ import { DuplicateWarningModal } from "../components/DuplicateWarningModal";
 import { MonthToggleBar } from "../components/MonthToggleBar";
 import { MonthlySummary } from "../components/MonthlySummary";
 import { SpendByCategory } from "../components/SpendByCategory";
+import { SpendingDonutChart } from "../components/SpendingDonutChart";
+import { buildCategoryRows } from "../utils/categoryData";
 import { TransactionList } from "../components/TransactionList";
 import { CategoryRulesList } from "../components/CategoryRulesList";
 import { useFileUpload } from "../hooks/useFileUpload";
@@ -69,6 +71,8 @@ export function UploadPage() {
     }
     setSelectedCategory(null);
   }
+  const categoryRows = buildCategoryRows(displayedTransactions);
+
   const filteredTransactions = selectedCategory
     ? displayedTransactions.filter(
         (t) => (t.category || "Uncategorised") === selectedCategory,
@@ -104,8 +108,13 @@ export function UploadPage() {
         onMonthSelect={setSelectedMonth}
       />
       <MonthlySummary transactions={filteredTransactions} />
+      <SpendingDonutChart
+        rows={categoryRows}
+        selectedCategory={selectedCategory}
+        onCategoryClick={setSelectedCategory}
+      />
       <SpendByCategory
-        transactions={displayedTransactions}
+        rows={categoryRows}
         selectedCategory={selectedCategory}
         onCategoryClick={setSelectedCategory}
       />
