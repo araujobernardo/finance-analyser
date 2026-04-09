@@ -10,6 +10,8 @@ interface Props {
   onCategoryClick: (category: string | null) => void;
   budgets: Record<string, number>;
   onBudgetsChange: (budgets: Record<string, number>) => void;
+  showForm?: boolean;
+  onShowFormChange?: (show: boolean) => void;
 }
 
 const fmt = new Intl.NumberFormat("en-US", {
@@ -30,8 +32,15 @@ export function SpendByCategory({
   onCategoryClick,
   budgets,
   onBudgetsChange,
+  showForm: showFormProp,
+  onShowFormChange,
 }: Props) {
-  const [showForm, setShowForm] = useState(false);
+  const [showFormInternal, setShowFormInternal] = useState(false);
+  const showForm = showFormProp ?? showFormInternal;
+  function setShowForm(v: boolean) {
+    setShowFormInternal(v);
+    onShowFormChange?.(v);
+  }
   const [formCategory, setFormCategory] = useState<string>(CATEGORIES[0]);
   const [formAmount, setFormAmount] = useState("");
 
