@@ -17,6 +17,7 @@ import type { Transaction } from "../utils/csvParser";
 export function UploadPage() {
   const {
     selectedFile,
+    parseErrors,
     isDuplicate,
     duplicateMonth,
     isCategorising,
@@ -91,11 +92,40 @@ export function UploadPage() {
           Categorising transactions…
         </p>
       )}
-      {selectedFile && !isDuplicate && !isCategorising && (
-        <p style={{ fontSize: "0.8rem", color: "#6b7280" }}>
-          Stored: {selectedFile.name}
-        </p>
-      )}
+      {selectedFile &&
+        !isDuplicate &&
+        !isCategorising &&
+        parseErrors.length > 0 && (
+          <div
+            style={{
+              marginTop: "0.5rem",
+              padding: "0.6rem 0.85rem",
+              borderRadius: "6px",
+              background: "#fef2f2",
+              border: "1px solid #fca5a5",
+              fontSize: "0.85rem",
+              color: "#b91c1c",
+            }}
+          >
+            <strong>Could not read {selectedFile.name}</strong>
+            <ul style={{ margin: "0.3rem 0 0", paddingLeft: "1.2rem" }}>
+              {parseErrors.slice(0, 3).map((e, i) => (
+                <li key={i}>{e.message}</li>
+              ))}
+              {parseErrors.length > 3 && (
+                <li>…and {parseErrors.length - 3} more row errors</li>
+              )}
+            </ul>
+          </div>
+        )}
+      {selectedFile &&
+        !isDuplicate &&
+        !isCategorising &&
+        parseErrors.length === 0 && (
+          <p style={{ fontSize: "0.8rem", color: "#6b7280" }}>
+            Stored: {selectedFile.name}
+          </p>
+        )}
       {isDuplicate && duplicateMonth && (
         <DuplicateWarningModal
           monthName={duplicateMonth}

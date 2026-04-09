@@ -128,7 +128,7 @@ describe("parseCsv — header validation", () => {
   it("returns an error for a completely wrong header", () => {
     const { transactions, errors } = parseCsv("Foo,Bar,Baz,Qux\n1,2,3,4");
     expect(transactions).toHaveLength(0);
-    expect(errors[0].message).toMatch(/missing required columns/i);
+    expect(errors[0].message).toMatch(/unrecognised file format/i);
   });
 });
 
@@ -322,6 +322,103 @@ describe("parseCsv — NZ bank format — happy path", () => {
       makeNzCsv("2024/03/15,ID001,EFTPOS,,Merchant,,-50.00"),
     );
     expect(transactions[0].balance).toBeUndefined();
+  });
+});
+
+// ── Credit card format — happy path ───────────────────────────────────────────
+
+function makeCreditCardCsv(...rows: string[]): string {
+  const metadata = [
+    "Created date / time : 9 April 2026 / 21:25:14",
+    "Card Number XXXX-XXXX-XXXX-4863 (Visa Platinum Rewards)",
+    "From date 20260301",
+    "To date 20260409",
+    "Date Processed,Date of Transaction,Unique Id,Tran Type,Reference,Description,Amount",
+  ];
+  return [...metadata, ...rows].join("\n");
+}
+
+describe("parseCsv — credit card format — happy path", () => {
+  it("detects the credit card format and parses a debit row", () => {
+    const { transactions, errors } = parseCsv(
+      makeCreditCardCsv(
+        '2026/03/01,2026/03/01,ID001,DEBIT,4863,"New World Northwood",107.81',
+      ),
+    );
+    expect(errors).toHaveLength(0);
+    expect(transactions).toHaveLength(1);
+    const t = transactions[0];
+    expect(t.date).toEqual(new Date(2026, 2, 1));
+    expect(t.description).toBe("New World Northwood");
+    expect(t.amount).toBe(-107.81); // negated: debit → expense
+    expect(t.balance).toBeUndefined();
+  });
+
+  it("negates credit (payment) amounts to positive income", () => {
+    const { transactions, errors } = parseCsv(
+      makeCreditCardCsv(
+        '2026/03/08,2026/03/07,ID002,CREDIT,4863,"PAYMENT RECEIVED credit",-1268.00',
+      ),
+    );
+    expect(errors).toHaveLength(0);
+    expect(transactions[0].amount).toBe(1268); // -(-1268) = +1268
+  });
+
+  it("parses multiple rows", () => {
+    const { transactions, errors } = parseCsv(
+      makeCreditCardCsv(
+        '2026/03/01,2026/03/01,ID001,DEBIT,4863,"Pak n Save Papanui",60.24',
+        '2026/03/02,2026/03/01,ID002,DEBIT,4863,"WILSON PARKING",4.70',
+        '2026/03/08,2026/03/07,ID003,CREDIT,4863,"PAYMENT RECEIVED credit",-1268.00',
+      ),
+    );
+    expect(errors).toHaveLength(0);
+    expect(transactions).toHaveLength(3);
+    expect(transactions[0].amount).toBe(-60.24);
+    expect(transactions[1].amount).toBe(-4.7);
+    expect(transactions[2].amount).toBe(1268);
+  });
+
+  it("uses the Date of Transaction column, not Date Processed", () => {
+    const { transactions } = parseCsv(
+      makeCreditCardCsv(
+        '2026/03/03,2026/03/01,ID001,DEBIT,4863,"Test Merchant",10.00',
+      ),
+    );
+    // Date of Transaction is 2026/03/01, Date Processed is 2026/03/03
+    expect(transactions[0].date).toEqual(new Date(2026, 2, 1));
+  });
+
+  it("handles quoted description fields containing commas", () => {
+    const { transactions, errors } = parseCsv(
+      makeCreditCardCsv(
+        '2026/03/01,2026/03/01,ID001,DEBIT,4863,"Smith, John Transfer",50.00',
+      ),
+    );
+    expect(errors).toHaveLength(0);
+    expect(transactions[0].description).toBe("Smith, John Transfer");
+  });
+});
+
+describe("parseCsv — credit card format — errors", () => {
+  it("skips a row with an invalid date and records an error", () => {
+    const { transactions, errors } = parseCsv(
+      makeCreditCardCsv(
+        '01/03/2026,01/03/2026,ID001,DEBIT,4863,"Merchant",50.00',
+      ),
+    );
+    expect(transactions).toHaveLength(0);
+    expect(errors[0].message).toMatch(/invalid date/i);
+  });
+
+  it("skips a row with an invalid amount and records an error", () => {
+    const { transactions, errors } = parseCsv(
+      makeCreditCardCsv(
+        '2026/03/01,2026/03/01,ID001,DEBIT,4863,"Merchant",N/A',
+      ),
+    );
+    expect(transactions).toHaveLength(0);
+    expect(errors[0].message).toMatch(/invalid amount/i);
   });
 });
 
