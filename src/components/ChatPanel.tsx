@@ -1,15 +1,20 @@
 import { useState, useRef, useEffect } from "react";
+import { streamChatResponse } from "../services/claudeChat";
+import type { ChatMessage } from "../services/claudeChat";
 import "./ChatPanel.css";
 
-interface Message {
+interface DisplayMessage {
   role: "user" | "bot";
   text: string;
+  isStreaming?: boolean;
 }
 
 export function ChatPanel() {
   const [open, setOpen] = useState(false);
-  const [messages, setMessages] = useState<Message[]>([]);
+  const [messages, setMessages] = useState<DisplayMessage[]>([]);
+  const [history, setHistory] = useState<ChatMessage[]>([]);
   const [input, setInput] = useState("");
+  const [isLoading, setIsLoading] = useState(false);
   const bottomRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -21,13 +26,66 @@ export function ChatPanel() {
   function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     const text = input.trim();
-    if (!text) return;
+    if (!text || isLoading) return;
+
+    const newHistory: ChatMessage[] = [
+      ...history,
+      { role: "user", content: text },
+    ];
+
     setMessages((prev) => [
       ...prev,
       { role: "user", text },
-      { role: "bot", text: "…" },
+      { role: "bot", text: "", isStreaming: true },
     ]);
     setInput("");
+    setIsLoading(true);
+
+    let accumulated = "";
+
+    streamChatResponse(
+      newHistory,
+      (delta) => {
+        accumulated += delta;
+        setMessages((prev) => {
+          const next = [...prev];
+          next[next.length - 1] = {
+            role: "bot",
+            text: accumulated,
+            isStreaming: true,
+          };
+          return next;
+        });
+      },
+      () => {
+        setMessages((prev) => {
+          const next = [...prev];
+          next[next.length - 1] = {
+            role: "bot",
+            text: accumulated,
+            isStreaming: false,
+          };
+          return next;
+        });
+        setHistory([
+          ...newHistory,
+          { role: "assistant", content: accumulated },
+        ]);
+        setIsLoading(false);
+      },
+      (err) => {
+        setMessages((prev) => {
+          const next = [...prev];
+          next[next.length - 1] = {
+            role: "bot",
+            text: `Error: ${err.message}`,
+            isStreaming: false,
+          };
+          return next;
+        });
+        setIsLoading(false);
+      },
+    );
   }
 
   return (
@@ -59,7 +117,12 @@ export function ChatPanel() {
                     : "chat-panel__bubble chat-panel__bubble--bot"
                 }
               >
-                {m.text}
+                {m.text ||
+                  (m.isStreaming ? (
+                    <span className="chat-panel__typing">●●●</span>
+                  ) : (
+                    ""
+                  ))}
               </div>
             ))}
             <div ref={bottomRef} />
@@ -72,10 +135,12 @@ export function ChatPanel() {
               value={input}
               onChange={(e) => setInput(e.target.value)}
               aria-label="Message input"
+              disabled={isLoading}
             />
             <button
               className="chat-panel__send"
               type="submit"
+              disabled={isLoading}
               aria-label="Send message"
             >
               Send
