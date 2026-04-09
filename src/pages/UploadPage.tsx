@@ -5,6 +5,7 @@ import { MonthToggleBar } from "../components/MonthToggleBar";
 import { MonthlySummary } from "../components/MonthlySummary";
 import { SpendByCategory } from "../components/SpendByCategory";
 import { SpendingDonutChart } from "../components/SpendingDonutChart";
+import { LargestTransactions } from "../components/LargestTransactions";
 import { buildCategoryRows } from "../utils/categoryData";
 import { TransactionList } from "../components/TransactionList";
 import { CategoryRulesList } from "../components/CategoryRulesList";
@@ -163,6 +164,10 @@ export function UploadPage() {
           }}
         />
       )}
+      <LargestTransactions
+        transactions={displayedTransactions}
+        onCategoryClick={setSelectedCategory}
+      />
       <CategoryRulesList rules={rules} onRulesChange={setRules} />
     </div>
   );
