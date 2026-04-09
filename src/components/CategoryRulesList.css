@@ -1,21 +1,21 @@
 .rules-container {
   margin-top: 1.5rem;
   padding: 1rem;
-  border: 1px solid #e5e7eb;
+  border: 1px solid var(--rules-border);
   border-radius: 8px;
-  background: #fafafa;
+  background: var(--rules-bg);
 }
 
 .rules-title {
   margin: 0 0 0.75rem;
   font-size: 0.9rem;
   font-weight: 600;
-  color: #374151;
+  color: var(--rules-title);
 }
 
 .rules-empty {
   font-size: 0.8rem;
-  color: #9ca3af;
+  color: var(--rules-muted);
   margin: 0;
 }
 
@@ -38,19 +38,19 @@
 
 .rules-description {
   flex: 1;
-  color: #374151;
+  color: var(--rules-text);
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
 }
 
 .rules-arrow {
-  color: #9ca3af;
+  color: var(--rules-muted);
   flex-shrink: 0;
 }
 
 .rules-category {
-  color: #6b7280;
+  color: var(--rules-sub);
   font-weight: 500;
   flex-shrink: 0;
   min-width: 80px;
@@ -59,7 +59,7 @@
 .rules-delete {
   background: none;
   border: none;
-  color: #9ca3af;
+  color: var(--rules-muted);
   font-size: 1rem;
   cursor: pointer;
   padding: 0 4px;
@@ -68,5 +68,5 @@
 }
 
 .rules-delete:hover {
-  color: #dc2626;
+  color: var(--color-danger);
 }

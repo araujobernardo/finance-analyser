@@ -125,15 +125,15 @@
 }
 
 .budget-bar__fill--ok {
-  background: #22c55e;
+  background: var(--color-success);
 }
 
 .budget-bar__fill--warn {
-  background: #f59e0b;
+  background: var(--color-warning);
 }
 
 .budget-bar__fill--over {
-  background: #ef4444;
+  background: var(--color-danger);
 }
 
 .budget-bar__label {
@@ -210,7 +210,7 @@
 
 .budget-delete-btn:hover {
   opacity: 1;
-  color: #ef4444;
+  color: var(--color-danger);
 }
 
 /* Orphaned budgets section */

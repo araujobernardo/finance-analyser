@@ -5,14 +5,14 @@
   width: 52px;
   height: 52px;
   border-radius: 50%;
-  background: #1e293b;
-  color: #fff;
+  background: var(--chat-header-bg);
+  color: var(--chat-header-text);
   border: none;
   cursor: pointer;
   display: flex;
   align-items: center;
   justify-content: center;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.25);
+  box-shadow: var(--shadow);
   z-index: 1000;
   transition:
     background 0.2s,
@@ -20,7 +20,7 @@
 }
 
 .chat-fab:hover {
-  background: #334155;
+  background: var(--nav-link-hover-bg);
   transform: scale(1.06);
 }
 
@@ -40,7 +40,7 @@
   background: var(--bg);
   border: 1px solid var(--border);
   border-radius: 12px;
-  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.18);
+  box-shadow: var(--shadow);
   z-index: 999;
   overflow: hidden;
   animation: chat-slide-up 0.2s ease-out;
@@ -62,8 +62,8 @@
   align-items: center;
   justify-content: space-between;
   padding: 0.75rem 1rem;
-  background: #1e293b;
-  color: #fff;
+  background: var(--chat-header-bg);
+  color: var(--chat-header-text);
   font-weight: 600;
   font-size: 0.9rem;
   flex-shrink: 0;
@@ -72,7 +72,7 @@
 .chat-panel__close {
   background: none;
   border: none;
-  color: #cbd5e1;
+  color: var(--chat-header-link);
   cursor: pointer;
   font-size: 1rem;
   line-height: 1;
@@ -81,7 +81,7 @@
 }
 
 .chat-panel__close:hover {
-  color: #fff;
+  color: var(--chat-header-text);
 }
 
 .chat-panel__messages {
@@ -112,15 +112,15 @@
 
 .chat-panel__bubble--user {
   align-self: flex-end;
-  background: #2563eb;
-  color: #fff;
+  background: var(--chat-user-bg);
+  color: var(--chat-user-text);
   border-bottom-right-radius: 4px;
 }
 
 .chat-panel__bubble--bot {
   align-self: flex-start;
-  background: #e5e7eb;
-  color: #111827;
+  background: var(--chat-bot-bg);
+  color: var(--chat-bot-text);
   border-bottom-left-radius: 4px;
 }
 
@@ -144,13 +144,13 @@
 }
 
 .chat-panel__input:focus {
-  border-color: #2563eb;
+  border-color: var(--chat-send-bg);
 }
 
 .chat-panel__send {
   padding: 0.4rem 0.75rem;
-  background: #2563eb;
-  color: #fff;
+  background: var(--chat-send-bg);
+  color: var(--chat-user-text);
   border: none;
   border-radius: 8px;
   font-size: 0.875rem;
@@ -160,7 +160,7 @@
 }
 
 .chat-panel__send:hover {
-  background: #1d4ed8;
+  background: var(--chat-send-hover);
 }
 
 .chat-panel__send:disabled,
