@@ -11,7 +11,11 @@ import { TransactionList } from "../components/TransactionList";
 import { CategoryRulesList } from "../components/CategoryRulesList";
 import { useFileUpload } from "../hooks/useFileUpload";
 import { loadRules } from "../services/categoryRules";
-import { getStoredMonths, loadTransactions } from "../services/storage";
+import {
+  getStoredMonths,
+  loadTransactions,
+  removeMonth,
+} from "../services/storage";
 import type { Transaction } from "../utils/csvParser";
 
 export function UploadPage() {
@@ -83,6 +87,17 @@ export function UploadPage() {
 
   const [rules, setRules] = useState<Record<string, string>>(() => loadRules());
 
+  function handleDeleteMonth(monthKey: string) {
+    removeMonth(monthKey);
+    const months = getStoredMonths();
+    setStoredMonths(months);
+    if (selectedMonth === monthKey) {
+      setSelectedMonth(months.length > 0 ? months[months.length - 1] : null);
+    }
+    setDisplayedTransactions([]);
+    setSelectedCategory(null);
+  }
+
   return (
     <div className="page-content">
       <h1>Upload Transactions</h1>
@@ -137,6 +152,7 @@ export function UploadPage() {
         months={storedMonths}
         selectedMonth={selectedMonth}
         onMonthSelect={setSelectedMonth}
+        onMonthDelete={handleDeleteMonth}
       />
       <MonthlySummary transactions={filteredTransactions} />
       <SpendingDonutChart

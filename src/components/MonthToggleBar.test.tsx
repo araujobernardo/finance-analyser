@@ -15,7 +15,7 @@ describe("MonthToggleBar", () => {
     expect(container.firstChild).toBeNull();
   });
 
-  it("renders a button for each month", () => {
+  it("renders a select button for each month (no delete buttons without onMonthDelete)", () => {
     render(
       <MonthToggleBar
         months={["2025-01", "2025-02", "2025-03"]}
@@ -24,6 +24,36 @@ describe("MonthToggleBar", () => {
       />,
     );
     expect(screen.getAllByRole("button")).toHaveLength(3);
+  });
+
+  it("renders a delete button for each month when onMonthDelete is provided", () => {
+    render(
+      <MonthToggleBar
+        months={["2025-01", "2025-02", "2025-03"]}
+        selectedMonth="2025-01"
+        onMonthSelect={vi.fn()}
+        onMonthDelete={vi.fn()}
+      />,
+    );
+    // 3 select + 3 delete = 6 buttons
+    expect(screen.getAllByRole("button")).toHaveLength(6);
+    expect(screen.getAllByRole("button", { name: /delete/i })).toHaveLength(3);
+  });
+
+  it("calls onMonthDelete with the correct month key when delete is clicked", async () => {
+    const onMonthDelete = vi.fn();
+    render(
+      <MonthToggleBar
+        months={["2025-01", "2025-02"]}
+        selectedMonth="2025-01"
+        onMonthSelect={vi.fn()}
+        onMonthDelete={onMonthDelete}
+      />,
+    );
+    await userEvent.click(
+      screen.getByRole("button", { name: /delete feb 2025/i }),
+    );
+    expect(onMonthDelete).toHaveBeenCalledWith("2025-02");
   });
 
   it("formats month keys as human-readable labels", () => {
