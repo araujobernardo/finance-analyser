@@ -1,7 +1,7 @@
 .dup-modal__backdrop {
   position: fixed;
   inset: 0;
-  background-color: rgba(0, 0, 0, 0.6);
+  background-color: var(--modal-overlay);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -9,8 +9,8 @@
 }
 
 .dup-modal__panel {
-  background-color: #1f2937;
-  border: 1px solid #374151;
+  background-color: var(--modal-bg);
+  border: 1px solid var(--modal-border);
   border-radius: 0.75rem;
   padding: 1.75rem 2rem;
   max-width: 420px;
@@ -24,13 +24,13 @@
   margin: 0;
   font-size: 1.1rem;
   font-weight: 600;
-  color: #f9fafb;
+  color: var(--modal-title);
 }
 
 .dup-modal__body {
   margin: 0;
   font-size: 0.95rem;
-  color: #d1d5db;
+  color: var(--modal-body);
   line-height: 1.5;
 }
 
@@ -53,26 +53,24 @@
     border-color 0.15s ease;
 }
 
-/* Cancel — safe default, visually prominent */
 .dup-modal__btn--cancel {
-  background-color: #374151;
-  border-color: #4b5563;
-  color: #f9fafb;
+  background-color: var(--modal-cancel-bg);
+  border-color: var(--modal-cancel-border);
+  color: var(--modal-cancel-text);
 }
 
 .dup-modal__btn--cancel:hover,
 .dup-modal__btn--cancel:focus-visible {
-  background-color: #4b5563;
+  background-color: var(--surface-hover);
 }
 
-/* Replace — amber/warning colour, not red */
 .dup-modal__btn--replace {
-  background-color: #92400e;
-  border-color: #b45309;
-  color: #fde68a;
+  background-color: var(--modal-replace-bg);
+  border-color: var(--modal-replace-border);
+  color: var(--modal-replace-text);
 }
 
 .dup-modal__btn--replace:hover,
 .dup-modal__btn--replace:focus-visible {
-  background-color: #b45309;
+  background-color: var(--modal-replace-border);
 }

@@ -67,15 +67,15 @@
 
 /* Status colours */
 .budget-comparison__row--over td {
-  color: #dc2626;
+  color: var(--color-danger);
 }
 
 .budget-comparison__row--on-budget td {
-  color: #d97706;
+  color: var(--color-warning);
 }
 
 .budget-comparison__row--under td {
-  color: #16a34a;
+  color: var(--color-success);
 }
 
 /* Total row */

@@ -104,11 +104,11 @@
 
 /* Amount colours */
 .txn-table__amount--positive {
-  color: #16a34a;
+  color: var(--color-success);
 }
 
 .txn-table__amount--negative {
-  color: #dc2626;
+  color: var(--color-danger);
 }
 
 .txn-table__amount--zero {
