@@ -18,7 +18,8 @@ export interface ParseError {
 }
 
 /**
- * Parses a CSV exported from a NZ bank or in the legacy flat format.
+ * Parses a CSV exported from a NZ bank, legacy flat format, or credit card
+ * statement (e.g. ANZ/ASB Visa Platinum).
  *
  * Legacy format (flat):
  *   Columns: Date, Description, Amount, Balance
@@ -30,8 +31,15 @@ export interface ParseError {
  *   Date:    YYYY/MM/DD
  *   Description is built from Payee + Memo (non-empty parts joined by a space).
  *
- * Format is auto-detected from column headers: if Payee or Memo is present the
- * NZ bank format is used; otherwise the legacy format is used.
+ * Credit card format (e.g. ANZ Visa):
+ *   Metadata lines, then:
+ *   Columns: Date Processed, Date of Transaction, Unique Id, Tran Type,
+ *            Reference, Description, Amount
+ *   Date:    YYYY/MM/DD  (Date of Transaction is used)
+ *   Amounts: positive = debit (expense), negative = credit (income) — inverted
+ *            on import so expenses become negative and income positive.
+ *
+ * Format is auto-detected from column headers.
  */
 export function parseCsv(csvText: string): ParseResult {
   const lines = csvText.split(/\r?\n/).filter((line) => line.trim() !== "");
@@ -44,8 +52,10 @@ export function parseCsv(csvText: string): ParseResult {
   }
 
   // ── Find header line ──────────────────────────────────────────────────────
-  // The first line whose comma-separated columns (lowercased, unquoted) include
-  // "date" is the column header row — everything before it is metadata.
+  // The first line whose columns contain a recognised date column name is the
+  // header row — everything before it is metadata.
+
+  const DATE_COLS = new Set(["date", "date processed", "date of transaction"]);
 
   let headerLineIndex = -1;
   let headers: string[] = [];
@@ -54,7 +64,7 @@ export function parseCsv(csvText: string): ParseResult {
     const cols = lines[i]
       .split(",")
       .map((h) => h.trim().replace(/^"|"$/g, "").toLowerCase());
-    if (cols.includes("date")) {
+    if (cols.some((c) => DATE_COLS.has(c))) {
       headerLineIndex = i;
       headers = cols;
       break;
@@ -68,7 +78,8 @@ export function parseCsv(csvText: string): ParseResult {
         {
           row: 1,
           message:
-            "Missing required columns: date. No column header row found.",
+            "Unrecognised file format: no column header row found. " +
+            "Expected a CSV with a Date (or Date of Transaction) column.",
           raw: lines[0],
         },
       ],
@@ -78,9 +89,16 @@ export function parseCsv(csvText: string): ParseResult {
   // ── Detect format ─────────────────────────────────────────────────────────
 
   const isNzFormat = headers.includes("payee") || headers.includes("memo");
+  const isCreditCardFormat =
+    headers.includes("tran type") &&
+    headers.includes("description") &&
+    headers.includes("date of transaction");
 
   if (isNzFormat) {
     return parseNzFormat(lines, headerLineIndex, headers);
+  }
+  if (isCreditCardFormat) {
+    return parseCreditCardFormat(lines, headerLineIndex, headers);
   }
   return parseLegacyFormat(lines, headerLineIndex, headers);
 }
@@ -255,6 +273,91 @@ function parseNzFormat(
     }
 
     transactions.push({ date, description, amount });
+  }
+
+  return { transactions, errors };
+}
+
+// ── Credit card format ────────────────────────────────────────────────────────
+
+const CC_REQUIRED = ["date of transaction", "description", "amount"];
+
+function parseCreditCardFormat(
+  lines: string[],
+  headerLineIndex: number,
+  headers: string[],
+): ParseResult {
+  const transactions: Transaction[] = [];
+  const errors: ParseError[] = [];
+
+  const missing = CC_REQUIRED.filter((h) => !headers.includes(h));
+  if (missing.length > 0) {
+    return {
+      transactions,
+      errors: [
+        {
+          row: headerLineIndex + 1,
+          message: `Missing required columns: ${missing.join(", ")}. Found: ${headers.join(", ")}`,
+          raw: lines[headerLineIndex],
+        },
+      ],
+    };
+  }
+
+  const dateIdx = headers.indexOf("date of transaction");
+  const descIdx = headers.indexOf("description");
+  const amountIdx = headers.indexOf("amount");
+
+  const minCols = Math.max(dateIdx, descIdx, amountIdx) + 1;
+
+  for (let i = headerLineIndex + 1; i < lines.length; i++) {
+    const rowNumber = i + 1;
+    const raw = lines[i];
+    const cols = splitCsvRow(raw);
+
+    if (cols.length < minCols) {
+      errors.push({
+        row: rowNumber,
+        message: `Expected at least ${minCols} columns, found ${cols.length}.`,
+        raw,
+      });
+      continue;
+    }
+
+    const rawDate = cols[dateIdx].trim();
+    const rawDescription = cols[descIdx].trim();
+    const rawAmount = cols[amountIdx].trim();
+
+    const date = parseYyyyMmDd(rawDate);
+    if (date === null) {
+      errors.push({
+        row: rowNumber,
+        message: `Invalid date "${rawDate}". Expected YYYY/MM/DD.`,
+        raw,
+      });
+      continue;
+    }
+
+    if (rawDescription === "") {
+      errors.push({ row: rowNumber, message: "Description is empty.", raw });
+      continue;
+    }
+
+    const rawAmountNum = parseNumber(rawAmount);
+    if (rawAmountNum === null) {
+      errors.push({
+        row: rowNumber,
+        message: `Invalid amount "${rawAmount}".`,
+        raw,
+      });
+      continue;
+    }
+
+    // Credit card CSVs use positive for debits (expenses) and negative for
+    // credits (income/payments). Negate so our convention is: negative = expense.
+    const amount = -rawAmountNum;
+
+    transactions.push({ date, description: rawDescription, amount });
   }
 
   return { transactions, errors };
