@@ -29,6 +29,7 @@ export function UploadPage() {
     duplicateMonth,
     isCategorising,
     savedMonthKey,
+    savedMonthCount,
     handleFile,
     confirmReplace,
     cancelReplace,
@@ -151,6 +152,7 @@ export function UploadPage() {
         parseErrors.length === 0 && (
           <p style={{ fontSize: "0.8rem", color: "#6b7280" }}>
             Stored: {selectedFile.name}
+            {savedMonthCount > 1 && ` (${savedMonthCount} months)`}
           </p>
         )}
       {isDuplicate && duplicateMonth && (

@@ -9,9 +9,14 @@ import {
 } from "../services/storage";
 import { categoriseTransactions } from "../services/categorisation";
 
-interface PendingUpload {
+interface MonthGroup {
   monthKey: string;
   transactions: Transaction[];
+}
+
+interface PendingUpload {
+  groups: MonthGroup[];
+  duplicateMonthKeys: string[];
 }
 
 export interface UseFileUploadResult {
@@ -21,7 +26,7 @@ export interface UseFileUploadResult {
   duplicateMonth: string | null;
   isCategorising: boolean;
   savedMonthKey: string | null;
-  savedTransactions: Transaction[];
+  savedMonthCount: number;
   handleFile: (file: File) => void;
   confirmReplace: () => void;
   cancelReplace: () => void;
@@ -34,39 +39,53 @@ function formatMonthKey(monthKey: string): string {
   return date.toLocaleString("en", { month: "long", year: "numeric" });
 }
 
+/** Groups an array of transactions into per-month buckets, sorted by month key. */
+function groupByMonth(transactions: Transaction[]): MonthGroup[] {
+  const map = new Map<string, Transaction[]>();
+  for (const t of transactions) {
+    const key = monthKeyFromDate(t.date);
+    if (!map.has(key)) map.set(key, []);
+    map.get(key)!.push(t);
+  }
+  return [...map.entries()]
+    .sort(([a], [b]) => a.localeCompare(b))
+    .map(([monthKey, txns]) => ({ monthKey, transactions: txns }));
+}
+
 export function useFileUpload(): UseFileUploadResult {
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [parseErrors, setParseErrors] = useState<ParseError[]>([]);
   const [pending, setPending] = useState<PendingUpload | null>(null);
   const [isCategorising, setIsCategorising] = useState(false);
   const [savedMonthKey, setSavedMonthKey] = useState<string | null>(null);
-  const [savedTransactions, setSavedTransactions] = useState<Transaction[]>([]);
+  const [savedMonthCount, setSavedMonthCount] = useState(0);
 
-  async function saveWithCategories(
-    monthKey: string,
-    transactions: Transaction[],
-  ): Promise<void> {
+  async function saveGroup(group: MonthGroup): Promise<void> {
+    const { monthKey, transactions } = group;
+    // Preserve manually-set categories already in storage for this month
+    const { transactions: stored } = loadTransactions(monthKey);
+    const storedCats = new Map(
+      stored
+        .filter((t) => t.category && t.category !== "Uncategorised")
+        .map((t) => [`${t.description}|||${t.amount}`, t.category]),
+    );
+    const withPreserved = transactions.map((t) => {
+      const existing = storedCats.get(`${t.description}|||${t.amount}`);
+      return existing ? { ...t, category: existing } : t;
+    });
+    const categorised = await categoriseTransactions(withPreserved);
+    saveTransactions(monthKey, categorised);
+  }
+
+  async function saveAllGroups(groups: MonthGroup[]): Promise<void> {
     setIsCategorising(true);
     try {
-      // Preserve any manually-set categories already in storage for this month.
-      // Match by description + amount so overrides survive a re-upload.
-      const { transactions: stored } = loadTransactions(monthKey);
-      // Only preserve categories that were explicitly set (not "Uncategorised"),
-      // so re-uploading retries categorisation for previously failed rows.
-      const storedCats = new Map(
-        stored
-          .filter((t) => t.category && t.category !== "Uncategorised")
-          .map((t) => [`${t.description}|||${t.amount}`, t.category]),
-      );
-      const withPreserved = transactions.map((t) => {
-        const existing = storedCats.get(`${t.description}|||${t.amount}`);
-        return existing ? { ...t, category: existing } : t;
-      });
-
-      const categorised = await categoriseTransactions(withPreserved);
-      saveTransactions(monthKey, categorised);
-      setSavedMonthKey(monthKey);
-      setSavedTransactions(loadTransactions(monthKey).transactions);
+      for (const group of groups) {
+        await saveGroup(group);
+      }
+      const mostRecent = groups[groups.length - 1].monthKey;
+      setSavedMonthKey(mostRecent);
+      setSavedMonthCount(groups.length);
     } finally {
       setIsCategorising(false);
     }
@@ -84,13 +103,16 @@ export function useFileUpload(): UseFileUploadResult {
 
       if (transactions.length === 0) return;
 
-      const monthKey = monthKeyFromDate(transactions[0].date);
+      const groups = groupByMonth(transactions);
       const storedMonths = getStoredMonths();
+      const duplicateMonthKeys = groups
+        .map((g) => g.monthKey)
+        .filter((key) => storedMonths.includes(key));
 
-      if (storedMonths.includes(monthKey)) {
-        setPending({ monthKey, transactions });
+      if (duplicateMonthKeys.length > 0) {
+        setPending({ groups, duplicateMonthKeys });
       } else {
-        void saveWithCategories(monthKey, transactions);
+        void saveAllGroups(groups);
         setPending(null);
       }
     };
@@ -99,7 +121,7 @@ export function useFileUpload(): UseFileUploadResult {
 
   function confirmReplace(): void {
     if (pending) {
-      void saveWithCategories(pending.monthKey, pending.transactions);
+      void saveAllGroups(pending.groups);
       setPending(null);
     }
   }
@@ -109,14 +131,18 @@ export function useFileUpload(): UseFileUploadResult {
     setSelectedFile(null);
   }
 
+  const duplicateMonth = pending
+    ? pending.duplicateMonthKeys.map(formatMonthKey).join(", ")
+    : null;
+
   return {
     selectedFile,
     parseErrors,
     isDuplicate: pending !== null,
-    duplicateMonth: pending ? formatMonthKey(pending.monthKey) : null,
+    duplicateMonth,
     isCategorising,
     savedMonthKey,
-    savedTransactions,
+    savedMonthCount,
     handleFile,
     confirmReplace,
     cancelReplace,
