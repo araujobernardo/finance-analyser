@@ -3,6 +3,8 @@ import "./SpendByCategory.css";
 
 interface Props {
   transactions: Transaction[];
+  selectedCategory: string | null;
+  onCategoryClick: (category: string | null) => void;
 }
 
 const fmt = new Intl.NumberFormat("en-US", {
@@ -47,7 +49,11 @@ function buildRows(transactions: Transaction[]): CategoryRow[] {
   return rows;
 }
 
-export function SpendByCategory({ transactions }: Props) {
+export function SpendByCategory({
+  transactions,
+  selectedCategory,
+  onCategoryClick,
+}: Props) {
   const rows = buildRows(transactions);
 
   return (
@@ -62,11 +68,21 @@ export function SpendByCategory({ transactions }: Props) {
           {rows.map((row) => (
             <li
               key={row.category}
-              className={
+              className={[
+                "spend-row",
                 row.category === "Uncategorised"
-                  ? "spend-row spend-row--uncategorised"
-                  : "spend-row"
+                  ? "spend-row--uncategorised"
+                  : "",
+                row.category === selectedCategory ? "spend-row--selected" : "",
+              ]
+                .filter(Boolean)
+                .join(" ")}
+              onClick={() =>
+                onCategoryClick(
+                  row.category === selectedCategory ? null : row.category,
+                )
               }
+              style={{ cursor: "pointer" }}
             >
               <div
                 className="spend-row__bar"

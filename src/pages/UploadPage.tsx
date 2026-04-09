@@ -65,7 +65,15 @@ export function UploadPage() {
         setDisplayedTransactions(transactions);
       }
     }
+    setSelectedCategory(null);
   }
+
+  const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
+  const filteredTransactions = selectedCategory
+    ? displayedTransactions.filter(
+        (t) => (t.category || "Uncategorised") === selectedCategory,
+      )
+    : displayedTransactions;
 
   const [rules, setRules] = useState<Record<string, string>>(() => loadRules());
 
@@ -95,12 +103,51 @@ export function UploadPage() {
         selectedMonth={selectedMonth}
         onMonthSelect={setSelectedMonth}
       />
-      <MonthlySummary transactions={displayedTransactions} />
-      <SpendByCategory transactions={displayedTransactions} />
+      <MonthlySummary transactions={filteredTransactions} />
+      <SpendByCategory
+        transactions={displayedTransactions}
+        selectedCategory={selectedCategory}
+        onCategoryClick={setSelectedCategory}
+      />
+      {selectedCategory && (
+        <div style={{ marginBottom: "0.75rem" }}>
+          <span
+            style={{
+              display: "inline-flex",
+              alignItems: "center",
+              gap: "0.4rem",
+              padding: "0.2rem 0.6rem",
+              borderRadius: "999px",
+              border: "1px solid var(--accent-border)",
+              background: "var(--accent-bg)",
+              fontSize: "0.85rem",
+              color: "var(--accent)",
+            }}
+          >
+            Showing: {selectedCategory}
+            <button
+              type="button"
+              aria-label="Clear filter"
+              onClick={() => setSelectedCategory(null)}
+              style={{
+                background: "none",
+                border: "none",
+                cursor: "pointer",
+                color: "inherit",
+                padding: 0,
+                lineHeight: 1,
+                fontSize: "1rem",
+              }}
+            >
+              ×
+            </button>
+          </span>
+        </div>
+      )}
       {selectedMonth && displayedTransactions.length > 0 && !isCategorising && (
         <TransactionList
           monthKey={selectedMonth}
-          transactions={displayedTransactions}
+          transactions={filteredTransactions}
           onTransactionsChange={(updated) => {
             setDisplayedTransactions(updated);
             setRules(loadRules());
