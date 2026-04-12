@@ -73,23 +73,31 @@ Always use Conventional Commits:
 
 ## Rules
 
+### Branch hygiene (critical for parallel agents)
+
+- **Always branch from `main`** — never from another feature branch, unless
+  the user explicitly instructs a stack. When creating a branch, first run
+  `git checkout main && git pull` before creating your branch.
+- **Check your branch first** — at the very start of every session, run
+  `git branch --show-current`. If the output is not your expected feature
+  branch, stop and sort it out before touching any files.
+- **Never use stash to switch contexts** — if you find yourself on the wrong
+  branch with uncommitted changes, do NOT `git stash && git checkout X && git stash pop`.
+  Stash bleeds files across stories. Instead: discard or commit the changes
+  to the correct branch directly. If you are unsure which changes belong
+  where, stop and ask the user.
+- **Before every `git commit` or `git push`**, run `git branch --show-current`
+  and confirm the output matches your feature branch. If it is `main`, stop
+  immediately — do NOT commit.
+
+### Jira & PR
+
 - Never use `gh` CLI directly in bash commands — it is not available
-  in the Claude Code terminal environment. Instead, always use the
-  Jira REST API scripts pattern (node scripts/\*.mjs) for Jira updates,
-  and ask the user to run gh commands in their external PowerShell
-  terminal, or provide the exact gh command for them to run.
-- When creating a PR, do not show the full gh command in the
-  approval request. Instead ask simply:
-  "Shall I create the PR for [branch name]?"
+  in the Claude Code terminal environment. Use the Jira REST API scripts
+  pattern (node scripts/\*.mjs) for Jira updates instead.
+- When creating a PR, ask simply "Shall I create the PR for [branch name]?"
   and only run the command after the user says yes.
 - When moving a Jira ticket or adding a comment after a PR is opened,
   do it automatically without asking the user for confirmation.
-- ALWAYS verify you are on the feature branch before committing.
-  Run `git branch --show-current` before every `git commit` or
-  `git push`. If the output is `main`, stop immediately — do NOT
-  commit. Check out the correct feature branch first.
-- Never commit directly to `main`. If you find yourself on `main`
-  with staged changes, stash them (`git stash`), switch to the
-  feature branch, and pop the stash before committing.
 
 ## File Structure to Follow
