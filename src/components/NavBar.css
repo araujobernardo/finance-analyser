@@ -24,7 +24,9 @@
 }
 
 .navbar-link {
-  display: block;
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
   padding: 0.4rem 0.85rem;
   border-radius: 6px;
   color: var(--nav-link);
@@ -33,6 +35,11 @@
   transition:
     color 0.15s,
     background 0.15s;
+}
+
+.navbar-link__icon {
+  display: flex;
+  align-items: center;
 }
 
 .navbar-link:hover {
