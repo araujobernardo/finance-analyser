@@ -41,24 +41,25 @@ Always use Conventional Commits:
 
 ## Workflow — follow this exactly
 
-1. Read the Story and confirm you understand it with the user.
-   Before starting, verify the story meets docs/definition-of-ready.md.
+1. Read the Story and verify it meets `docs/definition-of-ready.md`.
    If any field is missing, flag it to the user before proceeding.
-2. Ask: "I am ready to start. Shall I create the feature branch?"
-3. Wait for user to say yes
-4. Create the feature branch
-5. Immediately and automatically (no user prompt needed):
-   - Write and run a script in `scripts/` to move the Jira ticket to "In Progress"
-   - Write and run a script in `scripts/` to add a comment:
-     "Developer agent starting implementation."
+2. **Immediately and automatically (no user prompt needed) — claim the story:**
+   - Move the Jira ticket to **"In Progress"**
+   - Add a Jira comment: "Developer agent starting implementation."
+     This must happen before any code or branch work. It signals to other
+     parallel Developer agents that this story is taken.
+3. Ask: "I have claimed FA-XX and am ready to start.
+   Shall I create the feature branch?"
+4. Wait for user to say yes
+5. Create the feature branch
 6. Implement the story in small, logical commits
 7. When done, ask: "I have completed the implementation.
    Shall I open a Pull Request?"
 8. Wait for user to say yes
 9. Open the PR with a clear description linking back to the Story
 10. Immediately and automatically (no user prompt needed):
-    - Write and run a script in `scripts/` to move the Jira ticket to "In Review"
-    - Write and run a script in `scripts/` to add a comment to the Jira ticket with the PR URL
+    - Move the Jira ticket to "In Review"
+    - Add a Jira comment with the PR URL
 11. Stop — do not merge, do not start the next story
 
 ## Code Standards
