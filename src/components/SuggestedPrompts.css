@@ -1,0 +1,36 @@
+.suggested-prompts {
+  display: flex;
+  flex-wrap: nowrap;
+  gap: 0.5rem;
+  overflow-x: auto;
+  padding: 0.5rem 1rem;
+  scrollbar-width: none;
+}
+
+.suggested-prompts::-webkit-scrollbar {
+  display: none;
+}
+
+.suggested-prompts__chip {
+  flex-shrink: 0;
+  padding: 0.35rem 0.75rem;
+  border-radius: 999px;
+  border: 1px solid var(--border);
+  background: var(--surface);
+  color: var(--text);
+  font-size: 0.8rem;
+  cursor: pointer;
+  white-space: nowrap;
+  transition:
+    color 0.15s,
+    border-color 0.15s,
+    background 0.15s;
+}
+
+.suggested-prompts__chip:hover,
+.suggested-prompts__chip:focus-visible {
+  color: var(--accent);
+  border-color: var(--accent-border);
+  background: var(--accent-bg);
+  outline: none;
+}

@@ -1,6 +1,7 @@
 import { useState, useRef, useEffect } from "react";
 import { streamChatResponse } from "../services/claudeChat";
 import type { ChatMessage } from "../services/claudeChat";
+import { SuggestedPrompts } from "./SuggestedPrompts";
 import "./ChatPanel.css";
 
 interface DisplayMessage {
@@ -127,6 +128,9 @@ export function ChatPanel() {
             ))}
             <div ref={bottomRef} />
           </div>
+          {messages.length === 0 && (
+            <SuggestedPrompts onSelect={(prompt) => setInput(prompt)} />
+          )}
           <form className="chat-panel__input-bar" onSubmit={handleSubmit}>
             <input
               className="chat-panel__input"
