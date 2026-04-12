@@ -13,6 +13,27 @@ This project uses three specialised agents:
 - **Developer** → `.claude/agents/developer.md`
 - **QA** → `.claude/agents/qa.md`
 
+## Jira Ticket Types
+
+- **Epic** — a grouping of related stories. Epics are managed by the delivery lead.
+  The Developer agent must NEVER pick up or work on an Epic directly.
+  If a backlog query returns an Epic, skip it entirely.
+- **Story** — the only unit of work the Developer agent picks up and implements.
+
+## Story Sequencing
+
+The order in which stories are worked is decided by the **Product Owner**
+and communicated through **Jira dependency links** (e.g. "is blocked by").
+
+The Developer agent must NEVER use the Jira key number to determine order.
+Instead, when asked to pick the next story, query Jira for Stories that are:
+
+- status = Backlog or To Do
+- issue type = Story
+- have no unresolved "is blocked by" links
+
+Pick the highest-priority unblocked Story. If priority is equal, ask the user.
+
 ## Golden Rules (apply to ALL agents)
 
 1. Never make assumptions — if something is unclear, stop and ask the user
