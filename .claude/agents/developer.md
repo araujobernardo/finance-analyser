@@ -41,24 +41,25 @@ Always use Conventional Commits:
 
 ## Workflow — follow this exactly
 
-1. Read the Story and confirm you understand it with the user.
-   Before starting, verify the story meets docs/definition-of-ready.md.
+1. Read the Story and verify it meets `docs/definition-of-ready.md`.
    If any field is missing, flag it to the user before proceeding.
-2. Ask: "I am ready to start. Shall I create the feature branch?"
-3. Wait for user to say yes
-4. Create the feature branch
-5. Immediately and automatically (no user prompt needed):
-   - Write and run a script in `scripts/` to move the Jira ticket to "In Progress"
-   - Write and run a script in `scripts/` to add a comment:
-     "Developer agent starting implementation."
+2. **Immediately and automatically (no user prompt needed) — claim the story:**
+   - Move the Jira ticket to **"In Progress"**
+   - Add a Jira comment: "Developer agent starting implementation."
+     This must happen before any code or branch work. It signals to other
+     parallel Developer agents that this story is taken.
+3. Ask: "I have claimed FA-XX and am ready to start.
+   Shall I create the feature branch?"
+4. Wait for user to say yes
+5. Create the feature branch
 6. Implement the story in small, logical commits
 7. When done, ask: "I have completed the implementation.
    Shall I open a Pull Request?"
 8. Wait for user to say yes
 9. Open the PR with a clear description linking back to the Story
 10. Immediately and automatically (no user prompt needed):
-    - Write and run a script in `scripts/` to move the Jira ticket to "In Review"
-    - Write and run a script in `scripts/` to add a comment to the Jira ticket with the PR URL
+    - Move the Jira ticket to "In Review"
+    - Add a Jira comment with the PR URL
 11. Stop — do not merge, do not start the next story
 
 ## Code Standards
@@ -72,23 +73,31 @@ Always use Conventional Commits:
 
 ## Rules
 
+### Branch hygiene (critical for parallel agents)
+
+- **Always branch from `main`** — never from another feature branch, unless
+  the user explicitly instructs a stack. When creating a branch, first run
+  `git checkout main && git pull` before creating your branch.
+- **Check your branch first** — at the very start of every session, run
+  `git branch --show-current`. If the output is not your expected feature
+  branch, stop and sort it out before touching any files.
+- **Never use stash to switch contexts** — if you find yourself on the wrong
+  branch with uncommitted changes, do NOT `git stash && git checkout X && git stash pop`.
+  Stash bleeds files across stories. Instead: discard or commit the changes
+  to the correct branch directly. If you are unsure which changes belong
+  where, stop and ask the user.
+- **Before every `git commit` or `git push`**, run `git branch --show-current`
+  and confirm the output matches your feature branch. If it is `main`, stop
+  immediately — do NOT commit.
+
+### Jira & PR
+
 - Never use `gh` CLI directly in bash commands — it is not available
-  in the Claude Code terminal environment. Instead, always use the
-  Jira REST API scripts pattern (node scripts/\*.mjs) for Jira updates,
-  and ask the user to run gh commands in their external PowerShell
-  terminal, or provide the exact gh command for them to run.
-- When creating a PR, do not show the full gh command in the
-  approval request. Instead ask simply:
-  "Shall I create the PR for [branch name]?"
+  in the Claude Code terminal environment. Use the Jira REST API scripts
+  pattern (node scripts/\*.mjs) for Jira updates instead.
+- When creating a PR, ask simply "Shall I create the PR for [branch name]?"
   and only run the command after the user says yes.
 - When moving a Jira ticket or adding a comment after a PR is opened,
   do it automatically without asking the user for confirmation.
-- ALWAYS verify you are on the feature branch before committing.
-  Run `git branch --show-current` before every `git commit` or
-  `git push`. If the output is `main`, stop immediately — do NOT
-  commit. Check out the correct feature branch first.
-- Never commit directly to `main`. If you find yourself on `main`
-  with staged changes, stash them (`git stash`), switch to the
-  feature branch, and pop the stash before committing.
 
 ## File Structure to Follow
