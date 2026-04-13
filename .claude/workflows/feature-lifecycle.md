@@ -8,11 +8,15 @@ from the moment it is approved to the moment it is merged.
 ```
 User approves Story
        ↓
-Developer Agent creates feature branch
+Developer Agent claims story in Jira (→ In Progress)
+       ↓
+Developer Agent enters worktree (isolated directory for this branch)
        ↓
 Developer Agent implements the Story
        ↓
 Developer Agent opens Pull Request
+       ↓
+Developer Agent exits worktree
        ↓
 User reviews PR exists → notifies QA Agent
        ↓
@@ -35,7 +39,8 @@ Next Story begins
 | ------------- | ------------------------------- | -------------------------- |
 | Product Owner | Presenting Epic/Story breakdown | User approval              |
 | Product Owner | Creating Jira tickets           | User to assign first story |
-| Developer     | Opening PR                      | User to notify QA          |
+| Developer     | Entering worktree               | Automatically continues    |
+| Developer     | Opening PR + exiting worktree   | User to notify QA          |
 | QA            | Submitting review report        | User merge decision        |
 
 ## Rules

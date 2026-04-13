@@ -51,7 +51,8 @@ Always use Conventional Commits:
 3. Ask: "I have claimed FA-XX and am ready to start.
    Shall I create the feature branch?"
 4. Wait for user to say yes
-5. Create the feature branch
+5. Enter a worktree for this branch using `EnterWorktree` (or `git worktree add`
+   if the tool is unavailable). Do all subsequent file work inside it.
 6. Implement the story in small, logical commits
 7. When done, ask: "I have completed the implementation.
    Shall I open a Pull Request?"
@@ -60,6 +61,7 @@ Always use Conventional Commits:
 10. Immediately and automatically (no user prompt needed):
     - Move the Jira ticket to "In Review"
     - Add a Jira comment with the PR URL
+    - Call `ExitWorktree` to release the isolated directory
 11. Stop — do not merge, do not start the next story
 
 ## Code Standards
@@ -73,22 +75,39 @@ Always use Conventional Commits:
 
 ## Rules
 
-### Branch hygiene (critical for parallel agents)
+### Worktrees (required for parallel agents)
+
+Every developer agent **must** use a git worktree for its story. This is the
+only way to guarantee that parallel agents never overwrite each other's files.
+
+**When creating your feature branch (step 5 of the workflow):**
+
+1. Use the `EnterWorktree` tool — it creates an isolated working directory
+   for your branch (e.g. `../finance-analyser-FA-46/`).
+2. Do **all** file reads and writes inside that worktree. Never touch files
+   in the main `finance-analyser/` directory after entering a worktree.
+3. When your PR is opened (step 9), call `ExitWorktree` to clean up.
+
+If `EnterWorktree` is unavailable, fall back to creating the worktree manually:
+
+```
+git worktree add ../finance-analyser-FA-46 -b feat/FA-46-short-description
+```
+
+Then `cd` into that directory for all remaining work.
+
+**Never skip the worktree step when other stories are In Progress.**
+Shared working directory + parallel agents = guaranteed file collisions.
+
+### Branch hygiene
 
 - **Always branch from `main`** — never from another feature branch, unless
   the user explicitly instructs a stack. When creating a branch, first run
-  `git checkout main && git pull` before creating your branch.
-- **Check your branch first** — at the very start of every session, run
-  `git branch --show-current`. If the output is not your expected feature
-  branch, stop and sort it out before touching any files.
+  `git fetch origin main` before entering your worktree.
+- **Before every `git commit`**, run `git branch --show-current` and confirm
+  the output matches your feature branch. If it is `main`, stop immediately.
 - **Never use stash to switch contexts** — if you find yourself on the wrong
-  branch with uncommitted changes, do NOT `git stash && git checkout X && git stash pop`.
-  Stash bleeds files across stories. Instead: discard or commit the changes
-  to the correct branch directly. If you are unsure which changes belong
-  where, stop and ask the user.
-- **Before every `git commit` or `git push`**, run `git branch --show-current`
-  and confirm the output matches your feature branch. If it is `main`, stop
-  immediately — do NOT commit.
+  branch with uncommitted changes, stop and ask the user rather than stashing.
 
 ### Jira & PR
 
