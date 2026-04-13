@@ -9,35 +9,50 @@
   display: flex;
   flex-direction: column;
   gap: 0.25rem;
-  padding: 1rem 1.25rem;
+  padding: 1.25rem 1.5rem;
   border: 1px solid var(--border);
-  border-radius: 8px;
-  background: var(--code-bg);
+  border-radius: 10px;
+  background: var(--surface);
   text-align: left;
 }
 
+.summary-icon {
+  font-size: 1.1rem;
+  line-height: 1;
+  margin-bottom: 0.25rem;
+}
+
+.summary-icon--income {
+  color: var(--color-success);
+}
+
+.summary-icon--expenses {
+  color: var(--color-danger);
+}
+
 .summary-label {
-  font-size: 0.8rem;
+  font-size: 0.75rem;
   color: var(--text);
   text-transform: uppercase;
-  letter-spacing: 0.05em;
+  letter-spacing: 0.06em;
 }
 
 .summary-value {
-  font-size: 1.4rem;
+  font-size: 1.5rem;
   font-weight: 600;
   color: var(--text-h);
+  margin-top: 0.1rem;
 }
 
 .summary-value--positive {
-  color: #16a34a;
+  color: var(--color-success);
 }
 
 .summary-value--negative {
-  color: #dc2626;
+  color: var(--color-danger);
 }
 
-@media (max-width: 600px) {
+@media (max-width: 768px) {
   .monthly-summary {
     flex-direction: column;
   }

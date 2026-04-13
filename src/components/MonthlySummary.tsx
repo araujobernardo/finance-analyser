@@ -25,12 +25,14 @@ export function MonthlySummary({ transactions }: Props) {
   return (
     <div className="monthly-summary">
       <div className="summary-card">
+        <span className="summary-icon summary-icon--income">▲</span>
         <span className="summary-label">Total Income</span>
         <span className="summary-value summary-value--positive">
           {fmt.format(income)}
         </span>
       </div>
       <div className="summary-card">
+        <span className="summary-icon summary-icon--expenses">▼</span>
         <span className="summary-label">Total Expenses</span>
         <span className="summary-value summary-value--negative">
           {fmt.format(expenses)}
