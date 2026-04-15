@@ -1,6 +1,7 @@
 import { useState, useMemo } from "react";
 import { MonthToggleBar } from "../components/MonthToggleBar";
 import { MonthlySummary } from "../components/MonthlySummary";
+import { LargestTransactions } from "../components/LargestTransactions";
 import { getStoredMonths, loadTransactions } from "../services/storage";
 import "./DashboardPage.css";
 
@@ -9,7 +10,6 @@ export function DashboardPage() {
   const [selectedMonth, setSelectedMonth] = useState<string | null>(
     months[0] ?? null,
   );
-
   const transactions = useMemo(() => {
     if (!selectedMonth) return [];
     return loadTransactions(selectedMonth).transactions;
@@ -33,6 +33,12 @@ export function DashboardPage() {
           </div>
           <div className="dashboard-full">
             <MonthlySummary transactions={transactions} />
+          </div>
+          <div className="dashboard-full">
+            <LargestTransactions
+              transactions={transactions}
+              onCategoryClick={() => {}}
+            />
           </div>
         </div>
       )}
