@@ -23,6 +23,8 @@ const MULTI_MONTH_CSV =
 
 const EMPTY_DATA_CSV = "Date,Description,Amount,Balance\n";
 
+const DEFAULT_ID = storage.DEFAULT_ACCOUNT_ID;
+
 beforeEach(() => {
   localStorage.clear();
   vi.restoreAllMocks();
@@ -41,14 +43,18 @@ describe("useFileUpload — handleFile", () => {
       await new Promise((r) => setTimeout(r, 50));
     });
 
-    expect(saveSpy).toHaveBeenCalledWith("2024-03", expect.any(Array));
+    expect(saveSpy).toHaveBeenCalledWith(
+      DEFAULT_ID,
+      "2024-03",
+      expect.any(Array),
+    );
     expect(result.current.selectedFile?.name).toBe("statement.csv");
     expect(result.current.isDuplicate).toBe(false);
     expect(result.current.parseErrors).toHaveLength(0);
   });
 
   it("sets isDuplicate and duplicateMonth when month already exists", async () => {
-    storage.saveTransactions("2024-03", []);
+    storage.saveTransactions(DEFAULT_ID, "2024-03", []);
     const { result } = renderHook(() => useFileUpload());
 
     await act(async () => {
@@ -61,7 +67,7 @@ describe("useFileUpload — handleFile", () => {
   });
 
   it("does not save when a duplicate is detected — waits for user choice", async () => {
-    storage.saveTransactions("2024-03", []);
+    storage.saveTransactions(DEFAULT_ID, "2024-03", []);
     const saveSpy = vi.spyOn(storage, "saveTransactions");
     saveSpy.mockClear();
 
@@ -115,9 +121,21 @@ describe("useFileUpload — multi-month upload", () => {
       await new Promise((r) => setTimeout(r, 50));
     });
 
-    expect(saveSpy).toHaveBeenCalledWith("2024-03", expect.any(Array));
-    expect(saveSpy).toHaveBeenCalledWith("2024-04", expect.any(Array));
-    expect(saveSpy).toHaveBeenCalledWith("2024-05", expect.any(Array));
+    expect(saveSpy).toHaveBeenCalledWith(
+      DEFAULT_ID,
+      "2024-03",
+      expect.any(Array),
+    );
+    expect(saveSpy).toHaveBeenCalledWith(
+      DEFAULT_ID,
+      "2024-04",
+      expect.any(Array),
+    );
+    expect(saveSpy).toHaveBeenCalledWith(
+      DEFAULT_ID,
+      "2024-05",
+      expect.any(Array),
+    );
     expect(saveSpy).toHaveBeenCalledTimes(3);
   });
 
@@ -144,7 +162,7 @@ describe("useFileUpload — multi-month upload", () => {
   });
 
   it("sets isDuplicate when any month already exists", async () => {
-    storage.saveTransactions("2024-04", []);
+    storage.saveTransactions(DEFAULT_ID, "2024-04", []);
     const { result } = renderHook(() => useFileUpload());
 
     await act(async () => {
@@ -156,8 +174,8 @@ describe("useFileUpload — multi-month upload", () => {
   });
 
   it("lists all duplicate months in duplicateMonth string", async () => {
-    storage.saveTransactions("2024-03", []);
-    storage.saveTransactions("2024-05", []);
+    storage.saveTransactions(DEFAULT_ID, "2024-03", []);
+    storage.saveTransactions(DEFAULT_ID, "2024-05", []);
     const { result } = renderHook(() => useFileUpload());
 
     await act(async () => {
@@ -170,7 +188,7 @@ describe("useFileUpload — multi-month upload", () => {
   });
 
   it("does not save any month when duplicates are detected — waits for user choice", async () => {
-    storage.saveTransactions("2024-04", []);
+    storage.saveTransactions(DEFAULT_ID, "2024-04", []);
     const saveSpy = vi.spyOn(storage, "saveTransactions");
     saveSpy.mockClear();
 
@@ -185,7 +203,7 @@ describe("useFileUpload — multi-month upload", () => {
   });
 
   it("saves all months on confirmReplace (including duplicates)", async () => {
-    storage.saveTransactions("2024-04", []);
+    storage.saveTransactions(DEFAULT_ID, "2024-04", []);
     const saveSpy = vi.spyOn(storage, "saveTransactions");
     saveSpy.mockClear();
 
@@ -201,9 +219,21 @@ describe("useFileUpload — multi-month upload", () => {
       await new Promise((r) => setTimeout(r, 50));
     });
 
-    expect(saveSpy).toHaveBeenCalledWith("2024-03", expect.any(Array));
-    expect(saveSpy).toHaveBeenCalledWith("2024-04", expect.any(Array));
-    expect(saveSpy).toHaveBeenCalledWith("2024-05", expect.any(Array));
+    expect(saveSpy).toHaveBeenCalledWith(
+      DEFAULT_ID,
+      "2024-03",
+      expect.any(Array),
+    );
+    expect(saveSpy).toHaveBeenCalledWith(
+      DEFAULT_ID,
+      "2024-04",
+      expect.any(Array),
+    );
+    expect(saveSpy).toHaveBeenCalledWith(
+      DEFAULT_ID,
+      "2024-05",
+      expect.any(Array),
+    );
     expect(result.current.isDuplicate).toBe(false);
   });
 });
@@ -212,7 +242,7 @@ describe("useFileUpload — multi-month upload", () => {
 
 describe("useFileUpload — confirmReplace", () => {
   it("saves the pending transactions and clears isDuplicate", async () => {
-    storage.saveTransactions("2024-03", []);
+    storage.saveTransactions(DEFAULT_ID, "2024-03", []);
     const saveSpy = vi.spyOn(storage, "saveTransactions");
     saveSpy.mockClear();
 
@@ -230,7 +260,11 @@ describe("useFileUpload — confirmReplace", () => {
       await new Promise((r) => setTimeout(r, 50));
     });
 
-    expect(saveSpy).toHaveBeenCalledWith("2024-03", expect.any(Array));
+    expect(saveSpy).toHaveBeenCalledWith(
+      DEFAULT_ID,
+      "2024-03",
+      expect.any(Array),
+    );
     expect(result.current.isDuplicate).toBe(false);
     expect(result.current.duplicateMonth).toBeNull();
   });
@@ -240,7 +274,7 @@ describe("useFileUpload — confirmReplace", () => {
 
 describe("useFileUpload — cancelReplace", () => {
   it("clears isDuplicate and selectedFile without saving", async () => {
-    storage.saveTransactions("2024-03", []);
+    storage.saveTransactions(DEFAULT_ID, "2024-03", []);
     const saveSpy = vi.spyOn(storage, "saveTransactions");
     saveSpy.mockClear();
 
@@ -265,7 +299,7 @@ describe("useFileUpload — cancelReplace", () => {
 
 describe("useFileUpload — month name formatting", () => {
   it("formats the duplicate month as a human-readable name", async () => {
-    storage.saveTransactions("2024-04", []);
+    storage.saveTransactions(DEFAULT_ID, "2024-04", []);
     const { result } = renderHook(() => useFileUpload());
 
     await act(async () => {
@@ -274,5 +308,89 @@ describe("useFileUpload — month name formatting", () => {
     });
 
     expect(result.current.duplicateMonth).toBe("April 2024");
+  });
+});
+
+// ── per-account duplicate detection ───────────────────────────────────────
+
+describe("useFileUpload — per-account duplicate detection", () => {
+  const ACCOUNT_A = "account-a";
+  const ACCOUNT_B = "account-b";
+
+  it("saves without duplicate warning when the same month exists only in a different account", async () => {
+    // Seed the month under account-b only
+    storage.saveTransactions(ACCOUNT_B, "2024-03", []);
+
+    const saveSpy = vi.spyOn(storage, "saveTransactions");
+    saveSpy.mockClear();
+
+    // Upload under account-a — should NOT detect a duplicate
+    const { result } = renderHook(() =>
+      useFileUpload({ accountId: ACCOUNT_A }),
+    );
+
+    await act(async () => {
+      result.current.handleFile(makeFile(VALID_CSV));
+      await new Promise((r) => setTimeout(r, 50));
+    });
+
+    expect(result.current.isDuplicate).toBe(false);
+    expect(saveSpy).toHaveBeenCalledWith(
+      ACCOUNT_A,
+      "2024-03",
+      expect.any(Array),
+    );
+  });
+
+  it("detects a duplicate only within the same account", async () => {
+    // Seed the month under account-a
+    storage.saveTransactions(ACCOUNT_A, "2024-03", []);
+
+    const { result } = renderHook(() =>
+      useFileUpload({ accountId: ACCOUNT_A }),
+    );
+
+    await act(async () => {
+      result.current.handleFile(makeFile(VALID_CSV));
+      await new Promise((r) => setTimeout(r, 50));
+    });
+
+    expect(result.current.isDuplicate).toBe(true);
+    expect(result.current.duplicateMonth).toBe("March 2024");
+  });
+
+  it("saves transactions under the provided accountId", async () => {
+    const saveSpy = vi.spyOn(storage, "saveTransactions");
+
+    const { result } = renderHook(() =>
+      useFileUpload({ accountId: ACCOUNT_A }),
+    );
+
+    await act(async () => {
+      result.current.handleFile(makeFile(VALID_CSV));
+      await new Promise((r) => setTimeout(r, 50));
+    });
+
+    // All saves must be scoped to ACCOUNT_A
+    for (const call of saveSpy.mock.calls) {
+      expect(call[0]).toBe(ACCOUNT_A);
+    }
+  });
+
+  it("re-uploading the same month for a different account after switching does not trigger duplicate", async () => {
+    // Account A already has 2024-04
+    storage.saveTransactions(ACCOUNT_A, "2024-04", []);
+
+    // Now upload under account B — no duplicate expected
+    const { result } = renderHook(() =>
+      useFileUpload({ accountId: ACCOUNT_B }),
+    );
+
+    await act(async () => {
+      result.current.handleFile(makeFile(VALID_CSV_APRIL));
+      await new Promise((r) => setTimeout(r, 50));
+    });
+
+    expect(result.current.isDuplicate).toBe(false);
   });
 });
