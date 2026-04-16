@@ -12,16 +12,22 @@ import { buildCategoryRows } from "../utils/categoryData";
 import { TransactionList } from "../components/TransactionList";
 import { CategoryRulesList } from "../components/CategoryRulesList";
 import { useFileUpload } from "../hooks/useFileUpload";
+import { useAccount } from "../context/AccountContext";
 import { loadRules } from "../services/categoryRules";
 import { loadBudgets } from "../services/budgets";
 import {
-  getStoredMonths,
-  loadTransactions,
-  removeMonth,
+  getAccountMonths,
+  getTransactions,
+  deleteMonth,
 } from "../services/storage";
 import type { Transaction } from "../utils/csvParser";
 
 export function UploadPage() {
+  const { accounts, activeAccountId } = useAccount();
+  const activeAccount = accounts.find((a) => a.id === activeAccountId);
+  const accountName = activeAccount?.name ?? "My Account";
+  const accountColour = activeAccount?.colour;
+
   const {
     selectedFile,
     parseErrors,
@@ -33,14 +39,14 @@ export function UploadPage() {
     handleFile,
     confirmReplace,
     cancelReplace,
-  } = useFileUpload();
+  } = useFileUpload({ accountId: activeAccountId });
 
   // Track which month the user (or a fresh upload) has selected
   const [storedMonths, setStoredMonths] = useState<string[]>(() =>
-    getStoredMonths(),
+    getAccountMonths(activeAccountId),
   );
   const [selectedMonth, setSelectedMonth] = useState<string | null>(() => {
-    const months = getStoredMonths();
+    const months = getAccountMonths(activeAccountId);
     return months.length > 0 ? months[months.length - 1] : null;
   });
 
@@ -49,7 +55,7 @@ export function UploadPage() {
   const [prevSavedMonthKey, setPrevSavedMonthKey] = useState(savedMonthKey);
   if (savedMonthKey !== prevSavedMonthKey) {
     setPrevSavedMonthKey(savedMonthKey);
-    const months = getStoredMonths();
+    const months = getAccountMonths(activeAccountId);
     setStoredMonths(months);
     if (savedMonthKey) setSelectedMonth(savedMonthKey);
   }
@@ -61,9 +67,10 @@ export function UploadPage() {
   const [displayedTransactions, setDisplayedTransactions] = useState<
     Transaction[]
   >(() => {
-    const months = getStoredMonths();
+    const months = getAccountMonths(activeAccountId);
     if (months.length === 0) return [];
-    return loadTransactions(months[months.length - 1]).transactions;
+    return getTransactions(activeAccountId, months[months.length - 1])
+      .transactions;
   });
   const [prevSelectedMonth, setPrevSelectedMonth] = useState(selectedMonth);
   if (selectedMonth !== prevSelectedMonth) {
@@ -71,7 +78,7 @@ export function UploadPage() {
     if (!selectedMonth) {
       setDisplayedTransactions([]);
     } else {
-      const { transactions } = loadTransactions(selectedMonth);
+      const { transactions } = getTransactions(activeAccountId, selectedMonth);
       // Edge case: selected month was deleted — fall back to most recent
       if (transactions.length === 0 && storedMonths.length > 0) {
         const fallback = storedMonths[storedMonths.length - 1];
@@ -101,8 +108,8 @@ export function UploadPage() {
   const [showBudgetForm, setShowBudgetForm] = useState(false);
 
   function handleDeleteMonth(monthKey: string) {
-    removeMonth(monthKey);
-    const months = getStoredMonths();
+    deleteMonth(activeAccountId, monthKey);
+    const months = getAccountMonths(activeAccountId);
     setStoredMonths(months);
     if (selectedMonth === monthKey) {
       setSelectedMonth(months.length > 0 ? months[months.length - 1] : null);
@@ -113,7 +120,51 @@ export function UploadPage() {
 
   return (
     <div className="page-content">
-      <h1>Upload Transactions</h1>
+      <h1>
+        Upload Transactions
+        {accountColour ? (
+          <span
+            style={{
+              display: "inline-flex",
+              alignItems: "center",
+              gap: "0.4rem",
+              marginLeft: "0.6rem",
+              padding: "0.15rem 0.55rem",
+              borderRadius: "999px",
+              background: accountColour + "22",
+              border: `1px solid ${accountColour}55`,
+              fontSize: "0.6em",
+              fontWeight: 500,
+              color: accountColour,
+              verticalAlign: "middle",
+            }}
+            aria-label={`Active account: ${accountName}`}
+          >
+            <span
+              style={{
+                display: "inline-block",
+                width: "0.6em",
+                height: "0.6em",
+                borderRadius: "50%",
+                background: accountColour,
+              }}
+            />
+            {accountName}
+          </span>
+        ) : (
+          <span
+            style={{
+              marginLeft: "0.5rem",
+              fontSize: "0.6em",
+              fontWeight: 400,
+              color: "var(--text-muted, #6b7280)",
+              verticalAlign: "middle",
+            }}
+          >
+            ({accountName})
+          </span>
+        )}
+      </h1>
       <CsvUpload onFileSelected={handleFile} />
       {isCategorising && (
         <p style={{ fontSize: "0.8rem", color: "#6b7280" }}>
@@ -151,7 +202,7 @@ export function UploadPage() {
         !isCategorising &&
         parseErrors.length === 0 && (
           <p style={{ fontSize: "0.8rem", color: "#6b7280" }}>
-            Stored: {selectedFile.name}
+            Stored: {selectedFile.name} for <strong>{accountName}</strong>
             {savedMonthCount > 1 && ` (${savedMonthCount} months)`}
           </p>
         )}
