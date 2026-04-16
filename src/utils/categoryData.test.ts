@@ -76,4 +76,45 @@ describe("buildCategoryRows", () => {
     const rows = buildCategoryRows([tx(-100, "Food")]);
     expect(rows.every((r) => r.total > 0)).toBe(true);
   });
+
+  // ── categoryOverride support (AC: dashboard reflects inline edits) ──────────
+
+  it("uses categoryOverride instead of category when override is present", () => {
+    const overridden: Transaction = {
+      date: new Date("2025-03-01"),
+      description: "Countdown",
+      amount: -60,
+      category: "Groceries",
+      categoryOverride: "Dining",
+    };
+    const rows = buildCategoryRows([overridden]);
+    expect(rows.map((r) => r.category)).toContain("Dining");
+    expect(rows.map((r) => r.category)).not.toContain("Groceries");
+  });
+
+  it("falls back to category when no override is present", () => {
+    const rows = buildCategoryRows([tx(-50, "Transport")]);
+    expect(rows[0].category).toBe("Transport");
+  });
+
+  it("mixes overridden and non-overridden transactions correctly", () => {
+    const overridden: Transaction = {
+      date: new Date("2025-03-01"),
+      description: "A",
+      amount: -40,
+      category: "Groceries",
+      categoryOverride: "Dining",
+    };
+    const normal: Transaction = {
+      date: new Date("2025-03-01"),
+      description: "B",
+      amount: -60,
+      category: "Transport",
+    };
+    const rows = buildCategoryRows([overridden, normal]);
+    const cats = rows.map((r) => r.category);
+    expect(cats).toContain("Dining");
+    expect(cats).toContain("Transport");
+    expect(cats).not.toContain("Groceries");
+  });
 });

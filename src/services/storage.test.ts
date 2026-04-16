@@ -19,6 +19,8 @@ import {
   removeMonth,
   monthKeyFromDate,
   updateTransactionCategory,
+  overrideTransactionCategory,
+  bulkOverrideTransactionCategory,
 } from "./storage";
 import type { Account } from "./storage";
 import type { Transaction } from "../utils/csvParser";
@@ -532,5 +534,103 @@ describe("updateTransactionCategory", () => {
     expect(transactions[0].category).toBe("Groceries");
     expect(transactions[1].category).toBe("Dining");
     expect(transactions[2].category).toBe("Utilities");
+  });
+});
+
+// ── overrideTransactionCategory ───────────────────────────────────────────────
+
+describe("overrideTransactionCategory", () => {
+  it("sets categoryOverride without touching category", () => {
+    saveTransactions(MARCH_2024, [
+      makeTransaction({ category: "Groceries" }),
+    ]);
+    overrideTransactionCategory(MARCH_2024, 0, "Dining");
+    const { transactions } = loadTransactions(MARCH_2024);
+    expect(transactions[0].categoryOverride).toBe("Dining");
+    expect(transactions[0].category).toBe("Groceries");
+  });
+
+  it("persists the override across a reload", () => {
+    saveTransactions(MARCH_2024, [makeTransaction()]);
+    overrideTransactionCategory(MARCH_2024, 0, "Transport");
+    const { transactions } = loadTransactions(MARCH_2024);
+    expect(transactions[0].categoryOverride).toBe("Transport");
+  });
+
+  it("returns success: true on a valid update", () => {
+    saveTransactions(MARCH_2024, [makeTransaction()]);
+    const result = overrideTransactionCategory(MARCH_2024, 0, "Dining");
+    expect(result.success).toBe(true);
+  });
+
+  it("returns an error for an out-of-range index", () => {
+    saveTransactions(MARCH_2024, [makeTransaction()]);
+    const result = overrideTransactionCategory(MARCH_2024, 99, "Dining");
+    expect(result.success).toBe(false);
+    expect(result.error).toBeDefined();
+  });
+
+  it("returns an error when the month does not exist", () => {
+    const result = overrideTransactionCategory("2099-01", 0, "Dining");
+    expect(result.success).toBe(false);
+  });
+
+  it("does not modify other transactions in the month", () => {
+    saveTransactions(MARCH_2024, [
+      makeTransaction({ description: "A", category: "Groceries" }),
+      makeTransaction({ description: "B", category: "Transport" }),
+    ]);
+    overrideTransactionCategory(MARCH_2024, 0, "Dining");
+    const { transactions } = loadTransactions(MARCH_2024);
+    expect(transactions[0].categoryOverride).toBe("Dining");
+    expect(transactions[1].categoryOverride).toBeUndefined();
+    expect(transactions[1].category).toBe("Transport");
+  });
+});
+
+// ── bulkOverrideTransactionCategory ──────────────────────────────────────────
+
+describe("bulkOverrideTransactionCategory", () => {
+  it("sets categoryOverride on all specified indices", () => {
+    saveTransactions(MARCH_2024, [
+      makeTransaction({ category: "Groceries" }),
+      makeTransaction({ category: "Transport" }),
+      makeTransaction({ category: "Utilities" }),
+    ]);
+    bulkOverrideTransactionCategory(MARCH_2024, [0, 2], "Dining");
+    const { transactions } = loadTransactions(MARCH_2024);
+    expect(transactions[0].categoryOverride).toBe("Dining");
+    expect(transactions[1].categoryOverride).toBeUndefined();
+    expect(transactions[2].categoryOverride).toBe("Dining");
+  });
+
+  it("does not touch the original category field", () => {
+    saveTransactions(MARCH_2024, [
+      makeTransaction({ category: "Groceries" }),
+      makeTransaction({ category: "Transport" }),
+    ]);
+    bulkOverrideTransactionCategory(MARCH_2024, [0, 1], "Shopping");
+    const { transactions } = loadTransactions(MARCH_2024);
+    expect(transactions[0].category).toBe("Groceries");
+    expect(transactions[1].category).toBe("Transport");
+  });
+
+  it("returns success: true when the update succeeds", () => {
+    saveTransactions(MARCH_2024, [makeTransaction(), makeTransaction()]);
+    const result = bulkOverrideTransactionCategory(MARCH_2024, [0, 1], "Dining");
+    expect(result.success).toBe(true);
+  });
+
+  it("returns an error when the month does not exist", () => {
+    const result = bulkOverrideTransactionCategory("2099-01", [0], "Dining");
+    expect(result.success).toBe(false);
+  });
+
+  it("handles an empty indices array (no-op)", () => {
+    saveTransactions(MARCH_2024, [makeTransaction({ category: "Groceries" })]);
+    const result = bulkOverrideTransactionCategory(MARCH_2024, [], "Dining");
+    expect(result.success).toBe(true);
+    const { transactions } = loadTransactions(MARCH_2024);
+    expect(transactions[0].categoryOverride).toBeUndefined();
   });
 });
