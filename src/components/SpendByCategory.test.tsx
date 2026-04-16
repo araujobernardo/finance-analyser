@@ -206,6 +206,64 @@ describe("SpendByCategory budget progress bar", () => {
   });
 });
 
+describe("SpendByCategory donut chart", () => {
+  it("renders the chart container when rows are present", () => {
+    const { container } = renderPanel([
+      row("Food", 100, 75),
+      row("Transport", 33, 25),
+    ]);
+    expect(
+      container.querySelector(".spend-by-category__chart"),
+    ).toBeInTheDocument();
+  });
+
+  it("does not render the chart container when there are no rows", () => {
+    const { container } = renderPanel([]);
+    expect(
+      container.querySelector(".spend-by-category__chart"),
+    ).not.toBeInTheDocument();
+  });
+
+  it("marks the chart container as aria-hidden", () => {
+    const { container } = renderPanel([row("Food", 100, 100)]);
+    expect(
+      container.querySelector(".spend-by-category__chart"),
+    ).toHaveAttribute("aria-hidden", "true");
+  });
+});
+
+describe("SpendByCategory colour swatches", () => {
+  it("renders a colour swatch for each category row", () => {
+    const { container } = renderPanel([
+      row("Food", 100, 75),
+      row("Transport", 33, 25),
+    ]);
+    const swatches = container.querySelectorAll(".spend-row__swatch");
+    expect(swatches).toHaveLength(2);
+  });
+
+  it("each swatch is aria-hidden", () => {
+    const { container } = renderPanel([row("Food", 100, 100)]);
+    const swatch = container.querySelector(".spend-row__swatch");
+    expect(swatch).toHaveAttribute("aria-hidden", "true");
+  });
+
+  it("renders a 4px percentage bar for each row", () => {
+    const { container } = renderPanel([
+      row("Food", 100, 75),
+      row("Transport", 33, 25),
+    ]);
+    const bars = container.querySelectorAll(".spend-row__pct-bar");
+    expect(bars).toHaveLength(2);
+  });
+
+  it("known categories receive a non-grey fill colour", () => {
+    const { container } = renderPanel([row("Groceries", 200, 100)]);
+    const swatch = container.querySelector(".spend-row__swatch") as HTMLElement;
+    expect(swatch.style.background).toBe("rgb(192, 132, 252)"); // #c084fc
+  });
+});
+
 describe("SpendByCategory orphaned budgets", () => {
   it("shows orphaned budgets section when a budget has no matching spend row", () => {
     renderPanel([row("Groceries", 200, 100)], {
