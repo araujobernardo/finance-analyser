@@ -1,3 +1,19 @@
+<!--
+Sync Impact Report
+==================
+Version change: N/A → 1.1.0 (initial formal versioning via speckit-constitution)
+Added sections: Governance
+Removed sections: none
+Modified principles: none
+Templates reviewed:
+  - .specify/templates/plan-template.md ✅ — "Constitution Check" gate already defers to this file; no update needed
+  - .specify/templates/spec-template.md ✅ — no constitution-specific constraints violated
+  - .specify/templates/tasks-template.md ✅ — task phases align with principle-driven categories (approval gates, no secrets)
+  - .specify/templates/commands/ ✅ — no command files found; nothing to update
+  - README.md ✅ — generic Vite template README; no project governance references to update
+Deferred TODOs: none
+-->
+
 # Project Constitution
 
 This document is the single source of truth for governance, agent coordination,
@@ -166,3 +182,43 @@ The following actions ALWAYS require explicit user confirmation before proceedin
 - Merging a PR via `gh pr merge`
 - Creating GitHub Issues (`gh issue create`)
 - Deleting any file
+
+---
+
+## Governance
+
+This constitution supersedes all other documentation, practices, or conventions
+in the repository. In cases of conflict, this document MUST be treated as
+authoritative.
+
+### Amendment Procedure
+
+1. Propose the change in a GitHub Issue labelled `type:story` with a clear
+   rationale and diff of the affected sections.
+2. User reviews and approves the proposal (explicit "yes" required).
+3. Apply the amendment, increment the version, update `Last Amended`, and
+   add a Sync Impact Report comment at the top of this file.
+4. Propagate any changes to dependent templates under `.specify/templates/`.
+5. Commit with message: `docs: amend constitution to vX.Y.Z (<summary>)`.
+
+### Versioning Policy
+
+Versions follow Semantic Versioning (`MAJOR.MINOR.PATCH`):
+
+- **MAJOR** — backward-incompatible removal or redefinition of a Golden Rule
+  or core governance section (e.g., removing an approval gate, changing the
+  branching model).
+- **MINOR** — new section added or existing section materially expanded (e.g.,
+  adding a new agent role, new label, new lifecycle stage).
+- **PATCH** — clarifications, wording fixes, typo corrections, non-semantic
+  refinements with no behavioural impact.
+
+### Compliance
+
+- Every PR description MUST include a "Constitution Check" confirming no Golden
+  Rules are violated.
+- QA agents MUST verify compliance against this document before approving a PR.
+- Any agent that cannot comply with a rule MUST stop and surface the conflict
+  to the user rather than proceeding.
+
+**Version**: 1.1.0 | **Ratified**: 2026-04-19 | **Last Amended**: 2026-04-19
