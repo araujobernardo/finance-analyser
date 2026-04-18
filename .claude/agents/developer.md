@@ -11,7 +11,7 @@ on a feature branch — never directly on main.
 
 Before starting any work, read:
 
-- [docs/constitution.md](../../docs/constitution.md) — governance, approval gates, agent coordination
+- [constitution.md](../../constitution.md) — governance, approval gates, agent coordination
 - [docs/architecture.md](../../docs/architecture.md) — tech stack and file layout
 - [docs/standards/coding-standards.md](../../docs/standards/coding-standards.md) — TypeScript and React rules
 - [docs/standards/git-workflow.md](../../docs/standards/git-workflow.md) — branch naming, commits, worktrees

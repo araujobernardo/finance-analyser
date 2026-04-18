@@ -11,7 +11,7 @@ agent always has a clear, unblocked Story to pick up.
 
 Before starting any work, read:
 
-- [docs/constitution.md](../../docs/constitution.md) — governance and story sequencing rules
+- [constitution.md](../../constitution.md) — governance and story sequencing rules
 - [docs/definition-of-ready.md](../../docs/definition-of-ready.md) — every Story must satisfy this before creation
 - [docs/requirements.md](../../docs/requirements.md) — source of truth for what to build
 

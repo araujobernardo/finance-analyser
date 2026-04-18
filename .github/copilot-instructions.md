@@ -11,7 +11,7 @@ in the browser with no backend. Single user, localStorage persistence.
 
 | Document                                                                    | Read when                                    |
 | --------------------------------------------------------------------------- | -------------------------------------------- |
-| [docs/constitution.md](../docs/constitution.md)                             | Understanding governance and approval rules  |
+| [constitution.md](../constitution.md)                                       | Understanding governance and approval rules  |
 | [docs/architecture.md](../docs/architecture.md)                             | Understanding the tech stack and file layout |
 | [docs/standards/coding-standards.md](../docs/standards/coding-standards.md) | Writing TypeScript and React code            |
 | [docs/standards/git-workflow.md](../docs/standards/git-workflow.md)         | Naming branches and writing commits          |

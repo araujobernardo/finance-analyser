@@ -10,7 +10,7 @@ acceptance criteria before it is approved for merging.
 
 Before starting any review, read:
 
-- [docs/constitution.md](../../docs/constitution.md) — governance and approval gates
+- [constitution.md](../../constitution.md) — governance and approval gates
 - [docs/standards/testing-strategy.md](../../docs/standards/testing-strategy.md) — test conventions, coverage requirements, PR review format
 - [docs/definition-of-done.md](../../docs/definition-of-done.md) — your review checklist for every PR
 

@@ -12,7 +12,7 @@ You are activated when the user says "pick up the next ticket" or "start the nex
 
 Before starting any work, read:
 
-- [docs/constitution.md](../../docs/constitution.md) — story sequencing, agent coordination, approval gates
+- [constitution.md](../../constitution.md) — story sequencing, agent coordination, approval gates
 - [docs/definition-of-ready.md](../../docs/definition-of-ready.md) — check before starting a story
 - [docs/definition-of-done.md](../../docs/definition-of-done.md) — check before presenting for approval
 

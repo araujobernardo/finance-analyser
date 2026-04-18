@@ -9,7 +9,7 @@ See [docs/requirements.md](docs/requirements.md) for full requirements.
 
 | Document                                                                 | Purpose                                        |
 | ------------------------------------------------------------------------ | ---------------------------------------------- |
-| [docs/constitution.md](docs/constitution.md)                             | Governance, approval gates, agent coordination |
+| [constitution.md](constitution.md)                                       | Governance, approval gates, agent coordination |
 | [docs/architecture.md](docs/architecture.md)                             | Tech stack and file layout                     |
 | [docs/standards/coding-standards.md](docs/standards/coding-standards.md) | TypeScript and React rules                     |
 | [docs/standards/git-workflow.md](docs/standards/git-workflow.md)         | Branch naming, commits, PRs                    |
@@ -27,4 +27,4 @@ See [docs/requirements.md](docs/requirements.md) for full requirements.
 | Delivery Lead | [.claude/agents/delivery-lead.md](.claude/agents/delivery-lead.md) |
 
 All governance rules (golden rules, approval gates, auto-approved actions)
-are in [docs/constitution.md](docs/constitution.md).
+are in [constitution.md](constitution.md).
