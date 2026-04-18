@@ -16,14 +16,14 @@ function renderPanel(
   rows: CategoryRow[],
   {
     selectedCategory = null,
-    onCategoryClick = vi.fn(),
+    onCategoryClick = vi.fn() as (category: string | null) => void,
     budgets = {},
-    onBudgetsChange = vi.fn(),
+    onBudgetsChange = vi.fn() as (budgets: Record<string, number>) => void,
   }: {
     selectedCategory?: string | null;
-    onCategoryClick?: ReturnType<typeof vi.fn>;
+    onCategoryClick?: (category: string | null) => void;
     budgets?: Record<string, number>;
-    onBudgetsChange?: ReturnType<typeof vi.fn>;
+    onBudgetsChange?: (budgets: Record<string, number>) => void;
   } = {},
 ) {
   return render(

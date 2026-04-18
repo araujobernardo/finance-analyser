@@ -1,4 +1,3 @@
-import { useState } from "react";
 import {
   PieChart,
   Pie,
@@ -112,8 +111,6 @@ export function SpendingDonutChart({
   selectedCategory,
   onCategoryClick,
 }: Props) {
-  const [hoverIndex, setHoverIndex] = useState<number | null>(null);
-
   if (rows.length < 2) {
     return (
       <div className="donut-empty">
@@ -123,11 +120,6 @@ export function SpendingDonutChart({
       </div>
     );
   }
-
-  const activeIndex =
-    selectedCategory !== null
-      ? rows.findIndex((r) => r.category === selectedCategory)
-      : hoverIndex;
 
   return (
     <div className="donut-wrapper">
@@ -141,10 +133,7 @@ export function SpendingDonutChart({
             cy="50%"
             innerRadius={70}
             outerRadius={110}
-            activeIndex={activeIndex ?? undefined}
             activeShape={ActiveShape}
-            onMouseEnter={(_, index) => setHoverIndex(index)}
-            onMouseLeave={() => setHoverIndex(null)}
             onClick={(_, index) => {
               const cat = rows[index].category;
               onCategoryClick(cat === selectedCategory ? null : cat);
