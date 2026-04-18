@@ -28,3 +28,9 @@ See [docs/requirements.md](docs/requirements.md) for full requirements.
 
 All governance rules (golden rules, approval gates, auto-approved actions)
 are in [constitution.md](constitution.md).
+
+<!-- SPECKIT START -->
+
+For project principles, governance, and agent workflow see: constitution.md
+
+<!-- SPECKIT END -->
