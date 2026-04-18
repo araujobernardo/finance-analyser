@@ -1,6 +1,11 @@
-import { useMemo, useState, useEffect, useRef } from "react";
+import { useMemo, useState, useEffect, useRef, useCallback } from "react";
 import { MonthToggleBar } from "../components/MonthToggleBar";
-import { getStoredMonths, loadTransactions } from "../services/storage";
+import {
+  getStoredMonths,
+  loadTransactions,
+  overrideTransactionCategory,
+  bulkOverrideTransactionCategory,
+} from "../services/storage";
 import type { Transaction } from "../utils/csvParser";
 import { CATEGORIES } from "../services/categorisation";
 import "./TransactionsPage.css";
@@ -43,6 +48,8 @@ function compareRows(
   dir: SortDir,
 ): number {
   let cmp = 0;
+  const catA = a.categoryOverride ?? a.category ?? "Uncategorised";
+  const catB = b.categoryOverride ?? b.category ?? "Uncategorised";
   switch (col) {
     case "date":
       cmp = a.date.getTime() - b.date.getTime();
@@ -51,9 +58,7 @@ function compareRows(
       cmp = a.description.localeCompare(b.description);
       break;
     case "category":
-      cmp = (a.category ?? "Uncategorised").localeCompare(
-        b.category ?? "Uncategorised",
-      );
+      cmp = catA.localeCompare(catB);
       break;
     case "amount":
       cmp = a.amount - b.amount;
@@ -63,6 +68,109 @@ function compareRows(
 }
 
 const ALL_CATEGORIES = ["Uncategorised", ...CATEGORIES];
+
+// ── Inline category dropdown ──────────────────────────────────────────────────
+
+interface InlineCategoryDropdownProps {
+  category: string;
+  isOverridden: boolean;
+  onSelect: (newCat: string) => void;
+  onCancel: () => void;
+}
+
+function InlineCategoryDropdown({
+  category,
+  isOverridden,
+  onSelect,
+  onCancel,
+}: InlineCategoryDropdownProps) {
+  const [open, setOpen] = useState(false);
+  const containerRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (!open) return;
+    function handleClickOutside(e: MouseEvent) {
+      if (
+        containerRef.current &&
+        !containerRef.current.contains(e.target as Node)
+      ) {
+        setOpen(false);
+        onCancel();
+      }
+    }
+    function handleKeyDown(e: KeyboardEvent) {
+      if (e.key === "Escape") {
+        setOpen(false);
+        onCancel();
+      }
+    }
+    document.addEventListener("mousedown", handleClickOutside);
+    document.addEventListener("keydown", handleKeyDown);
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+      document.removeEventListener("keydown", handleKeyDown);
+    };
+  }, [open, onCancel]);
+
+  function handleSelect(cat: string) {
+    setOpen(false);
+    onSelect(cat);
+  }
+
+  return (
+    <div className="txns-cat-cell" ref={containerRef}>
+      {isOverridden && (
+        <span
+          className="txns-edited-dot"
+          aria-label="Category manually edited"
+          title="Category manually edited"
+        />
+      )}
+      <span
+        className="txns-cat-dot"
+        style={{ background: CATEGORY_COLOURS[category] ?? "#9ca3af" }}
+      />
+      <button
+        className="txns-cat-inline-btn"
+        onClick={() => setOpen((v) => !v)}
+        aria-haspopup="listbox"
+        aria-expanded={open}
+        type="button"
+        title="Click to change category"
+      >
+        {category}
+        <span className="txns-cat-inline-arrow" aria-hidden="true">
+          ▾
+        </span>
+      </button>
+      {open && (
+        <ul
+          className="txns-cat-inline-dropdown"
+          role="listbox"
+          aria-label="Select category"
+        >
+          {ALL_CATEGORIES.map((cat) => (
+            <li
+              key={cat}
+              role="option"
+              aria-selected={cat === category}
+              className={`txns-cat-inline-option${cat === category ? " txns-cat-inline-option--active" : ""}`}
+              onMouseDown={() => handleSelect(cat)}
+            >
+              <span
+                className="txns-cat-dot"
+                style={{ background: CATEGORY_COLOURS[cat] ?? "#9ca3af" }}
+              />
+              {cat}
+            </li>
+          ))}
+        </ul>
+      )}
+    </div>
+  );
+}
+
+// ── Main page ─────────────────────────────────────────────────────────────────
 
 export function TransactionsPage() {
   const months = useMemo(() => getStoredMonths(), []);
@@ -80,7 +188,16 @@ export function TransactionsPage() {
   const [page, setPage] = useState(1);
   const filterRef = useRef<HTMLDivElement>(null);
 
-  // Debounce search and reset page together (async callback, not synchronous effect)
+  // Local transactions state so inline edits reflect immediately
+  const [localTransactions, setLocalTransactions] = useState<Transaction[]>([]);
+
+  // Checkbox selection state — keyed by the transaction's position in
+  // `localTransactions` (stable within a session for a given month)
+  const [selectedIndices, setSelectedIndices] = useState<Set<number>>(
+    new Set(),
+  );
+
+  // Debounce search and reset page together
   useEffect(() => {
     const id = setTimeout(() => {
       setSearchDebounced(searchRaw);
@@ -100,33 +217,43 @@ export function TransactionsPage() {
     return () => document.removeEventListener("mousedown", handleClick);
   }, [filterOpen]);
 
-  const transactions = useMemo(() => {
-    if (!selectedMonth) return [];
-    return loadTransactions(selectedMonth).transactions;
+  // Load transactions when selected month changes
+  useEffect(() => {
+    if (!selectedMonth) {
+      setLocalTransactions([]);
+      return;
+    }
+    setLocalTransactions(loadTransactions(selectedMonth).transactions);
+    setSelectedIndices(new Set());
   }, [selectedMonth]);
 
   const filtered = useMemo(() => {
     const q = searchDebounced.toLowerCase();
-    return transactions
-      .filter((t) => {
+    return localTransactions
+      .map((t, originalIndex) => ({ t, originalIndex }))
+      .filter(({ t }) => {
+        const displayCat = t.categoryOverride ?? t.category ?? "";
         if (
           q &&
           !t.description.toLowerCase().includes(q) &&
-          !(t.category ?? "").toLowerCase().includes(q)
+          !displayCat.toLowerCase().includes(q)
         )
           return false;
         if (selectedCategories.length > 0) {
-          const cat = t.category ?? "Uncategorised";
+          const cat = displayCat || "Uncategorised";
           if (!selectedCategories.includes(cat)) return false;
         }
         return true;
       })
-      .sort((a, b) => compareRows(a, b, sort.col, sort.dir));
-  }, [transactions, searchDebounced, selectedCategories, sort]);
+      .sort((a, b) => compareRows(a.t, b.t, sort.col, sort.dir));
+  }, [localTransactions, searchDebounced, selectedCategories, sort]);
 
   const totalSpend = useMemo(
     () =>
-      filtered.reduce((s, t) => (t.amount < 0 ? s + Math.abs(t.amount) : s), 0),
+      filtered.reduce(
+        (s, { t }) => (t.amount < 0 ? s + Math.abs(t.amount) : s),
+        0,
+      ),
     [filtered],
   );
 
@@ -155,6 +282,70 @@ export function TransactionsPage() {
       prev.includes(cat) ? prev.filter((c) => c !== cat) : [...prev, cat],
     );
     setPage(1);
+  }
+
+  // ── Inline category editing ────────────────────────────────────────────────
+
+  const handleCategorySelect = useCallback(
+    (originalIndex: number, newCat: string) => {
+      if (!selectedMonth) return;
+      overrideTransactionCategory(selectedMonth, originalIndex, newCat);
+      setLocalTransactions((prev) =>
+        prev.map((t, i) =>
+          i === originalIndex ? { ...t, categoryOverride: newCat } : t,
+        ),
+      );
+    },
+    [selectedMonth],
+  );
+
+  // ── Checkbox selection ─────────────────────────────────────────────────────
+
+  const allPageIndices = paginated.map(({ originalIndex }) => originalIndex);
+  const allPageSelected =
+    allPageIndices.length > 0 &&
+    allPageIndices.every((i) => selectedIndices.has(i));
+
+  function toggleSelectAll() {
+    if (allPageSelected) {
+      setSelectedIndices((prev) => {
+        const next = new Set(prev);
+        allPageIndices.forEach((i) => next.delete(i));
+        return next;
+      });
+    } else {
+      setSelectedIndices((prev) => {
+        const next = new Set(prev);
+        allPageIndices.forEach((i) => next.add(i));
+        return next;
+      });
+    }
+  }
+
+  function toggleSelectRow(originalIndex: number) {
+    setSelectedIndices((prev) => {
+      const next = new Set(prev);
+      if (next.has(originalIndex)) {
+        next.delete(originalIndex);
+      } else {
+        next.add(originalIndex);
+      }
+      return next;
+    });
+  }
+
+  // ── Bulk category update ───────────────────────────────────────────────────
+
+  function handleBulkCategorySelect(newCat: string) {
+    if (!selectedMonth || selectedIndices.size === 0) return;
+    const indices = Array.from(selectedIndices);
+    bulkOverrideTransactionCategory(selectedMonth, indices, newCat);
+    setLocalTransactions((prev) =>
+      prev.map((t, i) =>
+        selectedIndices.has(i) ? { ...t, categoryOverride: newCat } : t,
+      ),
+    );
+    setSelectedIndices(new Set());
   }
 
   if (months.length === 0) {
@@ -256,6 +447,15 @@ export function TransactionsPage() {
             <table className="txns-table" data-testid="txns-table">
               <thead>
                 <tr>
+                  <th className="txns-th txns-th--check">
+                    <input
+                      type="checkbox"
+                      checked={allPageSelected}
+                      onChange={toggleSelectAll}
+                      aria-label="Select all visible rows"
+                      title="Select all"
+                    />
+                  </th>
                   <th
                     className="txns-th txns-th--date"
                     onClick={() => handleSort("date")}
@@ -311,22 +511,41 @@ export function TransactionsPage() {
                 </tr>
               </thead>
               <tbody>
-                {paginated.map((t, i) => {
-                  const cat = t.category ?? "Uncategorised";
+                {paginated.map(({ t, originalIndex }) => {
+                  const displayCat =
+                    t.categoryOverride ?? t.category ?? "Uncategorised";
+                  const isOverridden = Boolean(t.categoryOverride);
+                  const isSelected = selectedIndices.has(originalIndex);
                   return (
-                    <tr key={i} className="txns-row">
+                    <tr
+                      key={originalIndex}
+                      className={`txns-row${isSelected ? " txns-row--selected" : ""}`}
+                    >
+                      <td className="txns-td txns-td--check">
+                        <input
+                          type="checkbox"
+                          checked={isSelected}
+                          onChange={() => toggleSelectRow(originalIndex)}
+                          aria-label={`Select row for ${t.description}`}
+                        />
+                      </td>
                       <td className="txns-td txns-td--date">
                         {DATE_FMT.format(t.date)}
                       </td>
-                      <td className="txns-td txns-td--desc">{t.description}</td>
+                      <td className="txns-td txns-td--desc">
+                        {t.description}
+                      </td>
                       <td className="txns-td txns-td--cat">
-                        <span
-                          className="txns-cat-dot"
-                          style={{
-                            background: CATEGORY_COLOURS[cat] ?? "#9ca3af",
+                        <InlineCategoryDropdown
+                          category={displayCat}
+                          isOverridden={isOverridden}
+                          onSelect={(newCat) =>
+                            handleCategorySelect(originalIndex, newCat)
+                          }
+                          onCancel={() => {
+                            /* no-op: cancel just closes the dropdown */
                           }}
                         />
-                        {cat}
                       </td>
                       <td
                         className={`txns-td txns-td--num ${t.amount >= 0 ? "txns-td--positive" : "txns-td--negative"}`}
@@ -368,6 +587,49 @@ export function TransactionsPage() {
             </div>
           )}
         </>
+      )}
+
+      {/* Bulk action bar — fixed at bottom when rows are selected */}
+      {selectedIndices.size > 0 && (
+        <div className="txns-bulk-bar" role="region" aria-label="Bulk actions">
+          <span className="txns-bulk-bar__count">
+            {selectedIndices.size} row{selectedIndices.size !== 1 ? "s" : ""}{" "}
+            selected
+          </span>
+          <div className="txns-bulk-bar__actions">
+            <label className="txns-bulk-bar__label" htmlFor="bulk-cat-select">
+              Set category:
+            </label>
+            <select
+              id="bulk-cat-select"
+              className="txns-bulk-bar__select"
+              defaultValue=""
+              onChange={(e) => {
+                if (e.target.value) {
+                  handleBulkCategorySelect(e.target.value);
+                  e.target.value = "";
+                }
+              }}
+              aria-label="Bulk category"
+            >
+              <option value="" disabled>
+                Choose…
+              </option>
+              {ALL_CATEGORIES.map((cat) => (
+                <option key={cat} value={cat}>
+                  {cat}
+                </option>
+              ))}
+            </select>
+            <button
+              className="txns-bulk-bar__clear"
+              onClick={() => setSelectedIndices(new Set())}
+              type="button"
+            >
+              Clear selection
+            </button>
+          </div>
+        </div>
       )}
     </div>
   );

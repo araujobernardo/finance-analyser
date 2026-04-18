@@ -197,11 +197,9 @@
 }
 
 .txns-td--cat {
-  display: flex;
-  align-items: center;
-  gap: 0.4rem;
   white-space: nowrap;
   font-size: 0.8rem;
+  vertical-align: middle;
 }
 
 .txns-td--num {
@@ -259,4 +257,175 @@
   text-align: center;
   margin: 3rem 0;
   font-size: 0.95rem;
+}
+
+/* Checkbox column */
+.txns-th--check {
+  width: 36px;
+  padding: 0.6rem 0.5rem;
+  cursor: default;
+}
+
+.txns-td--check {
+  width: 36px;
+  padding: 0.55rem 0.5rem;
+  text-align: center;
+}
+
+/* Row selection */
+.txns-row--selected {
+  background: var(--accent-bg) !important;
+}
+
+/* Inline category cell */
+.txns-td--cat {
+  position: relative;
+}
+
+.txns-cat-cell {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+}
+
+/* Edited/override indicator dot */
+.txns-edited-dot {
+  display: inline-block;
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--accent);
+  flex-shrink: 0;
+}
+
+/* Inline category trigger button */
+.txns-cat-inline-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  background: none;
+  border: 1px solid transparent;
+  border-radius: 6px;
+  padding: 2px 6px;
+  font-size: 0.8rem;
+  color: var(--text-h);
+  cursor: pointer;
+  white-space: nowrap;
+  transition: border-color 0.15s, background 0.15s;
+}
+
+.txns-cat-inline-btn:hover {
+  border-color: var(--border);
+  background: var(--surface-hover);
+}
+
+.txns-cat-inline-arrow {
+  font-size: 0.6rem;
+  color: var(--text);
+  opacity: 0.6;
+}
+
+/* Inline dropdown list */
+.txns-cat-inline-dropdown {
+  position: absolute;
+  top: calc(100% + 2px);
+  left: 0;
+  z-index: 200;
+  min-width: 160px;
+  margin: 0;
+  padding: 0.3rem 0;
+  list-style: none;
+  background: var(--dropdown-bg);
+  border: 1px solid var(--dropdown-border);
+  border-radius: 6px;
+  box-shadow: var(--dropdown-shadow);
+  max-height: 260px;
+  overflow-y: auto;
+}
+
+.txns-cat-inline-option {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.4rem 0.75rem;
+  font-size: 0.8rem;
+  color: var(--dropdown-text);
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+.txns-cat-inline-option:hover {
+  background: var(--dropdown-hover-bg);
+}
+
+.txns-cat-inline-option--active {
+  font-weight: 600;
+  color: var(--dropdown-selected);
+}
+
+/* Bulk action bar — fixed at bottom */
+.txns-bulk-bar {
+  position: fixed;
+  bottom: 1.5rem;
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  padding: 0.65rem 1.25rem;
+  background: var(--surface);
+  border: 1px solid var(--accent-border);
+  border-radius: 10px;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.25);
+  font-size: 0.875rem;
+  z-index: 300;
+  white-space: nowrap;
+}
+
+.txns-bulk-bar__count {
+  color: var(--text-h);
+  font-weight: 500;
+}
+
+.txns-bulk-bar__actions {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.txns-bulk-bar__label {
+  color: var(--text);
+  font-size: 0.825rem;
+}
+
+.txns-bulk-bar__select {
+  padding: 0.3rem 0.6rem;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  background: var(--bg);
+  color: var(--text-h);
+  font-size: 0.825rem;
+  cursor: pointer;
+  outline: none;
+}
+
+.txns-bulk-bar__select:focus {
+  border-color: var(--accent);
+}
+
+.txns-bulk-bar__clear {
+  padding: 0.3rem 0.75rem;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  background: transparent;
+  color: var(--text);
+  font-size: 0.825rem;
+  cursor: pointer;
+  transition: border-color 0.15s, color 0.15s;
+}
+
+.txns-bulk-bar__clear:hover {
+  border-color: var(--accent);
+  color: var(--text-h);
 }

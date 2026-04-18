@@ -289,6 +289,47 @@ export function updateTransactionCategory(
 }
 
 /**
+ * Sets a user-supplied category override on a single transaction.
+ * The override is stored in `categoryOverride` (separate from the AI
+ * `category` field) consistent with the manual-override model.
+ */
+export function overrideTransactionCategory(
+  monthKey: string,
+  index: number,
+  newCategory: string,
+): SaveResult {
+  const { transactions, error } = loadTransactions(monthKey);
+  if (error) return { success: false, error };
+  if (index < 0 || index >= transactions.length) {
+    return {
+      success: false,
+      error: { type: "unavailable", message: `Index ${index} out of range.` },
+    };
+  }
+  transactions[index] = {
+    ...transactions[index],
+    categoryOverride: newCategory,
+  };
+  return saveTransactions(DEFAULT_ACCOUNT_ID, monthKey, transactions);
+}
+
+/**
+ * Sets a user-supplied category override on multiple transactions (bulk update).
+ */
+export function bulkOverrideTransactionCategory(
+  monthKey: string,
+  indices: number[],
+  newCategory: string,
+): SaveResult {
+  const { transactions, error } = loadTransactions(monthKey);
+  if (error) return { success: false, error };
+  const updated = transactions.map((t, i) =>
+    indices.includes(i) ? { ...t, categoryOverride: newCategory } : t,
+  );
+  return saveTransactions(DEFAULT_ACCOUNT_ID, monthKey, updated);
+}
+
+/**
  * Removes a month from the default account.
  * @deprecated Prefer deleteMonth(accountId, monthKey).
  */
@@ -304,6 +345,7 @@ interface SerialisedTransaction {
   amount: number;
   balance?: number;
   category?: string;
+  categoryOverride?: string;
 }
 
 function accountMonthsKey(accountId: string): string {
@@ -395,6 +437,7 @@ function serialiseTransaction(t: Transaction): SerialisedTransaction {
     amount: t.amount,
     balance: t.balance,
     category: t.category,
+    categoryOverride: t.categoryOverride,
   };
 }
 
@@ -405,5 +448,6 @@ function deserialiseTransaction(s: SerialisedTransaction): Transaction {
     amount: s.amount,
     balance: s.balance,
     category: s.category,
+    categoryOverride: s.categoryOverride,
   };
 }

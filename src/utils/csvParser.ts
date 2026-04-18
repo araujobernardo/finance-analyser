@@ -4,6 +4,7 @@ export interface Transaction {
   amount: number;
   balance?: number; // present in legacy format; absent in NZ bank format
   category?: string; // assigned by auto-categorisation; overridable by user
+  categoryOverride?: string; // set by the user; takes display precedence over category
 }
 
 export interface ParseResult {

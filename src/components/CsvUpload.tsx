@@ -1,4 +1,5 @@
-import { useRef, useState, DragEvent, ChangeEvent, KeyboardEvent } from "react";
+import { useRef, useState } from "react";
+import type { DragEvent, ChangeEvent, KeyboardEvent } from "react";
 import "./CsvUpload.css";
 
 interface CsvUploadProps {
