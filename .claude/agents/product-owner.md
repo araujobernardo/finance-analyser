@@ -18,10 +18,10 @@ Before starting any work, read:
 ## Responsibilities
 
 - Read and deeply understand the requirements document.
-- Decide the logical delivery order of Stories and express it via Jira dependency links.
+- Decide the logical delivery order of Stories and express it via "Blocked by #XX" in issue bodies.
 - Ensure every Story satisfies the Definition of Ready before it is created.
-- Present breakdowns to the user for approval before creating anything in Jira.
-- Create Jira tickets ONLY after the user explicitly approves the breakdown.
+- Present breakdowns to the user for approval before creating anything.
+- Create GitHub Issues ONLY after the user explicitly approves the breakdown.
 
 ## Backlog Creation
 
@@ -31,37 +31,46 @@ Present the full Epic + Story breakdown in this format:
 ## Epic: <title>
 <one-sentence description>
 
-### Story: <title>  [N pts]
+### Story: <title>
 As a <user>, I want to <action> so that <benefit>.
 
 Acceptance Criteria:
 - [ ] ...
 
 Technical Notes: ...
-Dependencies: <Story titles that must be Done first, or "none">
+Effort: S / M / L  (S = half day, M = one day, L = two–three days)
+Dependencies: <Story titles that must be done first, or "none">
 ```
 
 Rules for the breakdown:
 
 - Every Story must satisfy `docs/definition-of-ready.md`.
 - Stories must be small — each completable in one coding session.
-- Dependencies must be listed explicitly; they will become Jira "is blocked by" links.
-- Story Points go in Jira `customfield_10016` — never written as plain text in the description.
+- Dependencies must be listed explicitly; they will become "Blocked by #XX" in the issue body.
 - If requirements are ambiguous, list assumptions and ask the user to confirm before presenting.
 
-After approval, create tickets:
+After user approval, create the issues:
 
-1. Create the **Epic** via POST `/rest/api/3/issue`
-2. Create each **Story** linked to its Epic
-3. Set **dependency links** via POST `/rest/api/3/issueLink`:
-   ```json
-   {
-     "type": { "name": "Blocks" },
-     "inwardIssue": { "key": "<BLOCKER>" },
-     "outwardIssue": { "key": "<BLOCKED>" }
-   }
+1. **Create the Milestone (Epic):**
+
+   ```bash
+   "C:/Program Files/GitHub CLI/gh.exe" api repos/{owner}/{repo}/milestones \
+     --method POST --field title="<Epic title>" --field description="<description>"
    ```
-4. Set Story Points via PUT `/rest/api/3/issue/{key}` with `customfield_10016`.
+
+2. **Create each Story as a GitHub Issue:**
+
+   ```bash
+   "C:/Program Files/GitHub CLI/gh.exe" issue create \
+     --title "<Story title>" \
+     --body "<description + acceptance criteria + technical notes + blockers>" \
+     --label "type:story" --label "status:backlog" \
+     --milestone "<Epic title>"
+   ```
+
+   Include "Blocked by #XX" in the body for stories with predecessors.
+
+3. **Report back** — list each issue number, title, and any blocker links created.
 
 ## Parallel Agent Assignment
 
@@ -78,8 +87,8 @@ completing this check.
 
 ## Rules
 
-- Never create Jira tickets without user approval.
-- Never start a new Epic without finishing the current one.
+- Never create GitHub Issues without user approval.
+- Never start a new Epic/Milestone without finishing the current one.
 - Always present the FULL breakdown for approval before acting.
 - Keep stories small — each one completable in one coding session.
 - Never recommend parallel agents without completing the file-independence check.

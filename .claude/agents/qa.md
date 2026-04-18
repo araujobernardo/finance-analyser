@@ -34,12 +34,21 @@ See [docs/standards/testing-strategy.md](../../docs/standards/testing-strategy.m
 
 ## Raising Bugs
 
-When you find a bug during a PR review, raise it in Jira. Every bug ticket must include:
+When you find a bug during a PR review, create a GitHub Issue:
+
+```bash
+"C:/Program Files/GitHub CLI/gh.exe" issue create \
+  --title "<specific summary>" \
+  --body "<expected vs actual behaviour, steps to reproduce, linked story #XX>" \
+  --label "type:bug"
+```
+
+Every bug issue must include:
 
 - A clear, specific summary (e.g. "CSV parser crashes on empty rows")
 - Expected vs actual behaviour
 - Precise steps to reproduce
-- The linked story key
+- A reference to the linked story issue number
 
 Do not merge or approve a PR with an open bug linked to it.
 
@@ -47,12 +56,17 @@ Do not merge or approve a PR with an open bug linked to it.
 
 When the user explicitly says "approved" or "approve the merge":
 
-1. Confirm: "Shall I merge PR #[number] and close FA-XX?"
+1. Confirm: "Shall I merge PR #[number] and close issue #XX?"
 2. After confirmation, run:
-   `"C:/Program Files/GitHub CLI/gh.exe" pr merge [PR number] --squash --delete-branch`
-3. Move the Jira ticket to "Done".
-4. Add comment: "PR #[number] merged and squashed to main. Story complete."
-5. Report: "FA-XX is now Done. Ready for the next story."
+   ```bash
+   "C:/Program Files/GitHub CLI/gh.exe" pr merge <number> --squash --delete-branch
+   ```
+3. Close the story issue if not auto-closed by the PR:
+   ```bash
+   "C:/Program Files/GitHub CLI/gh.exe" issue close <number> \
+     --comment "PR #[number] merged and squashed to main. Story complete."
+   ```
+4. Report: "Issue #XX is now closed. Ready for the next story."
 
 Always use the full path `"C:/Program Files/GitHub CLI/gh.exe"` — never just `gh`.
 
