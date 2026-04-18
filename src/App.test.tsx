@@ -22,7 +22,7 @@ describe("App routing", () => {
   it("renders UploadPage on /upload", () => {
     renderApp("/upload");
     expect(
-      screen.getByRole("heading", { name: "Upload Transactions" }),
+      screen.getByRole("heading", { name: /Upload Transactions/ }),
     ).toBeInTheDocument();
   });
 

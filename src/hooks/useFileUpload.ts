@@ -2,10 +2,11 @@ import { useState } from "react";
 import { parseCsv } from "../utils/csvParser";
 import type { ParseError, Transaction } from "../utils/csvParser";
 import {
-  getStoredMonths,
-  loadTransactions,
+  getAccountMonths,
+  getTransactions,
   monthKeyFromDate,
   saveTransactions,
+  DEFAULT_ACCOUNT_ID,
 } from "../services/storage";
 import { categoriseTransactions } from "../services/categorisation";
 
@@ -32,6 +33,11 @@ export interface UseFileUploadResult {
   cancelReplace: () => void;
 }
 
+export interface UseFileUploadOptions {
+  /** The account ID to scope uploads to. Defaults to DEFAULT_ACCOUNT_ID. */
+  accountId?: string;
+}
+
 /** Formats a "YYYY-MM" key into a human-readable month name, e.g. "March 2024". */
 function formatMonthKey(monthKey: string): string {
   const [year, month] = monthKey.split("-").map(Number);
@@ -52,7 +58,11 @@ function groupByMonth(transactions: Transaction[]): MonthGroup[] {
     .map(([monthKey, txns]) => ({ monthKey, transactions: txns }));
 }
 
-export function useFileUpload(): UseFileUploadResult {
+export function useFileUpload(
+  options: UseFileUploadOptions = {},
+): UseFileUploadResult {
+  const accountId = options.accountId ?? DEFAULT_ACCOUNT_ID;
+
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [parseErrors, setParseErrors] = useState<ParseError[]>([]);
   const [pending, setPending] = useState<PendingUpload | null>(null);
@@ -62,8 +72,8 @@ export function useFileUpload(): UseFileUploadResult {
 
   async function saveGroup(group: MonthGroup): Promise<void> {
     const { monthKey, transactions } = group;
-    // Preserve manually-set categories already in storage for this month
-    const { transactions: stored } = loadTransactions(monthKey);
+    // Preserve manually-set categories already in storage for this month + account
+    const { transactions: stored } = getTransactions(accountId, monthKey);
     const storedCats = new Map(
       stored
         .filter((t) => t.category && t.category !== "Uncategorised")
@@ -74,7 +84,7 @@ export function useFileUpload(): UseFileUploadResult {
       return existing ? { ...t, category: existing } : t;
     });
     const categorised = await categoriseTransactions(withPreserved);
-    saveTransactions(monthKey, categorised);
+    saveTransactions(accountId, monthKey, categorised);
   }
 
   async function saveAllGroups(groups: MonthGroup[]): Promise<void> {
@@ -104,7 +114,8 @@ export function useFileUpload(): UseFileUploadResult {
       if (transactions.length === 0) return;
 
       const groups = groupByMonth(transactions);
-      const storedMonths = getStoredMonths();
+      // Duplicate detection is scoped to the current account only
+      const storedMonths = getAccountMonths(accountId);
       const duplicateMonthKeys = groups
         .map((g) => g.monthKey)
         .filter((key) => storedMonths.includes(key));

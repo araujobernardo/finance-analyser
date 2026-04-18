@@ -16,41 +16,31 @@ describe("LargestTransactions", () => {
   it("shows empty state when no transactions", () => {
     render(<LargestTransactions transactions={[]} onCategoryClick={vi.fn()} />);
     expect(
-      screen.getByText("No expense transactions for this month."),
+      screen.getByText("No transactions for this period."),
     ).toBeInTheDocument();
-  });
-
-  it("shows empty state when only income transactions", () => {
-    render(
-      <LargestTransactions
-        transactions={[tx(100), tx(200)]}
-        onCategoryClick={vi.fn()}
-      />,
-    );
-    expect(
-      screen.getByText("No expense transactions for this month."),
-    ).toBeInTheDocument();
-  });
-
-  it("excludes income and zero-amount transactions", () => {
-    render(
-      <LargestTransactions
-        transactions={[tx(100), tx(0), tx(-50)]}
-        onCategoryClick={vi.fn()}
-      />,
-    );
-    expect(screen.getAllByRole("listitem")).toHaveLength(1);
   });
 
   it("renders the panel title", () => {
     render(<LargestTransactions transactions={[]} onCategoryClick={vi.fn()} />);
-    expect(screen.getByText("Largest Expenses This Month")).toBeInTheDocument();
+    expect(screen.getByText("Largest Transactions")).toBeInTheDocument();
   });
 
-  it("sorts expenses by absolute amount descending", () => {
+  it("includes both debits and credits in the top-10 list", () => {
     render(
       <LargestTransactions
-        transactions={[tx(-20, "Small"), tx(-100, "Big"), tx(-50, "Mid")]}
+        transactions={[tx(-100, "Expense"), tx(200, "Income")]}
+        onCategoryClick={vi.fn()}
+      />,
+    );
+    expect(screen.getAllByRole("listitem")).toHaveLength(2);
+    expect(screen.getByText("Expense")).toBeInTheDocument();
+    expect(screen.getByText("Income")).toBeInTheDocument();
+  });
+
+  it("sorts by absolute amount descending", () => {
+    render(
+      <LargestTransactions
+        transactions={[tx(-20, "Small"), tx(100, "Big"), tx(-50, "Mid")]}
         onCategoryClick={vi.fn()}
       />,
     );
@@ -113,6 +103,74 @@ describe("LargestTransactions", () => {
     expect(screen.getByText("Uncategorised")).toBeInTheDocument();
   });
 
+  it("renders rank numbers 1 through N", () => {
+    render(
+      <LargestTransactions
+        transactions={[tx(-30, "A"), tx(-20, "B"), tx(-10, "C")]}
+        onCategoryClick={vi.fn()}
+      />,
+    );
+    expect(screen.getByText("1")).toBeInTheDocument();
+    expect(screen.getByText("2")).toBeInTheDocument();
+    expect(screen.getByText("3")).toBeInTheDocument();
+  });
+
+  it("truncates descriptions longer than 40 characters", () => {
+    const longDesc = "A".repeat(50);
+    render(
+      <LargestTransactions
+        transactions={[tx(-10, longDesc)]}
+        onCategoryClick={vi.fn()}
+      />,
+    );
+    expect(screen.getByText("A".repeat(40) + "…")).toBeInTheDocument();
+  });
+
+  it("adds a title tooltip when description is truncated", () => {
+    const longDesc = "A".repeat(50);
+    render(
+      <LargestTransactions
+        transactions={[tx(-10, longDesc)]}
+        onCategoryClick={vi.fn()}
+      />,
+    );
+    const desc = screen.getByText("A".repeat(40) + "…");
+    expect(desc).toHaveAttribute("title", longDesc);
+  });
+
+  it("does not add a title tooltip for short descriptions", () => {
+    render(
+      <LargestTransactions
+        transactions={[tx(-10, "Short desc")]}
+        onCategoryClick={vi.fn()}
+      />,
+    );
+    const desc = screen.getByText("Short desc");
+    expect(desc).not.toHaveAttribute("title");
+  });
+
+  it("applies debit styling to negative amounts", () => {
+    render(
+      <LargestTransactions
+        transactions={[tx(-50, "Expense")]}
+        onCategoryClick={vi.fn()}
+      />,
+    );
+    const amt = screen.getByText("$50.00");
+    expect(amt).toHaveClass("largest-txns__amount--debit");
+  });
+
+  it("applies credit styling to positive amounts", () => {
+    render(
+      <LargestTransactions
+        transactions={[tx(200, "Salary")]}
+        onCategoryClick={vi.fn()}
+      />,
+    );
+    const amt = screen.getByText("$200.00");
+    expect(amt).toHaveClass("largest-txns__amount--credit");
+  });
+
   it("calls onCategoryClick with the transaction category when a row is clicked", async () => {
     const onCategoryClick = vi.fn();
     render(
@@ -133,10 +191,7 @@ describe("LargestTransactions", () => {
       amount: -40,
     };
     render(
-      <LargestTransactions
-        transactions={[t]}
-        onCategoryClick={onCategoryClick}
-      />,
+      <LargestTransactions transactions={[t]} onCategoryClick={onCategoryClick} />,
     );
     await userEvent.click(screen.getByRole("listitem"));
     expect(onCategoryClick).toHaveBeenCalledWith("Uncategorised");
