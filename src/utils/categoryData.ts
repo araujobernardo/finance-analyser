@@ -12,7 +12,7 @@ export function buildCategoryRows(transactions: Transaction[]): CategoryRow[] {
 
   const totals: Record<string, number> = {};
   for (const t of expenses) {
-    const cat = t.category || "Uncategorised";
+    const cat = (t.categoryOverride ?? t.category) || "Uncategorised";
     totals[cat] = (totals[cat] ?? 0) + Math.abs(t.amount);
   }
 
