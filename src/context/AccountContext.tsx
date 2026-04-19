@@ -1,5 +1,10 @@
 import { createContext, useContext, useState, type ReactNode } from "react";
-import { getAccounts, DEFAULT_ACCOUNT_ID } from "../services/storage";
+import {
+  getAccounts,
+  saveAccount,
+  deleteAccount,
+  DEFAULT_ACCOUNT_ID,
+} from "../services/storage";
 import type { Account } from "../services/storage";
 import { ACTIVE_ACCOUNT_KEY } from "./accountKeys";
 
@@ -7,12 +12,16 @@ export interface AccountContextValue {
   accounts: Account[];
   activeAccountId: string;
   setActiveAccountId: (id: string) => void;
+  addAccount: (account: Account) => void;
+  removeAccount: (id: string) => void;
 }
 
 const AccountContext = createContext<AccountContextValue>({
   accounts: [],
   activeAccountId: DEFAULT_ACCOUNT_ID,
   setActiveAccountId: () => {},
+  addAccount: () => {},
+  removeAccount: () => {},
 });
 
 function resolveInitialAccountId(accounts: Account[]): string {
@@ -22,7 +31,7 @@ function resolveInitialAccountId(accounts: Account[]): string {
 }
 
 export function AccountProvider({ children }: { children: ReactNode }) {
-  const [accounts] = useState<Account[]>(() => getAccounts());
+  const [accounts, setAccounts] = useState<Account[]>(() => getAccounts());
   const [activeAccountId, setActiveAccountIdState] = useState<string>(() =>
     resolveInitialAccountId(getAccounts()),
   );
@@ -32,9 +41,30 @@ export function AccountProvider({ children }: { children: ReactNode }) {
     setActiveAccountIdState(id);
   }
 
+  function addAccount(account: Account) {
+    saveAccount(account);
+    setAccounts(getAccounts());
+    setActiveAccountId(account.id);
+  }
+
+  function removeAccount(id: string) {
+    deleteAccount(id);
+    const remaining = getAccounts();
+    setAccounts(remaining);
+    if (remaining.length > 0) {
+      setActiveAccountId(remaining[0].id);
+    }
+  }
+
   return (
     <AccountContext.Provider
-      value={{ accounts, activeAccountId, setActiveAccountId }}
+      value={{
+        accounts,
+        activeAccountId,
+        setActiveAccountId,
+        addAccount,
+        removeAccount,
+      }}
     >
       {children}
     </AccountContext.Provider>

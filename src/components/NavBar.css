@@ -52,3 +52,137 @@
   font-weight: 600;
   background: var(--nav-link-hover-bg);
 }
+
+/* ── Account selector ───────────────────────────────────────────────────── */
+
+.account-selector {
+  position: relative;
+  margin-left: auto;
+}
+
+.account-selector__trigger {
+  display: flex;
+  align-items: center;
+  gap: 0.45rem;
+  padding: 0.35rem 0.75rem;
+  border-radius: 6px;
+  background: transparent;
+  color: var(--nav-link);
+  border: 1px solid transparent;
+  cursor: pointer;
+  font-size: 0.875rem;
+  transition:
+    color 0.15s,
+    background 0.15s;
+}
+
+.account-selector__trigger:hover,
+.account-selector__trigger:focus-visible {
+  color: var(--nav-text);
+  background: var(--nav-link-hover-bg);
+}
+
+.account-selector__name {
+  max-width: 120px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.account-selector__arrow {
+  font-size: 0.75rem;
+  opacity: 0.7;
+}
+
+.account-dot {
+  width: 0.7rem;
+  height: 0.7rem;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.account-selector__menu {
+  position: absolute;
+  top: calc(100% + 0.35rem);
+  right: 0;
+  min-width: 160px;
+  background: var(--dropdown-bg);
+  border: 1px solid var(--dropdown-border);
+  border-radius: 8px;
+  box-shadow: var(--dropdown-shadow);
+  list-style: none;
+  margin: 0;
+  padding: 0.35rem 0;
+  z-index: 200;
+}
+
+.account-selector__item {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.5rem 0.85rem;
+  font-size: 0.875rem;
+  color: var(--dropdown-text);
+  cursor: pointer;
+  user-select: none;
+}
+
+.account-selector__item:hover {
+  background: var(--dropdown-hover-bg);
+}
+
+.account-selector__item--active {
+  font-weight: 600;
+  color: var(--dropdown-selected);
+}
+
+.account-selector__item--action {
+  color: var(--nav-link);
+}
+
+.account-selector__item--action:hover {
+  color: var(--nav-text);
+  background: var(--dropdown-hover-bg);
+}
+
+.account-selector__item--danger:not(.account-selector__item--disabled) {
+  color: var(--color-danger);
+}
+
+.account-selector__item--disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+.account-selector__item--disabled:hover {
+  background: transparent;
+}
+
+.account-selector__separator {
+  border: none;
+  border-top: 1px solid var(--dropdown-border);
+  margin: 0.35rem 0;
+  padding: 0;
+}
+
+.account-selector__add-btn {
+  display: flex;
+  align-items: center;
+  margin-left: auto;
+  padding: 0.35rem 0.75rem;
+  border-radius: 6px;
+  background: transparent;
+  color: var(--nav-link);
+  border: 1px solid transparent;
+  cursor: pointer;
+  font-size: 0.875rem;
+  transition:
+    color 0.15s,
+    background 0.15s;
+}
+
+.account-selector__add-btn:hover,
+.account-selector__add-btn:focus-visible {
+  color: var(--nav-text);
+  background: var(--nav-link-hover-bg);
+}

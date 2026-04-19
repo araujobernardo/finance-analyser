@@ -1,0 +1,165 @@
+.account-modal__backdrop {
+  position: fixed;
+  inset: 0;
+  background-color: var(--modal-overlay);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 100;
+}
+
+.account-modal__panel {
+  background-color: var(--modal-bg);
+  border: 1px solid var(--modal-border);
+  border-radius: 0.75rem;
+  padding: 1.75rem 2rem;
+  max-width: 460px;
+  width: 90%;
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
+}
+
+.account-modal__title {
+  margin: 0;
+  font-size: 1.1rem;
+  font-weight: 600;
+  color: var(--modal-title);
+}
+
+.account-modal__body {
+  margin: 0;
+  font-size: 0.95rem;
+  color: var(--modal-body);
+  line-height: 1.5;
+}
+
+.account-modal__field {
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+}
+
+.account-modal__label {
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: var(--modal-title);
+}
+
+.account-modal__input {
+  padding: 0.5rem 0.75rem;
+  border: 1px solid var(--modal-cancel-border);
+  border-radius: 0.5rem;
+  font-size: 0.9rem;
+  background-color: var(--modal-cancel-bg);
+  color: var(--modal-title);
+  outline: none;
+  transition: border-color 0.15s ease;
+}
+
+.account-modal__input:focus {
+  border-color: #6366f1;
+}
+
+.account-modal__input--error {
+  border-color: var(--color-danger);
+}
+
+.account-modal__error {
+  font-size: 0.8rem;
+  color: var(--color-danger);
+  margin-top: 0.1rem;
+}
+
+.account-modal__swatches {
+  display: flex;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+}
+
+.account-modal__swatch {
+  width: 2rem;
+  height: 2rem;
+  border-radius: 50%;
+  border: 2px solid transparent;
+  cursor: pointer;
+  padding: 0;
+  transition: transform 0.1s ease;
+}
+
+.account-modal__swatch:hover {
+  transform: scale(1.15);
+}
+
+.account-modal__swatch--selected {
+  border-color: var(--modal-title);
+  transform: scale(1.1);
+}
+
+.account-modal__actions {
+  display: flex;
+  gap: 0.75rem;
+  justify-content: flex-end;
+  margin-top: 0.25rem;
+}
+
+.account-modal__btn {
+  padding: 0.5rem 1.25rem;
+  border-radius: 0.5rem;
+  font-size: 0.9rem;
+  font-weight: 500;
+  cursor: pointer;
+  border: 1px solid transparent;
+  transition:
+    background-color 0.15s ease,
+    border-color 0.15s ease,
+    opacity 0.15s ease;
+}
+
+.account-modal__btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.account-modal__btn--cancel {
+  background-color: var(--modal-cancel-bg);
+  border-color: var(--modal-cancel-border);
+  color: var(--modal-cancel-text);
+}
+
+.account-modal__btn--cancel:hover:not(:disabled),
+.account-modal__btn--cancel:focus-visible:not(:disabled) {
+  background-color: var(--surface-hover);
+}
+
+.account-modal__btn--save {
+  background-color: #6366f1;
+  border-color: #4f46e5;
+  color: #ffffff;
+}
+
+.account-modal__btn--save:hover:not(:disabled),
+.account-modal__btn--save:focus-visible:not(:disabled) {
+  background-color: #4f46e5;
+}
+
+.account-modal__btn--danger {
+  background-color: var(--color-danger);
+  border-color: #b91c1c;
+  color: #ffffff;
+}
+
+.account-modal__btn--danger:hover:not(:disabled),
+.account-modal__btn--danger:focus-visible:not(:disabled) {
+  background-color: #b91c1c;
+}
+
+.account-modal__warning {
+  background-color: rgba(220, 38, 38, 0.08);
+  border: 1px solid rgba(220, 38, 38, 0.25);
+  border-radius: 0.5rem;
+  padding: 0.75rem 1rem;
+  font-size: 0.875rem;
+  color: var(--color-danger);
+  line-height: 1.5;
+}

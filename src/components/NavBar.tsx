@@ -1,6 +1,8 @@
 import { useState, useEffect, useRef } from "react";
 import { NavLink } from "react-router-dom";
 import { useAccount } from "../context/AccountContext";
+import { AddAccountModal } from "./AddAccountModal";
+import { DeleteAccountModal } from "./DeleteAccountModal";
 import "./NavBar.css";
 
 const GearIcon = () => (
@@ -32,6 +34,8 @@ const NAV_LINKS = [
 function AccountSelector() {
   const { accounts, activeAccountId, setActiveAccountId } = useAccount();
   const [open, setOpen] = useState(false);
+  const [showAddModal, setShowAddModal] = useState(false);
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -48,62 +52,122 @@ function AccountSelector() {
     return () => document.removeEventListener("mousedown", handleOutsideClick);
   }, [open]);
 
-  if (accounts.length === 0) return null;
-
+  const isLastAccount = accounts.length <= 1;
   const active = accounts.find((a) => a.id === activeAccountId) ?? accounts[0];
 
-  return (
-    <div className="account-selector" ref={containerRef}>
-      <button
-        type="button"
-        className="account-selector__trigger"
-        onClick={() => setOpen((o) => !o)}
-        aria-haspopup="listbox"
-        aria-expanded={open}
-        aria-label={`Active account: ${active.name}`}
-      >
-        <span
-          className="account-dot"
-          style={{ background: active.colour }}
-          aria-hidden="true"
-        />
-        <span className="account-selector__name">{active.name}</span>
-        <span className="account-selector__arrow" aria-hidden="true">
-          ▾
-        </span>
-      </button>
-      {open && (
-        <ul
-          className="account-selector__menu"
-          role="listbox"
-          aria-label="Select account"
+  if (accounts.length === 0) {
+    return (
+      <>
+        <button
+          type="button"
+          className="account-selector__add-btn"
+          onClick={() => setShowAddModal(true)}
+          aria-label="Add account"
         >
-          {accounts.map((acc) => (
+          + Add Account
+        </button>
+        {showAddModal && (
+          <AddAccountModal onClose={() => setShowAddModal(false)} />
+        )}
+      </>
+    );
+  }
+
+  return (
+    <>
+      <div className="account-selector" ref={containerRef}>
+        <button
+          type="button"
+          className="account-selector__trigger"
+          onClick={() => setOpen((o) => !o)}
+          aria-haspopup="listbox"
+          aria-expanded={open}
+          aria-label={`Active account: ${active.name}`}
+        >
+          <span
+            className="account-dot"
+            style={{ background: active.colour }}
+            aria-hidden="true"
+          />
+          <span className="account-selector__name">{active.name}</span>
+          <span className="account-selector__arrow" aria-hidden="true">
+            ▾
+          </span>
+        </button>
+        {open && (
+          <ul
+            className="account-selector__menu"
+            role="listbox"
+            aria-label="Select account"
+          >
+            {accounts.map((acc) => (
+              <li
+                key={acc.id}
+                role="option"
+                aria-selected={acc.id === activeAccountId}
+                className={
+                  acc.id === activeAccountId
+                    ? "account-selector__item account-selector__item--active"
+                    : "account-selector__item"
+                }
+                onClick={() => {
+                  setActiveAccountId(acc.id);
+                  setOpen(false);
+                }}
+              >
+                <span
+                  className="account-dot"
+                  style={{ background: acc.colour }}
+                  aria-hidden="true"
+                />
+                {acc.name}
+              </li>
+            ))}
             <li
-              key={acc.id}
+              role="separator"
+              className="account-selector__separator"
+              aria-hidden="true"
+            />
+            <li
               role="option"
-              aria-selected={acc.id === activeAccountId}
-              className={
-                acc.id === activeAccountId
-                  ? "account-selector__item account-selector__item--active"
-                  : "account-selector__item"
-              }
+              aria-selected={false}
+              className="account-selector__item account-selector__item--action"
               onClick={() => {
-                setActiveAccountId(acc.id);
                 setOpen(false);
+                setShowAddModal(true);
               }}
             >
-              <span
-                className="account-dot"
-                style={{ background: acc.colour }}
-                aria-hidden="true"
-              />
-              {acc.name}
+              + Add Account
             </li>
-          ))}
-        </ul>
+            <li
+              role="option"
+              aria-selected={false}
+              aria-disabled={isLastAccount}
+              className={`account-selector__item account-selector__item--action account-selector__item--danger${isLastAccount ? " account-selector__item--disabled" : ""}`}
+              title={
+                isLastAccount ? "Cannot delete the last account" : undefined
+              }
+              onClick={() => {
+                if (isLastAccount) return;
+                setOpen(false);
+                setShowDeleteModal(true);
+              }}
+            >
+              Delete Account
+            </li>
+          </ul>
+        )}
+      </div>
+      {showAddModal && (
+        <AddAccountModal onClose={() => setShowAddModal(false)} />
       )}
-    </div>
+      {showDeleteModal && (
+        <DeleteAccountModal
+          accountId={activeAccountId}
+          onClose={() => setShowDeleteModal(false)}
+        />
+      )}
+    </>
   );
 }
 
