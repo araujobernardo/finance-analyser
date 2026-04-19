@@ -122,6 +122,68 @@ describe("AccountProvider", () => {
     expect(ctx.activeAccountId).toBe("acc-b");
     expect(localStorage.getItem(ACTIVE_ACCOUNT_KEY)).toBe("acc-b");
   });
+
+  it("addAccount persists a new account and switches to it", () => {
+    let ctx!: ReturnType<typeof useAccount>;
+    render(
+      <AccountProvider>
+        <ContextReader onRender={(v) => (ctx = v)} />
+      </AccountProvider>,
+    );
+    const newAccount = makeAccount({ id: "new-1", name: "New Account" });
+    act(() => ctx.addAccount(newAccount));
+    expect(ctx.accounts.find((a) => a.id === "new-1")).toBeDefined();
+    expect(ctx.activeAccountId).toBe("new-1");
+  });
+
+  it("addAccount stores the account in localStorage", () => {
+    let ctx!: ReturnType<typeof useAccount>;
+    render(
+      <AccountProvider>
+        <ContextReader onRender={(v) => (ctx = v)} />
+      </AccountProvider>,
+    );
+    const newAccount = makeAccount({ id: "new-2", name: "Another Account" });
+    act(() => ctx.addAccount(newAccount));
+    const stored = JSON.parse(
+      localStorage.getItem(ACCOUNTS_KEY) ?? "[]",
+    ) as Account[];
+    expect(stored.find((a) => a.id === "new-2")).toBeDefined();
+  });
+
+  it("removeAccount removes the account and switches to the first remaining", () => {
+    seedAccounts([
+      makeAccount({ id: "acc-a", name: "Account A" }),
+      makeAccount({ id: "acc-b", name: "Account B" }),
+    ]);
+    let ctx!: ReturnType<typeof useAccount>;
+    render(
+      <AccountProvider>
+        <ContextReader onRender={(v) => (ctx = v)} />
+      </AccountProvider>,
+    );
+    act(() => ctx.removeAccount("acc-a"));
+    expect(ctx.accounts.find((a) => a.id === "acc-a")).toBeUndefined();
+    expect(ctx.activeAccountId).toBe("acc-b");
+  });
+
+  it("removeAccount removes account from localStorage", () => {
+    seedAccounts([
+      makeAccount({ id: "acc-a", name: "Account A" }),
+      makeAccount({ id: "acc-b", name: "Account B" }),
+    ]);
+    let ctx!: ReturnType<typeof useAccount>;
+    render(
+      <AccountProvider>
+        <ContextReader onRender={(v) => (ctx = v)} />
+      </AccountProvider>,
+    );
+    act(() => ctx.removeAccount("acc-a"));
+    const stored = JSON.parse(
+      localStorage.getItem(ACCOUNTS_KEY) ?? "[]",
+    ) as Account[];
+    expect(stored.find((a) => a.id === "acc-a")).toBeUndefined();
+  });
 });
 
 // ── useAccount outside provider ────────────────────────────────────────────
