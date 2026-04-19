@@ -33,4 +33,9 @@ are in [constitution.md](constitution.md).
 
 For project principles, governance, and agent workflow see: constitution.md
 
+## Active Feature Plan
+
+Current feature: **AI Chat Enhancements** (branch `001-ai-chat-enhancements`)  
+Implementation plan: [specs/001-ai-chat-enhancements/plan.md](specs/001-ai-chat-enhancements/plan.md)
+
 <!-- SPECKIT END -->
