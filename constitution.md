@@ -1,18 +1,15 @@
 <!--
 Sync Impact Report
 ==================
-Version change: 1.1.0 → 2.0.0 (MAJOR — full automation rewrite)
+Version change: 2.0.0 → 2.1.0 (MINOR — Golden Rules rewritten for automation model)
 Modified sections:
-  - Feature Lifecycle: replaced entirely with automated pipeline (7 steps)
-  - Auto-Approved Actions: removed
-  - Always Requires Approval: removed
-  - Replaced by: Automation Rules (new, with two subsections)
-Added sections:
-  - Merge Strategy
-  - Scope Creep Rule
+  - Golden Rules: replaced 6 generic rules with 6 automation-specific rules
+    (product-decision gate, credentials, localStorage schema, DoR/DoD gates,
+    product-decision default)
 Unchanged sections:
-  - Golden Rules, Issue Types, Issue Labels, Story Sequencing,
-    Agent Coordination, Governance
+  - Issue Types, Issue Labels, Story Sequencing, Agent Coordination,
+    Feature Lifecycle, Automation Rules, Merge Strategy, Scope Creep Rule,
+    Governance
 Templates reviewed:
   - All .specify/templates/ ✅ — no updates required
 Deferred TODOs: none
@@ -30,13 +27,15 @@ must follow these rules exactly.
 
 These apply to ALL agents and AI tools without exception:
 
-1. Never make assumptions — if something is unclear, stop and ask the user.
-2. Never push directly to `main` — all changes go through a PR.
-3. Never merge a PR without explicit user approval.
-4. Always wait for user confirmation before starting the next step.
-5. When in doubt, do less and ask more.
-6. Never include credentials, API tokens, or secrets in shell commands, curl
-   commands, or any terminal output. Always read secrets from `.env` files silently.
+1. Never make assumptions about product requirements — if the spec is silent,
+   stop and ask the user.
+2. Never expose credentials, API tokens, or secrets in any file, command, or
+   output. Always read from `.env` silently.
+3. Never modify localStorage schema without flagging it to the user — this
+   affects existing user data.
+4. Never skip the Definition of Ready check before implementation.
+5. Never skip the Definition of Done check before merging.
+6. When in doubt about a product decision, do less and ask more.
 
 ---
 
@@ -202,4 +201,4 @@ Versions follow Semantic Versioning (`MAJOR.MINOR.PATCH`):
 - Any agent that cannot comply with a rule MUST stop and surface the conflict
   to the user rather than proceeding.
 
-**Version**: 2.0.0 | **Ratified**: 2026-04-19 | **Last Amended**: 2026-04-19
+**Version**: 2.1.0 | **Ratified**: 2026-04-19 | **Last Amended**: 2026-04-19
