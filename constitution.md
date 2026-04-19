@@ -1,16 +1,20 @@
 <!--
 Sync Impact Report
 ==================
-Version change: N/A → 1.1.0 (initial formal versioning via speckit-constitution)
-Added sections: Governance
-Removed sections: none
-Modified principles: none
+Version change: 1.1.0 → 2.0.0 (MAJOR — full automation rewrite)
+Modified sections:
+  - Feature Lifecycle: replaced entirely with automated pipeline (7 steps)
+  - Auto-Approved Actions: removed
+  - Always Requires Approval: removed
+  - Replaced by: Automation Rules (new, with two subsections)
+Added sections:
+  - Merge Strategy
+  - Scope Creep Rule
+Unchanged sections:
+  - Golden Rules, Issue Types, Issue Labels, Story Sequencing,
+    Agent Coordination, Governance
 Templates reviewed:
-  - .specify/templates/plan-template.md ✅ — "Constitution Check" gate already defers to this file; no update needed
-  - .specify/templates/spec-template.md ✅ — no constitution-specific constraints violated
-  - .specify/templates/tasks-template.md ✅ — task phases align with principle-driven categories (approval gates, no secrets)
-  - .specify/templates/commands/ ✅ — no command files found; nothing to update
-  - README.md ✅ — generic Vite template README; no project governance references to update
+  - All .specify/templates/ ✅ — no updates required
 Deferred TODOs: none
 -->
 
@@ -108,80 +112,57 @@ report that to the user. Do not start work on a story that is already claimed.
 
 ## Feature Lifecycle
 
-End-to-end process for delivering a Story:
-
-```
-User approves Story
-       ↓
-Developer Agent claims issue (status:backlog → status:in-progress)
-       ↓
-Developer Agent enters worktree (isolated directory for this branch)
-       ↓
-Developer Agent implements the Story
-       ↓
-Developer Agent opens Pull Request
-       ↓
-Developer Agent exits worktree, labels issue status:in-review
-       ↓
-User reviews PR exists → notifies QA Agent
-       ↓
-QA Agent reviews PR + writes tests
-       ↓
-QA Agent submits review report to user
-       ↓
-User decides: Approve or Request Changes
-       ↓ (if approved)
-User merges PR → issue closed
-       ↓
-Next Story begins
-```
-
-### Handoff Points (where agents stop and wait)
-
-| Agent         | Stops after                     | Waits for                  |
-| ------------- | ------------------------------- | -------------------------- |
-| Product Owner | Presenting Epic/Story breakdown | User approval              |
-| Product Owner | Creating GitHub Issues          | User to assign first story |
-| Developer     | Entering worktree               | Automatically continues    |
-| Developer     | Opening PR + exiting worktree   | User to notify QA          |
-| QA            | Submitting review report        | User merge decision        |
-
-No agent proceeds past a handoff point without explicit user approval.
-"Explicit approval" means the user types yes or a clear confirmation.
-Agents must not interpret silence or ambiguity as approval.
+1. User provides requirements.
+2. User runs `/speckit-specify` → `/speckit-plan` → `/speckit-tasks`.
+3. spec-kit creates GitHub Issues from tasks via `/speckit-taskstoissues`.
+4. Delivery Lead agent picks up automatically.
+5. **Developer agent**: claims issue → creates branch → implements →
+   opens PR → transitions label to `status:in-review`.
+6. **QA agent**: writes tests → checks DoR/DoD → security scan →
+   if pass: squash merges automatically. If fail: fixes autonomously,
+   loops max 3 attempts, then stops and notifies user.
+7. Repeat until backlog is empty.
 
 ---
 
-## Auto-Approved Actions
+## Automation Rules
 
-The following actions run automatically without asking for user confirmation:
+### Fully Automated (no user confirmation needed)
 
-- Reading any file in the project
-- Running `gh issue list`, `gh issue view`, `gh pr list`, `gh pr view` (read-only)
-- Running any existing test suite (`npx vitest run`)
-- Checking git status, git log, git diff
-- Listing files and directories
-- Checking installed packages (`npm list`, `where.exe`)
-- Running debug/diagnostic commands that only print output
-- Installing npm packages (`npm install`)
-- Writing scripts to the `scripts/` folder
-- Running `scripts/` files that only perform read operations or test runs
-- Labelling a GitHub Issue (status transitions: `status:backlog` → `status:in-progress` → `status:in-review`)
-- Adding a comment to a GitHub Issue
+- All git operations (branch create, commit, push, merge, delete branch)
+- All PR operations (create, review, squash merge)
+- All GitHub Issue operations (create, label, comment, close)
+- All file operations (create, edit, delete) inside `src/`
+- All config file edits
+- `npm install`, test runs, lint, build
+- Bug issue creation for out-of-scope issues found during implementation
+- Test failure auto-fix (up to 3 attempts before escalating)
+
+### Stop and Ask User Only When
+
+- Spec is silent on a product decision
+- Security issue found (API key exposed, credentials in code)
+- Test failures persist after 3 fix attempts
+- Fundamental conflict with constitution detected
+- Behaviour that would affect user data or localStorage schema
 
 ---
 
-## Always Requires Approval
+## Merge Strategy
 
-The following actions ALWAYS require explicit user confirmation before proceeding:
+- Always squash merge: `gh pr merge <number> --squash --delete-branch`
+- After merge: close the issue with comment "Merged in PR #X. Story complete."
+- Branch deletion is automatic and immediate after merge.
 
-- Creating or editing any file inside `src/`
-- Creating or editing any config file (`vite.config.ts`, `tsconfig`, `package.json`, `eslint`, `prettier`)
-- Any git commit or push
-- Creating a PR via `gh pr create`
-- Merging a PR via `gh pr merge`
-- Creating GitHub Issues (`gh issue create`)
-- Deleting any file
+---
+
+## Scope Creep Rule
+
+If a Developer finds something broken outside the current story:
+
+1. Open a GitHub Issue with label `type:bug` and `status:backlog`.
+2. Add a comment to the current story issue referencing the new bug.
+3. Continue with the current story — do not fix the out-of-scope issue.
 
 ---
 
@@ -221,4 +202,4 @@ Versions follow Semantic Versioning (`MAJOR.MINOR.PATCH`):
 - Any agent that cannot comply with a rule MUST stop and surface the conflict
   to the user rather than proceeding.
 
-**Version**: 1.1.0 | **Ratified**: 2026-04-19 | **Last Amended**: 2026-04-19
+**Version**: 2.0.0 | **Ratified**: 2026-04-19 | **Last Amended**: 2026-04-19
