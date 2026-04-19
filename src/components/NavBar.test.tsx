@@ -4,6 +4,7 @@ import userEvent from "@testing-library/user-event";
 import { MemoryRouter } from "react-router-dom";
 import { NavBar } from "./NavBar";
 import { AccountProvider } from "../context/AccountContext";
+import { ALL_ACCOUNTS_ID } from "../context/AccountContext";
 import { ACTIVE_ACCOUNT_KEY } from "../context/accountKeys";
 import { ACCOUNT_COLOURS } from "../services/storage";
 import type { Account } from "../services/storage";
@@ -189,5 +190,91 @@ describe("NavBar — account selector", () => {
     expect(
       screen.getByRole("button", { name: /active account: savings/i }),
     ).toBeInTheDocument();
+  });
+});
+
+// ── All Accounts option ────────────────────────────────────────────────────
+
+describe("NavBar — All Accounts option", () => {
+  it("shows 'All Accounts' as an option in the dropdown", async () => {
+    seedAccounts([
+      { id: "a1", name: "Checking", colour: ACCOUNT_COLOURS[0], createdAt: "" },
+    ]);
+    renderNavBar();
+    await userEvent.click(
+      screen.getByRole("button", { name: /active account/i }),
+    );
+    expect(
+      screen.getByRole("option", { name: /all accounts/i }),
+    ).toBeInTheDocument();
+  });
+
+  it("lists 'All Accounts' before individual accounts in the dropdown", async () => {
+    seedAccounts([
+      { id: "a1", name: "Checking", colour: ACCOUNT_COLOURS[0], createdAt: "" },
+    ]);
+    renderNavBar();
+    await userEvent.click(
+      screen.getByRole("button", { name: /active account/i }),
+    );
+    const options = screen
+      .getAllByRole("option")
+      .filter((el) => !el.getAttribute("role")?.includes("separator"));
+    expect(options[0]).toHaveTextContent(/all accounts/i);
+  });
+
+  it("switches to 'All Accounts' when that option is clicked", async () => {
+    seedAccounts([
+      { id: "a1", name: "Checking", colour: ACCOUNT_COLOURS[0], createdAt: "" },
+    ]);
+    renderNavBar();
+    await userEvent.click(
+      screen.getByRole("button", { name: /active account/i }),
+    );
+    await userEvent.click(
+      screen.getByRole("option", { name: /all accounts/i }),
+    );
+    expect(
+      screen.getByRole("button", { name: /active account: all accounts/i }),
+    ).toBeInTheDocument();
+  });
+
+  it("persists 'all' to localStorage when All Accounts is selected", async () => {
+    seedAccounts([
+      { id: "a1", name: "Checking", colour: ACCOUNT_COLOURS[0], createdAt: "" },
+    ]);
+    renderNavBar();
+    await userEvent.click(
+      screen.getByRole("button", { name: /active account/i }),
+    );
+    await userEvent.click(
+      screen.getByRole("option", { name: /all accounts/i }),
+    );
+    expect(localStorage.getItem(ACTIVE_ACCOUNT_KEY)).toBe(ALL_ACCOUNTS_ID);
+  });
+
+  it("restores 'All Accounts' as active from localStorage", () => {
+    seedAccounts([
+      { id: "a1", name: "Checking", colour: ACCOUNT_COLOURS[0], createdAt: "" },
+    ]);
+    localStorage.setItem(ACTIVE_ACCOUNT_KEY, ALL_ACCOUNTS_ID);
+    renderNavBar();
+    expect(
+      screen.getByRole("button", { name: /active account: all accounts/i }),
+    ).toBeInTheDocument();
+  });
+
+  it("marks 'All Accounts' option as selected when it is active", async () => {
+    seedAccounts([
+      { id: "a1", name: "Checking", colour: ACCOUNT_COLOURS[0], createdAt: "" },
+    ]);
+    localStorage.setItem(ACTIVE_ACCOUNT_KEY, ALL_ACCOUNTS_ID);
+    renderNavBar();
+    await userEvent.click(
+      screen.getByRole("button", { name: /active account: all accounts/i }),
+    );
+    expect(
+      screen.getByRole("option", { name: /all accounts/i }),
+    ).toHaveAttribute("aria-selected", "true");
   });
 });

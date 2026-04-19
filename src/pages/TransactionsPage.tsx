@@ -1,13 +1,17 @@
 import { useMemo, useState, useEffect, useRef, useCallback } from "react";
 import { MonthToggleBar } from "../components/MonthToggleBar";
 import {
-  getStoredMonths,
-  loadTransactions,
   overrideTransactionCategory,
   bulkOverrideTransactionCategory,
 } from "../services/storage";
-import type { Transaction } from "../utils/csvParser";
 import { CATEGORIES } from "../services/categorisation";
+import {
+  useActiveMonths,
+  useActiveTransactions,
+  useAccount,
+  ALL_ACCOUNTS_ID,
+  type TransactionWithAccount,
+} from "../context/AccountContext";
 import "./TransactionsPage.css";
 
 const PAGE_SIZE = 50;
@@ -42,8 +46,8 @@ type SortCol = "date" | "description" | "category" | "amount";
 type SortDir = "asc" | "desc";
 
 function compareRows(
-  a: Transaction,
-  b: Transaction,
+  a: TransactionWithAccount,
+  b: TransactionWithAccount,
   col: SortCol,
   dir: SortDir,
 ): number {
@@ -173,10 +177,10 @@ function InlineCategoryDropdown({
 // ── Main page ─────────────────────────────────────────────────────────────────
 
 export function TransactionsPage() {
-  const months = useMemo(() => getStoredMonths(), []);
-  const [selectedMonth, setSelectedMonth] = useState<string | null>(
-    months[months.length - 1] ?? null,
-  );
+  const months = useActiveMonths();
+  const { activeAccountId } = useAccount();
+  const isAllAccounts = activeAccountId === ALL_ACCOUNTS_ID;
+  const [selectedMonth, setSelectedMonth] = useState<string | null>(null);
   const [searchRaw, setSearchRaw] = useState("");
   const [searchDebounced, setSearchDebounced] = useState("");
   const [selectedCategories, setSelectedCategories] = useState<string[]>([]);
@@ -188,8 +192,19 @@ export function TransactionsPage() {
   const [page, setPage] = useState(1);
   const filterRef = useRef<HTMLDivElement>(null);
 
+  // Resolve the selected month against available months
+  const resolvedMonth =
+    selectedMonth && months.includes(selectedMonth)
+      ? selectedMonth
+      : (months[months.length - 1] ?? null);
+
+  // Load transactions via context hook (merges all accounts when activeAccountId === 'all')
+  const contextTransactions = useActiveTransactions(resolvedMonth);
+
   // Local transactions state so inline edits reflect immediately
-  const [localTransactions, setLocalTransactions] = useState<Transaction[]>([]);
+  const [localTransactions, setLocalTransactions] = useState<
+    TransactionWithAccount[]
+  >([]);
 
   // Checkbox selection state — keyed by the transaction's position in
   // `localTransactions` (stable within a session for a given month)
@@ -217,15 +232,15 @@ export function TransactionsPage() {
     return () => document.removeEventListener("mousedown", handleClick);
   }, [filterOpen]);
 
-  // Load transactions when selected month changes
+  // Sync local transactions when context transactions change (month or account switch).
+  // localTransactions is a mutable copy allowing inline category edits without
+  // re-fetching from storage; syncing from an effect here is intentional.
+  /* eslint-disable react-hooks/set-state-in-effect */
   useEffect(() => {
-    if (!selectedMonth) {
-      setLocalTransactions([]);
-      return;
-    }
-    setLocalTransactions(loadTransactions(selectedMonth).transactions);
+    setLocalTransactions(contextTransactions);
     setSelectedIndices(new Set());
-  }, [selectedMonth]);
+  }, [contextTransactions]);
+  /* eslint-enable react-hooks/set-state-in-effect */
 
   const filtered = useMemo(() => {
     const q = searchDebounced.toLowerCase();
@@ -247,6 +262,9 @@ export function TransactionsPage() {
       })
       .sort((a, b) => compareRows(a.t, b.t, sort.col, sort.dir));
   }, [localTransactions, searchDebounced, selectedCategories, sort]);
+
+  // Category edits are disabled in 'All Accounts' view because transactions are
+  // read-only composites from multiple accounts — no single account index applies.
 
   const totalSpend = useMemo(
     () =>
@@ -288,15 +306,15 @@ export function TransactionsPage() {
 
   const handleCategorySelect = useCallback(
     (originalIndex: number, newCat: string) => {
-      if (!selectedMonth) return;
-      overrideTransactionCategory(selectedMonth, originalIndex, newCat);
+      if (!resolvedMonth || isAllAccounts) return;
+      overrideTransactionCategory(resolvedMonth, originalIndex, newCat);
       setLocalTransactions((prev) =>
         prev.map((t, i) =>
           i === originalIndex ? { ...t, categoryOverride: newCat } : t,
         ),
       );
     },
-    [selectedMonth],
+    [resolvedMonth, isAllAccounts],
   );
 
   // ── Checkbox selection ─────────────────────────────────────────────────────
@@ -337,9 +355,9 @@ export function TransactionsPage() {
   // ── Bulk category update ───────────────────────────────────────────────────
 
   function handleBulkCategorySelect(newCat: string) {
-    if (!selectedMonth || selectedIndices.size === 0) return;
+    if (!resolvedMonth || isAllAccounts || selectedIndices.size === 0) return;
     const indices = Array.from(selectedIndices);
-    bulkOverrideTransactionCategory(selectedMonth, indices, newCat);
+    bulkOverrideTransactionCategory(resolvedMonth, indices, newCat);
     setLocalTransactions((prev) =>
       prev.map((t, i) =>
         selectedIndices.has(i) ? { ...t, categoryOverride: newCat } : t,
@@ -363,7 +381,7 @@ export function TransactionsPage() {
 
       <MonthToggleBar
         months={months}
-        selectedMonth={selectedMonth}
+        selectedMonth={resolvedMonth}
         onMonthSelect={(m) => {
           setSelectedMonth(m);
           setPage(1);
@@ -456,6 +474,12 @@ export function TransactionsPage() {
                       title="Select all"
                     />
                   </th>
+                  {isAllAccounts && (
+                    <th
+                      className="txns-th txns-th--acct"
+                      aria-label="Account"
+                    />
+                  )}
                   <th
                     className="txns-th txns-th--date"
                     onClick={() => handleSort("date")}
@@ -529,12 +553,21 @@ export function TransactionsPage() {
                           aria-label={`Select row for ${t.description}`}
                         />
                       </td>
+                      {isAllAccounts && (
+                        <td className="txns-td txns-td--acct">
+                          {t.accountColour && (
+                            <span
+                              className="txns-acct-dot"
+                              style={{ background: t.accountColour }}
+                              aria-hidden="true"
+                            />
+                          )}
+                        </td>
+                      )}
                       <td className="txns-td txns-td--date">
                         {DATE_FMT.format(t.date)}
                       </td>
-                      <td className="txns-td txns-td--desc">
-                        {t.description}
-                      </td>
+                      <td className="txns-td txns-td--desc">{t.description}</td>
                       <td className="txns-td txns-td--cat">
                         <InlineCategoryDropdown
                           category={displayCat}
