@@ -1,89 +1,58 @@
 import { useState, useRef, useEffect } from "react";
 import { streamChatResponse } from "../services/claudeChat";
-import type { ChatMessage } from "../services/claudeChat";
+import { useChatHistory } from "../hooks/useChatHistory";
 import { SuggestedPrompts } from "./SuggestedPrompts";
 import "./ChatPanel.css";
 
-interface DisplayMessage {
-  role: "user" | "bot";
-  text: string;
-  isStreaming?: boolean;
-}
-
 export function ChatPanel() {
   const [open, setOpen] = useState(false);
-  const [messages, setMessages] = useState<DisplayMessage[]>([]);
-  const [history, setHistory] = useState<ChatMessage[]>([]);
   const [input, setInput] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const bottomRef = useRef<HTMLDivElement>(null);
+
+  const {
+    displayMessages,
+    apiHistory,
+    appendUserMessage,
+    setStreamingMessage,
+    markStreamingDone,
+    setError,
+  } = useChatHistory();
 
   useEffect(() => {
     if (open) {
       bottomRef.current?.scrollIntoView({ behavior: "smooth" });
     }
-  }, [messages, open]);
+  }, [displayMessages, open]);
 
   function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     const text = input.trim();
     if (!text || isLoading) return;
 
-    const newHistory: ChatMessage[] = [
-      ...history,
-      { role: "user", content: text },
-    ];
-
-    setMessages((prev) => [
-      ...prev,
-      { role: "user", text },
-      { role: "bot", text: "", isStreaming: true },
-    ]);
+    appendUserMessage(text);
     setInput("");
     setIsLoading(true);
+
+    const historyWithUserMsg = [
+      ...apiHistory,
+      { role: "user" as const, content: text },
+    ];
 
     let accumulated = "";
 
     streamChatResponse(
-      newHistory,
+      historyWithUserMsg,
       (delta) => {
         accumulated += delta;
-        setMessages((prev) => {
-          const next = [...prev];
-          next[next.length - 1] = {
-            role: "bot",
-            text: accumulated,
-            isStreaming: true,
-          };
-          return next;
-        });
+        setStreamingMessage(accumulated);
       },
       () => {
-        setMessages((prev) => {
-          const next = [...prev];
-          next[next.length - 1] = {
-            role: "bot",
-            text: accumulated,
-            isStreaming: false,
-          };
-          return next;
-        });
-        setHistory([
-          ...newHistory,
-          { role: "assistant", content: accumulated },
-        ]);
+        markStreamingDone();
         setIsLoading(false);
       },
       (err) => {
-        setMessages((prev) => {
-          const next = [...prev];
-          next[next.length - 1] = {
-            role: "bot",
-            text: `Error: ${err.message}`,
-            isStreaming: false,
-          };
-          return next;
-        });
+        setError(err.message);
         setIsLoading(false);
       },
     );
@@ -104,12 +73,12 @@ export function ChatPanel() {
             </button>
           </div>
           <div className="chat-panel__messages">
-            {messages.length === 0 && (
+            {displayMessages.length === 0 && (
               <p className="chat-panel__empty">
                 Ask me anything about your finances.
               </p>
             )}
-            {messages.map((m, i) => (
+            {displayMessages.map((m, i) => (
               <div
                 key={i}
                 className={
@@ -128,7 +97,7 @@ export function ChatPanel() {
             ))}
             <div ref={bottomRef} />
           </div>
-          {messages.length === 0 && (
+          {displayMessages.length === 0 && (
             <SuggestedPrompts onSelect={(prompt) => setInput(prompt)} />
           )}
           <form className="chat-panel__input-bar" onSubmit={handleSubmit}>
