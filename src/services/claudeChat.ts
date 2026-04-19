@@ -1,5 +1,5 @@
 import Anthropic from "@anthropic-ai/sdk";
-import { getStoredMonths, loadTransactions } from "./storage";
+import { getAccounts, getAccountMonths, getTransactions } from "./storage";
 
 export interface ChatMessage {
   role: "user" | "assistant";
@@ -8,51 +8,65 @@ export interface ChatMessage {
 
 /** Builds a concise finance summary to inject as system context. */
 export function buildFinanceContext(): string {
-  const months = getStoredMonths();
-  if (months.length === 0) {
+  const accounts = getAccounts();
+  if (accounts.length === 0) {
     return "The user has not uploaded any financial data yet.";
   }
 
   const lines: string[] = ["The user's financial data is summarised below."];
+  let hasAnyData = false;
 
-  for (const monthKey of months) {
-    const { transactions } = loadTransactions(monthKey);
-    if (transactions.length === 0) continue;
+  for (const account of accounts) {
+    const months = getAccountMonths(account.id);
+    if (months.length === 0) continue;
 
-    const [year, month] = monthKey.split("-");
-    const label = new Date(Number(year), Number(month) - 1, 1).toLocaleString(
-      "en",
-      { month: "long", year: "numeric" },
-    );
+    lines.push(`\n# Account: ${account.name}`);
 
-    const income = transactions
-      .filter((t) => t.amount > 0)
-      .reduce((s, t) => s + t.amount, 0);
-    const expenses = transactions
-      .filter((t) => t.amount < 0)
-      .reduce((s, t) => s + Math.abs(t.amount), 0);
-    const net = income - expenses;
+    for (const monthKey of months) {
+      const { transactions } = getTransactions(account.id, monthKey);
+      if (transactions.length === 0) continue;
 
-    // Category totals
-    const byCategory: Record<string, number> = {};
-    for (const t of transactions) {
-      if (t.amount >= 0) continue;
-      const cat = t.category || "Uncategorised";
-      byCategory[cat] = (byCategory[cat] ?? 0) + Math.abs(t.amount);
+      hasAnyData = true;
+
+      const [year, month] = monthKey.split("-");
+      const label = new Date(Number(year), Number(month) - 1, 1).toLocaleString(
+        "en",
+        { month: "long", year: "numeric" },
+      );
+
+      const income = transactions
+        .filter((t) => t.amount > 0)
+        .reduce((s, t) => s + t.amount, 0);
+      const expenses = transactions
+        .filter((t) => t.amount < 0)
+        .reduce((s, t) => s + Math.abs(t.amount), 0);
+      const net = income - expenses;
+
+      // Category totals
+      const byCategory: Record<string, number> = {};
+      for (const t of transactions) {
+        if (t.amount >= 0) continue;
+        const cat = t.category || "Uncategorised";
+        byCategory[cat] = (byCategory[cat] ?? 0) + Math.abs(t.amount);
+      }
+      const topCategories = Object.entries(byCategory)
+        .sort((a, b) => b[1] - a[1])
+        .slice(0, 5)
+        .map(([cat, total]) => `${cat}: $${total.toFixed(2)}`)
+        .join(", ");
+
+      lines.push(
+        `\n## ${label}`,
+        `- Income: $${income.toFixed(2)}`,
+        `- Expenses: $${expenses.toFixed(2)}`,
+        `- Net savings: $${net.toFixed(2)}`,
+        `- Top categories: ${topCategories || "none"}`,
+      );
     }
-    const topCategories = Object.entries(byCategory)
-      .sort((a, b) => b[1] - a[1])
-      .slice(0, 5)
-      .map(([cat, total]) => `${cat}: $${total.toFixed(2)}`)
-      .join(", ");
+  }
 
-    lines.push(
-      `\n## ${label}`,
-      `- Income: $${income.toFixed(2)}`,
-      `- Expenses: $${expenses.toFixed(2)}`,
-      `- Net savings: $${net.toFixed(2)}`,
-      `- Top categories: ${topCategories || "none"}`,
-    );
+  if (!hasAnyData) {
+    return "The user has not uploaded any financial data yet.";
   }
 
   return lines.join("\n");
