@@ -1,48 +1,53 @@
 # Definition of Ready
 
-A Story or Epic is **ready** to be picked up by the Developer 
-agent when ALL of the following are true.
+A Story is **ready** to be picked up by the Developer agent when ALL of the
+following are true.
 
-## 1. Description
-A concise summary of the functionality being implemented. 
-Must answer:
-- What is being built?
-- Why does it matter to the user?
-- What problem does it solve?
+## 1. User Story
+
+Written in the format:
+
+> As a **[role]**, I want **[capability]**, so that **[benefit]**.
 
 ## 2. Acceptance Criteria
-A numbered list of specific, testable outcomes. Each criterion 
-must be:
-- Independently verifiable (pass/fail)
-- Written from the user's perspective
-- Free of implementation detail
 
-## 3. User Experience
-For stories with UI changes:
-- Description of the expected user interaction flow
-- Any specific visual requirements (colours, layout, behaviour)
-- Accessibility requirements (keyboard navigation, screen readers)
+Each criterion in Given/When/Then format:
 
-For purely backend/utility stories, mark this section "N/A".
+> **Given** [context], **When** [action], **Then** [outcome].
+
+Every criterion must be independently verifiable (pass/fail).
+
+## 3. UX Notes
+
+Description of any UI changes or interactions involved.  
+Mark as `N/A — no UI changes` for purely backend/utility stories.
 
 ## 4. Technical Notes
+
 Implementation guidance including:
-- Which files or modules should be created or modified
-- Architectural constraints or patterns to follow
-- Dependencies on other stories or external services
-- Any known edge cases the developer should handle
 
-## 5. Story Points
-Effort estimate relative to other stories:
+- File paths to create or modify
+- Approach and architectural constraints
+- Dependencies on other stories (and their issue numbers)
 
-| Points | Meaning |
-|---|---|
-| 1 | Trivial — under an hour |
-| 2 | Small — half a day |
-| 3 | Medium — one full day |
-| 5 | Large — two to three days |
-| 8 | Very large — consider splitting |
+## 5. Effort
+
+| Size | Meaning                    |
+| ---- | -------------------------- |
+| S    | Small — a few hours        |
+| M    | Medium — about a day       |
+| L    | Large — consider splitting |
+
+## 6. No Unresolved Blockers
+
+The story body must not contain any open `Blocked by #XX` references.
+
+## 7. Spec and Plan Exist
+
+- Spec created by `/speckit-specify` exists under `specs/`
+- Plan created by `/speckit-plan` exists under `specs/`
 
 ---
-*This document is the single source of truth for story readiness. 
-All agents must verify a story meets this standard before work begins.*
+
+_This document is the single source of truth for story readiness.
+All agents must verify a story meets this standard before work begins._

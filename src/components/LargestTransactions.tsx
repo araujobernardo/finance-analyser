@@ -67,7 +67,9 @@ export function LargestTransactions({ transactions, onCategoryClick }: Props) {
                 </span>
                 <span
                   className="largest-txns__desc"
-                  title={t.description.length > MAX_DESC ? t.description : undefined}
+                  title={
+                    t.description.length > MAX_DESC ? t.description : undefined
+                  }
                 >
                   {truncated}
                 </span>
