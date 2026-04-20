@@ -321,6 +321,15 @@ export function bulkOverrideTransactionCategory(
   indices: number[],
   newCategory: string,
 ): SaveResult {
+  if (!getAccountMonths(DEFAULT_ACCOUNT_ID).includes(monthKey)) {
+    return {
+      success: false,
+      error: {
+        type: "unavailable",
+        message: `Month ${monthKey} does not exist`,
+      },
+    };
+  }
   const { transactions, error } = loadTransactions(monthKey);
   if (error) return { success: false, error };
   const updated = transactions.map((t, i) =>
