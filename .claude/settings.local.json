@@ -1,3 +1,7 @@
 {
-  "permissions": {}
+  "permissions": {
+    "allow": [
+      "PowerShell(.specify/extensions/git/scripts/powershell/auto-commit.ps1 after_specify)"
+    ]
+  }
 }
