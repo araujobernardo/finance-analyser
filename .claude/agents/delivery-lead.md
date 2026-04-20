@@ -64,9 +64,20 @@ Wait for the QA agent to return.
 
 ### Step 3 — After QA returns
 
-- **If QA merged successfully**: report "#XX is Done. [X] complete, [Y] remaining
-  in backlog." Then immediately pick up the next unblocked story — no user prompt
-  needed.
+- **If QA merged successfully**:
+  1. Append one line to `CHANGELOG.md` at the repo root:
+     ```
+     - **YYYY-MM-DD** | #<issue> | <story title> | <one sentence summary of what shipped>
+     ```
+     If `CHANGELOG.md` does not exist, create it first with this header:
+     ```markdown
+     # Changelog
+
+     _Automatically maintained by the Delivery Lead agent._
+     ```
+  2. Commit: `chore: update CHANGELOG for #<issue>`
+  3. Report "#XX is Done. [X] complete, [Y] remaining in backlog." Then
+     immediately pick up the next unblocked story — no user prompt needed.
 - **If QA stopped** (test loop exhausted or security issue): report findings to
   the user and wait for instruction.
 
