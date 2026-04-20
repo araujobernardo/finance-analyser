@@ -1,9 +1,29 @@
 import type { Transaction } from "../utils/csvParser";
+import { EmptyState } from "./ui/EmptyState";
+import { SkeletonCard } from "./ui/SkeletonCard";
 import "./LargestTransactions.css";
 
 interface Props {
   transactions: Transaction[];
   onCategoryClick: (category: string | null) => void;
+  isLoading?: boolean;
+}
+
+function TransactionIcon() {
+  return (
+    <svg
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth={1.5}
+    >
+      <path
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        d="M3.75 12h16.5m-16.5 3.75h16.5M3.75 19.5h16.5M5.625 4.5h12.75a1.875 1.875 0 0 1 0 3.75H5.625a1.875 1.875 0 0 1 0-3.75Z"
+      />
+    </svg>
+  );
 }
 
 const DATE_FMT = new Intl.DateTimeFormat("en-NZ", {
@@ -34,7 +54,20 @@ const CATEGORY_COLORS: Record<string, string> = {
 
 const MAX_DESC = 40;
 
-export function LargestTransactions({ transactions, onCategoryClick }: Props) {
+export function LargestTransactions({
+  transactions,
+  onCategoryClick,
+  isLoading,
+}: Props) {
+  if (isLoading) {
+    return (
+      <div className="largest-txns">
+        <h2 className="largest-txns__title">Largest Transactions</h2>
+        <SkeletonCard rows={5} />
+      </div>
+    );
+  }
+
   const top10 = [...transactions]
     .sort((a, b) => Math.abs(b.amount) - Math.abs(a.amount))
     .slice(0, 10);
@@ -43,7 +76,10 @@ export function LargestTransactions({ transactions, onCategoryClick }: Props) {
     <div className="largest-txns">
       <h2 className="largest-txns__title">Largest Transactions</h2>
       {top10.length === 0 ? (
-        <p className="largest-txns__empty">No transactions for this period.</p>
+        <EmptyState
+          icon={<TransactionIcon />}
+          message="No transactions for this period."
+        />
       ) : (
         <ul className="largest-txns__list">
           {top10.map((t, i) => {

@@ -1,0 +1,42 @@
+@keyframes skeleton-pulse {
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.4;
+  }
+}
+
+.skeleton-card {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  padding: 1.5rem;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  background: var(--surface);
+}
+
+.skeleton-card__row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+}
+
+.skeleton-card__bar {
+  height: 14px;
+  border-radius: 6px;
+  background: var(--border);
+  animation: skeleton-pulse 1.5s ease-in-out infinite;
+}
+
+.skeleton-card__bar--wide {
+  flex: 1;
+}
+
+.skeleton-card__bar--narrow {
+  width: 64px;
+  flex-shrink: 0;
+}

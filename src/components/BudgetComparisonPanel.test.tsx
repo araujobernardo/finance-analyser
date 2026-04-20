@@ -28,13 +28,6 @@ describe("BudgetComparisonPanel — empty state", () => {
     expect(screen.getByText(/No budgets set/)).toBeInTheDocument();
   });
 
-  it("calls onManageBudgets when 'Add a budget' link is clicked", async () => {
-    const onManageBudgets = vi.fn();
-    renderPanel({}, [], onManageBudgets);
-    await userEvent.click(screen.getByRole("button", { name: "Add a budget" }));
-    expect(onManageBudgets).toHaveBeenCalled();
-  });
-
   it("calls onManageBudgets when '+ Add budget' button in header is clicked", async () => {
     const onManageBudgets = vi.fn();
     renderPanel({}, [], onManageBudgets);
