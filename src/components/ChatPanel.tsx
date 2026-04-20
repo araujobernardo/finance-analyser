@@ -1,6 +1,7 @@
 import { useState, useRef, useEffect } from "react";
 import { streamChatResponse } from "../services/claudeChat";
 import { useChatHistory } from "../hooks/useChatHistory";
+import { useAccount } from "../context/AccountContext";
 import { SuggestedPrompts } from "./SuggestedPrompts";
 import "./ChatPanel.css";
 
@@ -10,6 +11,9 @@ export function ChatPanel() {
   const [isLoading, setIsLoading] = useState(false);
   const bottomRef = useRef<HTMLDivElement>(null);
 
+  const { activeAccountId } = useAccount();
+  const isMounted = useRef(false);
+
   const {
     displayMessages,
     apiHistory,
@@ -17,7 +21,18 @@ export function ChatPanel() {
     setStreamingMessage,
     markStreamingDone,
     setError,
+    reset,
   } = useChatHistory();
+
+  // Reset chat history when the active account changes (skip initial mount)
+  useEffect(() => {
+    if (!isMounted.current) {
+      isMounted.current = true;
+      return;
+    }
+    reset();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [activeAccountId]);
 
   useEffect(() => {
     if (open) {
@@ -55,6 +70,7 @@ export function ChatPanel() {
         setError(err.message);
         setIsLoading(false);
       },
+      activeAccountId,
     );
   }
 

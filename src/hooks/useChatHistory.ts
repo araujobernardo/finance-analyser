@@ -20,6 +20,7 @@ export interface UseChatHistoryResult {
   setStreamingMessage: (text: string) => void;
   markStreamingDone: () => void;
   setError: (message: string) => void;
+  reset: () => void;
 }
 
 const ACCOUNT_ID = "global";
@@ -97,6 +98,12 @@ export function useChatHistory(): UseChatHistoryResult {
     setStreamingText(`Error: ${message}`);
   }
 
+  function reset(): void {
+    setPersisted([]);
+    setStreamingText(null);
+    saveChatHistory(ACCOUNT_ID, []);
+  }
+
   return {
     displayMessages,
     apiHistory,
@@ -105,5 +112,6 @@ export function useChatHistory(): UseChatHistoryResult {
     setStreamingMessage,
     markStreamingDone,
     setError,
+    reset,
   };
 }
