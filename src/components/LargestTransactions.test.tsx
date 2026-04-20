@@ -191,7 +191,10 @@ describe("LargestTransactions", () => {
       amount: -40,
     };
     render(
-      <LargestTransactions transactions={[t]} onCategoryClick={onCategoryClick} />,
+      <LargestTransactions
+        transactions={[t]}
+        onCategoryClick={onCategoryClick}
+      />,
     );
     await userEvent.click(screen.getByRole("listitem"));
     expect(onCategoryClick).toHaveBeenCalledWith("Uncategorised");

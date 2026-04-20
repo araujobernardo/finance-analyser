@@ -541,9 +541,7 @@ describe("updateTransactionCategory", () => {
 
 describe("overrideTransactionCategory", () => {
   it("sets categoryOverride without touching category", () => {
-    saveTransactions(MARCH_2024, [
-      makeTransaction({ category: "Groceries" }),
-    ]);
+    saveTransactions(MARCH_2024, [makeTransaction({ category: "Groceries" })]);
     overrideTransactionCategory(MARCH_2024, 0, "Dining");
     const { transactions } = loadTransactions(MARCH_2024);
     expect(transactions[0].categoryOverride).toBe("Dining");
@@ -617,7 +615,11 @@ describe("bulkOverrideTransactionCategory", () => {
 
   it("returns success: true when the update succeeds", () => {
     saveTransactions(MARCH_2024, [makeTransaction(), makeTransaction()]);
-    const result = bulkOverrideTransactionCategory(MARCH_2024, [0, 1], "Dining");
+    const result = bulkOverrideTransactionCategory(
+      MARCH_2024,
+      [0, 1],
+      "Dining",
+    );
     expect(result.success).toBe(true);
   });
 
