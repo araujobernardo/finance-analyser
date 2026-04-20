@@ -47,37 +47,60 @@ Before starting any work, read:
 
 Do not proceed to Step 1 until Step 0 completes successfully.
 
-### Step 1 — Spawn Developer agent
+### Step 1 — Check UI vs non-UI
+
+Read the story's Technical Notes. A story is a **UI story** if it creates or
+modifies files in `src/components/`, `src/pages/`, or `.css` files.
+Non-UI stories (only `src/services/`, `src/hooks/`, `src/utils/`, tests) skip
+to Step 2b.
+
+### Step 2a — Spawn Designer agent (UI stories only)
+
+Use the Agent tool. Pass it: issue number, title, acceptance criteria, UX Notes,
+feature spec directory, and:
+"You are the Designer agent. Follow .claude/agents/designer.md exactly."
+
+The Designer will present 3 UX options to the user and wait for a choice.
+**Wait for the Designer to return** before proceeding — do not spawn Developer
+until the Designer reports "UX brief complete for #XX."
+
+### Step 2b — Spawn Developer agent
 
 Use the Agent tool. Pass it: issue number, title, description, acceptance criteria,
 technical notes, and: "You are the Developer agent. Follow .claude/agents/developer.md exactly."
+For UI stories, also pass the path to the UX brief: `specs/[dir]/ux-brief.md`.
 
 Wait for the Developer agent to return (it will open the PR and label the issue
 `status:in-review`).
 
-### Step 2 — Spawn QA agent
+### Step 3 — Spawn QA agent
 
 Use the Agent tool. Pass it: issue number, title, PR number, acceptance criteria,
 and: "You are the QA agent. Follow .claude/agents/qa.md exactly."
 
 Wait for the QA agent to return.
 
-### Step 3 — After QA returns
+### Step 4 — After QA returns
 
 - **If QA merged successfully**:
   1. Append one line to `CHANGELOG.md` at the repo root:
+
      ```
      - **YYYY-MM-DD** | #<issue> | <story title> | <one sentence summary of what shipped>
      ```
+
      If `CHANGELOG.md` does not exist, create it first with this header:
+
      ```markdown
      # Changelog
 
      _Automatically maintained by the Delivery Lead agent._
      ```
+
   2. Commit: `chore: update CHANGELOG for #<issue>`
   3. Report "#XX is Done. [X] complete, [Y] remaining in backlog." Then
      immediately pick up the next unblocked story — no user prompt needed.
+
 - **If QA stopped** (test loop exhausted or security issue): report findings to
   the user and wait for instruction.
 

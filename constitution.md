@@ -1,15 +1,15 @@
 <!--
 Sync Impact Report
 ==================
-Version change: 2.0.0 → 2.1.0 (MINOR — Golden Rules rewritten for automation model)
+Version change: 2.1.0 → 2.2.0 (MINOR — Designer agent added to Feature Lifecycle)
 Modified sections:
-  - Golden Rules: replaced 6 generic rules with 6 automation-specific rules
-    (product-decision gate, credentials, localStorage schema, DoR/DoD gates,
-    product-decision default)
+  - Feature Lifecycle: step 4a added — Designer agent for UI stories
+  - Agent Handoff Points: new table entry for Designer
+  - Automation Rules: web search for design references, ux-brief.md write,
+    and GitHub issue comment added to auto-approved list
 Unchanged sections:
-  - Issue Types, Issue Labels, Story Sequencing, Agent Coordination,
-    Feature Lifecycle, Automation Rules, Merge Strategy, Scope Creep Rule,
-    Governance
+  - Golden Rules, Issue Types, Issue Labels, Story Sequencing, Agent Coordination,
+    Merge Strategy, Scope Creep Rule, Governance
 Templates reviewed:
   - All .specify/templates/ ✅ — no updates required
 Deferred TODOs: none
@@ -115,12 +115,29 @@ report that to the user. Do not start work on a story that is already claimed.
 2. User runs `/speckit-specify` → `/speckit-plan` → `/speckit-tasks`.
 3. spec-kit creates GitHub Issues from tasks via `/speckit-taskstoissues`.
 4. Delivery Lead agent picks up automatically.
+   4a. **Designer agent** (UI stories only): presents 3 UX options → user
+   chooses → writes `specs/[dir]/ux-brief.md` → hands off to Developer.
+   Non-UI stories skip this step entirely.
 5. **Developer agent**: claims issue → creates branch → implements →
    opens PR → transitions label to `status:in-review`.
 6. **QA agent**: writes tests → checks DoR/DoD → security scan →
    if pass: squash merges automatically. If fail: fixes autonomously,
    loops max 3 attempts, then stops and notifies user.
 7. Repeat until backlog is empty.
+
+---
+
+## Agent Handoff Points
+
+| From          | To            | Trigger                                | Condition         |
+| ------------- | ------------- | -------------------------------------- | ----------------- |
+| Delivery Lead | Designer      | Story claimed, pre-Developer           | UI story only     |
+| Designer      | User          | 3 UX options ready                     | Always            |
+| User          | Designer      | Option chosen                          | Always            |
+| Designer      | Developer     | `ux-brief.md` written, issue commented | Always            |
+| Delivery Lead | Developer     | Story claimed (no Designer step)       | Non-UI story only |
+| Developer     | QA            | PR open, label `status:in-review`      | Always            |
+| QA            | Delivery Lead | Merge complete or stop condition hit   | Always            |
 
 ---
 
@@ -136,6 +153,9 @@ report that to the user. Do not start work on a story that is already claimed.
 - `npm install`, test runs, lint, build
 - Bug issue creation for out-of-scope issues found during implementation
 - Test failure auto-fix (up to 3 attempts before escalating)
+- Designer: web searches for design references (Monarch Money, YNAB, etc.)
+- Designer: writing `specs/[dir]/ux-brief.md`
+- Designer: posting handoff comment on GitHub issue
 
 ### Stop and Ask User Only When
 
@@ -201,4 +221,4 @@ Versions follow Semantic Versioning (`MAJOR.MINOR.PATCH`):
 - Any agent that cannot comply with a rule MUST stop and surface the conflict
   to the user rather than proceeding.
 
-**Version**: 2.1.0 | **Ratified**: 2026-04-19 | **Last Amended**: 2026-04-19
+**Version**: 2.2.0 | **Ratified**: 2026-04-19 | **Last Amended**: 2026-04-20
