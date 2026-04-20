@@ -1,5 +1,6 @@
 import { describe, it, expect } from "vitest";
 import { render, screen } from "@testing-library/react";
+import { MemoryRouter } from "react-router-dom";
 import { MonthlySummary } from "./MonthlySummary";
 import type { Transaction } from "../utils/csvParser";
 
@@ -7,11 +8,27 @@ function makeTransaction(amount: number): Transaction {
   return { date: new Date("2025-03-01"), description: "Test", amount };
 }
 
+function renderWithRouter(ui: React.ReactElement) {
+  return render(<MemoryRouter>{ui}</MemoryRouter>);
+}
+
 describe("MonthlySummary", () => {
-  it("shows $0.00 for all values when no transactions", () => {
-    render(<MonthlySummary transactions={[]} />);
-    // Income and Expenses show exact "$0.00"; Net shows "↑ $0.00"
-    expect(screen.getAllByText("$0.00", { exact: false })).toHaveLength(3);
+  it("shows empty state with CTA when no transactions", () => {
+    renderWithRouter(<MonthlySummary transactions={[]} />);
+    expect(screen.getByTestId("empty-state")).toBeInTheDocument();
+    expect(
+      screen.getByRole("link", { name: "Upload CSV" }),
+    ).toBeInTheDocument();
+  });
+
+  it("shows skeleton when isLoading is true", () => {
+    render(<MonthlySummary transactions={[]} isLoading />);
+    expect(screen.getByTestId("skeleton-card")).toBeInTheDocument();
+  });
+
+  it("shows summary cards when transactions are present", () => {
+    renderWithRouter(<MonthlySummary transactions={[makeTransaction(100)]} />);
+    expect(screen.getByText("Total Income")).toBeInTheDocument();
   });
 
   it("calculates total income from positive amounts", () => {
@@ -97,8 +114,8 @@ describe("MonthlySummary", () => {
     expect(screen.getByText("$1,234.50")).toBeInTheDocument();
   });
 
-  it("renders the three card labels", () => {
-    render(<MonthlySummary transactions={[]} />);
+  it("renders the three card labels when transactions are present", () => {
+    render(<MonthlySummary transactions={[makeTransaction(100)]} />);
     expect(screen.getByText("Total Income")).toBeInTheDocument();
     expect(screen.getByText("Total Expenses")).toBeInTheDocument();
     expect(screen.getByText("Net Savings")).toBeInTheDocument();

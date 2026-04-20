@@ -41,7 +41,7 @@ describe("SpendByCategory", () => {
   it("shows empty state when rows is empty", () => {
     renderPanel([]);
     expect(
-      screen.getByText("No expense transactions for this month."),
+      screen.getByText("No expense transactions for this period."),
     ).toBeInTheDocument();
   });
 

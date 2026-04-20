@@ -11,6 +11,8 @@ import type { TooltipProps } from "recharts";
 import { saveBudget, deleteBudget } from "../services/budgets";
 import { CATEGORIES } from "../services/categorisation";
 import type { CategoryRow } from "../utils/categoryData";
+import { EmptyState } from "./ui/EmptyState";
+import { SkeletonCard } from "./ui/SkeletonCard";
 import "./SpendByCategory.css";
 
 interface Props {
@@ -21,6 +23,24 @@ interface Props {
   onBudgetsChange: (budgets: Record<string, number>) => void;
   showForm?: boolean;
   onShowFormChange?: (show: boolean) => void;
+  isLoading?: boolean;
+}
+
+function CategoryIcon() {
+  return (
+    <svg
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth={1.5}
+    >
+      <path
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        d="M3.75 6A2.25 2.25 0 0 1 6 3.75h2.25A2.25 2.25 0 0 1 10.5 6v2.25a2.25 2.25 0 0 1-2.25 2.25H6a2.25 2.25 0 0 1-2.25-2.25V6ZM3.75 15.75A2.25 2.25 0 0 1 6 13.5h2.25a2.25 2.25 0 0 1 2.25 2.25V18a2.25 2.25 0 0 1-2.25 2.25H6A2.25 2.25 0 0 1 3.75 18v-2.25ZM13.5 6a2.25 2.25 0 0 1 2.25-2.25H18A2.25 2.25 0 0 1 20.25 6v2.25A2.25 2.25 0 0 1 18 10.5h-2.25a2.25 2.25 0 0 1-2.25-2.25V6ZM13.5 15.75a2.25 2.25 0 0 1 2.25-2.25H18a2.25 2.25 0 0 1 2.25 2.25V18A2.25 2.25 0 0 1 18 20.25h-2.25A2.25 2.25 0 0 1 13.5 18v-2.25Z"
+      />
+    </svg>
+  );
 }
 
 const fmt = new Intl.NumberFormat("en-US", {
@@ -114,6 +134,7 @@ export function SpendByCategory({
   onBudgetsChange,
   showForm: showFormProp,
   onShowFormChange,
+  isLoading,
 }: Props) {
   const [showFormInternal, setShowFormInternal] = useState(false);
   const showForm = showFormProp ?? showFormInternal;
@@ -123,6 +144,16 @@ export function SpendByCategory({
   }
   const [formCategory, setFormCategory] = useState<string>(CATEGORIES[0]);
   const [formAmount, setFormAmount] = useState("");
+
+  if (isLoading) {
+    return (
+      <div className="spend-by-category">
+        <div className="spend-by-category__card">
+          <SkeletonCard rows={5} />
+        </div>
+      </div>
+    );
+  }
 
   const spentMap = Object.fromEntries(rows.map((r) => [r.category, r.total]));
   const orphaned = Object.keys(budgets).filter(
@@ -195,9 +226,10 @@ export function SpendByCategory({
         )}
 
         {rows.length === 0 ? (
-          <p className="spend-by-category__empty">
-            No expense transactions for this month.
-          </p>
+          <EmptyState
+            icon={<CategoryIcon />}
+            message="No expense transactions for this period."
+          />
         ) : (
           <>
             <div className="spend-by-category__chart" aria-hidden="true">

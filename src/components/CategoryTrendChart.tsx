@@ -9,6 +9,8 @@ import {
   ResponsiveContainer,
 } from "recharts";
 import { DONUT_PALETTE } from "./SpendingDonutChart";
+import { EmptyState } from "./ui/EmptyState";
+import { SkeletonCard } from "./ui/SkeletonCard";
 import "./CategoryTrendChart.css";
 
 export interface MonthCategoryData {
@@ -20,6 +22,24 @@ export interface MonthCategoryData {
 
 interface Props {
   months: MonthCategoryData[];
+  isLoading?: boolean;
+}
+
+function LineChartIcon() {
+  return (
+    <svg
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth={1.5}
+    >
+      <path
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        d="M2.25 18 9 11.25l4.306 4.306a11.95 11.95 0 0 1 5.814-5.518l2.74-1.22m0 0-5.94-2.281m5.94 2.28-2.28 5.941"
+      />
+    </svg>
+  );
 }
 
 const UNCATEGORISED_COLOR = "#9ca3af";
@@ -57,7 +77,7 @@ function CustomTooltip({ active, payload, label }: any) {
   );
 }
 
-export function CategoryTrendChart({ months }: Props) {
+export function CategoryTrendChart({ months, isLoading }: Props) {
   const categories = useMemo(() => {
     const seen = new Set<string>();
     for (const m of months) {
@@ -84,13 +104,20 @@ export function CategoryTrendChart({ months }: Props) {
     [months, categories],
   );
 
+  if (isLoading) {
+    return <SkeletonCard rows={4} />;
+  }
+
   if (months.length < 2) {
     return (
-      <p className="cat-trend-empty">
-        {months.length === 0
-          ? "No data yet — upload at least two months to see category trends."
-          : "Upload at least two months of data to see category trends."}
-      </p>
+      <EmptyState
+        icon={<LineChartIcon />}
+        message={
+          months.length === 0
+            ? "No data yet — upload at least two months to see category trends."
+            : "Upload at least two months of data to see category trends."
+        }
+      />
     );
   }
 
