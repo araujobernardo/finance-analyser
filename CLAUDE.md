@@ -35,7 +35,7 @@ For project principles, governance, and agent workflow see: constitution.md
 
 ## Active Feature Plan
 
-Current feature: **AI Chat Enhancements** (branch `001-ai-chat-enhancements`)  
-Implementation plan: [specs/001-ai-chat-enhancements/plan.md](specs/001-ai-chat-enhancements/plan.md)
+Current feature: **UX/UI Overhaul — Monarch Money Quality** (branch `002-ux-ui-overhaul`)  
+Implementation plan: [specs/002-ux-ui-overhaul/plan.md](specs/002-ux-ui-overhaul/plan.md)
 
 <!-- SPECKIT END -->
