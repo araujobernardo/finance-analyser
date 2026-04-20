@@ -1,19 +1,24 @@
-import { useState, useMemo } from "react";
+import { useState } from "react";
 import { MonthToggleBar } from "../components/MonthToggleBar";
 import { MonthlySummary } from "../components/MonthlySummary";
 import { LargestTransactions } from "../components/LargestTransactions";
-import { getStoredMonths, loadTransactions } from "../services/storage";
+import {
+  useActiveMonths,
+  useActiveTransactions,
+} from "../context/AccountContext";
 import "./DashboardPage.css";
 
 export function DashboardPage() {
-  const months = useMemo(() => getStoredMonths(), []);
-  const [selectedMonth, setSelectedMonth] = useState<string | null>(
-    months[0] ?? null,
-  );
-  const transactions = useMemo(() => {
-    if (!selectedMonth) return [];
-    return loadTransactions(selectedMonth).transactions;
-  }, [selectedMonth]);
+  const months = useActiveMonths();
+  const [selectedMonth, setSelectedMonth] = useState<string | null>(null);
+
+  // Auto-select the first available month whenever the months list changes
+  const resolvedMonth =
+    selectedMonth && months.includes(selectedMonth)
+      ? selectedMonth
+      : (months[0] ?? null);
+
+  const transactions = useActiveTransactions(resolvedMonth);
 
   return (
     <div className="dashboard-page">
@@ -27,7 +32,7 @@ export function DashboardPage() {
           <div className="dashboard-full">
             <MonthToggleBar
               months={months}
-              selectedMonth={selectedMonth}
+              selectedMonth={resolvedMonth}
               onMonthSelect={setSelectedMonth}
             />
           </div>

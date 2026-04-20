@@ -1,9 +1,25 @@
 import { useState, useEffect, useRef } from "react";
 import { NavLink } from "react-router-dom";
-import { useAccount } from "../context/AccountContext";
+import { useAccount, ALL_ACCOUNTS_ID } from "../context/AccountContext";
 import { AddAccountModal } from "./AddAccountModal";
 import { DeleteAccountModal } from "./DeleteAccountModal";
 import "./NavBar.css";
+
+/** Multi-coloured icon for the All Accounts option */
+const AllAccountsIcon = () => (
+  <svg
+    width="14"
+    height="14"
+    viewBox="0 0 14 14"
+    fill="none"
+    aria-hidden="true"
+    style={{ flexShrink: 0 }}
+  >
+    <circle cx="4" cy="7" r="3" fill="#6366f1" />
+    <circle cx="7" cy="4" r="3" fill="#22c55e" />
+    <circle cx="10" cy="7" r="3" fill="#f59e0b" />
+  </svg>
+);
 
 const GearIcon = () => (
   <svg
@@ -53,7 +69,10 @@ function AccountSelector() {
   }, [open]);
 
   const isLastAccount = accounts.length <= 1;
-  const active = accounts.find((a) => a.id === activeAccountId) ?? accounts[0];
+  const isAllAccounts = activeAccountId === ALL_ACCOUNTS_ID;
+  const active = isAllAccounts
+    ? null
+    : (accounts.find((a) => a.id === activeAccountId) ?? accounts[0]);
 
   if (accounts.length === 0) {
     return (
@@ -82,14 +101,24 @@ function AccountSelector() {
           onClick={() => setOpen((o) => !o)}
           aria-haspopup="listbox"
           aria-expanded={open}
-          aria-label={`Active account: ${active.name}`}
+          aria-label={
+            isAllAccounts
+              ? "Active account: All Accounts"
+              : `Active account: ${active?.name ?? ""}`
+          }
         >
-          <span
-            className="account-dot"
-            style={{ background: active.colour }}
-            aria-hidden="true"
-          />
-          <span className="account-selector__name">{active.name}</span>
+          {isAllAccounts ? (
+            <AllAccountsIcon />
+          ) : (
+            <span
+              className="account-dot"
+              style={{ background: active?.colour }}
+              aria-hidden="true"
+            />
+          )}
+          <span className="account-selector__name">
+            {isAllAccounts ? "All Accounts" : (active?.name ?? "")}
+          </span>
           <span className="account-selector__arrow" aria-hidden="true">
             ▾
           </span>
@@ -100,6 +129,28 @@ function AccountSelector() {
             role="listbox"
             aria-label="Select account"
           >
+            <li
+              key={ALL_ACCOUNTS_ID}
+              role="option"
+              aria-selected={isAllAccounts}
+              className={
+                isAllAccounts
+                  ? "account-selector__item account-selector__item--active"
+                  : "account-selector__item"
+              }
+              onClick={() => {
+                setActiveAccountId(ALL_ACCOUNTS_ID);
+                setOpen(false);
+              }}
+            >
+              <AllAccountsIcon />
+              All Accounts
+            </li>
+            <li
+              role="separator"
+              className="account-selector__separator"
+              aria-hidden="true"
+            />
             {accounts.map((acc) => (
               <li
                 key={acc.id}
