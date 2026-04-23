@@ -36,7 +36,9 @@ For project principles, governance, and agent workflow see: constitution.md
 
 ## Active Feature Plan
 
-Current feature: **UX/UI Overhaul — Monarch Money Quality** (branch `002-ux-ui-overhaul`)  
-Implementation plan: [specs/002-ux-ui-overhaul/plan.md](specs/002-ux-ui-overhaul/plan.md)
+Current feature: **UX/UI Overhaul — Realign to Prototype** (branch `002-ux-ui-overhaul`)  
+Implementation plan: [specs/002-ux-ui-overhaul/plan.md](specs/002-ux-ui-overhaul/plan.md)  
+Spec: [specs/002-ux-ui-overhaul/spec.md](specs/002-ux-ui-overhaul/spec.md)  
+Primary reference: [docs/prototype.jsx](docs/prototype.jsx)
 
 <!-- SPECKIT END -->
