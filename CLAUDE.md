@@ -16,6 +16,7 @@ See [docs/requirements.md](docs/requirements.md) for full requirements.
 | [docs/standards/testing-strategy.md](docs/standards/testing-strategy.md) | Test coverage and QA process                   |
 | [docs/definition-of-ready.md](docs/definition-of-ready.md)               | Story readiness checklist                      |
 | [docs/definition-of-done.md](docs/definition-of-done.md)                 | Story completion checklist                     |
+| [docs/dev-mentor-progress.md](docs/dev-mentor-progress.md)               | Learning curriculum and session log            |
 
 ## Agent Squad
 
@@ -35,7 +36,7 @@ For project principles, governance, and agent workflow see: constitution.md
 
 ## Active Feature Plan
 
-Current feature: **AI Chat Enhancements** (branch `001-ai-chat-enhancements`)  
-Implementation plan: [specs/001-ai-chat-enhancements/plan.md](specs/001-ai-chat-enhancements/plan.md)
+Current feature: **UX/UI Overhaul — Monarch Money Quality** (branch `002-ux-ui-overhaul`)  
+Implementation plan: [specs/002-ux-ui-overhaul/plan.md](specs/002-ux-ui-overhaul/plan.md)
 
 <!-- SPECKIT END -->

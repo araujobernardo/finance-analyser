@@ -1,0 +1,513 @@
+# Dev Mentor — Learning Progress
+
+> Track your software development curriculum progress here.
+> Update this file as you complete topics and exercises.
+
+---
+
+## My Setup
+
+| Field       | Value                                                  |
+| ----------- | ------------------------------------------------------ |
+| Language    | TypeScript                                             |
+| Framework   | React + Vite                                           |
+| OS          | Windows 11                                             |
+| Project     | Finance Analyser                                       |
+| Repo        | araujobernardo/finance-analyser (private)              |
+| GitHub CLI  | `gh` (full path: `C:/Program Files/GitHub CLI/gh.exe`) |
+| AI Tooling  | Claude Code + spec-kit                                 |
+| Node        | Node.js (npm)                                          |
+| Python tool | uv (for spec-kit)                                      |
+
+> ⚠️ Jira has been removed from the project. All work tracking now uses GitHub Issues.
+
+---
+
+## Curriculum Progress
+
+### 1. Git & Version Control ✅
+
+- [x] Basic commands (clone, add, commit, push, pull)
+- [x] Branching strategies (feature branches per story, trunk-based with PR merges)
+- [x] Pull requests, code reviews, merge conflicts
+- [x] Commit message conventions (Conventional Commits)
+
+**Exercises completed:**
+
+- Cloned repo from GitHub to local machine
+- Made first commit (`chore: add .env.example`) and pushed to GitHub
+- Created feature branches for every story using naming convention `feat/FA-XX-description`
+- Opened 70+ PRs, all squash merged via `gh pr merge --squash --delete-branch`
+- Used Conventional Commits throughout: `feat:`, `fix:`, `chore:`, `test:`, `docs:`, `refactor:`
+- Learned the difference between `git restore`, `git restore --staged`, and `git reset`
+- Learned PowerShell navigation: `cd`, `ls`, `pwd`, `mkdir`
+- Discovered that `LF will be replaced by CRLF` warnings are harmless on Windows
+- Cleaned up 14 abandoned git worktrees left by agent sessions
+- Used `git worktree list` and `git worktree remove --force` for cleanup
+- Learned that `git merge --no-ff` preserves merge commit history vs squash
+- Understood when to squash (feature code) vs regular merge (config/docs)
+
+---
+
+### 2. VS Code Mastery ✅
+
+- [x] Essential extensions for my stack
+- [x] Keyboard shortcuts and productivity tips
+- [x] Integrated terminal, debugger, and Git panel
+- [x] Settings sync and workspace configuration
+
+**Exercises completed:**
+
+- Installed extensions: ESLint, Prettier, GitLens, TypeScript Next, Tailwind CSS
+- Configured `settings.json` with `formatOnSave`, `defaultFormatter`, `wordWrap`, `autoSave`
+- Learned key shortcuts: `Ctrl+Shift+P`, `Ctrl+P`, `Ctrl+\``, `Ctrl+D`, `Alt+↑/↓`
+- Used Claude Code extension directly inside VS Code for all agent interactions
+- Learned the difference between VS Code's integrated terminal and external PowerShell
+- Configured `.claude/settings.local.json` to auto-approve all Claude Code tool permissions
+
+---
+
+### 3. Claude Code ✅
+
+- [x] Installation and setup
+- [x] Using it for scaffolding, refactoring, and debugging
+- [x] Effective prompting patterns for code tasks
+- [x] When to trust AI output vs. when to verify manually
+- [x] Sub-agent architecture (Delivery Lead spawning Developer and QA)
+- [x] Permission management via `.claude/settings.local.json`
+
+**Exercises completed:**
+
+- Used Claude Code to read, create, and edit files across the entire project
+- Built a 3-agent execution squad: Developer, QA, Delivery Lead
+- Learned role-based prompting with agent files in `.claude/agents/`
+- Caught Claude Code hardcoding credentials in a script — learned to always verify
+- Learned the distinction between auto-approved actions vs requires-approval
+- Fixed permission prompts by configuring `settings.local.json` with `Bash(*)`, `Read(*)`, `Write(*)`, `Edit(*)`, `MultiEdit(*)`, `Glob(*)`, `Grep(*)`, `PowerShell(*)`
+- Discovered that two settings files (`settings.json` + `settings.local.json`) can conflict — solved by using only `settings.local.json`
+- Learned that Claude Code only reads permissions on startup — must restart after config changes
+
+---
+
+### 4. Code Quality Gates ✅
+
+- [x] Linters and formatters (ESLint, Prettier)
+- [x] Pre-commit hooks with Husky
+- [x] Code style guides and team conventions
+- [x] CI quality gates blocking merges on red builds
+- [ ] Static analysis tools
+
+**Exercises completed:**
+
+- **Layer 1 — Pre-commit hooks:** Installed Husky + lint-staged; runs ESLint --fix and Prettier --write on every commit
+- Verified the hook fires by making an intentional formatting error and watching it auto-fix
+- **Layer 2 — GitHub Actions CI:** `.github/workflows/ci.yml` triggers on every PR and push to main
+- CI pipeline has 4 gates: Install → ESLint → Prettier check → Test suite
+- CI caught a real ESLint error on the first run — pipeline working as intended
+- Fixed `HUSKY=0` env var to prevent Husky from failing in CI runner
+- **Layer 3 — Test reporting:** Configured Vitest JUnit reporter + `dorny/test-reporter@v1` in CI
+- Fixed Vite CVEs by running `npm audit fix`
+- **Quality gate enforcement:** QA agent now runs `gh pr checks --watch` before every merge — no merge on red CI
+- Learned that GitHub branch protection rules require a paid plan for private repos — used agent-level enforcement instead
+
+---
+
+### 5. Testing Strategy ✅
+
+- [x] Unit tests — structure, naming, and what to test
+- [x] Integration and end-to-end tests
+- [x] Regression testing and test suites
+- [x] Test coverage as a quality metric (not a vanity metric)
+- [ ] Test-driven development (TDD) basics
+
+**Exercises completed:**
+
+- Set up Vitest + Testing Library + jsdom from scratch
+- 400+ tests across 25+ test files — all written by QA agent
+- Learned `describe` / `it` / `expect` structure
+- Learned `vi.spyOn`, `vi.fn()`, `vi.mock()` for mocking
+- Learned `beforeEach(() => localStorage.clear())` pattern for test isolation
+- Understood why async FileReader tests need `await new Promise(r => setTimeout(r, 50))`
+- Learned `{ applyAccept: false }` trick for testing file type rejection
+- Saw QA agent catch subtle bugs — tests are a safety net, not a vanity metric
+- Learned that `.env` values leak into Vitest — fixed with `vi.stubEnv()`
+- Added `chatStorage.test.ts`, `useChatHistory.test.ts`, `claudeChat.test.ts` as part of FA-53
+
+---
+
+### 6. CI/CD with GitHub Actions ✅
+
+- [x] What CI/CD is and why it matters
+- [x] Writing your first workflow file
+- [x] Running tests automatically on every pull request
+- [x] Blocking merges when quality gates fail
+- [ ] Automated deployments to staging/production
+
+**Exercises completed:**
+
+- Wrote `ci.yml` from scratch with `on: push/pull_request` triggers
+- Used `npm ci` instead of `npm install` for faster, deterministic CI installs
+- Added `HUSKY: 0` env var to prevent Husky hook registration in CI
+- Set `if: always()` on test reporter so results publish even when tests fail
+- Watched the pipeline catch real bugs on first runs
+- Added `checks: write` and `pull-requests: write` permissions for test reporters
+- Understood that CI + agent-level `gh pr checks --watch` is the correct quality gate strategy for private repos on free GitHub plan
+
+---
+
+### 7. Modern Development Workflow ✅
+
+- [x] Full feature lifecycle: issue → branch → code → test → PR → review → merge → deploy
+- [x] Working effectively with an AI agent team
+- [x] Documentation habits (constitution, architecture, standards, changelog)
+- [x] Project governance and agent coordination
+- [ ] Incident response and rollback strategies
+- [ ] Automated deployments to staging/production
+
+**Exercises completed:**
+
+- Built complete AI agent team: Developer, QA, Delivery Lead + spec-kit planning layer
+- Migrated from Jira to GitHub Issues — full backlog of 15 stories migrated via script
+- Wrote a `create-github-issues.mjs` migration script using `gh` CLI
+- Implemented Definition of Ready and Definition of Done for spec-kit workflow
+- Set up CHANGELOG.md — auto-maintained by Delivery Lead after every merge
+- Learned the difference between tool-specific config (CLAUDE.md) and tool-agnostic docs (constitution.md)
+
+---
+
+## Agentic Development Workflow (New Curriculum Layer)
+
+This is a major addition beyond the original curriculum — building a reusable AI development pipeline.
+
+### 8. Spec-Driven Development with spec-kit ✅
+
+- [x] Installed spec-kit via `uv` (Python CLI tool from GitHub)
+- [x] Understand the `/specify → /plan → /tasks → /implement` workflow
+- [x] spec-kit generates specs, plans, tasks, and GitHub Issues from requirements
+- [x] Ran first full pipeline on FA-53 (AI Chat Enhancements)
+- [x] Configured auto-commit hooks in spec-kit git extension
+- [x] Understand spec-kit's role: **planning tool**, not replacement for execution agents
+
+**Key concepts:**
+
+- spec-kit = Product Owner + Planner (specification layer)
+- Your agents = Execution team (Developer, QA, Delivery Lead)
+- constitution.md = The rulebook both follow
+- Specs live in `specs/[feature-name]/` — spec.md, plan.md, research.md, data-model.md, tasks.md, ux-brief.md
+
+**Commands:**
+
+```
+/speckit-specify    → turns requirements into a spec
+/speckit-plan       → turns spec into technical plan
+/speckit-tasks      → turns plan into actionable task list
+/speckit-taskstoissues → creates GitHub Issues from tasks
+```
+
+---
+
+### 9. Project Constitution & Documentation Architecture ✅
+
+- [x] Single Source of Truth principle — one file, not duplicated across agents
+- [x] Tool-agnostic docs (`docs/`) vs tool-specific config (`.claude/`, `.github/`)
+- [x] Agent files reference docs — never duplicate content
+- [x] constitution.md at repo root — governs all agents and tools
+
+**File structure:**
+
+```
+constitution.md              → Governance (version controlled, all agents read this)
+docs/
+  architecture.md            → Tech stack, file layout, constraints
+  design-system.md           → Colour tokens, typography, spacing, components
+  standards/
+    coding-standards.md      → TypeScript strict, component size limits
+    git-workflow.md          → Branching, commits, PRs
+    testing-strategy.md      → Vitest, co-located tests, coverage
+  definition-of-ready.md    → Story must meet this before agent picks it up
+  definition-of-done.md     → Story must meet this before merge
+CLAUDE.md                    → Thin wrapper (20 lines) pointing to docs/
+.github/
+  copilot-instructions.md   → Thin wrapper for GitHub Copilot
+.claude/
+  agents/                   → Role definitions (reference docs/, don't duplicate)
+  skills/                   → spec-kit skills (SKILL.md files)
+.specify/                   → spec-kit working directory
+specs/                      → Feature specs generated by spec-kit
+```
+
+---
+
+### 10. Full Automation Model ✅
+
+- [x] Agents run fully autonomously — no approval gates except 4 stop conditions
+- [x] QA merges automatically when all CI checks pass
+- [x] Squash merge + branch delete is the standard merge strategy
+- [x] CHANGELOG.md updated after every merge
+- [x] Scope creep — open bug issue, continue current story
+- [x] Test failures — 3 auto-fix attempts, then escalate to user
+
+**The 4 stop conditions (only time agents ask user):**
+
+1. Spec is silent on a product decision
+2. Security issue found (API key exposed, credentials in code)
+3. Test failures after 3 fix attempts
+4. Behaviour that would affect user data or localStorage schema
+
+**Golden Rules (constitution v2.2.0):**
+
+1. Never make assumptions about product requirements — if spec is silent, ask
+2. Never expose credentials, API tokens, or secrets in any file, command, or output
+3. Never modify localStorage schema without flagging to user
+4. Never skip the Definition of Ready check before implementation
+5. Never skip the Definition of Done check before merging
+6. When in doubt about a product decision, do less and ask more
+
+---
+
+### 11. Designer Agent & Design System ✅
+
+- [x] Added Designer agent to pipeline (between spec-kit tasks and Developer)
+- [x] Designer only runs for UI stories — skipped for services/hooks/utils/tests
+- [x] Designer researches real app references and presents 3 concrete options
+- [x] User picks an option — Designer writes UX brief — Developer implements
+- [x] Design system based on Monarch Money visual language
+
+**Design system foundations (`docs/design-system.md`):**
+
+- Colour tokens: deep navy backgrounds, soft white text, teal/green accent
+- Typography: Sora font, 4px base spacing system
+- Component patterns: cards, buttons, inputs, charts, empty states, skeletons
+- Finance Analyser principles: insight over data, green/red = good/bad only, one primary action per screen
+- Reference apps: Monarch Money (primary), Copilot Money (secondary), Linear (interaction patterns)
+
+**Pipeline with Designer:**
+
+```
+/speckit-specify → /speckit-plan → /speckit-tasks → /speckit-taskstoissues
+       ↓
+Delivery Lead picks up story
+       ↓
+[UI story?] → Designer presents 3 options → User picks → UX brief written
+[Non-UI?]  → Skip Designer
+       ↓
+Developer implements (using UX brief for UI stories)
+       ↓
+QA: tests → CI checks → security scan → auto-merge
+       ↓
+CHANGELOG updated → Next story
+```
+
+---
+
+## Finance App — What's Been Built
+
+### Completed Features
+
+| Area         | Feature                                     | Status  |
+| ------------ | ------------------------------------------- | ------- |
+| Upload       | CSV upload with drag-and-drop               | ✅ Done |
+| Upload       | NZ bank CSV auto-detection                  | ✅ Done |
+| Storage      | localStorage persistence service            | ✅ Done |
+| Upload       | Duplicate upload detection + warning modal  | ✅ Done |
+| AI           | Auto-categorise transactions via Claude API | ✅ Done |
+| Transactions | Manual category override with table         | ✅ Done |
+| Transactions | Category rules — remember past decisions    | ✅ Done |
+| Dashboard    | Spend by Category donut chart               | ✅ Done |
+| Dashboard    | Monthly Summary panel                       | ✅ Done |
+| Dashboard    | Largest Transactions panel                  | ✅ Done |
+| Dashboard    | Monthly Trend chart panel (FA-53-S4)        | ✅ Done |
+| Dashboard    | Empty & loading states (FA-54)              | ✅ Done |
+| Accounts     | Multi-account support                       | ✅ Done |
+| Accounts     | Add and delete accounts                     | ✅ Done |
+| Accounts     | Combined 'All Accounts' view                | ✅ Done |
+| Transactions | Inline category editing                     | ✅ Done |
+| Settings     | Category budgets                            | ✅ Done |
+| Settings     | Data export and reset                       | ✅ Done |
+| Chat         | Persistent chat history                     | ✅ Done |
+| Chat         | Multi-account AI context                    | ✅ Done |
+| Chat         | chatStorage unit tests                      | ✅ Done |
+
+### In Progress
+
+| Area  | Feature                           | Status      |
+| ----- | --------------------------------- | ----------- |
+| UX/UI | Full prototype-driven UX overhaul | 🔄 Planning |
+
+### Technical Stats
+
+- **Test count:** 400+ tests across 25+ test files
+- **PRs merged:** 70+
+- **Agents:** Developer, QA, Delivery Lead, Designer
+- **Constitution version:** v2.2.0
+
+---
+
+## What's Next
+
+### Immediate — UX/UI Overhaul
+
+The app is functionally complete but needs a full UX redesign based on the original prototype (`finance-dashboard.jsx`). Key issues to fix:
+
+- **Layout:** Switch from top navbar to sidebar layout (matching prototype)
+- **Upload flow:** Upload is a sidebar action, not a dedicated page — auto-navigate to Dashboard after upload
+- **Multi-month selection:** Select a date range, not just one month
+- **Account switching:** Content updates immediately, no refresh needed
+- **Dashboard panels:** All panels (Spend by Category, Largest Transactions, Trend chart) belong on Dashboard, not Upload page
+- **Design tokens:** Align to design-system.md — currently 30+ undocumented CSS variables
+
+The overhaul uses the prototype as the reference spec, not the current app.
+
+### Upcoming Curriculum Topics
+
+- [ ] **Automated deployments** — deploy Finance Analyser to Vercel or Netlify via GitHub Actions
+- [ ] **Incident response and rollback** — how to revert a bad merge, hotfix workflow
+- [ ] **TDD basics** — write tests before implementation on one story
+- [ ] **Static analysis** — add TypeScript strict checks, possibly SonarCloud
+- [ ] **Performance monitoring** — Lighthouse CI, bundle size tracking
+- [ ] **Reusing the dev team** — apply the full pipeline (spec-kit + agents + Designer) to a second, different project
+
+### The Bigger Goal
+
+Finance Analyser is the proving ground. The real output is a **reusable agentic development pipeline** that can be pointed at any project:
+
+1. Give requirements in plain English
+2. spec-kit plans the work
+3. Designer ensures quality UX
+4. Developer implements
+5. QA tests and merges
+6. Get working software
+
+This pipeline is now proven on Finance Analyser. Next step: apply it to a new project from scratch.
+
+---
+
+## Key Concepts Learned
+
+**Git**
+
+- `git reset --soft HEAD~1` undoes a commit but keeps the changes staged
+- Squash merging keeps main history clean — all feature commits become one
+- `git worktree list` shows all active worktrees; `git worktree remove --force` cleans up abandoned ones
+- Two settings files can conflict — always check which one loads last
+
+**TypeScript / React**
+
+- Optional fields (`balance?: number`) are the right tool when data might not always exist
+- Custom hooks keep components clean — logic lives in `useChatHistory`, not in `ChatPanel`
+- `import.meta.env` is how Vite exposes environment variables — must be prefixed with `VITE_`
+- `useRef` + `FileReader` is the correct pattern for reading file contents in React
+
+**Testing**
+
+- Tests next to the file they test (`csvParser.ts` → `csvParser.test.ts`) is industry standard
+- `beforeEach(() => localStorage.clear())` is essential for storage tests
+- Mock what you don't own: `vi.spyOn(Storage.prototype, 'setItem')` to simulate quota exceeded
+- CI catching a bug on first run is the pipeline working correctly — not a failure
+
+**CI/CD**
+
+- `npm ci` is always better than `npm install` in CI — faster and deterministic
+- `HUSKY: 0` prevents Husky from failing when there's no `.git` directory in CI
+- `if: always()` on a workflow step means it runs even if previous steps failed
+- Branch protection rules require a paid GitHub plan for private repos — use agent-level enforcement instead
+
+**Agentic Development**
+
+- Single Source of Truth: one document defines everything, agents reference it — never duplicate
+- Tool-agnostic docs (`docs/`) outlast any specific tool; CLAUDE.md is just a thin pointer
+- The Designer agent's job is UX decisions, not visual tweaks — it researches real references
+- Agents that merge without CI passing create debt — `gh pr checks --watch` is non-negotiable
+- Two `.claude/` settings files conflict — use only `settings.local.json`, keep it out of git
+- spec-kit is a planning tool, not an execution tool — they work at different layers
+- The only time to stop full automation is the 4 constitutional stop conditions
+
+**Design**
+
+- Monarch Money = right reference for "regular person, financial insights, clean dark UI"
+- A design system is the single source of truth for visual decisions — agents read it before touching UI
+- The Designer presents 3 concrete options with real app references — never asks open-ended questions
+- Insight over data: show "why do I have less money?" not just the numbers
+
+---
+
+## Session Log
+
+> This table is automatically updated by the Delivery Lead agent after each story is merged.
+> Entries follow the format: Date | Topic/Story | Notes
+
+| Date       | Topic Covered           | Notes                                                                                     |
+| ---------- | ----------------------- | ----------------------------------------------------------------------------------------- |
+| 2026-03-29 | Phase 1 — Foundation    | Installed tools, configured VS Code, created GitHub repo, scaffolded React app            |
+| 2026-03-29 | Phase 2 — Agent squad   | Built Product Owner, Developer, QA agents; wired Jira API; first agent-written PR         |
+| 2026-03-29 | Phase 3 — Jira board    | Kanban board live, 18 stories created with dependencies, GitHub-Jira integration          |
+| 2026-03-29 | Phase 4 begins — FA-13  | First full agent lifecycle: code → PR → QA review → merge → Done                          |
+| 2026-03-29 | FA-14, FA-15            | CSV parser with real NZ bank format; localStorage service with 22 tests                   |
+| 2026-04-02 | FA-16, FA-17            | Duplicate detection modal; Claude API categorisation; fixed VITE\_ key naming             |
+| 2026-04-02 | Delivery Lead           | Built orchestrator agent; "pick up the next ticket" workflow working end-to-end           |
+| 2026-04-02 | DoR / DoD               | Created Definition of Ready and Done; updated all 16 backlog stories                      |
+| 2026-04-08 | FA-18, FA-19            | Manual category override; category rules service                                          |
+| 2026-04-08 | Phase 5 — Quality gates | Husky + lint-staged + GitHub Actions CI + JUnit reporting; fixed Vite CVEs                |
+| 2026-04-16 | Phase 0 — Cleanup       | Removed Jira, deleted 86 scripts, cleaned 14 abandoned worktrees                          |
+| 2026-04-16 | Phase 1 — GitHub Issues | Migrated 15 Jira stories to GitHub Issues via `create-github-issues.mjs` script           |
+| 2026-04-17 | Phase 2 — Repo refactor | Restructured docs to tool-agnostic layer; added `.github/copilot-instructions.md`         |
+| 2026-04-17 | spec-kit install        | Installed via uv; configured auto-commit hooks; first `/speckit-specify` run              |
+| 2026-04-18 | Constitution rewrite    | v1.0 → v2.2.0; full automation model; removed all approval gates; added 4 stop conditions |
+| 2026-04-19 | FA-53 pipeline          | First full spec-kit pipeline: specify → plan → tasks → issues → implement → merge         |
+| 2026-04-19 | FA-53 stories           | Persistent chat history, multi-account AI context, chatStorage tests — all merged         |
+| 2026-04-19 | CI quality gate fix     | QA agent now runs `gh pr checks --watch` before every merge                               |
+| 2026-04-20 | Full backlog delivery   | All FA-36 through FA-66 stories delivered autonomously                                    |
+| 2026-04-20 | Designer agent          | Added Designer to pipeline; created design-system.md based on Monarch Money               |
+| 2026-04-20 | UX overhaul planning    | Prototype-driven gap analysis; 8 stories created for full UX redesign                     |
+| 2026-04-23 | UX overhaul scoped      | Identified prototype as source of truth; planning full sidebar layout + flow redesign     |
+| 2026-04-23 | Dev Mentor Progress     | Added curriculum file to squad docs; wired Delivery Lead to auto-update Session Log       |
+
+---
+
+## Dev Mentor System Prompt
+
+To continue your learning on any account, paste this system prompt into a new Claude Project:
+
+```
+You are a senior software engineer and patient mentor named "Dev Mentor". Your job is to teach me modern software development practices step by step, using a hands-on, exercise-driven approach.
+
+## Your Teaching Style
+- Always assess what I already know before explaining a topic
+- Break complex concepts into small, digestible steps
+- Give me practical exercises after each concept — not just theory
+- When I make mistakes, guide me to the answer rather than just giving it
+- Use analogies to explain abstract concepts
+- Celebrate progress and keep the tone encouraging but professional
+- If I seem stuck, offer hints in increasing levels of detail
+
+## Curriculum Scope
+Cover these topics in a logical progression. Track where we are and remind me of my progress:
+
+1. Git & Version Control
+2. VS Code Mastery
+3. Claude Code & Agentic Development
+4. Code Quality Gates
+5. Testing Strategy
+6. CI/CD with GitHub Actions
+7. Spec-Driven Development (spec-kit)
+8. Project Constitution & Documentation Architecture
+9. Full Automation Model
+10. Designer Agent & Design System
+11. Modern Development Workflow (putting it all together)
+
+## Session Management
+- At the start of each session, ask me what I want to focus on or remind me where we left off
+- Offer a quick recap of the last topic before moving forward
+- Track exercises I've completed and refer back to them
+- Suggest what to tackle next based on my progress
+
+## My Stack
+- Language: TypeScript
+- Framework: React + Vite
+- OS: Windows 11
+- Project: Finance Analyser (araujobernardo/finance-analyser)
+- AI Tooling: Claude Code + spec-kit
+- Backlog: GitHub Issues
+```
+
+> 💡 **Tip:** Start your first message with: _"I'm continuing from my progress file. Here's where I left off: [paste the Session Log and What's Next sections]"_
