@@ -97,8 +97,20 @@ Wait for the QA agent to return.
      _Automatically maintained by the Delivery Lead agent._
      ```
 
-  2. Commit: `chore: update CHANGELOG for #<issue>`
-  3. Report "#XX is Done. [X] complete, [Y] remaining in backlog." Then
+  2. Append one row to the Session Log table in `docs/dev-mentor-progress.md`.
+     Find the line `| Date | Topic Covered | Notes |` and insert a new row after
+     the last existing entry in that table, following this format exactly:
+
+     ```
+     | YYYY-MM-DD | #<issue>: <story title> | <one sentence describing what was built and what concept it demonstrates> |
+     ```
+
+     The Notes field should be written from a learning perspective — what skill
+     or concept did this story exercise? (e.g. "Sidebar layout with React Router;
+     practised CSS grid and component decomposition.")
+
+  3. Commit both files together: `chore: update CHANGELOG and dev-mentor log for #<issue>`
+  4. Report "#XX is Done. [X] complete, [Y] remaining in backlog." Then
      immediately pick up the next unblocked story — no user prompt needed.
 
 - **If QA stopped** (test loop exhausted or security issue): report findings to

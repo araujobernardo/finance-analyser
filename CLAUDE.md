@@ -16,6 +16,7 @@ See [docs/requirements.md](docs/requirements.md) for full requirements.
 | [docs/standards/testing-strategy.md](docs/standards/testing-strategy.md) | Test coverage and QA process                   |
 | [docs/definition-of-ready.md](docs/definition-of-ready.md)               | Story readiness checklist                      |
 | [docs/definition-of-done.md](docs/definition-of-done.md)                 | Story completion checklist                     |
+| [docs/dev-mentor-progress.md](docs/dev-mentor-progress.md)               | Learning curriculum and session log            |
 
 ## Agent Squad
 
