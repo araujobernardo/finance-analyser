@@ -1,127 +1,130 @@
-# Feature Specification: UX/UI Overhaul — Monarch Money Quality
+# Feature Specification: UX/UI Overhaul — Realign to Prototype
 
 **Feature Branch**: `002-ux-ui-overhaul`  
-**Created**: 2026-04-21  
+**Created**: 2026-04-23  
 **Status**: Draft  
-**Input**: Full UX/UI overhaul of Finance Analyser to match Monarch Money quality and design-system.md tokens.
+**Primary Reference**: `docs/prototype.jsx` (authoritative UX reference for all layout, interaction, and design decisions)
 
 ---
 
 ## User Scenarios & Testing _(mandatory)_
 
-### User Story 1 — Visually Consistent App Shell (Priority: P1)
+### User Story 1 — First-time Upload & Auto-Navigation (Priority: P1)
 
-A user opens Finance Analyser and immediately experiences a polished, dark-themed interface. The navigation bar is 56px tall, displays the brand wordmark, has clearly labelled nav links with SVG icons, an active-link accent underline, and an account selector with a visible border. Every page shares the same background colour, typography, and spacing rhythm — the app feels like one product, not a collection of pages.
+A user opens the app for the first time (no data), sees the sidebar with an "Upload CSV" button and an empty Dashboard. They click "Upload CSV" in the sidebar, select one or more ASB CSV files, and — after parsing and AI categorisation complete — are automatically taken to the Dashboard showing their transactions summarised.
 
-**Why this priority**: The shared design foundation (CSS tokens, base typography, NavBar) gates all other visual work. Nothing else can look correct until this layer exists.
+**Why this priority**: This is the core entry flow. Without it, the app has no data to show.
 
-**Independent Test**: Open the app with no data. Verify the NavBar renders at 56px, uses Inter font, active link shows teal underline (not background fill), account selector has a visible border, and the background is `#0f1923`.
+**Independent Test**: Open app with no data; upload a CSV via the sidebar button; confirm the Dashboard becomes visible automatically with transaction data.
 
 **Acceptance Scenarios**:
 
-1. **Given** the app is open, **When** a user looks at the NavBar, **Then** it is exactly 56px tall, shows the brand, nav links with icons, and an account selector with a 1px border.
-2. **Given** any page is open, **When** a user inspects the typography, **Then** all body text uses Inter, financial figures use tabular-nums, and no raw hex colours appear in inline styles.
-3. **Given** an active nav link, **When** a user sees it, **Then** it has a 2px teal bottom border (not a filled background).
-4. **Given** the account selector dropdown is open, **When** a user sees it, **Then** it uses `--bg-elevated` background, `--border-default` border, and `--shadow-md` shadow.
+1. **Given** no transactions exist, **When** the app loads, **Then** the Dashboard shows the "No data yet" empty state with instructions to upload via the sidebar.
+2. **Given** one or more CSVs are selected via the sidebar upload button, **When** parsing and categorisation complete, **Then** the active tab automatically switches to Dashboard.
+3. **Given** upload is in progress, **When** the sidebar status area is visible, **Then** it shows a loading message (e.g., "Parsing 2 files…" / "Categorising N transactions with AI…").
+4. **Given** upload succeeds, **When** the status message appears, **Then** it shows the import count and detected transfer count; status clears after ~5 s.
+5. **Given** a CSV is already imported, **When** the same file is uploaded again, **Then** no duplicate transactions are added and an appropriate message is shown.
 
 ---
 
-### User Story 2 — Import Page as a Focused Flow (Priority: P2)
+### User Story 2 — Dashboard Multi-Month View (Priority: P1)
 
-A user navigates to Import (previously "Upload"). They see a large, centred drop-zone as the primary focus. After uploading a CSV, they see a clearly styled success card showing the month imported, number of transactions, and account name — with a "View in Dashboard" CTA. Error states show a red-bordered card. A categorising skeleton replaces blank waiting time. No data-review panels appear on this page.
+A user with several months of data wants to compare spending across multiple months. They click additional month pills to extend the selection, see summary stats show monthly averages, and observe unselected months dimmed in the trend chart.
 
-**Why this priority**: The Import page is the entry point for all data. A cluttered, do-everything page confuses first-time users and undermines trust.
+**Why this priority**: Multi-month selection is a core differentiator called out in the prototype and currently broken.
 
-**Independent Test**: Upload a CSV. Verify only the upload zone, success/error card, and existing-months list appear. No MonthlySummary, TransactionTable, charts, or budget panels are present.
+**Independent Test**: Upload 3+ months of data; select two months; confirm stats show averages and trends dim non-selected months.
 
 **Acceptance Scenarios**:
 
-1. **Given** the Import page with no uploads, **When** a user sees the page, **Then** a centred upload zone occupies the main area with an icon, heading, and "browse" link styled per the design system.
-2. **Given** a CSV is uploading and being categorised, **When** the user waits, **Then** a skeleton card with pulsing animation and a "Categorising…" label replaces the success card area.
-3. **Given** a successful upload, **When** categorisation finishes, **Then** a green-bordered success card shows month, transaction count, account name, and a "View Dashboard" button.
-4. **Given** an invalid file or parse error, **When** the upload fails, **Then** a red-bordered error card shows the filename and first 3 error messages.
-5. **Given** existing uploads, **When** a user views the page, **Then** a month list (MonthToggleBar) lets them switch/delete months; no other review panels appear.
+1. **Given** multiple months of data, **When** the Dashboard loads, **Then** month pills are shown and the most-recent month is pre-selected.
+2. **Given** one month selected, **When** a second month pill is clicked, **Then** both are highlighted and summary stats show total values plus per-month averages.
+3. **Given** two months selected, **When** one pill is clicked to deselect, **Then** it removes that month — but if only one month remains, deselect is prevented.
+4. **Given** multi-month selected, **When** the Trends chart renders, **Then** bars for unselected months are rendered at 25% opacity.
+5. **Given** budgets exist and multi-month is selected, **When** Budget vs Actual renders, **Then** budget limit is multiplied by the number of selected months.
 
 ---
 
-### User Story 3 — Dashboard as Financial Overview (Priority: P3)
+### User Story 3 — Account Renaming in Sidebar (Priority: P2)
 
-A user opens the Dashboard and sees their financial snapshot for the selected month. Three KPI cards (Income, Expenses, Net Savings) are the most prominent elements — large numbers with colour coding. Below is a 2-column layout: a spend trend chart (wider) and a top-categories sidebar. Largest transactions appear below. The page is 1200px wide. If no data exists, a proper empty state with an "Import CSV" CTA appears instead of a blank page.
+A user with multiple accounts wants to give them friendly names. They click the pencil icon next to an account in the sidebar, type a new name, and press Enter (or blur). The new name is applied immediately across all transactions.
 
-**Why this priority**: The Dashboard is the most frequently visited page and the primary value-delivery surface. It must immediately communicate financial health.
+**Why this priority**: Account renaming is an important personalisation feature surfaced directly in the sidebar.
 
-**Independent Test**: With data for one month, open the Dashboard. Verify the 3 KPI cards are the tallest/most visually prominent elements, numbers use tabular-nums, the chart and category sidebar are side-by-side, and the max-width is 1200px.
+**Independent Test**: Import two CSVs; rename one account; confirm the new name appears in the sidebar, Dashboard, and Transactions table.
 
 **Acceptance Scenarios**:
 
-1. **Given** no data, **When** a user opens the Dashboard, **Then** the EmptyState component shows with an upload-cloud icon, "No data yet" heading, explanatory text, and an "Import CSV" button.
-2. **Given** data exists, **When** a user opens the Dashboard, **Then** MonthlySummary cards appear at the top with Income, Expenses, and Net Savings values — each in a design-system card with the correct colour token.
-3. **Given** data is loading, **When** context is switching accounts or months, **Then** skeleton cards appear in place of each panel.
-4. **Given** desktop width (≥1024px), **When** below the KPI row, **Then** the trend chart and category sidebar appear side-by-side in a 2-column layout.
-5. **Given** mobile width (<640px), **When** viewing the Dashboard, **Then** all panels stack in a single column.
+1. **Given** at least one account exists, **When** the sidebar renders, **Then** the Accounts section shows coloured dot + display name + pencil button for each account.
+2. **Given** pencil is clicked, **When** the inline input appears, **Then** pressing Enter commits the name; pressing Escape cancels; blurring commits.
+3. **Given** a name is committed, **When** checking any transaction, **Then** the account display name is updated retroactively.
+4. **Given** a rename is typed with >20 characters, **When** the input is committed, **Then** only the first 20 characters are saved.
 
 ---
 
-### User Story 4 — Transactions Page Redesign (Priority: P4)
+### User Story 4 — Transactions Full-Page with Filters (Priority: P2)
 
-A user opens Transactions and sees a clean, card-contained table with a search bar and category filter. Rows use hover-only highlighting (no zebra stripes). Category dots use design-system colours, not hardcoded hex. Empty states use the EmptyState component. The summary stats bar shows count, income, and expenses in a card with large tabular numbers. The bulk action bar uses design-system shadow and styling.
+A user navigates to Transactions via the sidebar and uses the filters to narrow by month, account, and category. They change a category on one transaction and see a toast confirming how many transactions were bulk-updated.
 
-**Why this priority**: Transactions is the most data-dense page — every visual noise problem is amplified here.
+**Why this priority**: Transactions is the primary data-browsing experience.
 
-**Independent Test**: Open Transactions with data. Verify no zebra striping, category dots don't use hardcoded hex (#22c55e etc.), sort icons are SVG chevrons, search input uses `--bg-input`, and the summary bar looks like a card.
+**Independent Test**: Navigate to Transactions; filter by month and category; change a category on a payee that appears multiple times; confirm toast and count.
 
 **Acceptance Scenarios**:
 
-1. **Given** no data, **When** a user opens Transactions, **Then** the EmptyState component shows with icon, "No transactions yet" heading, and "Import CSV" CTA.
-2. **Given** data exists and no filter applied, **When** a user hovers a row, **Then** only the hovered row changes background (no alternating stripes).
-3. **Given** a search with no results, **When** the table is empty, **Then** the EmptyState component shows "No transactions match your filter" with a "Clear filter" action.
-4. **Given** rows are selected, **When** the bulk action bar appears, **Then** it uses `--bg-elevated`, `--border-default`, and `--shadow-md` tokens.
-5. **Given** a sortable column header, **When** a user sorts by it, **Then** an SVG chevron (not ▲▼) indicates sort direction.
+1. **Given** the Transactions sidebar tab is clicked, **Then** the full-page transaction list is shown (no floating panel).
+2. **Given** transactions exist, **When** a month filter is selected, **Then** only that month's transactions are shown.
+3. **Given** a category is changed on one transaction, **When** the payee matches other transactions, **Then** all matching transactions are updated and a toast appears for 4 s showing the count.
+4. **Given** "Show transfers" is unchecked (default), **Then** transfer rows are hidden; when checked, they appear dimmed at 65% opacity.
+5. **Given** a transfer row is visible, **Then** it shows a read-only "Transfer" tag instead of a category dropdown.
 
 ---
 
-### User Story 5 — Settings Page Redesign (Priority: P5)
+### User Story 5 — AI Chat as Full Page (Priority: P2)
 
-A user opens Settings and sees a clean two-column layout: a left sidebar with active-link highlighting, and a right content area with account management. Account rows are design-system cards. Edit/Delete use icon buttons (pencil/trash SVGs). The Add Account button is a primary CTA. The confirm-delete dialog uses the modal pattern. Placeholder sections either show proper empty states or are hidden — no internal ticket numbers are visible.
+A user clicks "AI Chat" in the sidebar and sees a full-page chat interface (not a floating panel). They type a question about their spending and receive a contextual response.
 
-**Why this priority**: Settings is the least frequently visited page but has the most broken patterns (text-only icon buttons, exposed ticket numbers, no active sidebar state).
+**Why this priority**: The floating panel conflicts with page content; the prototype uses a full page.
 
-**Independent Test**: Open Settings. Verify the sidebar link for "Account Management" has an active teal accent state, Edit button shows a pencil icon, Delete shows a trash icon, and no text "FA-58" or "FA-59" appears anywhere on the page.
+**Independent Test**: Click AI Chat tab; confirm the page is a full-height chat layout; send a question; receive a reply.
 
 **Acceptance Scenarios**:
 
-1. **Given** Settings is open at "Account Management", **When** a user sees the sidebar, **Then** the active link has a left teal border and `--accent` colour.
-2. **Given** an account in the list, **When** a user sees the row, **Then** it is a design-system card with a pencil icon button (not text "Edit") and trash icon button (not text "Delete").
-3. **Given** deleting an account, **When** the confirm dialog appears, **Then** it uses `--bg-elevated` background, `--border-default` border, `--shadow-lg` shadow, and `--radius-xl` radius.
-4. **Given** the page loads, **When** a user scans all visible text, **Then** no internal ticket references (FA-58, FA-59) appear.
-5. **Given** mobile width, **When** the sidebar is shown, **Then** it collapses to horizontal tabs above the content area.
+1. **Given** the AI Chat tab is clicked, **Then** the content area shows a full-page chat — no floating overlay is visible.
+2. **Given** no transactions exist, **Then** the chat shows an empty state ("Upload transactions first.").
+3. **Given** transactions exist, **When** a suggestion chip is clicked, **Then** it populates and sends that question.
+4. **Given** a question is sent, **When** a response is loading, **Then** a typing indicator (3 animated dots) is shown.
+5. **Given** chat history exists, **When** switching tabs and returning to AI Chat, **Then** conversation history is preserved (session-level).
 
 ---
 
-### User Story 6 — Trends Page Redesign (Priority: P6)
+### User Story 6 — Settings: Categories & Budgets CRUD (Priority: P3)
 
-A user opens Trends and sees two charts — monthly spend and category trend — each wrapped in a design-system card. Chart grid lines use `--border-subtle`, axis text uses `--text-muted`, and tooltips use `--bg-elevated` with `--shadow-md`. If no data exists, a proper empty state appears. The nav label shows "Trends" (not "History").
+A user manages their spending categories and monthly budget targets in Settings. They can add, rename, recolour, set a budget, and delete categories. Deleting a category prompts for reassignment of affected transactions.
 
-**Why this priority**: Trends is functional but visually raw — charts float without context and don't follow the design system.
+**Why this priority**: Category management is important but not blocking core financial workflows.
 
-**Independent Test**: Open Trends with data. Verify each chart is inside a card container, the nav link says "Trends", tooltip background is `--bg-elevated`, and grid lines use `--border-subtle`.
+**Independent Test**: Open Settings; add a category; rename an existing one; delete one with >0 transactions; confirm reassignment works; save and verify changes appear in Transactions.
 
 **Acceptance Scenarios**:
 
-1. **Given** no data, **When** a user opens Trends, **Then** the EmptyState component shows with a chart icon and "Import CSV" CTA.
-2. **Given** data exists, **When** a user views Trends, **Then** each chart is wrapped in a card (`--bg-surface`, `--border-subtle`, `--radius-lg`, `--shadow-sm`).
-3. **Given** a user hovers a chart bar, **When** the tooltip appears, **Then** it uses `--bg-elevated` background and `--shadow-md` shadow.
-4. **Given** the NavBar, **When** a user looks at the link for this page, **Then** the label reads "Trends" not "History".
+1. **Given** the Settings page renders, **Then** it shows four sections: No-API notice, Your Data, Accounts, and Categories & Budgets.
+2. **Given** a category is renamed and saved, **Then** all transactions previously in that category are retroactively re-categorised.
+3. **Given** a category with existing transactions is deleted, **When** "Confirm Remove" is clicked, **Then** the transactions are reassigned to the selected category (or left uncategorised if none chosen).
+4. **Given** "Clear All Data" is clicked, **When** the user confirms the dialog, **Then** all transaction data is removed and the app returns to the empty state.
+5. **Given** account rename inputs are changed and "Save Account Names" is clicked, **Then** account display names are updated retroactively across all transactions.
 
 ---
 
 ### Edge Cases
 
-- What happens when a user is on mobile and tries to use the bulk action bar in Transactions?
-- How does the EmptyState render when a panel is inside a card (nested empty state)?
-- What happens to the account selector if 10+ accounts exist (overflow in dropdown)?
-- How do skeleton cards behave when the loading completes instantly (flash of skeleton)?
-- What happens on very long account names in the NavBar account selector (truncation)?
+- What happens when only one month of data exists? Month pills are still shown (single pill, cannot be deselected).
+- What happens when a user tries to deselect the last remaining month? The toggle is blocked — must always keep ≥1 month.
+- What happens if a CSV from a non-ASB bank is uploaded? The parser returns an error message shown in the sidebar status area.
+- What happens when the AI API call fails during upload categorisation? Transactions are imported with null categories; user can manually categorise later.
+- What happens when two CSVs from the same account are uploaded? Duplicate transaction IDs are detected and skipped.
+- What happens when a category name is left blank? Blank-name rows are filtered out before saving.
+- What happens when duplicate category names are entered? Validation rejects the save with a warning message.
 
 ---
 
@@ -129,91 +132,76 @@ A user opens Trends and sees two charts — monthly spend and category trend —
 
 ### Functional Requirements
 
-**Design Foundation**
+**Design System**
 
-- **FR-001**: The app MUST apply all colour, spacing, typography, border-radius, shadow, and motion tokens from `docs/design-system.md` as CSS custom properties on `:root` in a single `src/styles/tokens.css` file.
-- **FR-002**: All existing undocumented CSS vars (`--nav-bg`, `--text-h`, `--surface`, `--bg`, `--border`, `--dropdown-bg`, `--color-danger`, `--color-success`, `--accent-bg`, `--accent-border`, `--modal-overlay`, `--upload-zone-border`, and all others not in the design system) MUST be removed and replaced with design-system tokens.
-- **FR-003**: The app MUST use Inter (Google Fonts) as the primary font family with system-ui fallback, applied via `src/styles/base.css`.
-- **FR-004**: All currency and numeric financial values MUST use `font-variant-numeric: tabular-nums`.
-- **FR-005**: Shared utility classes (`.btn--primary`, `.btn--secondary`, `.btn--ghost`, `.btn--danger`, `.card`, `.badge`, `.input`) MUST be defined globally using design-system tokens, not duplicated per component.
-- **FR-006**: All hover/transition states MUST use `transition: all var(--motion-fast) ease-out`.
-- **FR-007**: All focus rings MUST use `outline: none; box-shadow: 0 0 0 2px var(--accent-muted)`.
-- **FR-008**: All `@media (prefers-reduced-motion)` rules MUST wrap non-essential animations.
+- **FR-001**: The app MUST use Sora as the primary font (weights 300–700) loaded from Google Fonts.
+- **FR-002**: The app MUST use JetBrains Mono for all monetary amounts and numeric figures.
+- **FR-003**: All colours MUST be defined as CSS custom properties matching the prototype C object exactly: `--bg: #060d1a`, `--surface: #0c1526`, `--card: #111e33`, `--border: #1a2d4a`, `--accent: #10b981`, `--accent-dim: #065f46`, `--text: #e2e8f0`, `--muted: #64748b`, `--subtle: #94a3b8`, `--red: #f87171`, `--amber: #fbbf24`.
+- **FR-004**: No hardcoded hex colours may appear in component files — all colour references MUST use the defined CSS custom properties.
 
-**NavBar**
+**App Shell**
 
-- **FR-009**: The NavBar MUST be exactly 56px tall with `--bg-surface` background and `1px solid var(--border-subtle)` bottom border.
-- **FR-010**: The active nav link MUST show `border-bottom: 2px solid var(--accent)` and `color: var(--accent)` — no background-fill active state.
-- **FR-011**: Inactive nav links MUST use `--text-secondary` colour; hover MUST use `--text-primary`.
-- **FR-012**: Every nav link MUST have an SVG icon (16px, `--text-secondary` stroke).
-- **FR-013**: The "Upload" nav link MUST be removed from the primary nav list and replaced with a `+ Import` button using `.btn--primary` styling in the nav right area.
-- **FR-014**: The account selector trigger MUST have `1px solid var(--border-default)` border and `--radius-md` border-radius.
-- **FR-015**: The account selector dropdown MUST use `--bg-elevated`, `--border-default`, `--shadow-md`, and `--radius-md` tokens.
-- **FR-016**: All hardcoded hex colours in NavBar icons and components MUST be replaced with design-system tokens.
+- **FR-005**: The app shell MUST render a fixed 224 px sidebar on the left and a scrollable content area filling the remaining viewport width.
+- **FR-006**: The app MUST use tab-based navigation (dashboard / transactions / chat / settings) — no URL routing is required for this overhaul.
+- **FR-007**: There MUST be no dedicated Upload Page; upload MUST be a sidebar action only.
+- **FR-008**: The top NavBar component MUST be removed; it is fully replaced by the sidebar.
+- **FR-009**: The floating ChatPanel overlay MUST be removed; AI Chat MUST be rendered as a full-page content area.
 
-**Import Page**
+**Sidebar**
 
-- **FR-017**: The Import page MUST show only: upload zone, existing-months list, and upload status (success/error/categorising). All data-review panels (MonthlySummary, TransactionTable, charts, budget panels, category rules) MUST be removed.
-- **FR-018**: The upload zone MUST be centred, prominent, and styled using design-system tokens (no undocumented CSS vars).
-- **FR-019**: The categorising state MUST render a SkeletonCard with pulse animation and a "Categorising your transactions…" label.
-- **FR-020**: The success state MUST be a card with `--positive` left border and `--positive-subtle` background, showing month, transaction count, account name, and a "View Dashboard" button.
-- **FR-021**: The error state MUST be a card with `--negative` left border and `--negative-subtle` background, showing filename and up to 3 error messages.
-- **FR-022**: The account badge in the page header MUST use the design-system badge pattern (not raw inline styles).
+- **FR-010**: The sidebar MUST display the brand header ("Finance" / "Analyser" / transaction count) at the top.
+- **FR-011**: The sidebar MUST show an Accounts section (coloured dot + display name + pencil rename button) only when at least one account exists.
+- **FR-012**: Clicking the pencil icon MUST trigger an inline text input for renaming; Enter or blur commits; Escape cancels. Name is capped at 20 characters.
+- **FR-013**: The sidebar MUST contain an "Upload CSV" button accepting multiple `.csv` files simultaneously.
+- **FR-014**: Upload status (loading / success / error) MUST be displayed in the sidebar below the upload button.
+- **FR-015**: After a successful upload, the app MUST automatically switch to the Dashboard tab.
+- **FR-016**: Navigation tabs (Dashboard, Transactions, AI Chat, Settings) MUST be shown below the upload area; active tab uses accent background highlight.
+- **FR-017**: A footer "ASB Bank · NZD" MUST appear at the bottom of the sidebar.
 
-**Dashboard Page**
+**Dashboard**
 
-- **FR-023**: The Dashboard page container MUST have `max-width: 1200px`.
-- **FR-024**: The page header MUST show the selected month label (e.g., "April 2026") in `--text-secondary` alongside the `<h1>` heading.
-- **FR-025**: When no data exists, the Dashboard MUST render the EmptyState component with an upload-cloud icon, "No data yet" heading, descriptive body text, and an "Import CSV" primary button linking to `/upload`.
-- **FR-026**: Each MonthlySummary card MUST use the design-system card pattern (`--bg-surface`, `--border-subtle`, `--radius-lg`, `--shadow-sm`) with numbers at `--text-xl` or larger.
-- **FR-027**: On desktop (≥1024px), the layout below KPI cards MUST show MonthlyTrendChart (8 of 12 columns) and a top-categories sidebar (4 of 12 columns) side-by-side.
-- **FR-028**: On mobile (<640px), all Dashboard panels MUST stack in a single column.
-- **FR-029**: Each Dashboard panel MUST show a SkeletonCard while data is loading.
+- **FR-018**: The Dashboard MUST show a pill row for all available months; pills are togglable and at least one must always remain selected.
+- **FR-019**: The Dashboard MUST show an account filter pill row (only when >1 account exists): "All Accounts" + one per account.
+- **FR-020**: Summary stats MUST show Income, Spent, Net, and Transaction count in a 4-column card grid.
+- **FR-021**: When multiple months are selected, summary stat cards MUST show a per-month average sub-label.
+- **FR-022**: If inter-account transfers are detected and excluded, a subtle notice bar MUST be shown with the total transfer amount.
+- **FR-023**: When "All Accounts" is the active filter and >1 account exists, per-account income/spend breakdown cards MUST be shown.
+- **FR-024**: The Dashboard MUST include a Spending by Category donut chart (innerRadius 52, outerRadius 85) with legend below showing category name and amount.
+- **FR-025**: The Dashboard MUST include a Largest Expenses panel showing the top 5 non-credit transactions with payee, date, account (if multi-account), amount, and category tag.
+- **FR-026**: The Dashboard MUST include a Monthly Trends bar chart (Income + Spend bars). When multi-month is selected, unselected months MUST render at 25% opacity.
+- **FR-027**: When budgets exist, a Budget vs Actual section MUST be shown with progress bars per category; budget limit scaled by number of selected months in multi-month mode.
+- **FR-028**: When no transactions exist, the Dashboard MUST show an empty state with icon, "No data yet" heading, and upload instructions.
 
-**Transactions Page**
+**Transactions**
 
-- **FR-030**: The category colour map MUST be replaced with design-system tokens — no hardcoded hex values.
-- **FR-031**: Table rows MUST NOT use zebra striping; only hover state (`--bg-overlay`) is permitted.
-- **FR-032**: The summary stats bar MUST use card styling (`--bg-surface`, `--border-subtle`, `--radius-lg`) with 3 stats (count, income, spend) at `--text-xl`, using `tabular-nums`.
-- **FR-033**: The search input MUST use `--bg-input`, `--border-default`, `--radius-md`, and an accent focus ring.
-- **FR-034**: Sort direction MUST be indicated by SVG chevron icons (not unicode ▲▼).
-- **FR-035**: The bulk action bar MUST use `--bg-elevated`, `--border-default`, and `--shadow-md`.
-- **FR-036**: The no-data empty state MUST use the EmptyState component with a "Import CSV" CTA.
-- **FR-037**: The no-filter-results empty state MUST use the EmptyState component with a "Clear filter" action.
+- **FR-029**: The Transactions page MUST show a filters row containing: search (payee/memo), month select, account select (if >1 account), category select, "Show transfers" checkbox, and row count.
+- **FR-030**: Changing a category on one transaction MUST update ALL transactions sharing the same payee substring; if >1 transaction is updated, a toast MUST appear for 4 s showing the count.
+- **FR-031**: Transfer rows MUST show a read-only "Transfer" tag in the category column; transfers MUST be hidden by default and shown at 65% opacity when "Show transfers" is checked.
+- **FR-032**: The transaction table MUST use JetBrains Mono for amounts; credit amounts are shown in accent green, debit amounts in red.
 
-**Settings Page**
+**AI Chat**
 
-- **FR-038**: The sidebar active link MUST display a `3px solid var(--accent)` left border and `--accent` text colour.
-- **FR-039**: Account rows MUST be design-system cards (`--bg-surface`, `--border-subtle`, `--radius-lg`, `--shadow-sm`).
-- **FR-040**: Edit and Delete buttons MUST be icon-only ghost buttons using SVG icons (pencil and trash respectively).
-- **FR-041**: The confirm-delete dialog MUST use `--bg-elevated`, `--border-default`, `--shadow-lg`, `--radius-xl`.
-- **FR-042**: All internal ticket references (FA-58, FA-59) MUST be removed from visible UI. Placeholder sections MUST show design-system empty states or be hidden entirely.
+- **FR-033**: The AI Chat tab MUST render as a full-page layout — the existing floating ChatPanel overlay MUST be removed.
+- **FR-034**: Chat MUST pass the full transaction dataset (all accounts, all months) as context to Claude.
+- **FR-035**: When messages = 1 (only the assistant greeting), four suggestion chips MUST be shown.
+- **FR-036**: When no transactions exist, the Chat MUST show an empty state with icon and "Upload transactions first." message.
 
-**Trends Page**
+**Settings**
 
-- **FR-043**: The nav link label MUST read "Trends" (not "History").
-- **FR-044**: Each chart MUST be wrapped in a design-system card (`--bg-surface`, `--border-subtle`, `--radius-lg`, `--shadow-sm`).
-- **FR-045**: Chart grid lines MUST use `--border-subtle` at 50% opacity; axis labels MUST use `--text-muted` at `--text-xs`.
-- **FR-046**: Chart tooltips MUST use `--bg-elevated` background, `--border-default` border, `--shadow-md` shadow.
-- **FR-047**: When no data exists, the Trends page MUST render the EmptyState component with an "Import CSV" CTA.
-
-**Empty & Loading States**
-
-- **FR-048**: Every panel that can be empty MUST use the EmptyState component with at minimum: icon (48px), heading, body text. Panels where action is possible MUST include a CTA button.
-- **FR-049**: Every panel that loads async data MUST show a SkeletonCard during loading. SkeletonCard pulse animation MUST use `--bg-overlay` and be wrapped in `prefers-reduced-motion`.
-
-**Mobile**
-
-- **FR-050**: On mobile (<640px), the NavBar MUST collapse to a bottom tab bar with icon + label for each nav item.
-- **FR-051**: On mobile, the Transactions table MUST be horizontally scrollable with a pinned filter bar.
-- **FR-052**: On mobile, the Settings sidebar MUST become horizontal tabs above the content area.
+- **FR-037**: Settings MUST include a "No API key needed" notice card.
+- **FR-038**: Settings MUST show a "Your Data" section with a stat grid (transaction count, month count, account count, transfer count) and a "Clear All Data" danger button with confirmation dialog.
+- **FR-039**: Settings MUST include an Accounts section for renaming accounts; saved names are applied retroactively to all transactions.
+- **FR-040**: Settings MUST include a full Categories & Budgets section: colour picker + name input + budget/month input per category; add new category; delete with optional reassignment; save all together.
+- **FR-041**: When a category is renamed and saved, all transactions assigned to the old name MUST be updated to the new name.
+- **FR-042**: When a category is deleted, the user MUST be shown the count of affected transactions and offered a reassignment target before confirming deletion.
 
 ### Key Entities
 
-- **Design Token**: A CSS custom property defined in `docs/design-system.md` and applied via `src/styles/tokens.css`. Every visual style decision references a token.
-- **Page Panel**: A visually distinct section on a page, always rendered inside a design-system card container.
-- **Empty State**: The visual treatment rendered when a panel has no data — uses the `EmptyState` component.
-- **Skeleton**: A loading placeholder — uses the `SkeletonCard` component with pulse animation.
+- **Transaction**: id, date, month, type, payee, memo, amount, isCredit, account, accountShort, category, isTransfer
+- **Account**: short (key derived from CSV), display (user-visible name, renameable)
+- **Category**: name, colour (hex string)
+- **Budget**: map of category name → monthly amount (number)
+- **Sidebar Tab**: one of `dashboard | transactions | chat | settings`
 
 ---
 
@@ -221,26 +209,24 @@ A user opens Trends and sees two charts — monthly spend and category trend —
 
 ### Measurable Outcomes
 
-- **SC-001**: Every CSS file in `src/` references only design-system tokens — zero undocumented CSS vars remain after the overhaul.
-- **SC-002**: A user with no prior experience can navigate from landing to viewing their financial summary in under 60 seconds after uploading a CSV.
-- **SC-003**: All 6 page empty states are present and informative — no blank panels or bare `<p>` tags remain anywhere in the app.
-- **SC-004**: Every panel that loads data shows a skeleton before content appears — zero panels flash undefined/blank.
-- **SC-005**: The Import page contains zero data-review components — only the upload zone, month list, and status card.
-- **SC-006**: All financial figures (currency values) use tabular-nums — no layout shift as values change.
-- **SC-007**: On a 375px wide viewport, all pages are fully usable with no horizontal overflow and no truncated interactive elements.
-- **SC-008**: No internal ticket references (FA-xx) appear in any visible UI text.
-- **SC-009**: The NavBar active link indicator is a teal bottom border — confirmed on all 5 nav destinations.
-- **SC-010**: 100% of sortable column headers in Transactions use SVG icons for sort direction, not unicode characters.
+- **SC-001**: A user can upload a CSV and reach a populated Dashboard in under 30 seconds (excluding AI categorisation network latency).
+- **SC-002**: Selecting a second month pill takes effect (summary stats update, chart dims) in under 200 ms with no page reload.
+- **SC-003**: All pages (Dashboard, Transactions, Chat, Settings) are accessible from the sidebar without any URL navigation or page reload.
+- **SC-004**: No hardcoded colour values exist in any component — 100% of colour references use the defined CSS custom properties.
+- **SC-005**: The sidebar is visible and usable at viewport widths ≥ 900 px without horizontal overflow.
+- **SC-006**: A category rename in Settings is reflected immediately across all transaction rows on the Transactions page within the same session.
+- **SC-007**: The Chat page renders as a full-height layout with no floating overlay element present in the DOM when other tabs are active.
 
 ---
 
 ## Assumptions
 
-- The existing `EmptyState` and `SkeletonCard` components in `src/components/ui/` are structurally sound and only need their CSS updated to use design-system tokens.
-- The existing Recharts integration is retained; only the chart styling props (colors, grid, tooltip) are updated.
-- `lucide-react` or a similar SVG icon library is available or will be added as a dependency to provide nav and action icons.
-- The existing routing structure (`/`, `/upload`, `/transactions`, `/history`, `/settings`) is preserved; only the nav label for `/history` changes to "Trends".
-- The Dashboard's top-categories sidebar (new panel) will show the top 5 spending categories from the selected month — derived from existing category data, no new data fetching required.
-- Mobile breakpoints: <640px = mobile, 640–1023px = tablet (single column), ≥1024px = desktop (multi-column).
-- The `docs/design-system.md` token list is the source of truth and is complete — no additional tokens will be needed.
-- The overhaul does not change any business logic, data storage, CSV parsing, or categorisation — only visual presentation layers (CSS, layout, component markup).
+- The app targets desktop browsers at ≥ 900 px width; no mobile breakpoints are in scope for this overhaul.
+- The existing localStorage-backed storage service (`storage.ts`) and AccountContext are retained without modification.
+- The existing Anthropic SDK integration (`claudeChat.ts`, `categorisation.ts`) is retained; only the UI that surfaces the chat changes.
+- The Sora and JetBrains Mono fonts are loaded from Google Fonts CDN and are available in the browser environment.
+- Transfer detection logic (matching debits/credits across accounts) is already correct in the existing codebase and does not need to change.
+- The `isTransfer` flag (not the category name "Savings & Transfers") is the sole driver for excluding transactions from dashboard totals and budget tracking.
+- Account colours follow the fixed palette from the prototype: `["#10b981","#60a5fa","#f472b6","#fbbf24","#a78bfa","#fb923c"]` assigned by index order.
+- Existing unit tests for services, hooks, and utilities are not updated as part of this overhaul (they remain passing against unchanged logic layers).
+- The `HistoryPage` and `UploadPage` routes are removed; their panels (Trends chart, Donut chart) move into the Dashboard.
