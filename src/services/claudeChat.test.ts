@@ -1,20 +1,27 @@
-import { describe, it, expect, beforeEach, vi } from "vitest";
+import { describe, it, expect, beforeEach, afterEach, vi } from "vitest";
 import { buildFinanceContext, ALL_ACCOUNTS_ID } from "./claudeChat";
+import * as storage from "./storage";
 
-// Mock storage so tests don't touch real localStorage
-vi.mock("./storage", () => ({
-  getAccounts: vi.fn(),
-  getAccountMonths: vi.fn(),
-  getTransactions: vi.fn(),
-}));
-
-import { getAccounts, getAccountMonths, getTransactions } from "./storage";
-const mockGetAccounts = vi.mocked(getAccounts);
-const mockGetAccountMonths = vi.mocked(getAccountMonths);
-const mockGetTransactions = vi.mocked(getTransactions);
+let mockGetAccounts: ReturnType<typeof vi.spyOn<typeof storage, "getAccounts">>;
+let mockGetAccountMonths: ReturnType<
+  typeof vi.spyOn<typeof storage, "getAccountMonths">
+>;
+let mockGetTransactions: ReturnType<
+  typeof vi.spyOn<typeof storage, "getTransactions">
+>;
 
 beforeEach(() => {
-  vi.clearAllMocks();
+  mockGetAccounts = vi.spyOn(storage, "getAccounts").mockReturnValue([]);
+  mockGetAccountMonths = vi
+    .spyOn(storage, "getAccountMonths")
+    .mockReturnValue([]);
+  mockGetTransactions = vi.spyOn(storage, "getTransactions").mockReturnValue({
+    transactions: [],
+  });
+});
+
+afterEach(() => {
+  vi.restoreAllMocks();
 });
 
 describe("buildFinanceContext", () => {
