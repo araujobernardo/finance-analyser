@@ -6,6 +6,7 @@ import {
   applyFlag,
   applyUnflag,
 } from "../utils/transferFlagging";
+import { fmt, fmtMonth, getCatColor } from "../utils/transactionFormatters";
 import "./TransactionsPage.css";
 
 interface Props {
@@ -14,21 +15,6 @@ interface Props {
   categories: PfaCategory[];
   onBulkCategoryChange: (updated: PfaTxn[]) => void;
 }
-
-const fmt = (n: number) =>
-  `$${Math.abs(n).toLocaleString("en-NZ", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
-
-const fmtMonth = (m: string) => {
-  if (!m) return "";
-  const [y, mo] = m.split("-");
-  return new Date(+y, +mo - 1, 1).toLocaleString("en-NZ", {
-    month: "long",
-    year: "numeric",
-  });
-};
-
-const getCatColor = (name: string | null, cats: PfaCategory[]) =>
-  cats.find((c) => c.name === name)?.color ?? "#64748b";
 
 export function TransactionsPage({
   txns,
