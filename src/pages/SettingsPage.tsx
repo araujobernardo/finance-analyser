@@ -55,24 +55,20 @@ export function SettingsPage({
 
   // eslint-disable-next-line react-hooks/set-state-in-effect
   useEffect(() => setCatEdits(categories.map((c) => ({ ...c }))), [categories]);
-  // eslint-disable-next-line react-hooks/set-state-in-effect
-  useEffect(
-    () =>
-      setBudgetEdits(
-        Object.fromEntries(
-          Object.entries(budgets).map(([k, v]) => [k, String(v)]),
-        ),
+  useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    setBudgetEdits(
+      Object.fromEntries(
+        Object.entries(budgets).map(([k, v]) => [k, String(v)]),
       ),
-    [budgets],
-  );
-  // eslint-disable-next-line react-hooks/set-state-in-effect
-  useEffect(
-    () =>
-      setAcctEdits(
-        Object.fromEntries(accountList.map((a) => [a.short, a.display])),
-      ),
-    [accountList],
-  );
+    );
+  }, [budgets]);
+  useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    setAcctEdits(
+      Object.fromEntries(accountList.map((a) => [a.short, a.display])),
+    );
+  }, [accountList]);
 
   const showFlash = (msg: string) => {
     setFlash(msg);
