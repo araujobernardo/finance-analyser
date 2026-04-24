@@ -58,7 +58,7 @@
 }
 
 .account-modal__input:focus {
-  border-color: #6366f1;
+  border-color: var(--accent);
 }
 
 .account-modal__input--error {
@@ -133,25 +133,25 @@
 }
 
 .account-modal__btn--save {
-  background-color: #6366f1;
-  border-color: #4f46e5;
-  color: #ffffff;
+  background-color: var(--accent);
+  border-color: var(--accent-dim);
+  color: white;
 }
 
 .account-modal__btn--save:hover:not(:disabled),
 .account-modal__btn--save:focus-visible:not(:disabled) {
-  background-color: #4f46e5;
+  opacity: 0.9;
 }
 
 .account-modal__btn--danger {
-  background-color: var(--color-danger);
-  border-color: #b91c1c;
-  color: #ffffff;
+  background-color: var(--red);
+  border-color: var(--red);
+  color: white;
 }
 
 .account-modal__btn--danger:hover:not(:disabled),
 .account-modal__btn--danger:focus-visible:not(:disabled) {
-  background-color: #b91c1c;
+  opacity: 0.9;
 }
 
 .account-modal__warning {

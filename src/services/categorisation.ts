@@ -2,6 +2,14 @@ import Anthropic from "@anthropic-ai/sdk";
 import type { Transaction } from "../utils/csvParser";
 import { getRuleForDescription } from "./categoryRules";
 
+// Exported for test injection only — do not call directly in production code.
+export const _clientFactory = {
+  create: (apiKey: string) =>
+    new Anthropic({ apiKey, dangerouslyAllowBrowser: true }) as {
+      messages: { create: (params: unknown) => Promise<unknown> };
+    },
+};
+
 export const CATEGORIES = [
   "Groceries",
   "Transport",
@@ -97,10 +105,7 @@ async function categoriseBatch(
     `Reply with ONLY a JSON array of strings, one per transaction, in the same order. No explanation.\n\n` +
     `Transactions:\n${lines}`;
 
-  const client = new Anthropic({
-    apiKey,
-    dangerouslyAllowBrowser: true,
-  });
+  const client = _clientFactory.create(apiKey);
 
   let text: string;
   try {

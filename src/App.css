@@ -1,6 +1,15 @@
-.page-content {
-  max-width: 900px;
-  margin: 2rem auto;
-  padding: 0 1.5rem;
-  text-align: left;
+.app-shell {
+  display: flex;
+  height: 100vh;
+  background: var(--bg);
+  color: var(--text);
+  overflow: hidden;
+  font-family: "Sora", sans-serif;
+}
+
+.app-content {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
 }

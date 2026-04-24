@@ -1,331 +1,327 @@
-.settings__title-row {
-  max-width: 900px;
-  margin: 2rem auto 0;
-  padding: 0 1.5rem;
+.settings-scroll {
+  flex: 1;
+  overflow-y: auto;
+  padding: 28px;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
 }
 
-.settings__title {
-  margin: 0 0 1.5rem;
-  font-size: 1.5rem;
+.settings-title {
+  font-size: 22px;
   font-weight: 700;
-  color: var(--text-h);
-}
-
-.settings {
-  max-width: 900px;
-  margin: 2rem auto;
-  padding: 0 1.5rem;
-  display: flex;
-  gap: 2rem;
-  align-items: flex-start;
-}
-
-/* ── Sidebar ─────────────────────────────────────────────────────────────── */
-
-.settings__sidebar {
-  width: 180px;
-  flex-shrink: 0;
-  display: flex;
-  flex-direction: column;
-  gap: 0.25rem;
-  position: sticky;
-  top: 1.5rem;
-}
-
-.settings__sidebar-link {
-  display: block;
-  padding: 0.45rem 0.75rem;
-  border-radius: 6px;
-  font-size: 0.875rem;
   color: var(--text);
-  text-decoration: none;
-  transition:
-    background 0.15s,
-    color 0.15s;
-}
-
-.settings__sidebar-link:hover {
-  background: var(--surface-hover);
-  color: var(--text-h);
-}
-
-.settings__sidebar-link--active {
-  background: var(--surface);
-  color: var(--text-h);
-  font-weight: 600;
-}
-
-/* ── Content ─────────────────────────────────────────────────────────────── */
-
-.settings__content {
-  flex: 1;
-  min-width: 0;
-  display: flex;
-  flex-direction: column;
-  gap: 2.5rem;
-}
-
-.settings__section-header {
-  display: flex;
-  align-items: center;
-  gap: 0.75rem;
-  margin: 0 0 1rem;
-  padding-bottom: 0.5rem;
-  border-bottom: 1px solid var(--border);
-}
-
-.settings__section-header h3 {
   margin: 0;
-  font-size: 1rem;
-  font-weight: 600;
-  color: var(--text-h);
 }
 
-.settings__section-placeholder {
-  font-size: 0.875rem;
-  color: var(--text);
-  opacity: 0.7;
-}
+/* ── Shared button styles ────────────────────────────────────────────── */
 
-/* ── Account list ────────────────────────────────────────────────────────── */
-
-.account-list {
-  display: flex;
-  flex-direction: column;
-  gap: 0.5rem;
-}
-
-.account-row {
-  display: flex;
-  align-items: center;
-  gap: 0.75rem;
-  padding: 0.6rem 0.75rem;
-  border: 1px solid var(--border);
-  border-radius: 8px;
-  background: var(--bg);
-}
-
-.account-row__swatch {
-  width: 16px;
-  height: 16px;
-  border-radius: 50%;
-  flex-shrink: 0;
-  border: 1px solid rgba(0, 0, 0, 0.1);
-}
-
-.account-row__name {
-  flex: 1;
-  font-size: 0.9rem;
-  color: var(--text-h);
-}
-
-.account-row__actions {
-  display: flex;
-  gap: 0.4rem;
-}
-
-.icon-btn {
-  background: none;
-  border: 1px solid var(--border);
-  border-radius: 6px;
-  padding: 0.25rem 0.5rem;
-  cursor: pointer;
-  font-size: 0.8rem;
-  color: var(--text);
-  transition:
-    background 0.15s,
-    color 0.15s,
-    border-color 0.15s;
-}
-
-.icon-btn:hover {
-  background: var(--surface-hover);
-  color: var(--text-h);
-}
-
-.icon-btn--danger:hover {
-  background: var(--color-danger);
-  color: #fff;
-  border-color: var(--color-danger);
-}
-
-/* ── Inline edit form ────────────────────────────────────────────────────── */
-
-.account-edit-form {
-  display: flex;
-  flex-direction: column;
-  gap: 0.75rem;
-  padding: 0.75rem;
-  border: 1px solid var(--accent-border);
-  border-radius: 8px;
-  background: var(--accent-bg);
-}
-
-.account-edit-form__row {
-  display: flex;
-  align-items: center;
-  gap: 0.75rem;
-}
-
-.account-edit-form__label {
-  font-size: 0.8rem;
-  color: var(--text);
-  width: 60px;
-  flex-shrink: 0;
-}
-
-.account-edit-form__input {
-  flex: 1;
-  padding: 0.35rem 0.6rem;
-  border: 1px solid var(--border);
-  border-radius: 6px;
-  background: var(--bg);
-  color: var(--text-h);
-  font-size: 0.875rem;
-}
-
-.account-edit-form__input:focus {
-  outline: none;
-  border-color: var(--accent);
-}
-
-.account-edit-form__colours {
-  display: flex;
-  gap: 0.4rem;
-  flex-wrap: wrap;
-}
-
-.colour-swatch {
-  width: 22px;
-  height: 22px;
-  border-radius: 50%;
-  border: 2px solid transparent;
-  cursor: pointer;
-  transition:
-    transform 0.1s,
-    border-color 0.1s;
-}
-
-.colour-swatch:hover {
-  transform: scale(1.15);
-}
-
-.colour-swatch--selected {
-  border-color: var(--text-h);
-  transform: scale(1.15);
-}
-
-.account-edit-form__actions {
-  display: flex;
-  gap: 0.5rem;
-  justify-content: flex-end;
-}
-
-.btn {
-  padding: 0.4rem 1rem;
-  border-radius: 6px;
-  font-size: 0.875rem;
-  font-weight: 500;
-  cursor: pointer;
-  border: 1px solid transparent;
-  transition:
-    background 0.15s,
-    border-color 0.15s;
-}
-
-.btn--primary {
+.btn-accent {
   background: var(--accent);
-  color: #fff;
-  border-color: var(--accent);
+  color: white;
+  border: none;
+  border-radius: 8px;
+  padding: 9px 22px;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  font-family: inherit;
 }
 
-.btn--primary:hover {
-  opacity: 0.88;
+.btn-accent:hover {
+  opacity: 0.9;
 }
 
-.btn--secondary {
-  background: var(--surface);
-  color: var(--text-h);
-  border-color: var(--border);
+.btn-accent-outline {
+  background: transparent;
+  color: var(--accent);
+  border: 1px solid color-mix(in srgb, var(--accent) 40%, transparent);
+  border-radius: 8px;
+  padding: 8px 16px;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  font-family: inherit;
+  white-space: nowrap;
 }
 
-.btn--secondary:hover {
-  background: var(--surface-hover);
+.btn-accent-outline:hover {
+  background: color-mix(in srgb, var(--accent) 10%, transparent);
 }
 
-/* ── Add account ─────────────────────────────────────────────────────────── */
-
-.add-account-btn {
-  margin-top: 0.25rem;
-  align-self: flex-start;
+.btn-danger {
+  background: transparent;
+  color: var(--red);
+  border: 1px solid color-mix(in srgb, var(--red) 35%, transparent);
+  border-radius: 8px;
+  padding: 8px 20px;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  font-family: inherit;
 }
 
-/* ── Confirm delete overlay ──────────────────────────────────────────────── */
-
-.confirm-backdrop {
-  position: fixed;
-  inset: 0;
-  background: var(--modal-overlay);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  z-index: 200;
+.btn-danger:hover {
+  background: color-mix(in srgb, var(--red) 10%, transparent);
 }
 
-.confirm-panel {
-  background: var(--modal-bg);
-  border: 1px solid var(--modal-border);
-  border-radius: 0.75rem;
-  padding: 1.75rem 2rem;
-  max-width: 380px;
-  width: 90%;
+.btn-ghost {
+  background: transparent;
+  color: var(--muted);
+  border: 1px solid var(--border);
+  border-radius: 7px;
+  padding: 7px 14px;
+  font-size: 12px;
+  cursor: pointer;
+  font-family: inherit;
+}
+
+/* ── API notice ──────────────────────────────────────────────────────── */
+
+.settings-api-notice {
+  border-color: color-mix(in srgb, var(--accent) 30%, transparent) !important;
+  background: color-mix(in srgb, var(--accent) 5%, var(--card)) !important;
+}
+
+.settings-api-label {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--accent);
+  margin-bottom: 6px;
+}
+
+.settings-api-body {
+  font-size: 13px;
+  color: var(--subtle);
+  line-height: 1.6;
+}
+
+.settings-api-body code {
+  font-family: "JetBrains Mono", monospace;
+  font-size: 12px;
+  background: color-mix(in srgb, var(--border) 50%, transparent);
+  padding: 1px 5px;
+  border-radius: 4px;
+}
+
+/* ── Sections ────────────────────────────────────────────────────────── */
+
+.settings-section {
   display: flex;
   flex-direction: column;
-  gap: 1rem;
+  gap: 12px;
 }
 
-.confirm-panel h2 {
-  margin: 0;
-  font-size: 1.05rem;
+.settings-section-title {
+  font-size: 15px;
   font-weight: 600;
-  color: var(--modal-title);
+  color: var(--text);
 }
 
-.confirm-panel p {
-  margin: 0;
-  font-size: 0.9rem;
-  color: var(--modal-body);
+.settings-section-sub {
+  font-size: 12px;
+  color: var(--muted);
   line-height: 1.5;
 }
 
-.confirm-panel__actions {
+/* ── Data grid ───────────────────────────────────────────────────────── */
+
+.settings-data-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px 24px;
+}
+
+.settings-data-row {
   display: flex;
-  gap: 0.75rem;
-  justify-content: flex-end;
+  justify-content: space-between;
+  font-size: 13px;
 }
 
-.btn--danger {
-  background: var(--color-danger);
-  color: #fff;
-  border-color: var(--color-danger);
+.settings-data-label {
+  color: var(--muted);
 }
 
-.btn--danger:hover {
-  opacity: 0.88;
+.settings-data-value {
+  color: var(--subtle);
+  font-weight: 600;
 }
 
-/* ── Mobile ──────────────────────────────────────────────────────────────── */
+/* ── Account rows ────────────────────────────────────────────────────── */
 
-@media (max-width: 600px) {
-  .settings {
-    flex-direction: column;
-    gap: 1.5rem;
-  }
+.settings-acct-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
 
-  .settings__sidebar {
-    width: 100%;
-    flex-direction: row;
-    flex-wrap: wrap;
-    position: static;
-  }
+.settings-acct-dot {
+  display: inline-block;
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.settings-acct-input {
+  flex: 1;
+}
+
+.settings-acct-count {
+  font-size: 12px;
+  color: var(--muted);
+  white-space: nowrap;
+}
+
+/* ── Shared input ────────────────────────────────────────────────────── */
+
+.settings-input {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 7px;
+  padding: 6px 10px;
+  color: var(--text);
+  font-size: 13px;
+  outline: none;
+  font-family: inherit;
+}
+
+.settings-input:focus {
+  border-color: var(--accent);
+}
+
+/* ── Flash message ───────────────────────────────────────────────────── */
+
+.settings-flash {
+  padding: 7px 12px;
+  font-size: 12px;
+  border-radius: 7px;
+  border: 1px solid transparent;
+}
+
+/* ── Delete confirmation ─────────────────────────────────────────────── */
+
+.settings-delete-panel {
+  background: color-mix(in srgb, var(--red) 6%, transparent);
+  border: 1px solid color-mix(in srgb, var(--red) 30%, transparent);
+  border-radius: 9px;
+  padding: 14px 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.settings-delete-title {
+  font-size: 13px;
+  color: var(--red);
+  font-weight: 600;
+}
+
+.settings-delete-sub {
+  font-size: 12px;
+  color: var(--subtle);
+}
+
+.settings-delete-actions {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.settings-delete-label {
+  font-size: 12px;
+  color: var(--muted);
+}
+
+/* ── Category rows ───────────────────────────────────────────────────── */
+
+.settings-cat-header {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding-bottom: 6px;
+  border-bottom: 1px solid var(--border);
+  font-size: 11px;
+  color: var(--muted);
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  font-weight: 600;
+}
+
+.settings-cat-color-col {
+  width: 28px;
+  flex-shrink: 0;
+}
+.settings-cat-name-col {
+  flex: 1;
+}
+.settings-cat-budget-col {
+  width: 90px;
+  text-align: right;
+}
+.settings-cat-del-col {
+  width: 28px;
+}
+
+.settings-cat-list {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.settings-cat-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.settings-color-picker {
+  width: 28px;
+  height: 28px;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  padding: 0;
+  background: none;
+  flex-shrink: 0;
+}
+
+.settings-cat-name-input {
+  flex: 1;
+  min-width: 0;
+}
+
+.settings-budget-input {
+  width: 90px;
+  text-align: right;
+}
+
+.settings-delete-btn {
+  width: 28px;
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  color: var(--muted);
+  font-size: 18px;
+  line-height: 1;
+  flex-shrink: 0;
+}
+
+.settings-delete-btn:hover {
+  color: var(--red);
+}
+
+/* ── Add new row ─────────────────────────────────────────────────────── */
+
+.settings-add-row {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  padding-top: 10px;
+  border-top: 1px solid var(--border);
+}
+
+.settings-add-input {
+  flex: 1;
 }

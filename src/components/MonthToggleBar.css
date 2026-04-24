@@ -39,9 +39,9 @@
 
 .month-toggle-delete:hover {
   opacity: 1;
-  color: #dc2626;
-  background: #fef2f2;
-  border-color: #fca5a5;
+  color: var(--red);
+  background: color-mix(in srgb, var(--red) 8%, transparent);
+  border-color: color-mix(in srgb, var(--red) 30%, transparent);
 }
 
 .month-toggle-btn {
