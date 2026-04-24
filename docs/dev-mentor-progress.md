@@ -462,6 +462,7 @@ This pipeline is now proven on Finance Analyser. Next step: apply it to a new pr
 | 2026-04-23 | UX overhaul scoped      | Identified prototype as source of truth; planning full sidebar layout + flow redesign                                                                           |
 | 2026-04-23 | Dev Mentor Progress     | Added curriculum file to squad docs; wired Delivery Lead to auto-update Session Log                                                                             |
 | 2026-04-24 | #87–#95: UX/UI Overhaul | Sidebar tab navigation, Recharts donut/bar charts, dark theme CSS tokens, localStorage lazy initializers — practised component decomposition and state lifting. |
+| 2026-04-24 | #97–#100: Manual Transfer Flagging | Inline flagging UI with candidate filtering; pure utility functions for flag/unflag logic; practised state machines and category restoration patterns. |
 
 ---
 
