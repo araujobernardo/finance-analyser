@@ -11,6 +11,7 @@ export interface PfaTxn {
   accountShort: string;
   category: string | null;
   isTransfer: boolean;
+  preFlagCategory?: string | null;
 }
 
 export interface PfaCategory {

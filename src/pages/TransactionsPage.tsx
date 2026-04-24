@@ -1,6 +1,11 @@
-import { useState } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { ACCOUNT_COLORS } from "../constants/colors";
 import type { PfaTxn, PfaCategory } from "../types/pfa";
+import {
+  getCandidates,
+  applyFlag,
+  applyUnflag,
+} from "../utils/transferFlagging";
 import "./TransactionsPage.css";
 
 interface Props {
@@ -38,7 +43,35 @@ export function TransactionsPage({
   const [showTransfers, setShowTransfers] = useState(false);
   const [toast, setToast] = useState<string | null>(null);
 
+  // Transfer flagging state
+  const [flagMode, setFlagMode] = useState<{ initiatingId: string } | null>(
+    null,
+  );
+  const [unflagTarget, setUnflagTarget] = useState<{ txnId: string } | null>(
+    null,
+  );
+
   const months = [...new Set(txns.map((t) => t.month))].sort().reverse();
+
+  // Candidates for current flag mode
+  const candidates = flagMode ? getCandidates(txns, flagMode.initiatingId) : [];
+  const candidateIds = new Set(candidates.map((c) => c.id));
+
+  // Dismiss flagging mode / unflag panel on Escape
+  const handleEscape = useCallback(
+    (e: KeyboardEvent) => {
+      if (e.key === "Escape") {
+        if (flagMode) setFlagMode(null);
+        if (unflagTarget) setUnflagTarget(null);
+      }
+    },
+    [flagMode, unflagTarget],
+  );
+
+  useEffect(() => {
+    document.addEventListener("keydown", handleEscape);
+    return () => document.removeEventListener("keydown", handleEscape);
+  }, [handleEscape]);
 
   const filtered = txns
     .filter((t) => {
@@ -79,6 +112,53 @@ export function TransactionsPage({
       setTimeout(() => setToast(null), 4000);
     }
   };
+
+  // Handle clicking a non-transfer row
+  const handleNonTransferRowClick = (txnId: string) => {
+    if (unflagTarget) return; // ignore row clicks when unflag panel is open
+
+    if (!flagMode) {
+      // Enter flagging mode
+      setFlagMode({ initiatingId: txnId });
+      return;
+    }
+
+    // Already in flagging mode — check if this is a candidate
+    if (candidateIds.has(txnId)) {
+      const updated = applyFlag(txns, flagMode.initiatingId, txnId);
+      onBulkCategoryChange(updated);
+      setFlagMode(null);
+      setToast("Transfer pair flagged.");
+      setTimeout(() => setToast(null), 4000);
+    }
+    // Clicking the initiating row again or any other row → cancel flagging
+    else {
+      setFlagMode(null);
+    }
+  };
+
+  // Handle clicking a transfer row
+  const handleTransferRowClick = (txnId: string) => {
+    if (flagMode) {
+      setFlagMode(null);
+      return;
+    }
+    setUnflagTarget({ txnId });
+  };
+
+  // Confirm un-flagging
+  const handleUnflagConfirm = () => {
+    if (!unflagTarget) return;
+    const updated = applyUnflag(txns, unflagTarget.txnId);
+    onBulkCategoryChange(updated);
+    setUnflagTarget(null);
+    setToast("Transfer pair un-flagged.");
+    setTimeout(() => setToast(null), 4000);
+  };
+
+  const initiatingTxn = flagMode
+    ? txns.find((t) => t.id === flagMode.initiatingId)
+    : null;
 
   return (
     <div className="txn-page">
@@ -140,8 +220,71 @@ export function TransactionsPage({
           </label>
           <span className="txn-row-count">{filtered.length} rows</span>
         </div>
-        {toast && <div className="txn-toast">✓ {toast}</div>}
+        {toast && <div className="txn-toast">&#10003; {toast}</div>}
       </div>
+
+      {/* Flag mode banner */}
+      {flagMode && (
+        <div
+          className={`txn-flag-banner${candidates.length === 0 ? " txn-flag-banner--no-candidates" : ""}`}
+        >
+          {candidates.length === 0 ? (
+            <>
+              No matching transactions found for{" "}
+              {initiatingTxn ? (
+                <>
+                  <strong>{initiatingTxn.date}</strong> /{" "}
+                  <strong>{fmt(initiatingTxn.amount)}</strong>
+                </>
+              ) : (
+                "this transaction"
+              )}
+              .{" "}
+              <button
+                className="txn-flag-banner-cancel"
+                onClick={() => setFlagMode(null)}
+              >
+                Cancel
+              </button>
+            </>
+          ) : (
+            <>
+              Select the matching transaction to complete the transfer pair
+              {" — or "}
+              <button
+                className="txn-flag-banner-cancel"
+                onClick={() => setFlagMode(null)}
+              >
+                press Escape to cancel
+              </button>
+            </>
+          )}
+        </div>
+      )}
+
+      {/* Un-flag confirmation panel */}
+      {unflagTarget && (
+        <div className="txn-unflag-panel">
+          <span className="txn-unflag-text">
+            Un-flag this transfer pair? Both transactions will revert to their
+            previous categories.
+          </span>
+          <div className="txn-unflag-actions">
+            <button
+              className="txn-unflag-confirm"
+              onClick={handleUnflagConfirm}
+            >
+              Confirm
+            </button>
+            <button
+              className="txn-unflag-cancel"
+              onClick={() => setUnflagTarget(null)}
+            >
+              Cancel
+            </button>
+          </div>
+        </div>
+      )}
 
       <div className="txn-table-wrap">
         <table className="txn-table">
@@ -170,10 +313,44 @@ export function TransactionsPage({
               const ac =
                 ACCOUNT_COLORS[Math.max(0, idx) % ACCOUNT_COLORS.length];
               const cc = getCatColor(t.category, categories);
+
+              // Determine row visual class for flagging mode
+              let flagClass = "";
+              if (flagMode) {
+                if (t.id === flagMode.initiatingId) {
+                  flagClass = " txn-row-initiating";
+                } else if (candidateIds.has(t.id)) {
+                  flagClass = " txn-row-candidate";
+                } else {
+                  flagClass = " txn-row-dimmed";
+                }
+              }
+
+              const isClickableCandidate = !!(
+                flagMode && candidateIds.has(t.id)
+              );
+              const isClickableTransfer = t.isTransfer && showTransfers;
+              const isClickableNonTransfer = !t.isTransfer && !unflagTarget;
+
               return (
                 <tr
                   key={t.id}
-                  className={`txn-row${t.isTransfer ? " txn-row-transfer" : ""}`}
+                  className={`txn-row${t.isTransfer ? " txn-row-transfer" : ""}${flagClass}`}
+                  onClick={() => {
+                    if (t.isTransfer) {
+                      if (isClickableTransfer) handleTransferRowClick(t.id);
+                    } else if (isClickableNonTransfer || isClickableCandidate) {
+                      handleNonTransferRowClick(t.id);
+                    }
+                  }}
+                  style={{
+                    cursor:
+                      isClickableCandidate ||
+                      isClickableTransfer ||
+                      isClickableNonTransfer
+                        ? "pointer"
+                        : "default",
+                  }}
                 >
                   <td className="txn-td txn-date">{t.date}</td>
                   {accountList.length > 1 && (
@@ -207,7 +384,7 @@ export function TransactionsPage({
                     {t.isCredit ? "+" : ""}
                     {fmt(t.amount)}
                     {t.isTransfer && (
-                      <span className="txn-transfer-icon">↔</span>
+                      <span className="txn-transfer-icon">⇔</span>
                     )}
                   </td>
                   <td className="txn-td txn-cat-cell">
@@ -232,6 +409,7 @@ export function TransactionsPage({
                           borderColor: t.category ? `${cc}55` : "var(--border)",
                           color: t.category ? cc : "var(--muted)",
                         }}
+                        onClick={(e) => e.stopPropagation()}
                         onChange={(e) =>
                           handleCategoryChange(t.id, e.target.value)
                         }
