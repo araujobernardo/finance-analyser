@@ -13,25 +13,25 @@
 
 .txn-table th {
   padding: 8px 12px;
-  border-bottom: 2px solid #e5e7eb;
-  color: #6b7280;
+  border-bottom: 2px solid var(--border);
+  color: var(--muted);
   font-weight: 600;
   white-space: nowrap;
 }
 
 .txn-table td {
   padding: 8px 12px;
-  border-bottom: 1px solid #f3f4f6;
+  border-bottom: 1px solid var(--border);
   vertical-align: middle;
 }
 
 .txn-table tbody tr:hover {
-  background: #f9fafb;
+  background: var(--surface);
 }
 
 .txn-date {
   white-space: nowrap;
-  color: #6b7280;
+  color: var(--muted);
 }
 
 .txn-desc {
@@ -48,15 +48,15 @@
 }
 
 .txn-positive {
-  color: #16a34a;
+  color: var(--accent);
 }
 
 .txn-negative {
-  color: #dc2626;
+  color: var(--red);
 }
 
 .txn-empty {
-  color: #6b7280;
+  color: var(--muted);
   font-size: 0.85rem;
   margin-top: 1rem;
 }

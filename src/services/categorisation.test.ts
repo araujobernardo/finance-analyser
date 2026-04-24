@@ -1,24 +1,20 @@
-import { describe, it, expect, vi, beforeEach } from "vitest";
-import { categoriseTransactions, CATEGORIES } from "./categorisation";
+import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
+import {
+  categoriseTransactions,
+  CATEGORIES,
+  _clientFactory,
+} from "./categorisation";
 import type { Transaction } from "../utils/csvParser";
-
-// ── Mock the Anthropic SDK ────────────────────────────────────────────────────
-// vi.mock is hoisted, so we use vi.hoisted to define mockCreate first.
-
-const mockCreate = vi.hoisted(() => vi.fn());
-
-vi.mock("@anthropic-ai/sdk", () => {
-  const FakeAnthropic = function () {
-    return { messages: { create: mockCreate } };
-  };
-  return { default: FakeAnthropic };
-});
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
 
 function makeTransaction(description: string, amount = -10): Transaction {
   return { date: new Date("2024-03-15"), description, amount };
 }
+
+// ── Mock setup ────────────────────────────────────────────────────────────────
+
+const mockCreate = vi.fn();
 
 function mockApiSuccess(categories: string[]) {
   mockCreate.mockResolvedValue({
@@ -30,12 +26,26 @@ function mockApiFailure() {
   mockCreate.mockRejectedValue(new Error("API error"));
 }
 
+const originalCreate = _clientFactory.create;
+
+beforeEach(() => {
+  vi.clearAllMocks();
+  vi.stubEnv("VITE_ANTHROPIC_API_KEY", "test-key");
+  localStorage.clear();
+  // Replace the client factory so no real HTTP calls are made
+  _clientFactory.create = () => ({ messages: { create: mockCreate } });
+});
+
+afterEach(() => {
+  vi.unstubAllEnvs();
+  // Restore the real factory
+  _clientFactory.create = originalCreate;
+});
+
 // ── Tests ─────────────────────────────────────────────────────────────────────
 
 describe("categoriseTransactions", () => {
   beforeEach(() => {
-    vi.clearAllMocks();
-    vi.stubEnv("VITE_ANTHROPIC_API_KEY", "test-key");
     localStorage.clear();
   });
 

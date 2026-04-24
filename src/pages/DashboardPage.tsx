@@ -1,91 +1,543 @@
-import { useState, useMemo } from "react";
-import { MonthToggleBar } from "../components/MonthToggleBar";
-import { MonthlySummary } from "../components/MonthlySummary";
-import { LargestTransactions } from "../components/LargestTransactions";
-import { MonthlyTrendChart } from "../components/MonthlyTrendChart";
-import type { TrendDataPoint } from "../components/MonthlyTrendChart";
 import {
-  useActiveMonths,
-  useActiveTransactions,
-  useAccount,
-  ALL_ACCOUNTS_ID,
-} from "../context/AccountContext";
-import { getTransactions } from "../services/storage";
+  PieChart,
+  Pie,
+  Cell,
+  BarChart,
+  Bar,
+  XAxis,
+  YAxis,
+  Tooltip,
+  ResponsiveContainer,
+  CartesianGrid,
+  Legend,
+} from "recharts";
+import { useState } from "react";
+import { ACCOUNT_COLORS } from "../constants/colors";
+import type { PfaTxn, PfaCategory, PfaBudgets } from "../types/pfa";
 import "./DashboardPage.css";
 
-function formatMonthLabel(monthKey: string): string {
-  // monthKey format: "YYYY-MM"
-  const [year, month] = monthKey.split("-");
-  const date = new Date(Number(year), Number(month) - 1, 1);
-  return date.toLocaleDateString("en-NZ", { month: "short", year: "2-digit" });
+interface Props {
+  txns: PfaTxn[];
+  months: string[];
+  selectedMonths: string[];
+  setSelectedMonths: (m: string[]) => void;
+  budgets: PfaBudgets;
+  accountList: { short: string; display: string }[];
+  categories: PfaCategory[];
 }
 
-export function DashboardPage() {
-  const months = useActiveMonths();
-  const { accounts, activeAccountId } = useAccount();
-  const [selectedMonth, setSelectedMonth] = useState<string | null>(null);
+const fmt = (n: number) =>
+  `$${Math.abs(n).toLocaleString("en-NZ", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
 
-  // Auto-select the first available month whenever the months list changes
-  const resolvedMonth =
-    selectedMonth && months.includes(selectedMonth)
-      ? selectedMonth
-      : (months[0] ?? null);
+const fmtMonth = (m: string) => {
+  if (!m) return "";
+  const [y, mo] = m.split("-");
+  return new Date(+y, +mo - 1, 1).toLocaleString("en-NZ", {
+    month: "long",
+    year: "numeric",
+  });
+};
 
-  const transactions = useActiveTransactions(resolvedMonth);
+const fmtMonthSh = (m: string) => {
+  if (!m) return "";
+  const [y, mo] = m.split("-");
+  return (
+    new Date(+y, +mo - 1, 1).toLocaleString("en-NZ", { month: "short" }) +
+    " '" +
+    y.slice(2)
+  );
+};
 
-  const trendData = useMemo<TrendDataPoint[]>(() => {
-    return months.map((monthKey) => {
-      let totalSpend = 0;
-      if (activeAccountId === ALL_ACCOUNTS_ID) {
-        for (const acc of accounts) {
-          const { transactions: txns } = getTransactions(acc.id, monthKey);
-          for (const t of txns) {
-            if (t.amount < 0) totalSpend += Math.abs(t.amount);
-          }
-        }
-      } else {
-        const { transactions: txns } = getTransactions(
-          activeAccountId,
-          monthKey,
-        );
-        for (const t of txns) {
-          if (t.amount < 0) totalSpend += Math.abs(t.amount);
-        }
-      }
-      return { monthKey, label: formatMonthLabel(monthKey), totalSpend };
-    });
-  }, [months, accounts, activeAccountId]);
+const getCatColor = (name: string, cats: PfaCategory[]) =>
+  cats.find((c) => c.name === name)?.color ?? "#64748b";
+
+export function DashboardPage({
+  txns,
+  months,
+  selectedMonths,
+  setSelectedMonths,
+  budgets,
+  accountList,
+  categories,
+}: Props) {
+  const [acctFilter, setAcctFilter] = useState("all");
+
+  const toggleMonth = (m: string) =>
+    setSelectedMonths(
+      selectedMonths.includes(m)
+        ? selectedMonths.length > 1
+          ? selectedMonths.filter((x) => x !== m)
+          : selectedMonths
+        : [...selectedMonths, m].sort(),
+    );
+
+  const multiMonth = selectedMonths.length > 1;
+  const n = selectedMonths.length;
+
+  const selTxns = txns.filter(
+    (t) =>
+      selectedMonths.includes(t.month) &&
+      (acctFilter === "all" || t.account === acctFilter),
+  );
+  const real = selTxns.filter((t) => !t.isTransfer);
+  const spend = real
+    .filter((t) => !t.isCredit)
+    .reduce((s, t) => s + Math.abs(t.amount), 0);
+  const income = real
+    .filter((t) => t.isCredit)
+    .reduce((s, t) => s + t.amount, 0);
+  const net = income - spend;
+  const transferAmt = selTxns
+    .filter((t) => t.isTransfer && !t.isCredit)
+    .reduce((s, t) => s + Math.abs(t.amount), 0);
+
+  const catData = categories
+    .filter((c) => c.name !== "Income")
+    .map((c) => ({
+      name: c.name,
+      color: c.color,
+      value: real
+        .filter((t) => t.category === c.name && !t.isCredit)
+        .reduce((s, t) => s + Math.abs(t.amount), 0),
+    }))
+    .filter((d) => d.value > 0)
+    .sort((a, b) => b.value - a.value);
+
+  const acctBreakdown = accountList.map((acct, i) => {
+    const at = txns.filter(
+      (t) =>
+        selectedMonths.includes(t.month) &&
+        t.accountShort === acct.short &&
+        !t.isTransfer,
+    );
+    return {
+      ...acct,
+      color: ACCOUNT_COLORS[i % ACCOUNT_COLORS.length],
+      income: at.filter((t) => t.isCredit).reduce((s, t) => s + t.amount, 0),
+      spend: at
+        .filter((t) => !t.isCredit)
+        .reduce((s, t) => s + Math.abs(t.amount), 0),
+    };
+  });
+
+  const trendData = months.map((m) => {
+    const mt = txns.filter(
+      (t) =>
+        t.month === m &&
+        (acctFilter === "all" || t.account === acctFilter) &&
+        !t.isTransfer,
+    );
+    return {
+      month: fmtMonthSh(m),
+      spend: mt
+        .filter((t) => !t.isCredit)
+        .reduce((s, t) => s + Math.abs(t.amount), 0),
+      income: mt.filter((t) => t.isCredit).reduce((s, t) => s + t.amount, 0),
+      sel: selectedMonths.includes(m),
+    };
+  });
+
+  const budgetData = Object.entries(budgets)
+    .map(([cat, budget]) => ({
+      cat,
+      budget: +budget,
+      actual: real
+        .filter((t) => t.category === cat && !t.isCredit)
+        .reduce((s, t) => s + Math.abs(t.amount), 0),
+    }))
+    .filter((d) => d.budget > 0);
+
+  const top5 = [...real]
+    .filter((t) => !t.isCredit)
+    .sort((a, b) => a.amount - b.amount)
+    .slice(0, 5);
+
+  if (!txns.length) {
+    return (
+      <div className="dash-empty">
+        <div className="dash-empty-icon">⬡</div>
+        <div className="dash-empty-title">No data yet</div>
+        <div className="dash-empty-sub">
+          Upload your bank CSV exports. Select multiple files at once to import
+          all accounts together.
+        </div>
+      </div>
+    );
+  }
+
+  const headingText = multiMonth
+    ? selectedMonths.map(fmtMonthSh).join(" · ")
+    : fmtMonth(selectedMonths[0] ?? months[0]);
+
+  const tooltipStyle = {
+    background: "var(--card)",
+    border: "1px solid var(--border)",
+    borderRadius: 8,
+    fontSize: 12,
+    color: "var(--text)",
+  };
 
   return (
-    <div className="dashboard-page">
-      <h1>Dashboard</h1>
-      {months.length === 0 ? (
-        <p className="dashboard-empty">
-          No data yet — upload a CSV to get started.
-        </p>
-      ) : (
-        <div className="dashboard-grid">
-          <div className="dashboard-full">
-            <MonthToggleBar
-              months={months}
-              selectedMonth={resolvedMonth}
-              onMonthSelect={setSelectedMonth}
-            />
+    <div className="dash-scroll">
+      {/* Header */}
+      <div className="dash-header">
+        <div>
+          <h1 className="dash-heading">{headingText}</h1>
+          {multiMonth && (
+            <div className="dash-heading-sub">
+              {n} months selected · click to deselect
+            </div>
+          )}
+        </div>
+        <div className="dash-month-pills">
+          {months.map((m) => (
+            <button
+              key={m}
+              className={`pill${selectedMonths.includes(m) ? " pill-active" : ""}`}
+              onClick={() => toggleMonth(m)}
+            >
+              {fmtMonthSh(m)}
+            </button>
+          ))}
+        </div>
+      </div>
+
+      {/* Account filter pills */}
+      {accountList.length > 1 && (
+        <div className="dash-acct-pills">
+          <button
+            className={`pill${acctFilter === "all" ? " pill-active" : ""}`}
+            onClick={() => setAcctFilter("all")}
+          >
+            All Accounts
+          </button>
+          {accountList.map((a, i) => {
+            const col = ACCOUNT_COLORS[i % ACCOUNT_COLORS.length];
+            const isActive = acctFilter === a.display;
+            return (
+              <button
+                key={a.short}
+                className={`pill${isActive ? " pill-active" : ""}`}
+                style={
+                  isActive
+                    ? { borderColor: col, color: col, background: `${col}22` }
+                    : undefined
+                }
+                onClick={() =>
+                  setAcctFilter((prev) =>
+                    prev === a.display ? "all" : a.display,
+                  )
+                }
+              >
+                {a.display}
+              </button>
+            );
+          })}
+        </div>
+      )}
+
+      {/* Summary stats */}
+      <div className="dash-stats-grid">
+        <div className="card">
+          <Stat
+            label="Income"
+            value={fmt(income)}
+            color="var(--accent)"
+            sub={multiMonth ? `avg ${fmt(income / n)}/mo` : undefined}
+          />
+        </div>
+        <div className="card">
+          <Stat
+            label="Spent"
+            value={fmt(spend)}
+            color="var(--red)"
+            sub={multiMonth ? `avg ${fmt(spend / n)}/mo` : undefined}
+          />
+        </div>
+        <div className="card">
+          <Stat
+            label="Net"
+            value={`${net >= 0 ? "+" : ""}${fmt(net)}`}
+            color={net >= 0 ? "var(--accent)" : "var(--red)"}
+            sub={
+              multiMonth
+                ? `avg ${net >= 0 ? "+" : ""}${fmt(net / n)}/mo`
+                : undefined
+            }
+          />
+        </div>
+        <div className="card">
+          <Stat
+            label="Transactions"
+            value={String(selTxns.length)}
+            color="var(--text)"
+          />
+        </div>
+      </div>
+
+      {/* Transfer notice */}
+      {transferAmt > 0 && (
+        <div className="dash-transfer-notice">
+          ↔ {fmt(transferAmt)} in inter-account transfers detected and excluded
+          from all totals.
+        </div>
+      )}
+
+      {/* Per-account breakdown */}
+      {acctFilter === "all" && accountList.length > 1 && (
+        <div className="dash-acct-grid">
+          {acctBreakdown.map(
+            ({ short, display, color, income: ai, spend: as_ }) => (
+              <div
+                key={short}
+                className="card dash-acct-card"
+                style={{ borderColor: `${color}33` }}
+              >
+                <div className="dash-acct-name" style={{ color }}>
+                  <span
+                    className="dash-acct-dot"
+                    style={{ background: color }}
+                  />
+                  {display}
+                </div>
+                <div className="dash-acct-rows">
+                  <div className="dash-acct-row">
+                    <span className="dash-acct-row-label">In</span>
+                    <span className="mono" style={{ color: "var(--accent)" }}>
+                      {fmt(ai)}
+                    </span>
+                  </div>
+                  <div className="dash-acct-row">
+                    <span className="dash-acct-row-label">Out</span>
+                    <span className="mono" style={{ color: "var(--red)" }}>
+                      {fmt(as_)}
+                    </span>
+                  </div>
+                </div>
+              </div>
+            ),
+          )}
+        </div>
+      )}
+
+      {/* Charts row */}
+      <div className="dash-charts-grid">
+        <div className="card">
+          <div className="card-title">Spending by Category</div>
+          {catData.length ? (
+            <>
+              <ResponsiveContainer width="100%" height={190}>
+                <PieChart>
+                  <Pie
+                    data={catData}
+                    cx="50%"
+                    cy="50%"
+                    innerRadius={52}
+                    outerRadius={85}
+                    paddingAngle={2}
+                    dataKey="value"
+                  >
+                    {catData.map((d, i) => (
+                      <Cell key={i} fill={d.color} />
+                    ))}
+                  </Pie>
+                  <Tooltip
+                    formatter={(v: number) => [fmt(v), "Spend"]}
+                    contentStyle={tooltipStyle}
+                  />
+                </PieChart>
+              </ResponsiveContainer>
+              <div className="dash-cat-legend">
+                {catData.slice(0, 7).map((d) => (
+                  <div key={d.name} className="dash-cat-legend-item">
+                    <span
+                      className="dash-cat-legend-dot"
+                      style={{ background: d.color }}
+                    />
+                    <span>{d.name}</span>
+                    <span className="mono dash-cat-legend-val">
+                      {fmt(d.value)}
+                    </span>
+                  </div>
+                ))}
+              </div>
+            </>
+          ) : (
+            <div className="dash-empty-chart">
+              No expense data for selected period
+            </div>
+          )}
+        </div>
+
+        <div className="card">
+          <div className="card-title">Largest Expenses</div>
+          <div className="dash-top5">
+            {top5.length ? (
+              top5.map((t) => {
+                const idx = accountList.findIndex(
+                  (a) => a.short === t.accountShort,
+                );
+                const ac =
+                  ACCOUNT_COLORS[Math.max(0, idx) % ACCOUNT_COLORS.length];
+                return (
+                  <div key={t.id} className="dash-top5-row">
+                    <div className="dash-top5-info">
+                      <div className="dash-top5-payee">
+                        {t.payee || t.memo || "Unknown"}
+                      </div>
+                      <div className="dash-top5-meta">
+                        <span>{t.date}</span>
+                        {accountList.length > 1 && (
+                          <span style={{ color: ac }}>· {t.account}</span>
+                        )}
+                      </div>
+                    </div>
+                    <div className="dash-top5-right">
+                      <span className="mono dash-top5-amount">
+                        {fmt(t.amount)}
+                      </span>
+                      {t.category && (
+                        <span
+                          className="tag"
+                          style={{
+                            color: getCatColor(t.category, categories),
+                            background: `${getCatColor(t.category, categories)}22`,
+                            borderColor: `${getCatColor(t.category, categories)}44`,
+                          }}
+                        >
+                          {t.category}
+                        </span>
+                      )}
+                    </div>
+                  </div>
+                );
+              })
+            ) : (
+              <div className="dash-empty-chart">
+                No expenses for selected period
+              </div>
+            )}
           </div>
-          <div className="dashboard-full">
-            <MonthlySummary transactions={transactions} />
+        </div>
+      </div>
+
+      {/* Monthly Trends */}
+      {trendData.length > 1 && (
+        <div className="card dash-trends">
+          <div className="card-title">
+            Monthly Trends
+            {multiMonth ? " — highlighted months are in selection" : ""}
           </div>
-          <div className="dashboard-full">
-            <LargestTransactions
-              transactions={transactions}
-              onCategoryClick={() => {}}
-            />
+          <ResponsiveContainer width="100%" height={180}>
+            <BarChart data={trendData} barGap={4}>
+              <CartesianGrid
+                strokeDasharray="3 3"
+                stroke="var(--border)"
+                vertical={false}
+              />
+              <XAxis
+                dataKey="month"
+                tick={{ fill: "var(--muted)", fontSize: 11 }}
+                axisLine={false}
+                tickLine={false}
+              />
+              <YAxis
+                tick={{ fill: "var(--muted)", fontSize: 11 }}
+                axisLine={false}
+                tickLine={false}
+                tickFormatter={(v: number) => `$${(v / 1000).toFixed(0)}k`}
+              />
+              <Tooltip
+                formatter={(v: number) => [fmt(v)]}
+                contentStyle={tooltipStyle}
+              />
+              <Legend wrapperStyle={{ fontSize: 12, color: "var(--muted)" }} />
+              <Bar dataKey="income" name="Income" radius={[4, 4, 0, 0]}>
+                {trendData.map((d, i) => (
+                  <Cell
+                    key={i}
+                    fill="var(--accent)"
+                    opacity={multiMonth && !d.sel ? 0.25 : 1}
+                  />
+                ))}
+              </Bar>
+              <Bar dataKey="spend" name="Spend" radius={[4, 4, 0, 0]}>
+                {trendData.map((d, i) => (
+                  <Cell
+                    key={i}
+                    fill="var(--red)"
+                    opacity={multiMonth && !d.sel ? 0.25 : 1}
+                  />
+                ))}
+              </Bar>
+            </BarChart>
+          </ResponsiveContainer>
+        </div>
+      )}
+
+      {/* Budget vs Actual */}
+      {budgetData.length > 0 && (
+        <div className="card">
+          <div className="card-title">
+            Budget vs Actual{multiMonth ? ` (${n}-month total)` : ""}
           </div>
-          <div className="dashboard-full">
-            <MonthlyTrendChart data={trendData} selectedMonth={resolvedMonth} />
+          <div className="dash-budget-list">
+            {budgetData.map((d) => {
+              const limit = multiMonth ? d.budget * n : d.budget;
+              const pct = Math.min((d.actual / limit) * 100, 100);
+              const over = d.actual > limit;
+              return (
+                <div key={d.cat}>
+                  <div className="dash-budget-row">
+                    <span className="dash-budget-cat">{d.cat}</span>
+                    <span
+                      className="mono"
+                      style={{ color: over ? "var(--red)" : "var(--muted)" }}
+                    >
+                      {fmt(d.actual)}
+                      <span style={{ color: "var(--muted)" }}>
+                        {" "}
+                        / {fmt(limit)}
+                      </span>
+                    </span>
+                  </div>
+                  <div className="dash-budget-track">
+                    <div
+                      className="dash-budget-fill"
+                      style={{
+                        width: `${pct}%`,
+                        background: over ? "var(--red)" : "var(--accent)",
+                      }}
+                    />
+                  </div>
+                </div>
+              );
+            })}
           </div>
         </div>
       )}
+    </div>
+  );
+}
+
+function Stat({
+  label,
+  value,
+  sub,
+  color = "var(--text)",
+}: {
+  label: string;
+  value: string;
+  sub?: string;
+  color?: string;
+}) {
+  return (
+    <div className="stat">
+      <div className="stat-label">{label}</div>
+      <div className="stat-value mono" style={{ color }}>
+        {value}
+      </div>
+      {sub && <div className="stat-sub mono">{sub}</div>}
     </div>
   );
 }

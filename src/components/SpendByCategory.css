@@ -203,7 +203,7 @@
   border: 1px solid var(--accent-border);
   border-radius: 4px;
   background: var(--accent);
-  color: #fff;
+  color: white;
   font-size: 0.85rem;
   cursor: pointer;
 }
@@ -265,7 +265,7 @@
   border-radius: 8px;
   padding: 0.4rem 0.65rem;
   font-size: 0.8rem;
-  color: #fff;
+  color: white;
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
 }
 

@@ -1,28 +1,43 @@
-import { describe, it, expect, beforeEach, vi } from "vitest";
+import { describe, it, expect, beforeEach, vi, afterEach } from "vitest";
 import { renderHook, act } from "@testing-library/react";
 import { useChatHistory } from "./useChatHistory";
 import * as chatStorage from "../services/chatStorage";
 
-vi.mock("../services/chatStorage");
+const CHAT_KEY = "finance-analyser-chat";
 
-const mockLoad = vi.mocked(chatStorage.loadChatHistory);
-const mockSave = vi.mocked(chatStorage.saveChatHistory);
+/** Write messages directly into localStorage for the "global" account */
+function seedHistory(
+  messages: Array<{
+    role: "user" | "assistant";
+    content: string;
+    timestamp: string;
+  }>,
+) {
+  localStorage.setItem(CHAT_KEY, JSON.stringify({ global: messages }));
+}
+
+let saveSpy: ReturnType<typeof vi.spyOn>;
 
 beforeEach(() => {
-  vi.clearAllMocks();
-  mockLoad.mockReturnValue([]);
+  localStorage.clear();
+  saveSpy = vi.spyOn(chatStorage, "saveChatHistory").mockImplementation(() => {
+    /* no-op – don't write to storage during tests */
+  });
+});
+
+afterEach(() => {
+  vi.restoreAllMocks();
 });
 
 describe("useChatHistory", () => {
   describe("initial load", () => {
     it("starts with empty display messages when no history", () => {
-      mockLoad.mockReturnValue([]);
       const { result } = renderHook(() => useChatHistory());
       expect(result.current.displayMessages).toHaveLength(0);
     });
 
     it("loads persisted messages on mount", () => {
-      mockLoad.mockReturnValue([
+      seedHistory([
         { role: "user", content: "Hello", timestamp: "2026-01-01T00:00:00Z" },
         {
           role: "assistant",
@@ -43,7 +58,7 @@ describe("useChatHistory", () => {
     });
 
     it("populates apiHistory from persisted messages", () => {
-      mockLoad.mockReturnValue([
+      seedHistory([
         { role: "user", content: "Hello", timestamp: "2026-01-01T00:00:00Z" },
       ]);
       const { result } = renderHook(() => useChatHistory());
@@ -69,7 +84,7 @@ describe("useChatHistory", () => {
     it("persists immediately after appendUserMessage", () => {
       const { result } = renderHook(() => useChatHistory());
       act(() => result.current.appendUserMessage("Test message"));
-      expect(mockSave).toHaveBeenCalledWith(
+      expect(saveSpy).toHaveBeenCalledWith(
         "global",
         expect.arrayContaining([
           expect.objectContaining({ role: "user", content: "Test message" }),
@@ -103,14 +118,14 @@ describe("useChatHistory", () => {
     it("does not persist during streaming", () => {
       const { result } = renderHook(() => useChatHistory());
       act(() => result.current.setStreamingMessage("partial response"));
-      expect(mockSave).not.toHaveBeenCalled();
+      expect(saveSpy).not.toHaveBeenCalled();
     });
 
     it("persists after markStreamingDone", () => {
       const { result } = renderHook(() => useChatHistory());
       act(() => result.current.setStreamingMessage("completed response"));
       act(() => result.current.markStreamingDone());
-      expect(mockSave).toHaveBeenCalledWith(
+      expect(saveSpy).toHaveBeenCalledWith(
         "global",
         expect.arrayContaining([
           expect.objectContaining({
@@ -146,7 +161,7 @@ describe("useChatHistory", () => {
       const { result } = renderHook(() => useChatHistory());
       act(() => result.current.setError("Network failure"));
       // save should not be called for errors
-      expect(mockSave).not.toHaveBeenCalled();
+      expect(saveSpy).not.toHaveBeenCalled();
     });
   });
 
@@ -155,7 +170,7 @@ describe("useChatHistory", () => {
       // saveChatHistory internally trims; we just verify it is called
       const { result } = renderHook(() => useChatHistory());
       act(() => result.current.appendUserMessage("message"));
-      expect(mockSave).toHaveBeenCalledWith("global", expect.any(Array));
+      expect(saveSpy).toHaveBeenCalledWith("global", expect.any(Array));
     });
   });
 });

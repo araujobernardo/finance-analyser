@@ -1,41 +1,40 @@
-# Implementation Plan: UX/UI Overhaul — Monarch Money Quality
+# Implementation Plan: UX/UI Overhaul — Realign to Prototype
 
-**Branch**: `002-ux-ui-overhaul` | **Date**: 2026-04-21 | **Spec**: [spec.md](./spec.md)  
-**Input**: Feature specification from `specs/002-ux-ui-overhaul/spec.md`
+**Branch**: `002-ux-ui-overhaul` | **Date**: 2026-04-23 | **Spec**: [spec.md](spec.md)
 
 ---
 
 ## Summary
 
-A complete visual redesign of Finance Analyser across all 6 pages and shared components, migrating from an ad-hoc CSS variable system to the `docs/design-system.md` token set. The overhaul covers: Inter typography, dark-navy design tokens, NavBar rebuild to 56px/icon/accent-underline pattern, Import page simplification to a focused upload flow, Dashboard layout expansion to 1200px with 2-column panels, Transactions table cleanup (no zebra, SVG icons, proper empty states), Settings icon-button polish, Trends page card-wrapping. No business logic, data storage, or localStorage schema changes.
+Realign the Finance Analyser app to match `docs/prototype.jsx` — the authoritative UX reference. The current app has diverged through iterative development: it uses a top navbar (not a sidebar), a separate Upload page (not a sidebar action), a floating chat overlay (not a full page), single-month dashboard selection (not multi-month), and incorrect design tokens (Inter font, wrong colours).
+
+This plan restores the prototype's layout, navigation, interaction patterns, design tokens, and font — while keeping all existing service logic (CSV parsing, categorisation, storage, AI chat) untouched.
 
 ---
 
 ## Technical Context
 
-**Language/Version**: TypeScript 5.x / React 18  
-**Primary Dependencies**: Vite, React Router v6, Recharts, Vitest + React Testing Library  
-**Storage**: localStorage (read-only for this feature — no schema changes per Golden Rule 3)  
-**Testing**: Vitest + React Testing Library (`.test.tsx` files per component)  
-**Target Platform**: Modern web browser (Chrome, Firefox, Safari, Edge); mobile-responsive at 375px+  
-**Project Type**: Web application — single-page app (SPA)  
-**Performance Goals**: No regressions — existing page load and render performance maintained  
-**Constraints**: Zero localStorage schema changes; all visual changes only; must pass existing test suite  
-**Scale/Scope**: 6 pages, ~25 components, 1 new `src/styles/` directory with 2 files
+**Language/Version**: TypeScript 5.x + React 18  
+**Primary Dependencies**: Vite, Recharts (charts), Anthropic SDK (AI chat), React Router (to be removed)  
+**Storage**: localStorage via `src/services/storage.ts` — schema unchanged  
+**Testing**: Vitest + React Testing Library (existing tests for services/hooks remain passing; UI component tests are out of scope for this overhaul)  
+**Target Platform**: Desktop browser, ≥ 900 px viewport width  
+**Project Type**: Single-page web application  
+**Performance Goals**: Tab switch < 200 ms; upload → Dashboard auto-navigation immediate on completion  
+**Constraints**: No localStorage schema changes; no changes to service/hook/utility layer  
+**Scale/Scope**: 6 UI surfaces (tokens, sidebar, dashboard, transactions, chat, settings)
 
 ---
 
 ## Constitution Check
 
-| Rule                                 | Status  | Notes                                                       |
-| ------------------------------------ | ------- | ----------------------------------------------------------- |
-| Never assume on product requirements | ✅ Pass | Spec is complete with 52 FRs and 10 SC metrics              |
-| Never expose credentials or secrets  | ✅ Pass | Pure CSS/visual change — no env vars or credentials touched |
-| Never modify localStorage schema     | ✅ Pass | No data model or storage changes — visual layer only        |
-| Never skip DoR before implementation | ✅ Pass | Each story must pass DoR before Developer picks it up       |
-| Never skip DoD before merging        | ✅ Pass | QA applies DoD to every PR per constitution                 |
-
-**Gate result**: PASS. All golden rules satisfied. Proceed to Phase 0.
+| Rule                                              | Status | Notes                                                            |
+| ------------------------------------------------- | ------ | ---------------------------------------------------------------- |
+| No assumptions about product requirements         | ✅     | Prototype is the explicit reference; spec covers all decisions   |
+| No credentials/API tokens exposed                 | ✅     | No new API integrations; existing `ANTHROPIC_API_KEY` via `.env` |
+| No localStorage schema changes                    | ✅     | Explicitly documented in data-model.md — zero schema changes     |
+| Definition of Ready checked before implementation | ✅     | Spec complete; tasks will carry DoR checklist                    |
+| Definition of Done checked before merge           | ✅     | Enforced by QA agent per constitution                            |
 
 ---
 
@@ -45,122 +44,161 @@ A complete visual redesign of Finance Analyser across all 6 pages and shared com
 
 ```text
 specs/002-ux-ui-overhaul/
-├── plan.md              ← this file
-├── research.md          ← Phase 0 output
-├── data-model.md        ← Phase 1 output (entity summary — no new data)
-└── tasks.md             ← Phase 2 output (/speckit-tasks command)
+├── plan.md          ← this file
+├── spec.md          ← feature specification
+├── research.md      ← decisions on architecture/font/routing
+├── data-model.md    ← entity shapes, session-state changes
+└── tasks.md         ← generated by /speckit-tasks
 ```
 
-### Source Code (repository root)
+### Source Code (files that change)
 
 ```text
 src/
-├── styles/                         ← NEW directory
-│   ├── tokens.css                  ← NEW: all design-system CSS custom properties
-│   └── base.css                    ← NEW: Inter font, reset, shared utility classes
+├── index.css                        ← REWRITE: design tokens, Sora font, global reset
+├── App.tsx                          ← REWRITE: tab-based shell, remove React Router
+├── App.css                          ← UPDATE: flex layout for sidebar + content
+├── main.tsx                         ← MINOR: remove BrowserRouter wrapper
+│
 ├── components/
-│   ├── NavBar.tsx                  ← MODIFIED: height, icons, active state, account selector
-│   ├── NavBar.css                  ← MODIFIED: full rewrite to design-system tokens
-│   ├── ui/
-│   │   ├── EmptyState.tsx          ← MODIFIED: ensure icon/heading/body/CTA structure
-│   │   ├── EmptyState.css          ← MODIFIED: design-system tokens
-│   │   ├── SkeletonCard.tsx        ← MODIFIED: pulse uses --bg-overlay
-│   │   └── SkeletonCard.css        ← MODIFIED: design-system tokens + prefers-reduced-motion
-│   ├── MonthlySummary.tsx          ← MODIFIED: card layout, --text-xl numbers, tabular-nums
-│   ├── MonthlySummary.css          ← MODIFIED: design-system tokens
-│   ├── LargestTransactions.tsx     ← MODIFIED: card wrapper, design tokens
-│   ├── LargestTransactions.css     ← MODIFIED: design-system tokens
-│   ├── MonthlyTrendChart.tsx       ← MODIFIED: chart colours/grid/tooltip tokens
-│   ├── MonthlyTrendChart.css       ← MODIFIED: design-system tokens
-│   ├── MonthToggleBar.tsx          ← MODIFIED: design-system tokens
-│   ├── MonthToggleBar.css          ← MODIFIED: design-system tokens
-│   ├── SpendByCategory.css         ← MODIFIED: design-system tokens
-│   ├── SpendingDonutChart.css      ← MODIFIED: design-system tokens
-│   ├── CategoryBadge.css           ← MODIFIED: design-system tokens
-│   ├── BudgetComparisonPanel.css   ← MODIFIED: design-system tokens
-│   ├── CategoryTrendChart.tsx      ← MODIFIED: chart styling tokens
-│   ├── CategoryTrendChart.css      ← MODIFIED: design-system tokens
-│   ├── MonthlySpendChart.css       ← MODIFIED: design-system tokens
-│   ├── TransactionList.css         ← MODIFIED: design-system tokens
-│   ├── TransactionTable.css        ← MODIFIED: design-system tokens
-│   ├── CategoryRulesList.css       ← MODIFIED: design-system tokens
-│   ├── DuplicateWarningModal.css   ← MODIFIED: design-system tokens
-│   ├── AddAccountModal.css         ← MODIFIED: design-system tokens
-│   ├── DeleteAccountModal.css      ← MODIFIED: design-system tokens
-│   └── ChatPanel.css               ← MODIFIED: design-system tokens
-├── pages/
-│   ├── UploadPage.tsx              ← MODIFIED: remove data-review panels, focused flow
-│   ├── UploadPage.css              ← NEW: upload-page specific styles with design tokens
-│   ├── DashboardPage.tsx           ← MODIFIED: 1200px, 2-column layout, EmptyState, skeleton
-│   ├── DashboardPage.css           ← MODIFIED: design-system tokens, 12-col grid
-│   ├── TransactionsPage.tsx        ← MODIFIED: SVG sort icons, EmptyState, category tokens
-│   ├── TransactionsPage.css        ← MODIFIED: remove zebra, design-system tokens
-│   ├── SettingsPage.tsx            ← MODIFIED: icon buttons, active sidebar, remove placeholders
-│   ├── SettingsPage.css            ← MODIFIED: design-system tokens, sidebar active state
-│   ├── HistoryPage.tsx             ← MODIFIED: card wrappers, EmptyState, "Trends" rename
-│   └── HistoryPage.css             ← MODIFIED (or NEW): card styles, design-system tokens
+│   ├── Sidebar.tsx                  ← NEW: 224px sidebar (upload, accounts, nav, footer)
+│   ├── Sidebar.css                  ← NEW
+│   ├── NavBar.tsx                   ← DELETE
+│   ├── NavBar.css                   ← DELETE
+│   ├── ChatPanel.tsx                ← DELETE (replaced by ChatPage)
+│   ├── ChatPanel.css                ← DELETE
+│   └── [all other components]       ← CSS token updates only (no raw hex colours)
+│
+└── pages/
+    ├── DashboardPage.tsx            ← REWRITE: multi-month, donut, trends, budget-vs-actual
+    ├── DashboardPage.css            ← REWRITE
+    ├── TransactionsPage.tsx         ← UPDATE: payee-match bulk update, show-transfers
+    ├── TransactionsPage.css         ← UPDATE: token-aligned styling
+    ├── ChatPage.tsx                 ← NEW: full-page chat (moved from floating panel)
+    ├── ChatPage.css                 ← NEW
+    ├── SettingsPage.tsx             ← REWRITE: categories CRUD, data stats, clear-all
+    ├── SettingsPage.css             ← REWRITE
+    ├── UploadPage.tsx               ← DELETE
+    ├── UploadPage.css               ← DELETE (if exists)
+    ├── HistoryPage.tsx              ← DELETE
+    └── NotFoundPage.tsx             ← KEEP (update token colours only)
 ```
-
-**Structure Decision**: Single-project SPA. The only new directory is `src/styles/` for the token and base CSS files. All other changes are modifications to existing `.tsx` and `.css` files. No new pages or routes are added.
 
 ---
 
-## Phase 0: Research
+## Implementation Phases
 
-See [research.md](./research.md) for full findings.
+### Phase 1 — Design Tokens + Base Styles
 
-### Key Decisions
+**Goal**: Establish the CSS foundation that all subsequent phases depend on. No component or layout changes — purely token/font updates.
 
-| Topic                   | Decision                                                   | Rationale                                                                                       |
-| ----------------------- | ---------------------------------------------------------- | ----------------------------------------------------------------------------------------------- |
-| Icon library            | `lucide-react`                                             | Already used in adjacent projects; tree-shakeable; consistent 16px stroke icons; MIT licence    |
-| Inter font delivery     | Google Fonts `<link>` in `index.html`                      | Simplest approach; no build config change; cached by browser across sites                       |
-| Token delivery          | Single `src/styles/tokens.css` imported in `main.tsx`      | One source of truth; no pre-processor needed; CSS custom properties work in all target browsers |
-| Category colour mapping | Map to design-system tokens + accent palette variants      | Avoids hardcoded hex; keeps semantic meaning (Income → `--positive`, etc.)                      |
-| Mobile NavBar           | CSS-only bottom tab bar using `position: fixed; bottom: 0` | No new routing or JS needed; layout shift handled by bottom-padding on app shell                |
+**Files**:
+
+- `src/index.css` — rewrite `:root` CSS custom properties to match prototype C object; add Sora + JetBrains Mono font-face via Google Fonts import; add scrollbar, keyframe, and select option overrides from prototype global `<style>` block
+- `index.html` — add Google Fonts `<link>` preconnect + stylesheet (Sora + JetBrains Mono); remove any existing Inter font link
+
+**Prototype reference**: `docs/prototype.jsx` lines 27–32 (C object), 4 (FONT_URL), 1108–1116 (global style block)
+
+**Acceptance**: All CSS custom properties are defined; `font-family: 'Sora', sans-serif` resolves; `font-family: 'JetBrains Mono', monospace` resolves.
 
 ---
 
-## Phase 1: Design & Contracts
+### Phase 2 — App Shell + Sidebar Layout
 
-### Data Model
+**Goal**: Replace the React Router + NavBar shell with the sidebar-based single-page app shell.
 
-See [data-model.md](./data-model.md).
+**Files**:
 
-No new data entities. This feature is purely visual. The existing entities (Account, Transaction, CategoryRule, Budget) are unchanged. The only "model" addition is the CSS token system — a set of CSS custom property names documented in `src/styles/tokens.css`, which mirrors `docs/design-system.md`.
+- `src/main.tsx` — remove `<BrowserRouter>` wrapper
+- `src/App.tsx` — replace `<Routes>` with tab-based rendering (`useState<'dashboard'|'transactions'|'chat'|'settings'>`); lift `selectedMonths: string[]`, `uploadStatus`, `chatMessages` to App level; remove NavBar import; add Sidebar component; wire upload handler (auto-switch to dashboard on success)
+- `src/App.css` — set `display: flex; height: 100vh; overflow: hidden` for the root container
+- `src/components/Sidebar.tsx` — NEW: implement prototype Sidebar component exactly (brand header, accounts section with inline rename, upload button + status + helper text, nav tabs, footer); accepts props: `tab`, `setTab`, `onUpload`, `uploadStatus`, `txnCount`, `accountList`, `onRenameAccount`
+- `src/components/Sidebar.css` — NEW
+- `src/components/NavBar.tsx` — DELETE
+- `src/components/NavBar.css` — DELETE
 
-### UI Contracts (Component Interface)
+**Prototype reference**: `docs/prototype.jsx` lines 206–283 (Sidebar), 989–1157 (App root)
 
-The following component prop interfaces must remain stable (no breaking changes):
+**Acceptance**: App renders with sidebar visible; clicking nav tabs switches content; no top navbar present; no URL changes on tab switch.
 
-| Component           | Contract                               | Notes                                                     |
-| ------------------- | -------------------------------------- | --------------------------------------------------------- |
-| `EmptyState`        | `{ icon, message, ctaLabel?, ctaTo? }` | Existing props preserved; CSS updated only                |
-| `SkeletonCard`      | `{ rows? }`                            | Existing props preserved; CSS updated only                |
-| `MonthlySummary`    | `{ transactions, isLoading? }`         | Existing props preserved; layout/CSS updated              |
-| `MonthlyTrendChart` | `{ data, selectedMonth }`              | Existing props preserved; chart colours updated via props |
-| `NavBar`            | (no props)                             | Internal refactor; external interface unchanged           |
-| `CsvUpload`         | `{ onFileSelected }`                   | Existing props preserved; CSS updated only                |
+---
 
-### Implementation Order (per user requirement)
+### Phase 3 — Dashboard Page
 
-The overhaul is broken into 8 implementation units delivered in strict dependency order:
+**Goal**: Replace the single-month dashboard with the prototype's multi-month, fully-featured Dashboard.
 
-```
-Unit 1: Design tokens + base styles (src/styles/)   ← blocks everything
-Unit 2: NavBar redesign                              ← shared by all pages
-Unit 3: Shared UI components (EmptyState, Skeleton, btn/card utilities)
-Unit 4: Import page redesign
-Unit 5: Dashboard page redesign
-Unit 6: Transactions page redesign
-Unit 7: Settings page redesign
-Unit 8: Trends page redesign
-```
+**Files**:
 
-Each unit maps to one or more stories in `tasks.md`. Units 4–8 each depend on Units 1–3 being complete.
+- `src/pages/DashboardPage.tsx` — REWRITE to match prototype Dashboard component; implement: multi-month toggle (array of selectedMonths, min 1), account filter pills, 4-column summary stats with avg sub-labels, transfer notice bar, per-account breakdown cards, Spending by Category donut (innerRadius 52 outerRadius 85) + legend, Largest Expenses top-5 panel, Monthly Trends bar chart (dimmed at 0.25 opacity for unselected months), Budget vs Actual progress bars (scaled for multi-month), empty state
+- `src/pages/DashboardPage.css` — REWRITE: grid layouts, pill styles, card styles using CSS tokens
+- `src/pages/HistoryPage.tsx` — DELETE (Trends chart now in Dashboard)
+- `src/pages/UploadPage.tsx` — DELETE (upload now in Sidebar)
+
+**Prototype reference**: `docs/prototype.jsx` lines 286–525 (Dashboard component)
+
+**Acceptance**: Multi-month toggle works; stats update reactively; donut and trends charts render; budget vs actual shown when budgets exist.
+
+---
+
+### Phase 4 — Transactions Page
+
+**Goal**: Update TransactionsPage to match prototype — payee-match bulk update, show-transfers toggle, token-aligned styling.
+
+**Files**:
+
+- `src/pages/TransactionsPage.tsx` — UPDATE: add "Show transfers" checkbox (hidden by default, dimmed at 65% opacity when shown); implement payee-substring bulk category change with toast notification (4 s auto-dismiss); ensure filters match prototype (search, month, account, category, transfers); table columns match prototype (Date, Account if >1, Payee/Memo, Amount, Category); amounts use JetBrains Mono; credits green, debits red; transfer rows show read-only Tag
+- `src/pages/TransactionsPage.css` — UPDATE: token-aligned colours, monospace amounts
+
+**Prototype reference**: `docs/prototype.jsx` lines 528–651 (Transactions component)
+
+**Acceptance**: Show-transfers toggle works; bulk update toast fires correctly; category dropdown hidden for transfers.
+
+---
+
+### Phase 5 — Chat Page
+
+**Goal**: Replace floating ChatPanel overlay with a full-page Chat tab.
+
+**Files**:
+
+- `src/pages/ChatPage.tsx` — NEW: implement prototype Chat component as full-page; header + subtitle, scrollable message area, user/assistant bubbles with avatar circles, suggestion chips (shown when messages = 1), typing indicator, input + send button; empty state when no transactions
+- `src/pages/ChatPage.css` — NEW
+- `src/components/ChatPanel.tsx` — DELETE
+- `src/components/ChatPanel.css` — DELETE
+
+**Prototype reference**: `docs/prototype.jsx` lines 655–740 (Chat component)
+
+**Note**: Reuse `claudeChat.ts` service for the API call; wire `chatMessages` state from App (already lifted in Phase 2) so history survives tab switches.
+
+**Acceptance**: Clicking AI Chat tab shows full-page chat; no floating overlay present; conversation persists across tab switches.
+
+---
+
+### Phase 6 — Settings Page
+
+**Goal**: Rewrite Settings to match prototype — full categories CRUD, data stats, clear-all, account renaming.
+
+**Files**:
+
+- `src/pages/SettingsPage.tsx` — REWRITE to match prototype Settings component: No-API notice card, Your Data stat grid + clear-all button, Accounts rename section, Categories & Budgets full CRUD (colour picker + name + budget/mo input, add new, delete with reassignment modal, save together); implement rename detection (retroactive transaction re-categorisation)
+- `src/pages/SettingsPage.css` — REWRITE
+
+**Prototype reference**: `docs/prototype.jsx` lines 743–986 (Settings component)
+
+**Acceptance**: Adding/renaming/deleting categories works; deleting shows reassignment modal with count; renaming updates all transactions; clear-all removes data; account rename applies retroactively.
+
+---
+
+### Phase 7 — Token Audit & CSS Cleanup
+
+**Goal**: Eliminate all remaining hardcoded hex colours from component CSS files.
+
+**Files**: All `src/components/*.css` and `src/pages/*.css` — replace any remaining raw hex values with CSS custom properties; verify all components inherit `font-family: 'Sora', sans-serif`; verify monospace elements use `font-family: 'JetBrains Mono', monospace`.
+
+**Acceptance**: `grep -r "#[0-9a-fA-F]\{6\}" src/` returns zero matches in CSS/TSX files (excluding `index.css` token definitions and `data-model.md`).
 
 ---
 
 ## Complexity Tracking
 
-No constitution violations detected. No complexity justification required.
+No constitution violations. This overhaul is a UI-only realignment — no new abstractions, no new patterns, no scope creep beyond matching the prototype.

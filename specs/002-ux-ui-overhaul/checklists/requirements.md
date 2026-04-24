@@ -1,7 +1,7 @@
-# Specification Quality Checklist: UX/UI Overhaul — Monarch Money Quality
+# Specification Quality Checklist: UX/UI Overhaul — Realign to Prototype
 
 **Purpose**: Validate specification completeness and quality before proceeding to planning
-**Created**: 2026-04-21
+**Created**: 2026-04-23
 **Feature**: [spec.md](../spec.md)
 
 ## Content Quality
@@ -31,4 +31,4 @@
 
 ## Notes
 
-All items pass. Specification is ready for `/speckit-plan`.
+All items pass. Spec is ready for `/speckit-plan`.

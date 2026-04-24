@@ -1,296 +1,407 @@
-import { useState } from "react";
-import {
-  getAccounts,
-  saveAccount,
-  deleteAccount,
-  ACCOUNT_COLOURS,
-} from "../services/storage";
-import type { Account } from "../services/storage";
+import { useState, useEffect } from "react";
+import { ACCOUNT_COLORS } from "../constants/colors";
+import type { PfaTxn, PfaCategory, PfaBudgets } from "../types/pfa";
 import "./SettingsPage.css";
 
-// ── Helpers ───────────────────────────────────────────────────────────────────
-
-function generateId(): string {
-  return `acct_${Date.now()}_${Math.random().toString(36).slice(2, 7)}`;
-}
-
-function nextColour(accounts: Account[]): string {
-  const used = new Set(accounts.map((a) => a.colour));
-  return ACCOUNT_COLOURS.find((c) => !used.has(c)) ?? ACCOUNT_COLOURS[0];
-}
-
-// ── ColourPicker ──────────────────────────────────────────────────────────────
-
-interface ColourPickerProps {
-  value: string;
-  onChange: (colour: string) => void;
-}
-
-function ColourPicker({ value, onChange }: ColourPickerProps) {
-  return (
-    <div className="account-edit-form__colours">
-      {ACCOUNT_COLOURS.map((c) => (
-        <button
-          key={c}
-          type="button"
-          className={`colour-swatch${c === value ? " colour-swatch--selected" : ""}`}
-          style={{ background: c }}
-          aria-label={`Select colour ${c}`}
-          aria-pressed={c === value}
-          onClick={() => onChange(c)}
-        />
-      ))}
-    </div>
-  );
-}
-
-// ── AccountEditForm ───────────────────────────────────────────────────────────
-
-interface AccountEditFormProps {
-  initial: { name: string; colour: string };
-  onSave: (name: string, colour: string) => void;
-  onCancel: () => void;
-}
-
-function AccountEditForm({ initial, onSave, onCancel }: AccountEditFormProps) {
-  const [name, setName] = useState(initial.name);
-  const [colour, setColour] = useState(initial.colour);
-
-  function handleSubmit(e: React.FormEvent) {
-    e.preventDefault();
-    const trimmed = name.trim();
-    if (!trimmed) return;
-    onSave(trimmed, colour);
-  }
-
-  return (
-    <form className="account-edit-form" onSubmit={handleSubmit}>
-      <div className="account-edit-form__row">
-        <span className="account-edit-form__label">Name</span>
-        <input
-          className="account-edit-form__input"
-          value={name}
-          onChange={(e) => setName(e.target.value)}
-          maxLength={40}
-          autoFocus
-          aria-label="Account name"
-        />
-      </div>
-      <div className="account-edit-form__row">
-        <span className="account-edit-form__label">Colour</span>
-        <ColourPicker value={colour} onChange={setColour} />
-      </div>
-      <div className="account-edit-form__actions">
-        <button type="button" className="btn btn--secondary" onClick={onCancel}>
-          Cancel
-        </button>
-        <button
-          type="submit"
-          className="btn btn--primary"
-          disabled={!name.trim()}
-        >
-          Save
-        </button>
-      </div>
-    </form>
-  );
-}
-
-// ── ConfirmDelete ─────────────────────────────────────────────────────────────
-
-interface ConfirmDeleteProps {
-  accountName: string;
-  onConfirm: () => void;
-  onCancel: () => void;
-}
-
-function ConfirmDelete({
-  accountName,
-  onConfirm,
-  onCancel,
-}: ConfirmDeleteProps) {
-  return (
-    <div className="confirm-backdrop" role="dialog" aria-modal="true">
-      <div className="confirm-panel">
-        <h2>Delete account?</h2>
-        <p>
-          This will permanently delete <strong>{accountName}</strong> and all
-          its transaction data. This cannot be undone.
-        </p>
-        <div className="confirm-panel__actions">
-          <button className="btn btn--secondary" onClick={onCancel} autoFocus>
-            Cancel
-          </button>
-          <button className="btn btn--danger" onClick={onConfirm}>
-            Delete
-          </button>
-        </div>
-      </div>
-    </div>
-  );
-}
-
-// ── AccountManagementSection ──────────────────────────────────────────────────
-
-type EditingState =
-  | { type: "none" }
-  | { type: "edit"; accountId: string }
-  | { type: "add" };
-
-function AccountManagementSection() {
-  const [accounts, setAccounts] = useState<Account[]>(() => getAccounts());
-  const [editing, setEditing] = useState<EditingState>({ type: "none" });
-  const [pendingDelete, setPendingDelete] = useState<Account | null>(null);
-
-  function refresh() {
-    setAccounts(getAccounts());
-  }
-
-  function handleSaveEdit(accountId: string, name: string, colour: string) {
-    const account = accounts.find((a) => a.id === accountId);
-    if (!account) return;
-    saveAccount({ ...account, name, colour });
-    refresh();
-    setEditing({ type: "none" });
-  }
-
-  function handleAdd(name: string, colour: string) {
-    saveAccount({
-      id: generateId(),
-      name,
-      colour,
-      createdAt: new Date().toISOString(),
-    });
-    refresh();
-    setEditing({ type: "none" });
-  }
-
-  function handleDelete(account: Account) {
-    deleteAccount(account.id);
-    refresh();
-    setPendingDelete(null);
-  }
-
-  return (
-    <section id="account-management">
-      <div className="settings__section-header">
-        <h3>Account Management</h3>
-      </div>
-      <div className="account-list">
-        {accounts.map((account) =>
-          editing.type === "edit" && editing.accountId === account.id ? (
-            <AccountEditForm
-              key={account.id}
-              initial={{ name: account.name, colour: account.colour }}
-              onSave={(name, colour) =>
-                handleSaveEdit(account.id, name, colour)
-              }
-              onCancel={() => setEditing({ type: "none" })}
-            />
-          ) : (
-            <div className="account-row" key={account.id}>
-              <span
-                className="account-row__swatch"
-                style={{ background: account.colour }}
-                aria-hidden="true"
-              />
-              <span className="account-row__name">{account.name}</span>
-              <div className="account-row__actions">
-                <button
-                  className="icon-btn"
-                  onClick={() =>
-                    setEditing({ type: "edit", accountId: account.id })
-                  }
-                  aria-label={`Edit ${account.name}`}
-                >
-                  Edit
-                </button>
-                <button
-                  className="icon-btn icon-btn--danger"
-                  onClick={() => setPendingDelete(account)}
-                  aria-label={`Delete ${account.name}`}
-                >
-                  Delete
-                </button>
-              </div>
-            </div>
-          ),
-        )}
-
-        {editing.type === "add" && (
-          <AccountEditForm
-            initial={{ name: "", colour: nextColour(accounts) }}
-            onSave={handleAdd}
-            onCancel={() => setEditing({ type: "none" })}
-          />
-        )}
-
-        {editing.type !== "add" && (
-          <button
-            className="btn btn--secondary add-account-btn"
-            onClick={() => setEditing({ type: "add" })}
-          >
-            + Add Account
-          </button>
-        )}
-      </div>
-
-      {pendingDelete && (
-        <ConfirmDelete
-          accountName={pendingDelete.name}
-          onConfirm={() => handleDelete(pendingDelete)}
-          onCancel={() => setPendingDelete(null)}
-        />
-      )}
-    </section>
-  );
-}
-
-// ── Page ──────────────────────────────────────────────────────────────────────
-
-const SECTIONS = [
-  { id: "account-management", label: "Account Management" },
-  { id: "category-budgets", label: "Category Budgets" },
-  { id: "data-management", label: "Data Management" },
+const EXTRA_COLORS = [
+  "#e879f9",
+  "#38bdf8",
+  "#fb7185",
+  "#4ade80",
+  "#facc15",
+  "#c084fc",
+  "#f97316",
 ];
 
-export function SettingsPage() {
+interface Props {
+  categories: PfaCategory[];
+  setCategories: (v: PfaCategory[]) => void;
+  budgets: PfaBudgets;
+  setBudgets: (v: PfaBudgets) => void;
+  txns: PfaTxn[];
+  setTxns: (v: PfaTxn[]) => void;
+  accountList: { short: string; display: string }[];
+  onRenameAccount: (short: string, name: string) => void;
+}
+
+export function SettingsPage({
+  categories,
+  setCategories,
+  budgets,
+  setBudgets,
+  txns,
+  setTxns,
+  accountList,
+  onRenameAccount,
+}: Props) {
+  const months = [...new Set(txns.map((t) => t.month))].sort();
+
+  const [catEdits, setCatEdits] = useState(() =>
+    categories.map((c) => ({ ...c })),
+  );
+  const [budgetEdits, setBudgetEdits] = useState<Record<string, string>>(() =>
+    Object.fromEntries(Object.entries(budgets).map(([k, v]) => [k, String(v)])),
+  );
+  const [newCatName, setNewCatName] = useState("");
+  const [deleteTarget, setDeleteTarget] = useState<{
+    name: string;
+    count: number;
+  } | null>(null);
+  const [reassignTo, setReassignTo] = useState("");
+  const [acctEdits, setAcctEdits] = useState<Record<string, string>>(() =>
+    Object.fromEntries(accountList.map((a) => [a.short, a.display])),
+  );
+  const [flash, setFlash] = useState("");
+
+  // eslint-disable-next-line react-hooks/set-state-in-effect
+  useEffect(() => setCatEdits(categories.map((c) => ({ ...c }))), [categories]);
+  useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    setBudgetEdits(
+      Object.fromEntries(
+        Object.entries(budgets).map(([k, v]) => [k, String(v)]),
+      ),
+    );
+  }, [budgets]);
+  useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    setAcctEdits(
+      Object.fromEntries(accountList.map((a) => [a.short, a.display])),
+    );
+  }, [accountList]);
+
+  const showFlash = (msg: string) => {
+    setFlash(msg);
+    setTimeout(() => setFlash(""), 2500);
+  };
+
+  const saveCategories = () => {
+    const names = catEdits.map((c) => c.name.trim()).filter(Boolean);
+    if (new Set(names).size !== names.length) {
+      showFlash("⚠ Duplicate category names — please fix");
+      return;
+    }
+    const nameMap: Record<string, string> = {};
+    catEdits.forEach((c, i) => {
+      const oldName = categories[i]?.name;
+      const newName = c.name.trim();
+      if (oldName && oldName !== newName) nameMap[oldName] = newName;
+    });
+    const newBudgets: PfaBudgets = {};
+    Object.entries(budgetEdits).forEach(([k, v]) => {
+      const mapped = nameMap[k] ?? k;
+      const n = parseFloat(v);
+      if (n > 0) newBudgets[mapped] = n;
+    });
+    const finalCats = catEdits
+      .map((c) => ({ name: c.name.trim(), color: c.color }))
+      .filter((c) => c.name);
+    let newTxns = txns;
+    if (Object.keys(nameMap).length) {
+      newTxns = txns.map((t) =>
+        t.category && nameMap[t.category]
+          ? { ...t, category: nameMap[t.category] }
+          : t,
+      );
+    }
+    setCategories(finalCats);
+    setBudgets(newBudgets);
+    if (newTxns !== txns) setTxns(newTxns);
+    setBudgetEdits(
+      Object.fromEntries(
+        Object.entries(newBudgets).map(([k, v]) => [k, String(v)]),
+      ),
+    );
+    showFlash("✓ Categories & budgets saved");
+  };
+
+  const addCategory = () => {
+    const name = newCatName.trim().slice(0, 20);
+    if (!name) return;
+    if (catEdits.some((c) => c.name.toLowerCase() === name.toLowerCase())) {
+      showFlash("⚠ Category already exists");
+      return;
+    }
+    const color = EXTRA_COLORS[catEdits.length % EXTRA_COLORS.length];
+    setCatEdits((prev) => [...prev, { name, color }]);
+    setNewCatName("");
+  };
+
+  const initiateDelete = (cat: PfaCategory) => {
+    const count = txns.filter((t) => t.category === cat.name).length;
+    setDeleteTarget({ name: cat.name, count });
+    setReassignTo("");
+  };
+
+  const confirmDelete = () => {
+    if (!deleteTarget) return;
+    const finalCats = catEdits.filter((c) => c.name !== deleteTarget.name);
+    const newBudgets = { ...budgetEdits };
+    delete newBudgets[deleteTarget.name];
+    let newTxns = txns;
+    if (deleteTarget.count > 0) {
+      newTxns = txns.map((t) =>
+        t.category === deleteTarget.name
+          ? { ...t, category: reassignTo || null }
+          : t,
+      );
+    }
+    setCatEdits(finalCats);
+    setBudgetEdits(newBudgets);
+    setCategories(finalCats);
+    setBudgets(
+      Object.fromEntries(
+        Object.entries(newBudgets)
+          .map(([k, v]) => [k, parseFloat(v)])
+          .filter(([, v]) => v > 0),
+      ),
+    );
+    if (newTxns !== txns) setTxns(newTxns);
+    setDeleteTarget(null);
+    showFlash(`✓ "${deleteTarget.name}" removed`);
+  };
+
+  const saveAccounts = () => {
+    for (const [short, name] of Object.entries(acctEdits)) {
+      const trimmed = name.trim().slice(0, 20);
+      const current = accountList.find((a) => a.short === short)?.display;
+      if (trimmed && trimmed !== current) onRenameAccount(short, trimmed);
+    }
+    showFlash("✓ Account names saved");
+  };
+
+  const isWarning = flash.startsWith("⚠");
+
   return (
-    <>
-      <div className="settings__title-row">
-        <h1 className="settings__title">Settings</h1>
-      </div>
-      <div className="settings">
-        <nav className="settings__sidebar" aria-label="Settings sections">
-          {SECTIONS.map((s) => (
-            <a key={s.id} href={`#${s.id}`} className="settings__sidebar-link">
-              {s.label}
-            </a>
-          ))}
-        </nav>
+    <div className="settings-scroll">
+      <h1 className="settings-title">Settings</h1>
 
-        <div className="settings__content">
-          <AccountManagementSection />
-
-          <section id="category-budgets">
-            <div className="settings__section-header">
-              <h3>Category Budgets</h3>
-            </div>
-            <p className="settings__section-placeholder">
-              Budget settings will appear here (FA-58).
-            </p>
-          </section>
-
-          <section id="data-management">
-            <div className="settings__section-header">
-              <h3>Data Management</h3>
-            </div>
-            <p className="settings__section-placeholder">
-              Export and reset options will appear here (FA-59).
-            </p>
-          </section>
+      {/* Section 1: No-API notice */}
+      <div className="card settings-api-notice">
+        <div className="settings-api-label">◎ Finance Analyser</div>
+        <div className="settings-api-body">
+          Configure your categories, budgets, and accounts below. AI
+          categorisation requires a <code>VITE_ANTHROPIC_API_KEY</code>{" "}
+          environment variable.
         </div>
       </div>
-    </>
+
+      {/* Section 2: Your Data */}
+      <div className="card settings-section">
+        <div className="settings-section-title">Your Data</div>
+        <div className="settings-data-grid">
+          {[
+            { label: "Transactions", value: txns.length },
+            { label: "Months", value: months.length },
+            { label: "Accounts", value: accountList.length },
+            {
+              label: "Transfers detected",
+              value: txns.filter((t) => t.isTransfer).length,
+            },
+          ].map(({ label, value }) => (
+            <div key={label} className="settings-data-row">
+              <span className="settings-data-label">{label}</span>
+              <span className="settings-data-value mono">{value}</span>
+            </div>
+          ))}
+        </div>
+        <button
+          className="btn-danger"
+          onClick={() => {
+            if (confirm("Delete all transaction data? This cannot be undone."))
+              setTxns([]);
+          }}
+        >
+          Clear All Data
+        </button>
+      </div>
+
+      {/* Section 3: Accounts */}
+      {accountList.length > 0 && (
+        <div className="card settings-section">
+          <div className="settings-section-title">Accounts</div>
+          <div className="settings-section-sub">
+            Rename accounts (max 20 characters). Applied retroactively to all
+            transactions.
+          </div>
+          {accountList.map((acct, i) => (
+            <div key={acct.short} className="settings-acct-row">
+              <span
+                className="settings-acct-dot"
+                style={{
+                  background: ACCOUNT_COLORS[i % ACCOUNT_COLORS.length],
+                }}
+              />
+              <input
+                className="settings-input settings-acct-input"
+                value={acctEdits[acct.short] ?? ""}
+                onChange={(e) =>
+                  setAcctEdits((prev) => ({
+                    ...prev,
+                    [acct.short]: e.target.value.slice(0, 20),
+                  }))
+                }
+              />
+              <span className="settings-acct-count">
+                {txns.filter((t) => t.accountShort === acct.short).length} txns
+              </span>
+            </div>
+          ))}
+          <button className="btn-accent" onClick={saveAccounts}>
+            Save Account Names
+          </button>
+        </div>
+      )}
+
+      {/* Section 4: Categories & Budgets */}
+      <div className="card settings-section">
+        <div className="settings-section-title">Categories &amp; Budgets</div>
+        <div className="settings-section-sub">
+          Manage spending categories and set monthly budget targets (applied
+          across all accounts).
+        </div>
+
+        {flash && (
+          <div
+            className="settings-flash"
+            style={{
+              color: isWarning ? "var(--amber)" : "var(--accent)",
+              background: isWarning
+                ? "color-mix(in srgb,var(--amber) 8%,transparent)"
+                : "color-mix(in srgb,var(--accent) 8%,transparent)",
+              borderColor: isWarning
+                ? "color-mix(in srgb,var(--amber) 25%,transparent)"
+                : "color-mix(in srgb,var(--accent) 25%,transparent)",
+            }}
+          >
+            {flash}
+          </div>
+        )}
+
+        {/* Delete confirmation panel */}
+        {deleteTarget && (
+          <div className="settings-delete-panel">
+            <div className="settings-delete-title">
+              Remove "{deleteTarget.name}"?
+            </div>
+            {deleteTarget.count > 0 && (
+              <div className="settings-delete-sub">
+                {deleteTarget.count} transaction
+                {deleteTarget.count !== 1 ? "s are" : " is"} currently assigned
+                to this category.
+              </div>
+            )}
+            <div className="settings-delete-actions">
+              {deleteTarget.count > 0 && (
+                <>
+                  <span className="settings-delete-label">Reassign to:</span>
+                  <select
+                    className="settings-input"
+                    value={reassignTo}
+                    onChange={(e) => setReassignTo(e.target.value)}
+                  >
+                    <option value="">Leave uncategorised</option>
+                    {catEdits
+                      .filter((c) => c.name !== deleteTarget.name)
+                      .map((c) => (
+                        <option key={c.name} value={c.name}>
+                          {c.name}
+                        </option>
+                      ))}
+                  </select>
+                </>
+              )}
+              <button className="btn-danger" onClick={confirmDelete}>
+                Confirm Remove
+              </button>
+              <button
+                className="btn-ghost"
+                onClick={() => setDeleteTarget(null)}
+              >
+                Cancel
+              </button>
+            </div>
+          </div>
+        )}
+
+        {/* Column headers */}
+        <div className="settings-cat-header">
+          <div className="settings-cat-color-col" />
+          <div className="settings-cat-name-col">Category name</div>
+          <div className="settings-cat-budget-col">Budget/mo</div>
+          <div className="settings-cat-del-col" />
+        </div>
+
+        {/* Category rows */}
+        <div className="settings-cat-list">
+          {catEdits.map((cat, i) => (
+            <div key={i} className="settings-cat-row">
+              <input
+                type="color"
+                value={cat.color}
+                onChange={(e) =>
+                  setCatEdits((prev) =>
+                    prev.map((c, j) =>
+                      j === i ? { ...c, color: e.target.value } : c,
+                    ),
+                  )
+                }
+                className="settings-color-picker"
+                title="Pick colour"
+              />
+              <input
+                className="settings-input settings-cat-name-input"
+                value={cat.name}
+                onChange={(e) =>
+                  setCatEdits((prev) =>
+                    prev.map((c, j) =>
+                      j === i ? { ...c, name: e.target.value.slice(0, 20) } : c,
+                    ),
+                  )
+                }
+                placeholder="Category name"
+              />
+              <input
+                type="number"
+                className="settings-input settings-budget-input mono"
+                placeholder="—"
+                value={budgetEdits[cat.name] ?? ""}
+                onChange={(e) =>
+                  setBudgetEdits((prev) => ({
+                    ...prev,
+                    [cat.name]: e.target.value,
+                  }))
+                }
+              />
+              <button
+                className="settings-delete-btn"
+                onClick={() => initiateDelete(cat)}
+                title="Remove"
+              >
+                ×
+              </button>
+            </div>
+          ))}
+        </div>
+
+        {/* Add new category */}
+        <div className="settings-add-row">
+          <input
+            className="settings-input settings-add-input"
+            value={newCatName}
+            onChange={(e) => setNewCatName(e.target.value.slice(0, 20))}
+            onKeyDown={(e) => e.key === "Enter" && addCategory()}
+            placeholder="New category name (max 20 chars)..."
+          />
+          <button className="btn-accent-outline" onClick={addCategory}>
+            + Add
+          </button>
+        </div>
+
+        <button className="btn-accent" onClick={saveCategories}>
+          Save Categories &amp; Budgets
+        </button>
+      </div>
+    </div>
   );
 }
