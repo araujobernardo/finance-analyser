@@ -13,22 +13,16 @@ export default defineConfig({
     outputFile: {
       junit: "./test-results/junit.xml",
     },
-    // Pre-bundle packages that ship ES-module entry-points via their
-    // 'exports' field.  Without this, the vmThreads Node.js runner on
-    // Linux CI resolves recharts → @reduxjs/toolkit → .mjs and throws
-    // "SyntaxError: Unexpected token 'export'".  Pre-bundling converts
-    // these packages to CJS-compatible bundles in a single Vite pass,
-    // deduplicating React so there is only one copy in the test VM.
-    deps: {
-      optimizer: {
-        ssr: {
-          include: [
-            "recharts",
-            "@reduxjs/toolkit",
-            "react-router-dom",
-            "react-router",
-          ],
-        },
+    server: {
+      deps: {
+        // Inline @reduxjs/toolkit so Vite transforms it instead of Node
+        // loading the raw ESM entry-point (.mjs) via the 'exports' field
+        // 'import' condition.  On Linux CI the vmThreads runner cannot
+        // evaluate a .mjs file loaded via require(), causing:
+        //   SyntaxError: Unexpected token 'export'
+        // Context: recharts (CJS) requires @reduxjs/toolkit; vitest resolves
+        // it to redux-toolkit.modern.mjs which Node's require() cannot parse.
+        inline: ["@reduxjs/toolkit"],
       },
     },
   },
