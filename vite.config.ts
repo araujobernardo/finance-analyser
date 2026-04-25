@@ -13,13 +13,23 @@ export default defineConfig({
     outputFile: {
       junit: "./test-results/junit.xml",
     },
-    // Prefer the 'module-sync' and 'node' export conditions so that
-    // react-router-dom, react-router and @reduxjs/toolkit resolve to their
-    // CJS-compatible builds rather than the raw .mjs files.  Without this,
-    // Linux CI (Node.js / vmThreads runner) cannot evaluate the ESM-only
-    // entry points and throws "SyntaxError: Unexpected token 'export'".
-    resolve: {
-      conditions: ["module-sync", "node"],
+    // Pre-bundle packages that ship ES-module entry-points via their
+    // 'exports' field.  Without this, the vmThreads Node.js runner on
+    // Linux CI resolves recharts → @reduxjs/toolkit → .mjs and throws
+    // "SyntaxError: Unexpected token 'export'".  Pre-bundling converts
+    // these packages to CJS-compatible bundles in a single Vite pass,
+    // deduplicating React so there is only one copy in the test VM.
+    deps: {
+      optimizer: {
+        ssr: {
+          include: [
+            "recharts",
+            "@reduxjs/toolkit",
+            "react-router-dom",
+            "react-router",
+          ],
+        },
+      },
     },
   },
 });
