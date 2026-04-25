@@ -1,5 +1,8 @@
 import { describe, it, expect } from "vitest";
-import type { PfaTxn } from "../types/pfa";
+import { render, screen } from "@testing-library/react";
+import userEvent from "@testing-library/user-event";
+import { TransactionsPage } from "./TransactionsPage";
+import type { PfaTxn, PfaCategory } from "../types/pfa";
 import {
   getCandidates,
   applyFlag,
@@ -225,5 +228,189 @@ describe("applyUnflag", () => {
     const txns = [txnA, txnB];
     const result = applyUnflag(txns, "nonexistent-id");
     expect(result).toEqual(txns);
+  });
+});
+
+// ── TransactionsPage — Uncategorised filter (T004–T009) ───────────────────────
+
+function makePageTxn(overrides: Partial<PfaTxn>): PfaTxn {
+  return {
+    id: "page-txn-1",
+    date: "2026-03-15",
+    month: "2026-03",
+    type: "",
+    payee: "Page Payee",
+    memo: "",
+    amount: -100,
+    isCredit: false,
+    account: "Main Account",
+    accountShort: "Main",
+    category: null,
+    isTransfer: false,
+    ...overrides,
+  };
+}
+
+const defaultCategories: PfaCategory[] = [
+  { name: "Groceries", color: "#ff0000" },
+  { name: "Transport", color: "#00ff00" },
+];
+
+const defaultAccountList = [{ short: "Main", display: "Main Account" }];
+
+function renderPage(txns: PfaTxn[]) {
+  return render(
+    <TransactionsPage
+      txns={txns}
+      accountList={defaultAccountList}
+      categories={defaultCategories}
+      onBulkCategoryChange={() => {}}
+    />,
+  );
+}
+
+// T004 — selecting "__uncategorised__" shows only uncategorised transactions
+describe("TransactionsPage — Uncategorised filter", () => {
+  it("T004: shows only transactions with null/undefined/empty category when Uncategorised is selected", async () => {
+    const user = userEvent.setup();
+    const txns = [
+      makePageTxn({ id: "t1", payee: "No Cat", category: null }),
+      makePageTxn({ id: "t2", payee: "Empty Cat", category: "" }),
+      makePageTxn({ id: "t3", payee: "Has Cat", category: "Groceries" }),
+    ];
+    renderPage(txns);
+
+    const catSelect = screen.getByDisplayValue("All categories");
+    await user.selectOptions(catSelect, "__uncategorised__");
+
+    expect(screen.getByText("No Cat")).toBeInTheDocument();
+    expect(screen.getByText("Empty Cat")).toBeInTheDocument();
+    expect(screen.queryByText("Has Cat")).not.toBeInTheDocument();
+  });
+
+  // T005 — transactions with a non-empty category are excluded
+  it("T005: transactions with a named category are not rendered when Uncategorised is selected", async () => {
+    const user = userEvent.setup();
+    const txns = [
+      makePageTxn({ id: "t1", payee: "Uncategorised One", category: null }),
+      makePageTxn({ id: "t2", payee: "Groceries Txn", category: "Groceries" }),
+      makePageTxn({ id: "t3", payee: "Transport Txn", category: "Transport" }),
+    ];
+    renderPage(txns);
+
+    const catSelect = screen.getByDisplayValue("All categories");
+    await user.selectOptions(catSelect, "__uncategorised__");
+
+    expect(screen.getByText("Uncategorised One")).toBeInTheDocument();
+    expect(screen.queryByText("Groceries Txn")).not.toBeInTheDocument();
+    expect(screen.queryByText("Transport Txn")).not.toBeInTheDocument();
+  });
+
+  // T006 — transfer transactions are absent even when showTransfers is enabled
+  it("T006: transfer transactions do not appear when Uncategorised is selected, even with Show transfers checked", async () => {
+    const user = userEvent.setup();
+    const txns = [
+      makePageTxn({ id: "t1", payee: "Normal Uncategorised", category: null }),
+      makePageTxn({
+        id: "t2",
+        payee: "Transfer Txn",
+        category: null,
+        isTransfer: true,
+      }),
+    ];
+    renderPage(txns);
+
+    // Enable Show transfers first
+    const showTransfersCheckbox = screen.getByRole("checkbox");
+    await user.click(showTransfersCheckbox);
+
+    // Now select Uncategorised
+    const catSelect = screen.getByDisplayValue("All categories");
+    await user.selectOptions(catSelect, "__uncategorised__");
+
+    expect(screen.getByText("Normal Uncategorised")).toBeInTheDocument();
+    expect(screen.queryByText("Transfer Txn")).not.toBeInTheDocument();
+  });
+
+  // T007 — Uncategorised AND month filter: AND composition
+  it("T007: only uncategorised transactions in the selected month appear when both filters are applied", async () => {
+    const user = userEvent.setup();
+    const txns = [
+      makePageTxn({
+        id: "t1",
+        payee: "March Uncat",
+        category: null,
+        month: "2026-03",
+        date: "2026-03-15",
+      }),
+      makePageTxn({
+        id: "t2",
+        payee: "April Uncat",
+        category: null,
+        month: "2026-04",
+        date: "2026-04-10",
+      }),
+      makePageTxn({
+        id: "t3",
+        payee: "March Cat",
+        category: "Groceries",
+        month: "2026-03",
+        date: "2026-03-15",
+      }),
+    ];
+    renderPage(txns);
+
+    const monthSelect = screen.getByDisplayValue("All months");
+    await user.selectOptions(monthSelect, "2026-03");
+
+    const catSelect = screen.getByDisplayValue("All categories");
+    await user.selectOptions(catSelect, "__uncategorised__");
+
+    expect(screen.getByText("March Uncat")).toBeInTheDocument();
+    expect(screen.queryByText("April Uncat")).not.toBeInTheDocument();
+    expect(screen.queryByText("March Cat")).not.toBeInTheDocument();
+  });
+
+  // T008 — Uncategorised AND search: further narrows correctly
+  it("T008: search term further narrows the Uncategorised filter results", async () => {
+    const user = userEvent.setup();
+    const txns = [
+      makePageTxn({ id: "t1", payee: "Amazon", category: null }),
+      makePageTxn({ id: "t2", payee: "Netflix", category: null }),
+      makePageTxn({ id: "t3", payee: "Amazon Prime", category: null }),
+    ];
+    renderPage(txns);
+
+    const catSelect = screen.getByDisplayValue("All categories");
+    await user.selectOptions(catSelect, "__uncategorised__");
+
+    const searchInput = screen.getByPlaceholderText("Search payee / memo...");
+    await user.type(searchInput, "amazon");
+
+    expect(screen.getByText("Amazon")).toBeInTheDocument();
+    expect(screen.getByText("Amazon Prime")).toBeInTheDocument();
+    expect(screen.queryByText("Netflix")).not.toBeInTheDocument();
+  });
+
+  // T009 — switching back to "all" restores full list
+  it("T009: switching back to All categories restores the full non-transfer list", async () => {
+    const user = userEvent.setup();
+    const txns = [
+      makePageTxn({ id: "t1", payee: "Uncategorised Txn", category: null }),
+      makePageTxn({
+        id: "t2",
+        payee: "Categorised Txn",
+        category: "Groceries",
+      }),
+    ];
+    renderPage(txns);
+
+    const catSelect = screen.getByDisplayValue("All categories");
+    await user.selectOptions(catSelect, "__uncategorised__");
+    expect(screen.queryByText("Categorised Txn")).not.toBeInTheDocument();
+
+    await user.selectOptions(catSelect, "all");
+    expect(screen.getByText("Uncategorised Txn")).toBeInTheDocument();
+    expect(screen.getByText("Categorised Txn")).toBeInTheDocument();
   });
 });
