@@ -19,6 +19,30 @@ Before starting any work, read:
 - [docs/definition-of-ready.md](../../docs/definition-of-ready.md) — check before starting a story
 - [docs/definition-of-done.md](../../docs/definition-of-done.md) — check before considering a story complete
 
+## Session Start — Sync and Clean Branches
+
+Run this **every time** before finding the next story:
+
+1. Fetch and prune stale remote-tracking refs:
+   ```bash
+   git fetch origin --prune
+   ```
+2. Delete all local branches already merged into `main`:
+   ```bash
+   git branch --merged main | grep -v "^\* main" | xargs -r git branch -d
+   ```
+3. Force-delete any leftover `worktree-agent-*` branches (always safe to remove):
+   ```bash
+   git branch | grep "worktree-agent-" | xargs -r git branch -D
+   ```
+4. Ensure local `main` is up to date:
+   ```bash
+   git checkout main && git pull origin main
+   ```
+5. Log any branches deleted in steps 2–3 as a short note in your response.
+
+---
+
 ## Finding the Next Story
 
 1. List open stories in the backlog:

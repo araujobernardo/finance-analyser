@@ -87,4 +87,4 @@ For purely utility/logic stories with no UI, manual testing is not required.
 ✅ APPROVED  |  ❌ CHANGES REQUESTED — reason
 ```
 
-Final merge decision belongs to the user, not the QA agent.
+QA merges autonomously once all checks pass (DoD, CI green, security scan clean, no open linked bugs). See `constitution.md` and `.claude/agents/qa.md` for the full merge protocol.

@@ -73,19 +73,29 @@ Do not merge a PR with an open bug issue linked to it.
 
 If all checks pass (DoD checklist, tests, security scan, no open linked bugs):
 
-1. Squash merge automatically — no user confirmation needed:
+1. **Wait for CI to go green** — do not merge until all GitHub Actions checks pass:
 
    ```bash
-   gh pr merge <number> --squash --delete-branch
+   "C:/Program Files/GitHub CLI/gh.exe" pr checks <number> --watch
    ```
 
-2. Close the story issue if not auto-closed by the PR:
+   If any check fails: treat it as a test failure and apply the Test Failure Protocol
+   (diagnose → fix → re-push → re-watch, max 3 attempts total across all failures).
+   Do not merge while any check is red or pending.
+
+2. Squash merge automatically once all checks are green — no user confirmation needed:
+
+   ```bash
+   "C:/Program Files/GitHub CLI/gh.exe" pr merge <number> --squash --delete-branch
+   ```
+
+3. Close the story issue if not auto-closed by the PR:
 
    ```bash
    gh issue close <number> --comment "Merged in PR #<number>. Story complete."
    ```
 
-3. Notify the Delivery Lead: "PR #<number> merged. Issue #XX closed. Ready for next story."
+4. Notify the Delivery Lead: "PR #<number> merged. Issue #XX closed. Ready for next story."
 
 ## Rules
 

@@ -1,15 +1,23 @@
 <!--
 Sync Impact Report
 ==================
-Version change: 2.1.0 → 2.2.0 (MINOR — Designer agent added to Feature Lifecycle)
+Version change: 2.2.0 → 2.3.0 (MINOR — CI gate and branch cleanup rules added)
 Modified sections:
-  - Feature Lifecycle: step 4a added — Designer agent for UI stories
-  - Agent Handoff Points: new table entry for Designer
-  - Automation Rules: web search for design references, ux-brief.md write,
-    and GitHub issue comment added to auto-approved list
+  - Automation Rules: two new auto-approved actions added —
+      1. Session-start branch cleanup (Delivery Lead: fetch --prune, delete merged
+         and worktree-agent-* local branches, pull latest main)
+      2. CI gate check (QA: gh pr checks --watch before every merge; failing check
+         counts toward 3-attempt test-failure loop)
+  - Merge Strategy: new leading rule — CI must be green before merging
 Unchanged sections:
   - Golden Rules, Issue Types, Issue Labels, Story Sequencing, Agent Coordination,
-    Merge Strategy, Scope Creep Rule, Governance
+    Feature Lifecycle, Agent Handoff Points, Scope Creep Rule, Governance
+Agent files updated:
+  - .claude/agents/delivery-lead.md: new "Session Start" section before story search
+  - .claude/agents/qa.md: Merge Execution step 1 now runs gh pr checks --watch
+Other files updated:
+  - docs/standards/testing-strategy.md: removed "Final merge decision belongs to user"
+    contradiction; now correctly states QA merges autonomously when all checks pass
 Templates reviewed:
   - All .specify/templates/ ✅ — no updates required
 Deferred TODOs: none
@@ -156,6 +164,8 @@ report that to the user. Do not start work on a story that is already claimed.
 - Designer: web searches for design references (Monarch Money, YNAB, etc.)
 - Designer: writing `specs/[dir]/ux-brief.md`
 - Designer: posting handoff comment on GitHub issue
+- **Session-start branch cleanup**: `git fetch --prune`, delete merged and `worktree-agent-*` local branches, pull latest `main` — Delivery Lead runs this before every story search
+- **CI gate check**: `gh pr checks <number> --watch` — QA runs this before every merge; a failing check is treated as a test failure (counts toward the 3-attempt loop)
 
 ### Stop and Ask User Only When
 
@@ -169,6 +179,7 @@ report that to the user. Do not start work on a story that is already claimed.
 
 ## Merge Strategy
 
+- **CI must be green before merging.** Run `gh pr checks <number> --watch` and confirm all checks pass. Never merge a PR with a red or pending check.
 - Always squash merge: `gh pr merge <number> --squash --delete-branch`
 - After merge: close the issue with comment "Merged in PR #X. Story complete."
 - Branch deletion is automatic and immediate after merge.
@@ -221,4 +232,4 @@ Versions follow Semantic Versioning (`MAJOR.MINOR.PATCH`):
 - Any agent that cannot comply with a rule MUST stop and surface the conflict
   to the user rather than proceeding.
 
-**Version**: 2.2.0 | **Ratified**: 2026-04-19 | **Last Amended**: 2026-04-20
+**Version**: 2.3.0 | **Ratified**: 2026-04-19 | **Last Amended**: 2026-04-25
