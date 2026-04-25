@@ -1,5 +1,5 @@
-import { describe, it, expect } from "vitest";
-import { render, screen } from "@testing-library/react";
+import { afterEach, describe, it, expect } from "vitest";
+import { render, screen, cleanup } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { TransactionsPage } from "./TransactionsPage";
 import type { PfaTxn, PfaCategory } from "../types/pfa";
@@ -271,6 +271,8 @@ function renderPage(txns: PfaTxn[]) {
 
 // T004 — selecting "__uncategorised__" shows only uncategorised transactions
 describe("TransactionsPage — Uncategorised filter", () => {
+  afterEach(cleanup);
+
   it("T004: shows only transactions with null/undefined/empty category when Uncategorised is selected", async () => {
     const user = userEvent.setup();
     const txns = [
