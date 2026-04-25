@@ -36,9 +36,8 @@ For project principles, governance, and agent workflow see: constitution.md
 
 ## Active Feature Plan
 
-Current feature: **UX/UI Overhaul — Realign to Prototype** (branch `002-ux-ui-overhaul`)  
-Implementation plan: [specs/002-ux-ui-overhaul/plan.md](specs/002-ux-ui-overhaul/plan.md)  
-Spec: [specs/002-ux-ui-overhaul/spec.md](specs/002-ux-ui-overhaul/spec.md)  
-Primary reference: [docs/prototype.jsx](docs/prototype.jsx)
+Current feature: **Account Number-Based Categorisation** (branch `006-account-number-categorisation`)  
+Implementation plan: [specs/006-account-number-categorisation/plan.md](specs/006-account-number-categorisation/plan.md)  
+Spec: [specs/006-account-number-categorisation/spec.md](specs/006-account-number-categorisation/spec.md)
 
 <!-- SPECKIT END -->
