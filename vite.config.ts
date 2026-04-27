@@ -7,21 +7,15 @@ export default defineConfig({
   test: {
     environment: "jsdom",
     globals: true,
-    pool: "vmThreads",
+    // forks pool uses real child processes which have native ESM support.
+    // vmThreads (the previous setting) uses vm contexts that cannot evaluate
+    // .mjs entry points via require(), causing SyntaxError on Linux CI for
+    // packages like recharts, @reduxjs/toolkit, and react-router.
+    pool: "forks",
     setupFiles: ["./src/test-setup.ts"],
     reporters: ["default", "junit"],
     outputFile: {
       junit: "./test-results/junit.xml",
-    },
-    server: {
-      deps: {
-        // Force Vitest to transform these ESM-only packages through its
-        // bundler instead of letting Node require() them directly.
-        // On Linux CI the vmThreads pool externalises these packages and
-        // Node's require() cannot parse their .mjs entry points, causing:
-        //   SyntaxError: Cannot use import statement outside a module
-        inline: ["@reduxjs/toolkit", "react-router", "react-router-dom"],
-      },
     },
   },
 });
