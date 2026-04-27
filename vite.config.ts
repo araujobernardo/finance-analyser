@@ -15,14 +15,12 @@ export default defineConfig({
     },
     server: {
       deps: {
-        // Inline @reduxjs/toolkit so Vite transforms it instead of Node
-        // loading the raw ESM entry-point (.mjs) via the 'exports' field
-        // 'import' condition.  On Linux CI the vmThreads runner cannot
-        // evaluate a .mjs file loaded via require(), causing:
-        //   SyntaxError: Unexpected token 'export'
-        // Context: recharts (CJS) requires @reduxjs/toolkit; vitest resolves
-        // it to redux-toolkit.modern.mjs which Node's require() cannot parse.
-        inline: ["@reduxjs/toolkit"],
+        // Force Vitest to transform these ESM-only packages through its
+        // bundler instead of letting Node require() them directly.
+        // On Linux CI the vmThreads pool externalises these packages and
+        // Node's require() cannot parse their .mjs entry points, causing:
+        //   SyntaxError: Cannot use import statement outside a module
+        inline: ["@reduxjs/toolkit", "react-router", "react-router-dom"],
       },
     },
   },
