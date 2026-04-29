@@ -1,5 +1,6 @@
 # Changelog
 
+- **2026-04-29** | #117 | Re-importing the same account number appends to the correct account | Added T007 unit test asserting `parseAccountName` is deterministic for the same CSV input, and documented the stability invariant as a JSDoc comment on the function.
 - **2026-04-29** | #113 | Render Savings transactions in green | Added `.category-badge--savings` CSS class using `var(--colour-savings)` token to style Savings category badge in green on the Transactions page; added `Savings` entry to `CATEGORY_COLOURS` in SpendByCategory so the dashboard pie chart swatch renders green.
 - **2026-04-29** | #116 | Use account number as primary key for account identity | Changed `short = nick ?? num` to `short = num ?? nick` in `accountParser.ts` so two accounts with the same name but different numbers are kept separate.
 - **2026-04-29** | #112 | Rename "Savings & Transfers" to "Savings" | Replaced every write/display occurrence of "Savings & Transfers" with "Savings" across App.tsx, transferFlagging.ts, and tests; added load-time normalisation to silently migrate existing localStorage data on first load.

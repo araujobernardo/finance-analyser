@@ -112,3 +112,21 @@ describe("parseAccountName — account number as primary key", () => {
     expect(result.short).toBe("Everyday");
   });
 });
+
+// ── Re-import stability (US2 / #117) ──────────────────────────────────────
+
+describe("parseAccountName — re-import stability", () => {
+  // T007: same CSV parsed twice must produce the identical short value so that
+  // re-importing an account appends to the correct existing account and does
+  // not create a duplicate.
+  it("returns the same short value when the same CSV is parsed a second time", () => {
+    const csvText = makeAsbHeader(
+      "Account 0549256-53 Branch 001 (Savings On Call)",
+    );
+    const firstImport = parseAccountName(csvText, NO_ALIASES);
+    const secondImport = parseAccountName(csvText, NO_ALIASES);
+    expect(firstImport.short).toBe("0549256-53");
+    expect(secondImport.short).toBe("0549256-53");
+    expect(firstImport.short).toBe(secondImport.short);
+  });
+});
