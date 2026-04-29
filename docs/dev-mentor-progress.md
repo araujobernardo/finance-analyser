@@ -468,6 +468,7 @@ This pipeline is now proven on Finance Analyser. Next step: apply it to a new pr
 | 2026-04-29 | #111: --colour-savings CSS token        | Added a single CSS custom property to `:root`; practised CSS design tokens and the principle of naming values by semantic role rather than colour value.                                  |
 | 2026-04-29 | #115: Extract parseAccountName utility  | Extracted a function from a large component into a co-located utility module; practised single-responsibility principle and writing unit tests for edge cases in a parser function.       |
 | 2026-04-29 | #112: Rename Savings & Transfers        | Renamed a category string across multiple files with load-time backward-compat normalisation; practised the pattern of migrating display labels without touching stored data.             |
+| 2026-04-29 | #116: Account number as primary key     | Fixed account identity by flipping `nick ?? num` to `num ?? nick`; practised the "data key vs display label" distinction and the impact of a single-character change on business logic.   |
 
 ---
 
