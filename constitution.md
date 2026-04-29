@@ -1,6 +1,19 @@
 <!--
 Sync Impact Report
 ==================
+Version change: 2.3.0 → 2.4.0 (MINOR — parallel agent execution prohibited)
+Modified sections:
+  - Agent Coordination: "Multiple Developer agents may run in parallel" replaced
+    with a hard rule: one story at a time, never parallel agents. Reason: agents
+    share the same workspace, causing branch conflicts even with no file overlap.
+Agent files updated:
+  - .claude/agents/delivery-lead.md: removed "Parallel Agent Assignment (Wave
+    Batching)" section; added "never spawn parallel agents" to Rules.
+-->
+
+<!--
+Sync Impact Report (previous)
+==================
 Version change: 2.2.0 → 2.3.0 (MINOR — CI gate and branch cleanup rules added)
 Modified sections:
   - Automation Rules: two new auto-approved actions added —
@@ -94,8 +107,7 @@ is equal, ask the user.
 
 ## Agent Coordination
 
-Multiple Developer agents may run in parallel. They coordinate exclusively
-through **GitHub Issue labels** — no direct communication between agents.
+**Only one story runs at a time.** Never spawn parallel agents — even with no file overlap, agents share the same workspace, which causes branch conflicts and messy state. The label system below tracks status, not concurrent work.
 
 | Issue label/state    | Meaning                              | Action for other agents |
 | -------------------- | ------------------------------------ | ----------------------- |
@@ -232,4 +244,4 @@ Versions follow Semantic Versioning (`MAJOR.MINOR.PATCH`):
 - Any agent that cannot comply with a rule MUST stop and surface the conflict
   to the user rather than proceeding.
 
-**Version**: 2.3.0 | **Ratified**: 2026-04-19 | **Last Amended**: 2026-04-25
+**Version**: 2.4.0 | **Ratified**: 2026-04-19 | **Last Amended**: 2026-04-29

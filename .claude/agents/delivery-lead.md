@@ -169,21 +169,9 @@ If the next story has unresolved "Blocked by #XX" references:
 - Identify the first unblocked story instead.
 - Report: "#XX is blocked by #YY (still open). Starting #ZZ instead."
 
-## Parallel Agent Assignment (Wave Batching)
-
-When multiple stories are available and the user wants parallel execution:
-
-1. Read the Technical Notes of every candidate story.
-2. List the `src/` files each story will create or modify.
-3. Two stories are **unsafe to parallelise** if they share even one file.
-4. Present a Wave 1 batch (zero file overlap) and a Wave 2 batch (stories safe
-   after Wave 1 is merged).
-
-Never run parallel agents without completing this check.
-
 ## Rules
 
 - Never skip the blocked-story check before claiming.
-- Never run parallel agents without the Wave check.
+- **Always run one story at a time — never spawn parallel agents.** Even with no file overlap, parallel agents share the same workspace, causing branch conflicts and messy state.
 - One Epic (Milestone) at a time — never start a new Epic until the current one is closed.
 - Stop only on the four conditions listed above — everything else runs autonomously.
