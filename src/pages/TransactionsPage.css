@@ -294,3 +294,10 @@
 .txn-unflag-cancel:hover {
   background: color-mix(in srgb, var(--border) 50%, var(--card));
 }
+
+/* ── Savings category badge ─────────────────────────────────────────────────── */
+
+.category-badge--savings {
+  color: var(--colour-savings);
+  background: color-mix(in srgb, var(--colour-savings) 10%, transparent);
+}

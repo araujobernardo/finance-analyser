@@ -67,6 +67,7 @@ const CATEGORY_COLOURS: Record<string, string> = {
   Education: "#a78bfa",
   Income: "#2dd4bf",
   Transfer: "#94a3b8",
+  Savings: "#10b981",
   Other: "#e879f9",
   Uncategorised: "#6b7280",
 };

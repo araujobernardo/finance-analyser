@@ -395,12 +395,18 @@ export function TransactionsPage({
                       </span>
                     ) : (
                       <select
-                        className="txn-cat-select"
+                        className={`txn-cat-select${t.category === "Savings" ? " category-badge--savings" : ""}`}
                         value={t.category ?? ""}
-                        style={{
-                          borderColor: t.category ? `${cc}55` : "var(--border)",
-                          color: t.category ? cc : "var(--muted)",
-                        }}
+                        style={
+                          t.category === "Savings"
+                            ? { borderColor: "var(--colour-savings)" }
+                            : {
+                                borderColor: t.category
+                                  ? `${cc}55`
+                                  : "var(--border)",
+                                color: t.category ? cc : "var(--muted)",
+                              }
+                        }
                         onClick={(e) => e.stopPropagation()}
                         onChange={(e) =>
                           handleCategoryChange(t.id, e.target.value)
