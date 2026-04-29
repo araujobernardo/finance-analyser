@@ -1,5 +1,6 @@
 # Changelog
 
+- **2026-04-30** | #134 | T001 [Setup] Create WeekBucket and WeeklyCategoryBucket types | Added `src/types/weeklyData.ts` with two TypeScript interfaces that provide the shared data model for Feature 007 weekly trend charts.
 - **2026-04-29** | #119 | ACN Phase 5 Polish — full test suite, type-check, and checklist update | Verified 502/502 Vitest tests pass, TypeScript compiles without errors, and marked all T001–T015 complete in the requirements checklist.
 - **2026-04-29** | #118 | Account number shown as distinguishing display label | Changed `baseDisplay` format from `Nick ···last6` to `Nick (full-number)` so accounts with the same name are visually distinguishable in the account selector.
 - **2026-04-29** | #117 | Re-importing the same account number appends to the correct account | Added T007 unit test asserting `parseAccountName` is deterministic for the same CSV input, and documented the stability invariant as a JSDoc comment on the function.
