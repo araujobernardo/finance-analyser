@@ -470,6 +470,7 @@ This pipeline is now proven on Finance Analyser. Next step: apply it to a new pr
 | 2026-04-29 | #112: Rename Savings & Transfers        | Renamed a category string across multiple files with load-time backward-compat normalisation; practised the pattern of migrating display labels without touching stored data.             |
 | 2026-04-29 | #116: Account number as primary key     | Fixed account identity by flipping `nick ?? num` to `num ?? nick`; practised the "data key vs display label" distinction and the impact of a single-character change on business logic.   |
 | 2026-04-29 | #117: Re-import stability invariant     | Added a regression test and JSDoc invariant comment for a deterministic parser function; practised documenting non-obvious invariants so future changes can't silently break them.        |
+| 2026-04-29 | #113: Savings green treatment (UI)      | Applied a CSS modifier class to colour a specific category; practised the Designer → Developer → QA flow with manual testing, and the `color-mix` CSS function for tinted backgrounds.    |
 
 ---
 
