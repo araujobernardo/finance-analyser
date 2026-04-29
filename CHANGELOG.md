@@ -1,5 +1,6 @@
 # Changelog
 
+- **2026-04-29** | #118 | Account number shown as distinguishing display label | Changed `baseDisplay` format from `Nick ···last6` to `Nick (full-number)` so accounts with the same name are visually distinguishable in the account selector.
 - **2026-04-29** | #117 | Re-importing the same account number appends to the correct account | Added T007 unit test asserting `parseAccountName` is deterministic for the same CSV input, and documented the stability invariant as a JSDoc comment on the function.
 - **2026-04-29** | #113 | Render Savings transactions in green | Added `.category-badge--savings` CSS class using `var(--colour-savings)` token to style Savings category badge in green on the Transactions page; added `Savings` entry to `CATEGORY_COLOURS` in SpendByCategory so the dashboard pie chart swatch renders green.
 - **2026-04-29** | #116 | Use account number as primary key for account identity | Changed `short = nick ?? num` to `short = num ?? nick` in `accountParser.ts` so two accounts with the same name but different numbers are kept separate.
