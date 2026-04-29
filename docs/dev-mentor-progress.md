@@ -478,6 +478,7 @@ This pipeline is now proven on Finance Analyser. Next step: apply it to a new pr
 | 2026-04-30 | #135: weeklyAggregation utility (isoWeekStart + formatWeekLabel) | Implemented two pure date-helper functions; practised ISO week Monday-calculation arithmetic and learned that `en-NZ` locale produces day-first format ("3 Feb") not month-first ("Feb 3") — locale format matters for chart labels.   |
 | 2026-04-30 | #136: Unit tests for isoWeekStart and formatWeekLabel            | Added cross-month boundary test to complete the T003 spec; practised identifying when a test story is already partially done by prior QA work and only filling the genuine gap.                                                        |
 | 2026-04-30 | #137: buildWeeklyTotals aggregation function                     | Implemented Map-based weekly grouping with account filtering; discovered that ISO date strings parsed as UTC cause day-off bugs in negative-offset timezones — must append `T00:00:00` for local-time parsing.                         |
+| 2026-04-30 | #138: Unit tests for buildWeeklyTotals                           | Added multi-month span boundary test; practised writing a test that crosses a calendar-month boundary to verify ISO-week grouping handles Jan/Feb rollover correctly.                                                                  |
 
 ---
 
