@@ -476,6 +476,7 @@ This pipeline is now proven on Finance Analyser. Next step: apply it to a new pr
 | 2026-04-29 | #119: ACN feature polish and sign-off                            | Ran full test suite and type-check as an explicit story; practised treating validation and documentation as first-class deliverables, not afterthoughts.                                                                               |
 | 2026-04-30 | #134: WeekBucket and WeeklyCategoryBucket types                  | Created a pure TypeScript interface file with no runtime code; practised that `tsc --noEmit` is the correct test for type-only files, and that JSDoc comments on interface fields are the right way to document data model invariants. |
 | 2026-04-30 | #135: weeklyAggregation utility (isoWeekStart + formatWeekLabel) | Implemented two pure date-helper functions; practised ISO week Monday-calculation arithmetic and learned that `en-NZ` locale produces day-first format ("3 Feb") not month-first ("Feb 3") — locale format matters for chart labels.   |
+| 2026-04-30 | #136: Unit tests for isoWeekStart and formatWeekLabel            | Added cross-month boundary test to complete the T003 spec; practised identifying when a test story is already partially done by prior QA work and only filling the genuine gap.                                                        |
 
 ---
 

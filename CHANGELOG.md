@@ -1,5 +1,6 @@
 # Changelog
 
+- **2026-04-30** | #136 | T003 [Setup] Unit tests for isoWeekStart and formatWeekLabel | Added cross-month boundary test case completing the full test specification for the weekly aggregation utility.
 - **2026-04-30** | #135 | T002 [Setup] Create weeklyAggregation utility with isoWeekStart and formatWeekLabel | Added `src/utils/weeklyAggregation.ts` with two pure date helpers plus 10 unit tests verifying ISO week boundaries and en-NZ label formatting.
 - **2026-04-30** | #134 | T001 [Setup] Create WeekBucket and WeeklyCategoryBucket types | Added `src/types/weeklyData.ts` with two TypeScript interfaces that provide the shared data model for Feature 007 weekly trend charts.
 - **2026-04-29** | #119 | ACN Phase 5 Polish — full test suite, type-check, and checklist update | Verified 502/502 Vitest tests pass, TypeScript compiles without errors, and marked all T001–T015 complete in the requirements checklist.
