@@ -17,11 +17,11 @@ const NO_ALIASES: PfaAccountAliases = {};
 // ── Happy path ─────────────────────────────────────────────────────────────
 
 describe("parseAccountName — happy path", () => {
-  it("returns short=num and display='nick ···last6' when both nickname and account number are present", () => {
+  it("returns short=num and display='nick (num)' when both nickname and account number are present", () => {
     const text = makeAsbHeader("Account 123456789012 Branch 001 (Savings)");
     const result = parseAccountName(text, NO_ALIASES);
     expect(result.short).toBe("123456789012");
-    expect(result.display).toBe("Savings ···789012");
+    expect(result.display).toBe("Savings (123456789012)");
   });
 
   it("applies an alias override for the short name when alias exists", () => {
@@ -60,7 +60,7 @@ describe("parseAccountName — edge cases", () => {
     const text = makeAsbHeader("Account 123456789012 Branch 001 (Savings),,,");
     const result = parseAccountName(text, NO_ALIASES);
     expect(result.short).toBe("123456789012");
-    expect(result.display).toBe("Savings ···789012");
+    expect(result.display).toBe("Savings (123456789012)");
   });
 
   it("returns account number as short/display when nickname is absent", () => {
@@ -74,7 +74,7 @@ describe("parseAccountName — edge cases", () => {
     const text = `ASB Bank Export\r\nAccount 123456789012 Branch 001 (Savings)\r\nDate,Amount`;
     const result = parseAccountName(text, NO_ALIASES);
     expect(result.short).toBe("123456789012");
-    expect(result.display).toBe("Savings ···789012");
+    expect(result.display).toBe("Savings (123456789012)");
   });
 });
 
@@ -110,6 +110,40 @@ describe("parseAccountName — account number as primary key", () => {
     const text = makeAsbHeader("Account() Branch 001 (Everyday)");
     const result = parseAccountName(text, NO_ALIASES);
     expect(result.short).toBe("Everyday");
+  });
+});
+
+// ── Display label format (US3 / #118) ─────────────────────────────────────
+
+describe("parseAccountName — display label format", () => {
+  // T009: CSV with number + name → display equals "Name (number)" format
+  it("formats display as 'Name (number)' when both account name and number are present", () => {
+    const textA = makeAsbHeader(
+      "Account 0549256-53 Branch 001 (Savings On Call)",
+    );
+    const textB = makeAsbHeader(
+      "Account 0549256-50 Branch 001 (Savings On Call)",
+    );
+    const resultA = parseAccountName(textA, NO_ALIASES);
+    const resultB = parseAccountName(textB, NO_ALIASES);
+    expect(resultA.display).toBe("Savings On Call (0549256-53)");
+    expect(resultB.display).toBe("Savings On Call (0549256-50)");
+  });
+
+  // T010: CSV with name only (no account number) → display equals the name alone
+  it("uses only the nickname as display when account number is absent", () => {
+    // No parseable token after 'Account' (parenthesis follows immediately),
+    // so num is null and display falls back to the nickname alone.
+    const text = makeAsbHeader("Account() Branch 001 (Everyday)");
+    const result = parseAccountName(text, NO_ALIASES);
+    expect(result.display).toBe("Everyday");
+  });
+
+  // T011: CSV with no recognisable metadata → display equals "Main Account"
+  it("returns display 'Main Account' when CSV contains no recognisable account/branch metadata", () => {
+    const text = "Header Line\nSome unrelated line\nDate,Amount";
+    const result = parseAccountName(text, NO_ALIASES);
+    expect(result.display).toBe("Main Account");
   });
 });
 
