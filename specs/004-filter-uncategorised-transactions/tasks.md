@@ -32,8 +32,8 @@
 
 ### Implementation for User Story 1
 
-- [ ] T002 [US1] In `src/pages/TransactionsPage.tsx`, add `<option value="__uncategorised__">Uncategorised</option>` as the second child of the category filter `<select>`, immediately after `<option value="all">All categories</option>` and before the `{categories.map(...)}` block
-- [ ] T003 [US1] In `src/pages/TransactionsPage.tsx`, replace the single-line category filter condition (`if (filterCat !== "all" && t.category !== filterCat) return false;`) with the following two-branch block: `if (filterCat === "__uncategorised__") { if (t.category) return false; } else if (filterCat !== "all" && t.category !== filterCat) { return false; }` — the `if (t.category)` check treats `null`, `undefined`, and `""` as uncategorised (all falsy)
+- [x] T002 [US1] In `src/pages/TransactionsPage.tsx`, add `<option value="__uncategorised__">Uncategorised</option>` as the second child of the category filter `<select>`, immediately after `<option value="all">All categories</option>` and before the `{categories.map(...)}` block
+- [x] T003 [US1] In `src/pages/TransactionsPage.tsx`, replace the single-line category filter condition (`if (filterCat !== "all" && t.category !== filterCat) return false;`) with the following two-branch block: `if (filterCat === "__uncategorised__") { if (t.category) return false; } else if (filterCat !== "all" && t.category !== filterCat) { return false; }` — the `if (t.category)` check treats `null`, `undefined`, and `""` as uncategorised (all falsy)
 
 **Checkpoint**: Selecting "Uncategorised" in the dropdown shows only uncategorised transactions. Categorised transactions are hidden. Transfer transactions are unaffected (governed by the existing Show transfers toggle). Switching back to "All categories" restores the full list. Row count updates correctly.
 
@@ -45,12 +45,12 @@
 
 **File**: `src/pages/TransactionsPage.test.tsx` (extend or create)
 
-- [ ] T004 [P] [US1] In `src/pages/TransactionsPage.test.tsx`, write test: when the category filter select is changed to `"__uncategorised__"`, only transactions with `category` equal to `null`, `undefined`, or `""` appear in the rendered list
-- [ ] T005 [P] [US1] In `src/pages/TransactionsPage.test.tsx`, write test: when the category filter is `"__uncategorised__"`, transactions with a non-empty `category` string (e.g., `"Groceries"`) are not rendered
-- [ ] T006 [P] [US1] In `src/pages/TransactionsPage.test.tsx`, write test: transfer transactions (`isTransfer: true`) are absent from the rendered list when the category filter is `"__uncategorised__"` — even with `showTransfers` enabled (the transfer gate runs before the category gate)
-- [ ] T007 [P] [US1] In `src/pages/TransactionsPage.test.tsx`, write test: when both `"__uncategorised__"` and a specific month are selected, only uncategorised transactions whose `month` matches the selected month appear (AND composition)
-- [ ] T008 [P] [US1] In `src/pages/TransactionsPage.test.tsx`, write test: when `"__uncategorised__"` is selected and a search term is entered, only uncategorised transactions whose `payee` or `memo` matches the search term appear
-- [ ] T009 [P] [US1] In `src/pages/TransactionsPage.test.tsx`, write test: after selecting `"__uncategorised__"` and then switching back to `"all"`, all non-transfer transactions appear again (full list restored)
+- [x] T004 [P] [US1] In `src/pages/TransactionsPage.test.tsx`, write test: when the category filter select is changed to `"__uncategorised__"`, only transactions with `category` equal to `null`, `undefined`, or `""` appear in the rendered list
+- [x] T005 [P] [US1] In `src/pages/TransactionsPage.test.tsx`, write test: when the category filter is `"__uncategorised__"`, transactions with a non-empty `category` string (e.g., `"Groceries"`) are not rendered
+- [x] T006 [P] [US1] In `src/pages/TransactionsPage.test.tsx`, write test: transfer transactions (`isTransfer: true`) are absent from the rendered list when the category filter is `"__uncategorised__"` — even with `showTransfers` enabled (the transfer gate runs before the category gate)
+- [x] T007 [P] [US1] In `src/pages/TransactionsPage.test.tsx`, write test: when both `"__uncategorised__"` and a specific month are selected, only uncategorised transactions whose `month` matches the selected month appear (AND composition)
+- [x] T008 [P] [US1] In `src/pages/TransactionsPage.test.tsx`, write test: when `"__uncategorised__"` is selected and a search term is entered, only uncategorised transactions whose `payee` or `memo` matches the search term appear
+- [x] T009 [P] [US1] In `src/pages/TransactionsPage.test.tsx`, write test: after selecting `"__uncategorised__"` and then switching back to `"all"`, all non-transfer transactions appear again (full list restored)
 
 **Checkpoint**: All 6 test cases pass (`npx vitest run`). No existing tests regress.
 

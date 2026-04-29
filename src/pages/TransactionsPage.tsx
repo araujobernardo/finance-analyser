@@ -64,7 +64,12 @@ export function TransactionsPage({
       if (!showTransfers && t.isTransfer) return false;
       if (filterMonth !== "all" && t.month !== filterMonth) return false;
       if (filterAccount !== "all" && t.account !== filterAccount) return false;
-      if (filterCat !== "all" && t.category !== filterCat) return false;
+      if (filterCat === "__uncategorised__") {
+        if (t.isTransfer) return false;
+        if (t.category) return false;
+      } else if (filterCat !== "all" && t.category !== filterCat) {
+        return false;
+      }
       const q = search.toLowerCase();
       if (
         q &&
@@ -189,6 +194,7 @@ export function TransactionsPage({
             onChange={(e) => setFilterCat(e.target.value)}
           >
             <option value="all">All categories</option>
+            <option value="__uncategorised__">Uncategorised</option>
             {categories.map((c) => (
               <option key={c.name} value={c.name}>
                 {c.name}
