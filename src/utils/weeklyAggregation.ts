@@ -44,9 +44,14 @@ export function buildWeeklyTotals(
   const weekMap = new Map<string, { totalSpend: number; weekStart: Date }>();
 
   for (const t of expenses) {
-    const date = new Date(t.date);
+    // Parse date string as local time by appending T00:00:00 (avoids UTC midnight shifting)
+    const date = new Date(`${t.date}T00:00:00`);
     const monday = isoWeekStart(date);
-    const key = monday.toISOString().slice(0, 10);
+    // Build key from local year/month/date to avoid UTC offset shifting
+    const y = monday.getFullYear();
+    const m = String(monday.getMonth() + 1).padStart(2, "0");
+    const d = String(monday.getDate()).padStart(2, "0");
+    const key = `${y}-${m}-${d}`;
     const existing = weekMap.get(key);
     if (existing) {
       existing.totalSpend += Math.abs(t.amount);
