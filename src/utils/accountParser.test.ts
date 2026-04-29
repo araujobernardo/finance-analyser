@@ -17,18 +17,18 @@ const NO_ALIASES: PfaAccountAliases = {};
 // ── Happy path ─────────────────────────────────────────────────────────────
 
 describe("parseAccountName — happy path", () => {
-  it("returns short=nick and display='nick ···last6' when both nickname and account number are present", () => {
+  it("returns short=num and display='nick ···last6' when both nickname and account number are present", () => {
     const text = makeAsbHeader("Account 123456789012 Branch 001 (Savings)");
     const result = parseAccountName(text, NO_ALIASES);
-    expect(result.short).toBe("Savings");
+    expect(result.short).toBe("123456789012");
     expect(result.display).toBe("Savings ···789012");
   });
 
   it("applies an alias override for the short name when alias exists", () => {
     const text = makeAsbHeader("Account 123456789012 Branch 001 (Savings)");
-    const aliases: PfaAccountAliases = { Savings: "My Savings Account" };
+    const aliases: PfaAccountAliases = { "123456789012": "My Savings Account" };
     const result = parseAccountName(text, aliases);
-    expect(result.short).toBe("Savings");
+    expect(result.short).toBe("123456789012");
     expect(result.display).toBe("My Savings Account");
   });
 });
@@ -59,7 +59,7 @@ describe("parseAccountName — edge cases", () => {
     // CSV rows sometimes have trailing commas
     const text = makeAsbHeader("Account 123456789012 Branch 001 (Savings),,,");
     const result = parseAccountName(text, NO_ALIASES);
-    expect(result.short).toBe("Savings");
+    expect(result.short).toBe("123456789012");
     expect(result.display).toBe("Savings ···789012");
   });
 
@@ -73,7 +73,42 @@ describe("parseAccountName — edge cases", () => {
   it("handles Windows-style CRLF line endings", () => {
     const text = `ASB Bank Export\r\nAccount 123456789012 Branch 001 (Savings)\r\nDate,Amount`;
     const result = parseAccountName(text, NO_ALIASES);
-    expect(result.short).toBe("Savings");
+    expect(result.short).toBe("123456789012");
     expect(result.display).toBe("Savings ···789012");
+  });
+});
+
+// ── Account number as primary key ──────────────────────────────────────────
+
+describe("parseAccountName — account number as primary key", () => {
+  // T003: same name, different numbers → two distinct short values
+  it("produces distinct short values for two payloads sharing the same name but different account numbers", () => {
+    const textA = makeAsbHeader(
+      "Account 0549256-53 Branch 001 (Savings On Call)",
+    );
+    const textB = makeAsbHeader(
+      "Account 0549256-50 Branch 001 (Savings On Call)",
+    );
+    const resultA = parseAccountName(textA, NO_ALIASES);
+    const resultB = parseAccountName(textB, NO_ALIASES);
+    expect(resultA.short).not.toBe(resultB.short);
+    expect(resultA.short).toBe("0549256-53");
+    expect(resultB.short).toBe("0549256-50");
+  });
+
+  // T004: number + name present → short equals the account number
+  it("uses the account number as short when both account number and nickname are present", () => {
+    const text = makeAsbHeader("Account 0549256-00 Branch 001 (Streamline)");
+    const result = parseAccountName(text, NO_ALIASES);
+    expect(result.short).toBe("0549256-00");
+  });
+
+  // T005: name only (no number) → short equals the name
+  it("falls back to nickname as short when account number is absent", () => {
+    // No parseable token after 'Account' (parenthesis follows immediately),
+    // so num is null and short falls back to the nickname.
+    const text = makeAsbHeader("Account() Branch 001 (Everyday)");
+    const result = parseAccountName(text, NO_ALIASES);
+    expect(result.short).toBe("Everyday");
   });
 });

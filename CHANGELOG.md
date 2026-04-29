@@ -1,5 +1,6 @@
 # Changelog
 
+- **2026-04-29** | #116 | Use account number as primary key for account identity | Changed `short = nick ?? num` to `short = num ?? nick` in `accountParser.ts` so two accounts with the same name but different numbers are kept separate.
 - **2026-04-29** | #112 | Rename "Savings & Transfers" to "Savings" | Replaced every write/display occurrence of "Savings & Transfers" with "Savings" across App.tsx, transferFlagging.ts, and tests; added load-time normalisation to silently migrate existing localStorage data on first load.
 - **2026-04-29** | #115 | Extract parseAccountName to accountParser utility | Extracted `parseAccountName` verbatim from `src/App.tsx` into `src/utils/accountParser.ts` as a named export; no logic changes.
 - **2026-04-29** | #111 | Add --colour-savings CSS token | Added `--colour-savings: #10b981;` design token to `:root` in `src/index.css`, providing a single consistent green value for the savings category treatment feature.
