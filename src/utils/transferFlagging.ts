@@ -22,7 +22,7 @@ export function getCandidates(txns: PfaTxn[], initiatingId: string): PfaTxn[] {
 
 /**
  * Flag two transactions as a transfer pair.
- * Sets isTransfer: true, category: "Savings & Transfers",
+ * Sets isTransfer: true, category: "Savings",
  * and stores the prior category in preFlagCategory.
  */
 export function applyFlag(
@@ -35,7 +35,7 @@ export function applyFlag(
       return {
         ...t,
         preFlagCategory: t.category,
-        category: "Savings & Transfers",
+        category: "Savings",
         isTransfer: true,
       };
     }

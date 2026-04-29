@@ -55,7 +55,7 @@ const DEFAULT_CATEGORIES: PfaCategory[] = [
   { name: "Education", color: "#a3e635" },
   { name: "Travel", color: "#818cf8" },
   { name: "Income", color: "#10b981" },
-  { name: "Savings & Transfers", color: "#475569" },
+  { name: "Savings", color: "#10b981" },
   { name: "Other", color: "#64748b" },
 ];
 
@@ -83,9 +83,7 @@ function detectTransfers(allTxns: PfaTxn[]): PfaTxn[] {
     );
   });
   return allTxns.map((t) =>
-    ids.has(t.id)
-      ? { ...t, category: "Savings & Transfers", isTransfer: true }
-      : t,
+    ids.has(t.id) ? { ...t, category: "Savings", isTransfer: true } : t,
   );
 }
 
@@ -97,7 +95,12 @@ export default function App() {
   const [tab, setTab] = useState<Tab>("dashboard");
   const [txns, setTxnsState] = useState<PfaTxn[]>(() => {
     const t = lsGet<PfaTxn[]>(SK.txns);
-    return t && Array.isArray(t) ? t : [];
+    if (!t || !Array.isArray(t)) return [];
+    return t.map((txn) =>
+      txn.category === "Savings & Transfers"
+        ? { ...txn, category: "Savings" }
+        : txn,
+    );
   });
   const [mm, setMmState] = useState<PfaMerchantMap>(
     () => lsGet<PfaMerchantMap>(SK.mm) ?? {},
