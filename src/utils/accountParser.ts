@@ -25,9 +25,7 @@ export function parseAccountName(
     const num = line.match(/Account\s+([\w-]+)/)?.[1]?.trim() ?? null;
     const short = num ?? nick ?? line.slice(0, 20);
     const baseDisplay =
-      nick && num
-        ? `${nick} ···${num.slice(-6)}`
-        : (nick ?? num ?? line.slice(0, 30));
+      nick && num ? `${nick} (${num})` : (nick ?? num ?? line.slice(0, 30));
     return { short, display: aliases[short] ?? baseDisplay };
   }
   return { short: "Main", display: aliases["Main"] ?? "Main Account" };
