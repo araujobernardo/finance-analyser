@@ -416,3 +416,119 @@ describe("TransactionsPage — Uncategorised filter", () => {
     expect(screen.getByText("Categorised Txn")).toBeInTheDocument();
   });
 });
+
+// ── Savings green treatment (Issue #113) ─────────────────────────────────────
+
+const savingsCategories: PfaCategory[] = [
+  { name: "Groceries", color: "#ff0000" },
+  { name: "Transport", color: "#0000ff" },
+  { name: "Savings", color: "#10b981" },
+];
+
+function renderPageWithCategories(
+  txns: PfaTxn[],
+  categories: PfaCategory[] = savingsCategories,
+) {
+  return render(
+    <TransactionsPage
+      txns={txns}
+      accountList={defaultAccountList}
+      categories={categories}
+      onBulkCategoryChange={() => {}}
+    />,
+  );
+}
+
+describe("TransactionsPage — Savings green treatment", () => {
+  afterEach(cleanup);
+
+  it("T-SAV-01: Savings category select has category-badge--savings class", () => {
+    const txns = [
+      makePageTxn({ id: "t1", payee: "ISA Contribution", category: "Savings" }),
+    ];
+    const { container } = renderPageWithCategories(txns);
+    // className is applied based on t.category === "Savings", not on select's value
+    const savingsSelect = container.querySelector(
+      "select.txn-cat-select.category-badge--savings",
+    );
+    expect(savingsSelect).not.toBeNull();
+  });
+
+  it("T-SAV-02: Non-Savings category select does NOT have category-badge--savings class", () => {
+    const txns = [
+      makePageTxn({ id: "t1", payee: "Supermarket", category: "Groceries" }),
+    ];
+    const { container } = renderPageWithCategories(txns);
+    const savingsBadgeSelects = container.querySelectorAll(
+      "select.txn-cat-select.category-badge--savings",
+    );
+    expect(savingsBadgeSelects).toHaveLength(0);
+    // Regular category select exists but without the savings class
+    const allSelects = container.querySelectorAll("select.txn-cat-select");
+    expect(allSelects).toHaveLength(1);
+  });
+
+  it("T-SAV-03: Savings select borderColor inline style does not use a hardcoded hex — uses token reference", () => {
+    const txns = [
+      makePageTxn({ id: "t1", payee: "Pension Transfer", category: "Savings" }),
+    ];
+    const { container } = renderPageWithCategories(txns);
+    const savingsSelect = container.querySelector(
+      "select.txn-cat-select.category-badge--savings",
+    ) as HTMLSelectElement | null;
+    expect(savingsSelect).not.toBeNull();
+    // The inline style borderColor must NOT be a hardcoded hex value like #10b981 or rgb(16,185,129)
+    // jsdom resolves CSS variables but the value should correspond to the savings token colour
+    // not the expense colour (red: #f87171 = rgb(248,113,113)) or orange
+    const border = savingsSelect!.style.borderColor;
+    expect(border).not.toMatch(/#f87171|rgb\(248,\s*113,\s*113\)/); // not red
+    expect(border).not.toMatch(/#f97316|rgb\(249,\s*115,\s*22\)/); // not orange
+    // jsdom may resolve var() to the actual colour — either form confirms no hardcoded expense colour
+    // The border should resolve to the savings green value (#10b981)
+    // We verify the attribute directly (the React prop sets it as a CSS variable string)
+    const styleAttr = savingsSelect!.getAttribute("style") ?? "";
+    expect(styleAttr).toContain("var(--colour-savings)");
+  });
+
+  it("T-SAV-04: Transfer rows do not have category-badge--savings class (no colour bleed)", () => {
+    const txns = [
+      makePageTxn({
+        id: "t1",
+        payee: "Bank Transfer",
+        category: "Savings",
+        isTransfer: true,
+      }),
+    ];
+    const { container } = renderPageWithCategories(txns);
+    // Transfer rows render a <span class="tag"> not a <select> — no savings badge
+    const savingsBadgeSelects = container.querySelectorAll(
+      "select.category-badge--savings",
+    );
+    expect(savingsBadgeSelects).toHaveLength(0);
+  });
+
+  it("T-SAV-05: Uncategorised transaction select does NOT have category-badge--savings class", () => {
+    const txns = [makePageTxn({ id: "t1", payee: "Unknown", category: null })];
+    const { container } = renderPageWithCategories(txns);
+    const allSelects = container.querySelectorAll("select.txn-cat-select");
+    expect(allSelects).toHaveLength(1);
+    expect(allSelects[0].classList.contains("category-badge--savings")).toBe(
+      false,
+    );
+  });
+
+  it("T-SAV-06: multiple transactions — only Savings rows carry the savings badge class", () => {
+    const txns = [
+      makePageTxn({ id: "t1", payee: "ISA", category: "Savings" }),
+      makePageTxn({ id: "t2", payee: "Tesco", category: "Groceries" }),
+      makePageTxn({ id: "t3", payee: "Bus Pass", category: "Transport" }),
+    ];
+    const { container } = renderPageWithCategories(txns);
+    const allSelects = container.querySelectorAll("select.txn-cat-select");
+    const savingsBadgeSelects = container.querySelectorAll(
+      "select.txn-cat-select.category-badge--savings",
+    );
+    expect(allSelects).toHaveLength(3);
+    expect(savingsBadgeSelects).toHaveLength(1);
+  });
+});

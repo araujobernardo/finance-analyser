@@ -264,6 +264,43 @@ describe("SpendByCategory colour swatches", () => {
   });
 });
 
+describe("SpendByCategory — Savings colour treatment (Issue #113)", () => {
+  it("SBC-SAV-01: Savings row swatch uses the green CATEGORY_COLOURS entry (#10b981)", () => {
+    const { container } = renderPanel([row("Savings", 500, 100)]);
+    const swatch = container.querySelector(".spend-row__swatch") as HTMLElement;
+    // jsdom converts #10b981 to its rgb equivalent
+    expect(swatch.style.background).toBe("rgb(16, 185, 129)"); // #10b981
+  });
+
+  it("SBC-SAV-02: Savings percentage bar uses the green colour (#10b981)", () => {
+    const { container } = renderPanel([row("Savings", 500, 100)]);
+    const bar = container.querySelector(".spend-row__pct-bar") as HTMLElement;
+    expect(bar.style.background).toBe("rgb(16, 185, 129)"); // #10b981
+  });
+
+  it("SBC-SAV-03: Non-Savings row does not use the Savings green colour", () => {
+    const { container } = renderPanel([row("Groceries", 200, 100)]);
+    const swatch = container.querySelector(".spend-row__swatch") as HTMLElement;
+    // Groceries is #c084fc — rgb(192,132,252)
+    expect(swatch.style.background).toBe("rgb(192, 132, 252)");
+    expect(swatch.style.background).not.toBe("rgb(16, 185, 129)");
+  });
+
+  it("SBC-SAV-04: Savings and Groceries rows each use their own distinct colours", () => {
+    const { container } = renderPanel([
+      row("Savings", 300, 60),
+      row("Groceries", 200, 40),
+    ]);
+    const swatches = container.querySelectorAll(
+      ".spend-row__swatch",
+    ) as NodeListOf<HTMLElement>;
+    expect(swatches).toHaveLength(2);
+    expect(swatches[0].style.background).toBe("rgb(16, 185, 129)"); // Savings
+    expect(swatches[1].style.background).toBe("rgb(192, 132, 252)"); // Groceries
+    expect(swatches[0].style.background).not.toBe(swatches[1].style.background);
+  });
+});
+
 describe("SpendByCategory orphaned budgets", () => {
   it("shows orphaned budgets section when a budget has no matching spend row", () => {
     renderPanel([row("Groceries", 200, 100)], {
