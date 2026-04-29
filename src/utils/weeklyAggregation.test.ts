@@ -183,4 +183,16 @@ describe("buildWeeklyTotals", () => {
     const result = buildWeeklyTotals(txns, "all");
     expect(result[0].weekStart).toBe("2026-01-26"); // Monday
   });
+
+  it("correctly spans a month boundary — week starting Jan 26 includes transactions on Jan 31 and Feb 1", () => {
+    const txns = [
+      makeTxn({ id: "t1", date: "2026-01-26", amount: -10 }), // Monday
+      makeTxn({ id: "t2", date: "2026-01-31", amount: -20 }), // Saturday (same week)
+      makeTxn({ id: "t3", date: "2026-02-01", amount: -30 }), // Sunday (same week)
+    ];
+    const result = buildWeeklyTotals(txns, "all");
+    expect(result).toHaveLength(1);
+    expect(result[0].weekStart).toBe("2026-01-26");
+    expect(result[0].totalSpend).toBe(60);
+  });
 });
