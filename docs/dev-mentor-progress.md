@@ -466,6 +466,7 @@ This pipeline is now proven on Finance Analyser. Next step: apply it to a new pr
 | 2026-04-29 | #103: Add "Uncategorised" filter option | Added a controlled filter value to TransactionsPage dropdown; practised filter state management and writing isolated React component tests with afterEach cleanup for CI stability.       |
 | 2026-04-29 | #104: Uncategorised filter logic        | Wired the `__uncategorised__` sentinel into the filter pipeline with falsy-check branching; practised multi-condition filter composition and verifying AND logic across combined filters. |
 | 2026-04-29 | #111: --colour-savings CSS token        | Added a single CSS custom property to `:root`; practised CSS design tokens and the principle of naming values by semantic role rather than colour value.                                  |
+| 2026-04-29 | #115: Extract parseAccountName utility  | Extracted a function from a large component into a co-located utility module; practised single-responsibility principle and writing unit tests for edge cases in a parser function.       |
 
 ---
 
