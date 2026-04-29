@@ -11,7 +11,7 @@ export function parseAccountName(
   if (line.includes("Account") && line.includes("Branch")) {
     const nick = line.match(/\(([^)]+)\)/)?.[1]?.trim() ?? null;
     const num = line.match(/Account\s+([\w-]+)/)?.[1]?.trim() ?? null;
-    const short = nick ?? num ?? line.slice(0, 20);
+    const short = num ?? nick ?? line.slice(0, 20);
     const baseDisplay =
       nick && num
         ? `${nick} ···${num.slice(-6)}`
