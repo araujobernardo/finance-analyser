@@ -2,6 +2,18 @@ import type { PfaAccountAliases } from "../types/pfa";
 
 // ── ASB account name extraction ──────────────────────────────────────────────
 
+/**
+ * Parses the account name from an ASB-format CSV export string.
+ *
+ * Stability invariant (US2 / #117):
+ * This function is deterministic — given the same CSV text and aliases map it
+ * always returns the same `short` value.  Specifically, `short` is set to the
+ * account number extracted from the CSV (`num ?? nick ?? ...`), so re-importing
+ * a CSV for `0549256-53` will always produce `short === "0549256-53"`, ensuring
+ * the new transactions are appended to the correct existing account rather than
+ * creating a duplicate.  The Phase 2 fix (#116) — changing `nick ?? num` to
+ * `num ?? nick` — is what establishes this invariant.
+ */
 export function parseAccountName(
   text: string,
   aliases: PfaAccountAliases,
