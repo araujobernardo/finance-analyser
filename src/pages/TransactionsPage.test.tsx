@@ -100,13 +100,13 @@ describe("applyFlag", () => {
     expect(b.isTransfer).toBe(true);
   });
 
-  it("sets category to 'Savings & Transfers' on both transactions", () => {
+  it("sets category to 'Savings' on both transactions", () => {
     const txns = [txnA, txnB];
     const result = applyFlag(txns, txnA.id, txnB.id);
     const a = result.find((t) => t.id === txnA.id)!;
     const b = result.find((t) => t.id === txnB.id)!;
-    expect(a.category).toBe("Savings & Transfers");
-    expect(b.category).toBe("Savings & Transfers");
+    expect(a.category).toBe("Savings");
+    expect(b.category).toBe("Savings");
   });
 
   it("stores original categories in preFlagCategory for both transactions", () => {
@@ -137,7 +137,7 @@ describe("applyUnflag", () => {
       amount: -100,
       date: "2026-03-15",
       isTransfer: true,
-      category: "Savings & Transfers",
+      category: "Savings",
       preFlagCategory: "Groceries",
     });
     const flaggedB = makeTxn({
@@ -146,7 +146,7 @@ describe("applyUnflag", () => {
       isCredit: true,
       date: "2026-03-15",
       isTransfer: true,
-      category: "Savings & Transfers",
+      category: "Savings",
       preFlagCategory: "Income",
     });
     const txns = [flaggedA, flaggedB];
@@ -168,7 +168,7 @@ describe("applyUnflag", () => {
       amount: -100,
       date: "2026-03-15",
       isTransfer: true,
-      category: "Savings & Transfers",
+      category: "Savings",
       // preFlagCategory not set
     });
     const autoB = makeTxn({
@@ -177,7 +177,7 @@ describe("applyUnflag", () => {
       isCredit: true,
       date: "2026-03-15",
       isTransfer: true,
-      category: "Savings & Transfers",
+      category: "Savings",
       // preFlagCategory not set
     });
     const txns = [autoA, autoB];
@@ -197,7 +197,7 @@ describe("applyUnflag", () => {
       amount: -100,
       date: "2026-03-15",
       isTransfer: true,
-      category: "Savings & Transfers",
+      category: "Savings",
       preFlagCategory: "Groceries",
     });
     const flaggedB = makeTxn({
@@ -206,7 +206,7 @@ describe("applyUnflag", () => {
       isCredit: true,
       date: "2026-03-15",
       isTransfer: true,
-      category: "Savings & Transfers",
+      category: "Savings",
       preFlagCategory: "Income",
     });
     const unrelated = makeTxn({
