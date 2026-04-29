@@ -65,10 +65,10 @@ export function TransactionsPage({
       if (filterMonth !== "all" && t.month !== filterMonth) return false;
       if (filterAccount !== "all" && t.account !== filterAccount) return false;
       if (filterCat === "__uncategorised__") {
-        if (t.isTransfer) return false;
-        if (t.category) return false;
+        if (t.isTransfer) return false; // transfers never appear in uncategorised view
+        if (t.category) return false; // has a category → exclude
       } else if (filterCat !== "all" && t.category !== filterCat) {
-        return false;
+        return false; // named category selected but doesn't match → exclude
       }
       const q = search.toLowerCase();
       if (
