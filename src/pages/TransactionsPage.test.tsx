@@ -532,3 +532,25 @@ describe("TransactionsPage — Savings green treatment", () => {
     expect(savingsBadgeSelects).toHaveLength(1);
   });
 });
+
+// -- T013: No occurrence of "Savings & Transfers" in rendered output --
+
+describe("TransactionsPage -- T013: 'Savings & Transfers' never appears in rendered output", () => {
+  afterEach(cleanup);
+
+  it("T013: no occurrence of the literal string 'Savings & Transfers' appears in any rendered output", () => {
+    const txns = [
+      makePageTxn({
+        id: "t1",
+        payee: "ISA Contribution",
+        category: "Savings",
+        isTransfer: true,
+      }),
+      makePageTxn({ id: "t2", payee: "Tesco", category: "Groceries" }),
+      makePageTxn({ id: "t3", payee: "Bus Pass", category: "Transport" }),
+      makePageTxn({ id: "t4", payee: "Unknown", category: null }),
+    ];
+    renderPageWithCategories(txns);
+    expect(screen.queryByText("Savings & Transfers")).not.toBeInTheDocument();
+  });
+});
