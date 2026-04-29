@@ -1,5 +1,6 @@
 # Changelog
 
+- **2026-04-30** | #135 | T002 [Setup] Create weeklyAggregation utility with isoWeekStart and formatWeekLabel | Added `src/utils/weeklyAggregation.ts` with two pure date helpers plus 10 unit tests verifying ISO week boundaries and en-NZ label formatting.
 - **2026-04-30** | #134 | T001 [Setup] Create WeekBucket and WeeklyCategoryBucket types | Added `src/types/weeklyData.ts` with two TypeScript interfaces that provide the shared data model for Feature 007 weekly trend charts.
 - **2026-04-29** | #119 | ACN Phase 5 Polish — full test suite, type-check, and checklist update | Verified 502/502 Vitest tests pass, TypeScript compiles without errors, and marked all T001–T015 complete in the requirements checklist.
 - **2026-04-29** | #118 | Account number shown as distinguishing display label | Changed `baseDisplay` format from `Nick ···last6` to `Nick (full-number)` so accounts with the same name are visually distinguishable in the account selector.
