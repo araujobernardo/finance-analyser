@@ -1,5 +1,6 @@
 # Changelog
 
+- **2026-04-29** | #104 | Update category filter logic to handle Uncategorised sentinel | Updated TransactionsPage filter logic so selecting "Uncategorised" shows only transactions with null/undefined/"" category and excludes transfers regardless of Show Transfers toggle.
 - **2026-04-29** | #103 | Add Uncategorised option to category filter | Added "Uncategorised" as a selectable option in the TransactionsPage category filter dropdown, so users can filter to see only unassigned transactions.
 - **2026-04-24** | #97–#100 | Manual Transfer Flagging | Click any transaction to flag it as a transfer pair; same-day same-amount candidates are highlighted; un-flagging restores prior categories.
 - **2026-04-24** | #87–#95 | UX/UI Overhaul — Realign to Prototype | Replaced NavBar+Router with 224px sidebar, rewrote Dashboard with Recharts charts, added full-page ChatPage, applied prototype dark theme design tokens.
