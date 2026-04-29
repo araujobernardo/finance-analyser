@@ -473,6 +473,7 @@ This pipeline is now proven on Finance Analyser. Next step: apply it to a new pr
 | 2026-04-29 | #113: Savings green treatment (UI)      | Applied a CSS modifier class to colour a specific category; practised the Designer → Developer → QA flow with manual testing, and the `color-mix` CSS function for tinted backgrounds.    |
 | 2026-04-29 | #114: SCT regression test suite         | Wrote integration tests for string rename and colour treatment; practised finding tests already covered by prior QA work and only filling actual gaps rather than duplicating coverage.   |
 | 2026-04-29 | #118: Account display label format      | Changed display format from truncated `···last6` to full `Name (number)`; practised the difference between a storage key (`short`) and a display label (`display`) in a data model.       |
+| 2026-04-29 | #119: ACN feature polish and sign-off   | Ran full test suite and type-check as an explicit story; practised treating validation and documentation as first-class deliverables, not afterthoughts.                                  |
 
 ---
 
