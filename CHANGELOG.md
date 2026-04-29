@@ -1,5 +1,6 @@
 # Changelog
 
+- **2026-04-29** | #119 | ACN Phase 5 Polish — full test suite, type-check, and checklist update | Verified 502/502 Vitest tests pass, TypeScript compiles without errors, and marked all T001–T015 complete in the requirements checklist.
 - **2026-04-29** | #118 | Account number shown as distinguishing display label | Changed `baseDisplay` format from `Nick ···last6` to `Nick (full-number)` so accounts with the same name are visually distinguishable in the account selector.
 - **2026-04-29** | #117 | Re-importing the same account number appends to the correct account | Added T007 unit test asserting `parseAccountName` is deterministic for the same CSV input, and documented the stability invariant as a JSDoc comment on the function.
 - **2026-04-29** | #113 | Render Savings transactions in green | Added `.category-badge--savings` CSS class using `var(--colour-savings)` token to style Savings category badge in green on the Transactions page; added `Savings` entry to `CATEGORY_COLOURS` in SpendByCategory so the dashboard pie chart swatch renders green.
