@@ -41,6 +41,14 @@ describe("isoWeekStart", () => {
     expect(result.getMilliseconds()).toBe(0);
   });
 
+  it("handles cross-month boundary — Wednesday 4 Feb returns Monday 2 Feb", () => {
+    const wednesday = new Date(2026, 1, 4); // Feb 4, 2026 (Wednesday)
+    const result = isoWeekStart(wednesday);
+    expect(result.getDay()).toBe(1);
+    expect(result.getMonth()).toBe(1); // February
+    expect(result.getDate()).toBe(2); // Feb 2
+  });
+
   it("does not mutate the input date", () => {
     const original = new Date("2026-01-28T12:00:00");
     const originalTime = original.getTime();
