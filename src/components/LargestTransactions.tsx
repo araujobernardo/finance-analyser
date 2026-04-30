@@ -5,6 +5,7 @@ import "./LargestTransactions.css";
 
 interface Props {
   transactions: Transaction[];
+  selectedCategory?: string | null;
   onCategoryClick: (category: string | null) => void;
   isLoading?: boolean;
 }
@@ -56,6 +57,7 @@ const MAX_DESC = 40;
 
 export function LargestTransactions({
   transactions,
+  selectedCategory = null,
   onCategoryClick,
   isLoading,
 }: Props) {
@@ -68,13 +70,25 @@ export function LargestTransactions({
     );
   }
 
-  const top10 = [...transactions]
+  const filtered =
+    selectedCategory !== null
+      ? transactions.filter(
+          (t) => (t.category || "Uncategorised") === selectedCategory,
+        )
+      : transactions;
+
+  const top10 = [...filtered]
     .sort((a, b) => Math.abs(b.amount) - Math.abs(a.amount))
     .slice(0, 10);
 
   return (
     <div className="largest-txns">
       <h2 className="largest-txns__title">Largest Transactions</h2>
+      {selectedCategory !== null && (
+        <div className="largest-txns__filter-chip">
+          Filtered: {selectedCategory}
+        </div>
+      )}
       {top10.length === 0 ? (
         <EmptyState
           icon={<TransactionIcon />}
