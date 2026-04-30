@@ -1,5 +1,6 @@
 # Changelog
 
+- **2026-04-30** | #181 | bug: SpendByCategory legend renders below donut instead of to the left | Wrapped the Dashboard Spending by Category section in a `.dash-cat-body` flex-row container; moved legend items into `.dash-cat-legend-col` (left) and the PieChart into `.dash-cat-chart-col` (right); added 5 co-located layout tests in `DashboardPage.test.tsx`.
 - **2026-04-30** | #157–#160 | [Polish] Feature 007 verification pass | Confirmed MonthlyTrendChart removed, selectedCategory wired, TypeScript (0 errors), ESLint (0 warnings), full test suite (566 tests passing). All verification issues closed without code changes required.
 - **2026-04-30** | #156 | T023 [US4] Add SpendingTrendsByCategoryChart to DashboardPage | Imported buildWeeklyCategoryTotals and SpendingTrendsByCategoryChart; added chart card below the category/transactions grid; passes selectedCategory for per-line dimming; reactively updates on account filter change.
 - **2026-04-30** | #155 | T022 [US4] Component tests for SpendingTrendsByCategoryChart | Added 13 tests covering empty/loading guards, scroll wrapper, min-width calculation, Recharts ResponsiveContainer presence, selectedCategory rerender smoke test, and hover interaction.
