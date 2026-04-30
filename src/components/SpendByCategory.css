@@ -16,7 +16,7 @@
 .spend-by-category__body {
   display: flex;
   flex-direction: row;
-  align-items: flex-start;
+  align-items: center;
   gap: 1rem;
 }
 
@@ -27,7 +27,9 @@
 
 .spend-by-category__chart-col {
   flex: 0 0 220px;
-  width: 220px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
 .spend-by-category__chart {
@@ -136,7 +138,7 @@
 }
 
 .spend-row__pct {
-  font-size: 0.8rem;
+  font-size: 0.9rem;
   color: var(--text);
   white-space: nowrap;
   min-width: 3.5rem;
