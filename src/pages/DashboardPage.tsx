@@ -4,6 +4,8 @@ import { ACCOUNT_COLORS } from "../constants/colors";
 import type { PfaTxn, PfaCategory, PfaBudgets } from "../types/pfa";
 import { buildWeeklyTotals } from "../utils/weeklyAggregation";
 import { WeeklyTrendChart } from "../components/WeeklyTrendChart";
+import { LargestTransactions } from "../components/LargestTransactions";
+import type { Transaction } from "../utils/csvParser";
 import "./DashboardPage.css";
 
 interface Props {
@@ -37,9 +39,6 @@ const fmtMonthSh = (m: string) => {
     y.slice(2)
   );
 };
-
-const getCatColor = (name: string, cats: PfaCategory[]) =>
-  cats.find((c) => c.name === name)?.color ?? "#64748b";
 
 export function DashboardPage({
   txns,
@@ -129,10 +128,15 @@ export function DashboardPage({
     }))
     .filter((d) => d.budget > 0);
 
-  const top5 = [...real]
+  // Map PfaTxns to Transaction shape for LargestTransactions component
+  const txnsForLargest: Transaction[] = real
     .filter((t) => !t.isCredit)
-    .sort((a, b) => a.amount - b.amount)
-    .slice(0, 5);
+    .map((t) => ({
+      date: new Date(`${t.date}T00:00:00`),
+      description: t.payee || t.memo || "Unknown",
+      amount: -Math.abs(t.amount), // negative = debit in Transaction convention
+      category: t.category ?? undefined,
+    }));
 
   if (!txns.length) {
     return (
@@ -382,54 +386,11 @@ export function DashboardPage({
         </div>
 
         <div className="card">
-          <div className="card-title">Largest Expenses</div>
-          <div className="dash-top5">
-            {top5.length ? (
-              top5.map((t) => {
-                const idx = accountList.findIndex(
-                  (a) => a.short === t.accountShort,
-                );
-                const ac =
-                  ACCOUNT_COLORS[Math.max(0, idx) % ACCOUNT_COLORS.length];
-                return (
-                  <div key={t.id} className="dash-top5-row">
-                    <div className="dash-top5-info">
-                      <div className="dash-top5-payee">
-                        {t.payee || t.memo || "Unknown"}
-                      </div>
-                      <div className="dash-top5-meta">
-                        <span>{t.date}</span>
-                        {accountList.length > 1 && (
-                          <span style={{ color: ac }}>· {t.account}</span>
-                        )}
-                      </div>
-                    </div>
-                    <div className="dash-top5-right">
-                      <span className="mono dash-top5-amount">
-                        {fmt(t.amount)}
-                      </span>
-                      {t.category && (
-                        <span
-                          className="tag"
-                          style={{
-                            color: getCatColor(t.category, categories),
-                            background: `${getCatColor(t.category, categories)}22`,
-                            borderColor: `${getCatColor(t.category, categories)}44`,
-                          }}
-                        >
-                          {t.category}
-                        </span>
-                      )}
-                    </div>
-                  </div>
-                );
-              })
-            ) : (
-              <div className="dash-empty-chart">
-                No expenses for selected period
-              </div>
-            )}
-          </div>
+          <LargestTransactions
+            transactions={txnsForLargest}
+            selectedCategory={selectedCategory}
+            onCategoryClick={setSelectedCategory}
+          />
         </div>
       </div>
 
