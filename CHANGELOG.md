@@ -1,5 +1,6 @@
 # Changelog
 
+- **2026-04-30** | #145 | T012 [US2] Update SpendByCategory.tsx for selection dim and legend restructure | Restructured component to place the category list in the left flex column and the donut chart in the right column; removed Recharts built-in `<Legend>`; wired `selectedCategory` opacity dimming on both list items and donut slices.
 - **2026-04-30** | #144 | T011 [US2] Update SpendByCategory.css for left-legend / right-donut layout | Added `.spend-by-category__body`, `.spend-by-category__legend-col`, and `.spend-by-category__chart-col` flexbox layout classes to position legend left and donut right at desktop widths.
 - **2026-04-30** | #143 | T010 [US2] Lift selectedCategory state to DashboardPage and reset on account change | Added `selectedCategory` state and `handleAcctFilterChange` helper that resets the selection on account switch; wired into the inline donut chart for immediate visual feedback.
 - **2026-04-30** | #142 | T009 [US1] Wire WeeklyTrendChart into DashboardPage, remove MonthlyTrendChart | Replaced inline Monthly Trends BarChart with `WeeklyTrendChart` component; computes weekly buckets reactively from all transactions filtered by active account; removed unused Recharts imports.
