@@ -1,5 +1,6 @@
 # Changelog
 
+- **2026-04-30** | #143 | T010 [US2] Lift selectedCategory state to DashboardPage and reset on account change | Added `selectedCategory` state and `handleAcctFilterChange` helper that resets the selection on account switch; wired into the inline donut chart for immediate visual feedback.
 - **2026-04-30** | #142 | T009 [US1] Wire WeeklyTrendChart into DashboardPage, remove MonthlyTrendChart | Replaced inline Monthly Trends BarChart with `WeeklyTrendChart` component; computes weekly buckets reactively from all transactions filtered by active account; removed unused Recharts imports.
 - **2026-04-30** | #139 | T006 [US1] Create WeeklyTrendChart component | Implemented `WeeklyTrendChart` using Recharts `ComposedChart` with bar series for weekly spend and a teal 4-week rolling-average line overlay; includes custom NZD tooltip, empty state, skeleton guard, and horizontal scroll wrapper matching `MonthlyTrendChart` pattern.
 - **2026-04-30** | #138 | T005 [US1] Unit tests for buildWeeklyTotals | Added multi-month span test completing full T005 coverage for the weekly aggregation function.
