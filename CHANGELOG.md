@@ -1,5 +1,6 @@
 # Changelog
 
+- **2026-04-30** | #156 | T023 [US4] Add SpendingTrendsByCategoryChart to DashboardPage | Imported buildWeeklyCategoryTotals and SpendingTrendsByCategoryChart; added chart card below the category/transactions grid; passes selectedCategory for per-line dimming; reactively updates on account filter change.
 - **2026-04-30** | #155 | T022 [US4] Component tests for SpendingTrendsByCategoryChart | Added 13 tests covering empty/loading guards, scroll wrapper, min-width calculation, Recharts ResponsiveContainer presence, selectedCategory rerender smoke test, and hover interaction.
 - **2026-04-30** | #153 | T020 [US4] Create SpendingTrendsByCategoryChart component | Recharts LineChart with one line per category; selectedCategory drives per-line opacity (1 vs 0.25) and strokeWidth (3 vs 1); ReferenceLine on hovered week; EmptyState for < 2 weeks; SkeletonCard for loading state.
 - **2026-04-30** | #154 | T021 [US4] Create SpendingTrendsByCategoryChart.css | Scroll container, tooltip, and legend styles mirroring CategoryTrendChart.css patterns; delivered alongside the component in PR #178.
