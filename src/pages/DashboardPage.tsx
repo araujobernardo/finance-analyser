@@ -316,73 +316,80 @@ export function DashboardPage({
         <div className="card">
           <div className="card-title">Spending by Category</div>
           {catData.length ? (
-            <>
-              <ResponsiveContainer width="100%" height={190}>
-                <PieChart>
-                  <Pie
-                    data={catData}
-                    cx="50%"
-                    cy="50%"
-                    innerRadius={52}
-                    outerRadius={85}
-                    paddingAngle={2}
-                    dataKey="value"
-                  >
-                    {catData.map((d, i) => (
-                      <Cell
-                        key={i}
-                        fill={d.color}
-                        opacity={
+            <div className="dash-cat-body">
+              {/* Left: legend list */}
+              <div className="dash-cat-legend-col">
+                <div className="dash-cat-legend">
+                  {catData.slice(0, 7).map((d) => (
+                    <div
+                      key={d.name}
+                      className="dash-cat-legend-item"
+                      style={{
+                        opacity:
                           selectedCategory === null ||
                           selectedCategory === d.name
                             ? 1
-                            : 0.3
-                        }
-                        onClick={() =>
-                          setSelectedCategory(
-                            d.name === selectedCategory ? null : d.name,
-                          )
-                        }
-                        style={{ cursor: "pointer" }}
+                            : 0.4,
+                        cursor: "pointer",
+                      }}
+                      onClick={() =>
+                        setSelectedCategory(
+                          d.name === selectedCategory ? null : d.name,
+                        )
+                      }
+                    >
+                      <span
+                        className="dash-cat-legend-dot"
+                        style={{ background: d.color }}
                       />
-                    ))}
-                  </Pie>
-                  <Tooltip
-                    formatter={(v: number) => [fmt(v), "Spend"]}
-                    contentStyle={tooltipStyle}
-                  />
-                </PieChart>
-              </ResponsiveContainer>
-              <div className="dash-cat-legend">
-                {catData.slice(0, 7).map((d) => (
-                  <div
-                    key={d.name}
-                    className="dash-cat-legend-item"
-                    style={{
-                      opacity:
-                        selectedCategory === null || selectedCategory === d.name
-                          ? 1
-                          : 0.4,
-                      cursor: "pointer",
-                    }}
-                    onClick={() =>
-                      setSelectedCategory(
-                        d.name === selectedCategory ? null : d.name,
-                      )
-                    }
-                  >
-                    <span
-                      className="dash-cat-legend-dot"
-                      style={{ background: d.color }}
-                    />
-                    <span>{d.name}</span>
-                    <span className="mono dash-cat-legend-val">
-                      {fmt(d.value)}
-                    </span>
-                  </div>
-                ))}
+                      <span>{d.name}</span>
+                      <span className="mono dash-cat-legend-val">
+                        {fmt(d.value)}
+                      </span>
+                    </div>
+                  ))}
+                </div>
               </div>
-            </>
+              {/* Right: donut chart */}
+              <div className="dash-cat-chart-col">
+                <ResponsiveContainer width="100%" height={190}>
+                  <PieChart>
+                    <Pie
+                      data={catData}
+                      cx="50%"
+                      cy="50%"
+                      innerRadius={52}
+                      outerRadius={85}
+                      paddingAngle={2}
+                      dataKey="value"
+                    >
+                      {catData.map((d, i) => (
+                        <Cell
+                          key={i}
+                          fill={d.color}
+                          opacity={
+                            selectedCategory === null ||
+                            selectedCategory === d.name
+                              ? 1
+                              : 0.3
+                          }
+                          onClick={() =>
+                            setSelectedCategory(
+                              d.name === selectedCategory ? null : d.name,
+                            )
+                          }
+                          style={{ cursor: "pointer" }}
+                        />
+                      ))}
+                    </Pie>
+                    <Tooltip
+                      formatter={(v: number) => [fmt(v), "Spend"]}
+                      contentStyle={tooltipStyle}
+                    />
+                  </PieChart>
+                </ResponsiveContainer>
+              </div>
+            </div>
           ) : (
             <div className="dash-empty-chart">
               No expense data for selected period
