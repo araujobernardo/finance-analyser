@@ -1,5 +1,6 @@
 # Changelog
 
+- **2026-04-30** | #139 | T006 [US1] Create WeeklyTrendChart component | Implemented `WeeklyTrendChart` using Recharts `ComposedChart` with bar series for weekly spend and a teal 4-week rolling-average line overlay; includes custom NZD tooltip, empty state, skeleton guard, and horizontal scroll wrapper matching `MonthlyTrendChart` pattern.
 - **2026-04-30** | #138 | T005 [US1] Unit tests for buildWeeklyTotals | Added multi-month span test completing full T005 coverage for the weekly aggregation function.
 - **2026-04-30** | #137 | T004 [US1] Add buildWeeklyTotals to weeklyAggregation | Implemented weekly expense aggregation with account filtering, 12-week cap, and local-time date parsing to avoid UTC timezone shifting bugs.
 - **2026-04-30** | #136 | T003 [Setup] Unit tests for isoWeekStart and formatWeekLabel | Added cross-month boundary test case completing the full test specification for the weekly aggregation utility.
