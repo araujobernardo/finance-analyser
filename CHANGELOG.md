@@ -1,5 +1,6 @@
 # Changelog
 
+- **2026-04-30** | #147 | T014 [US3] Update LargestTransactions with selectedCategory filter and chip | Added optional `selectedCategory` prop that filters the transaction list to matching category and renders a "Filtered: {name}" chip above the list; backward-compatible default of `null`.
 - **2026-04-30** | #146 | T013 [US2] Update SpendByCategory tests for layout and selection behaviour | Added 3 tests: legend-before-chart DOM order check, full-opacity when no category selected, and reduced-opacity check for non-selected rows.
 - **2026-04-30** | #145 | T012 [US2] Update SpendByCategory.tsx for selection dim and legend restructure | Restructured component to place the category list in the left flex column and the donut chart in the right column; removed Recharts built-in `<Legend>`; wired `selectedCategory` opacity dimming on both list items and donut slices.
 - **2026-04-30** | #144 | T011 [US2] Update SpendByCategory.css for left-legend / right-donut layout | Added `.spend-by-category__body`, `.spend-by-category__legend-col`, and `.spend-by-category__chart-col` flexbox layout classes to position legend left and donut right at desktop widths.
