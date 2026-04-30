@@ -1,5 +1,6 @@
 # Changelog
 
+- **2026-04-30** | #157–#160 | [Polish] Feature 007 verification pass | Confirmed MonthlyTrendChart removed, selectedCategory wired, TypeScript (0 errors), ESLint (0 warnings), full test suite (566 tests passing). All verification issues closed without code changes required.
 - **2026-04-30** | #156 | T023 [US4] Add SpendingTrendsByCategoryChart to DashboardPage | Imported buildWeeklyCategoryTotals and SpendingTrendsByCategoryChart; added chart card below the category/transactions grid; passes selectedCategory for per-line dimming; reactively updates on account filter change.
 - **2026-04-30** | #155 | T022 [US4] Component tests for SpendingTrendsByCategoryChart | Added 13 tests covering empty/loading guards, scroll wrapper, min-width calculation, Recharts ResponsiveContainer presence, selectedCategory rerender smoke test, and hover interaction.
 - **2026-04-30** | #153 | T020 [US4] Create SpendingTrendsByCategoryChart component | Recharts LineChart with one line per category; selectedCategory drives per-line opacity (1 vs 0.25) and strokeWidth (3 vs 1); ReferenceLine on hovered week; EmptyState for < 2 weeks; SkeletonCard for loading state.
