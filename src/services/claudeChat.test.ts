@@ -2,13 +2,12 @@ import { describe, it, expect, beforeEach, afterEach, vi } from "vitest";
 import { buildFinanceContext, ALL_ACCOUNTS_ID } from "./claudeChat";
 import * as storage from "./storage";
 
-let mockGetAccounts: ReturnType<typeof vi.spyOn<typeof storage, "getAccounts">>;
-let mockGetAccountMonths: ReturnType<
-  typeof vi.spyOn<typeof storage, "getAccountMonths">
->;
-let mockGetTransactions: ReturnType<
-  typeof vi.spyOn<typeof storage, "getTransactions">
->;
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+let mockGetAccounts: any;
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+let mockGetAccountMonths: any;
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+let mockGetTransactions: any;
 
 beforeEach(() => {
   mockGetAccounts = vi.spyOn(storage, "getAccounts").mockReturnValue([]);
@@ -162,21 +161,23 @@ describe("buildFinanceContext", () => {
       },
     ]);
     mockGetAccountMonths.mockReturnValue(["2025-02", "2025-03"]);
-    mockGetTransactions.mockImplementation((_accountId, monthKey) => ({
-      transactions: [
-        {
-          date: new Date(`${monthKey}-01`),
-          description: "Salary",
-          amount: 3000,
-        },
-        {
-          date: new Date(`${monthKey}-05`),
-          description: "Rent",
-          amount: -1000,
-          category: "Housing",
-        },
-      ],
-    }));
+    mockGetTransactions.mockImplementation(
+      (_accountId: string, monthKey: string) => ({
+        transactions: [
+          {
+            date: new Date(`${monthKey}-01`),
+            description: "Salary",
+            amount: 3000,
+          },
+          {
+            date: new Date(`${monthKey}-05`),
+            description: "Rent",
+            amount: -1000,
+            category: "Housing",
+          },
+        ],
+      }),
+    );
     const ctx = buildFinanceContext();
     expect(ctx).toContain("February 2025");
     expect(ctx).toContain("March 2025");
@@ -197,12 +198,12 @@ describe("buildFinanceContext", () => {
         createdAt: "2026-01-02T00:00:00Z",
       },
     ]);
-    mockGetAccountMonths.mockImplementation((accountId) => {
+    mockGetAccountMonths.mockImplementation((accountId: string) => {
       if (accountId === "acc1") return ["2025-03"];
       if (accountId === "acc2") return ["2025-03"];
       return [];
     });
-    mockGetTransactions.mockImplementation((accountId) => {
+    mockGetTransactions.mockImplementation((accountId: string) => {
       if (accountId === "acc1") {
         return {
           transactions: [
@@ -252,7 +253,7 @@ describe("buildFinanceContext", () => {
         createdAt: "2026-01-02T00:00:00Z",
       },
     ]);
-    mockGetAccountMonths.mockImplementation((accountId) => {
+    mockGetAccountMonths.mockImplementation((accountId: string) => {
       if (accountId === "acc1") return [];
       return ["2025-03"];
     });
@@ -289,12 +290,12 @@ describe("buildFinanceContext — multi-account selection", () => {
 
   function setupTwoAccounts() {
     mockGetAccounts.mockReturnValue(twoAccounts);
-    mockGetAccountMonths.mockImplementation((accountId) => {
+    mockGetAccountMonths.mockImplementation((accountId: string) => {
       if (accountId === "acc1") return ["2025-03"];
       if (accountId === "acc2") return ["2025-03"];
       return [];
     });
-    mockGetTransactions.mockImplementation((accountId) => {
+    mockGetTransactions.mockImplementation((accountId: string) => {
       if (accountId === "acc1") {
         return {
           transactions: [

@@ -114,8 +114,9 @@ async function categoriseBatch(
       max_tokens: 1024,
       messages: [{ role: "user", content: prompt }],
     });
-    const block = message.content.find((c) => c.type === "text");
-    text = block && "text" in block ? block.text : "[]";
+    const msg = message as { content: Array<{ type: string; text?: string }> };
+    const block = msg.content.find((c) => c.type === "text");
+    text = block?.text ?? "[]";
   } catch (err) {
     console.error("[categorisation] API call failed:", err);
     return fallback(batch.length);

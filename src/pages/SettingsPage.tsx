@@ -153,7 +153,7 @@ export function SettingsPage({
       Object.fromEntries(
         Object.entries(newBudgets)
           .map(([k, v]) => [k, parseFloat(v)])
-          .filter(([, v]) => v > 0),
+          .filter(([, v]) => (v as number) > 0),
       ),
     );
     if (newTxns !== txns) setTxns(newTxns);

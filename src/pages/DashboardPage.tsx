@@ -383,7 +383,7 @@ export function DashboardPage({
                       ))}
                     </Pie>
                     <Tooltip
-                      formatter={(v: number) => [fmt(v), "Spend"]}
+                      formatter={(v) => [fmt(v as number), "Spend"]}
                       contentStyle={tooltipStyle}
                     />
                   </PieChart>

@@ -185,7 +185,7 @@ export function SpendByCategory({
           <button
             type="button"
             className="budget-add-btn"
-            onClick={() => setShowForm((v) => !v)}
+            onClick={() => setShowForm(!showForm)}
           >
             {showForm ? "Cancel" : "+ Budget"}
           </button>
