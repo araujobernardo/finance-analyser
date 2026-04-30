@@ -1,19 +1,9 @@
-import {
-  PieChart,
-  Pie,
-  Cell,
-  BarChart,
-  Bar,
-  XAxis,
-  YAxis,
-  Tooltip,
-  ResponsiveContainer,
-  CartesianGrid,
-  Legend,
-} from "recharts";
+import { PieChart, Pie, Cell, Tooltip, ResponsiveContainer } from "recharts";
 import { useState } from "react";
 import { ACCOUNT_COLORS } from "../constants/colors";
 import type { PfaTxn, PfaCategory, PfaBudgets } from "../types/pfa";
+import { buildWeeklyTotals } from "../utils/weeklyAggregation";
+import { WeeklyTrendChart } from "../components/WeeklyTrendChart";
 import "./DashboardPage.css";
 
 interface Props {
@@ -120,22 +110,7 @@ export function DashboardPage({
     };
   });
 
-  const trendData = months.map((m) => {
-    const mt = txns.filter(
-      (t) =>
-        t.month === m &&
-        (acctFilter === "all" || t.account === acctFilter) &&
-        !t.isTransfer,
-    );
-    return {
-      month: fmtMonthSh(m),
-      spend: mt
-        .filter((t) => !t.isCredit)
-        .reduce((s, t) => s + Math.abs(t.amount), 0),
-      income: mt.filter((t) => t.isCredit).reduce((s, t) => s + t.amount, 0),
-      sel: selectedMonths.includes(m),
-    };
-  });
+  const weeklyBuckets = buildWeeklyTotals(txns, acctFilter);
 
   const budgetData = Object.entries(budgets)
     .map(([cat, budget]) => ({
@@ -421,59 +396,11 @@ export function DashboardPage({
         </div>
       </div>
 
-      {/* Monthly Trends */}
-      {trendData.length > 1 && (
-        <div className="card dash-trends">
-          <div className="card-title">
-            Monthly Trends
-            {multiMonth ? " — highlighted months are in selection" : ""}
-          </div>
-          <ResponsiveContainer width="100%" height={180}>
-            <BarChart data={trendData} barGap={4}>
-              <CartesianGrid
-                strokeDasharray="3 3"
-                stroke="var(--border)"
-                vertical={false}
-              />
-              <XAxis
-                dataKey="month"
-                tick={{ fill: "var(--muted)", fontSize: 11 }}
-                axisLine={false}
-                tickLine={false}
-              />
-              <YAxis
-                tick={{ fill: "var(--muted)", fontSize: 11 }}
-                axisLine={false}
-                tickLine={false}
-                tickFormatter={(v: number) => `$${(v / 1000).toFixed(0)}k`}
-              />
-              <Tooltip
-                formatter={(v: number) => [fmt(v)]}
-                contentStyle={tooltipStyle}
-              />
-              <Legend wrapperStyle={{ fontSize: 12, color: "var(--muted)" }} />
-              <Bar dataKey="income" name="Income" radius={[4, 4, 0, 0]}>
-                {trendData.map((d, i) => (
-                  <Cell
-                    key={i}
-                    fill="var(--accent)"
-                    opacity={multiMonth && !d.sel ? 0.25 : 1}
-                  />
-                ))}
-              </Bar>
-              <Bar dataKey="spend" name="Spend" radius={[4, 4, 0, 0]}>
-                {trendData.map((d, i) => (
-                  <Cell
-                    key={i}
-                    fill="var(--red)"
-                    opacity={multiMonth && !d.sel ? 0.25 : 1}
-                  />
-                ))}
-              </Bar>
-            </BarChart>
-          </ResponsiveContainer>
-        </div>
-      )}
+      {/* Weekly Trends */}
+      <div className="card dash-trends">
+        <div className="card-title">Weekly Trends</div>
+        <WeeklyTrendChart data={weeklyBuckets} />
+      </div>
 
       {/* Budget vs Actual */}
       {budgetData.length > 0 && (
