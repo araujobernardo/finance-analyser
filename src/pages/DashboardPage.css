@@ -5,6 +5,8 @@
   border: 1px solid var(--border);
   border-radius: 12px;
   padding: 20px 24px;
+  display: flex;
+  flex-direction: column;
 }
 
 .card-title {
@@ -222,6 +224,7 @@
   align-items: center;
   gap: 1rem;
   margin-top: 8px;
+  flex: 1;
 }
 
 .dash-cat-legend-col {
@@ -232,6 +235,9 @@
 .dash-cat-chart-col {
   flex: 0 0 200px;
   width: 200px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
 .dash-cat-legend {
@@ -243,9 +249,24 @@
 .dash-cat-legend-item {
   display: flex;
   align-items: center;
-  gap: 5px;
-  font-size: 11px;
+  gap: 6px;
+  font-size: 13px;
+  color: var(--subtle);
+}
+
+.dash-cat-legend-name {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  color: var(--text);
+}
+
+.dash-cat-legend-pct {
+  flex-shrink: 0;
   color: var(--muted);
+  font-size: 12px;
 }
 
 .dash-cat-legend-dot {
@@ -257,7 +278,9 @@
 }
 
 .dash-cat-legend-val {
+  flex-shrink: 0;
   color: var(--subtle);
+  font-weight: 600;
 }
 
 .dash-empty-chart {

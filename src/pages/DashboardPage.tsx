@@ -102,6 +102,7 @@ export function DashboardPage({
     }))
     .filter((d) => d.value > 0)
     .sort((a, b) => b.value - a.value);
+  const catTotal = catData.reduce((s, d) => s + d.value, 0);
 
   const acctBreakdown = accountList.map((acct, i) => {
     const at = txns.filter(
@@ -342,9 +343,15 @@ export function DashboardPage({
                         className="dash-cat-legend-dot"
                         style={{ background: d.color }}
                       />
-                      <span>{d.name}</span>
+                      <span className="dash-cat-legend-name">{d.name}</span>
                       <span className="mono dash-cat-legend-val">
                         {fmt(d.value)}
+                      </span>
+                      <span className="dash-cat-legend-pct">
+                        {catTotal > 0
+                          ? ((d.value / catTotal) * 100).toFixed(1)
+                          : "0.0"}
+                        %
                       </span>
                     </div>
                   ))}
