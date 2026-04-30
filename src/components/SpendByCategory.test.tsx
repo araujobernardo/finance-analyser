@@ -206,6 +206,53 @@ describe("SpendByCategory budget progress bar", () => {
   });
 });
 
+describe("SpendByCategory layout and selection behaviour", () => {
+  it("legend list appears before the chart container in DOM order", () => {
+    const { container } = renderPanel([
+      row("Food", 100, 75),
+      row("Transport", 33, 25),
+    ]);
+    const legendCol = container.querySelector(
+      ".spend-by-category__legend-col",
+    ) as HTMLElement;
+    const chartCol = container.querySelector(
+      ".spend-by-category__chart-col",
+    ) as HTMLElement;
+    expect(legendCol).toBeInTheDocument();
+    expect(chartCol).toBeInTheDocument();
+    // Legend column must come before the chart column in the DOM
+    expect(
+      legendCol.compareDocumentPosition(chartCol) &
+        Node.DOCUMENT_POSITION_FOLLOWING,
+    ).toBeTruthy();
+  });
+
+  it("all legend items render at full opacity when no category is selected", () => {
+    renderPanel([row("Food", 100, 75), row("Transport", 33, 25)], {
+      selectedCategory: null,
+    });
+    const items = screen.getAllByRole("listitem");
+    // filter to spend-row items (excludes orphaned list items if any)
+    const spendRows = items.filter((el) => el.classList.contains("spend-row"));
+    for (const item of spendRows) {
+      const opacity = (item as HTMLElement).style.opacity;
+      expect(opacity === "" || opacity === "1").toBe(true);
+    }
+  });
+
+  it("non-selected legend items render at reduced opacity when a category is selected", () => {
+    renderPanel([row("Food", 100, 75), row("Transport", 33, 25)], {
+      selectedCategory: "Food",
+    });
+    const items = screen.getAllByRole("listitem");
+    const spendRows = items.filter((el) => el.classList.contains("spend-row"));
+    // Food (index 0) — selected → full opacity
+    expect((spendRows[0] as HTMLElement).style.opacity).toBe("1");
+    // Transport (index 1) — not selected → reduced opacity
+    expect((spendRows[1] as HTMLElement).style.opacity).toBe("0.4");
+  });
+});
+
 describe("SpendByCategory donut chart", () => {
   it("renders the chart container when rows are present", () => {
     const { container } = renderPanel([
