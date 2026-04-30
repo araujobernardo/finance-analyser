@@ -129,15 +129,21 @@ describe("SpendingTrendsByCategoryChart", () => {
   });
 
   describe("line rendering — one line per category", () => {
-    it("renders the LineChart SVG when two or more weeks are provided", () => {
+    it("renders both the scroll container and the Recharts responsive container", () => {
       const { container } = render(
         <SpendingTrendsByCategoryChart
           data={TWO_WEEKS}
           selectedCategory={null}
         />,
       );
-      // Recharts renders a .recharts-wrapper element in jsdom
-      expect(container.querySelector(".recharts-wrapper")).toBeInTheDocument();
+      // Our own scroll wrapper is present
+      expect(
+        container.querySelector(".spend-trends__scroll"),
+      ).toBeInTheDocument();
+      // Recharts ResponsiveContainer renders .recharts-responsive-container in jsdom
+      expect(
+        container.querySelector(".recharts-responsive-container"),
+      ).toBeInTheDocument();
     });
 
     it("renders a ResponsiveContainer when two or more weeks are provided", () => {
