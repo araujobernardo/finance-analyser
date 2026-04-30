@@ -1,5 +1,7 @@
 # Changelog
 
+- **2026-04-30** | #153 | T020 [US4] Create SpendingTrendsByCategoryChart component | Recharts LineChart with one line per category; selectedCategory drives per-line opacity (1 vs 0.25) and strokeWidth (3 vs 1); ReferenceLine on hovered week; EmptyState for < 2 weeks; SkeletonCard for loading state.
+- **2026-04-30** | #154 | T021 [US4] Create SpendingTrendsByCategoryChart.css | Scroll container, tooltip, and legend styles mirroring CategoryTrendChart.css patterns; delivered alongside the component in PR #178.
 - **2026-04-30** | #152 | T019 [US4] Unit tests for buildWeeklyCategoryTotals | Added 10 tests covering empty input, single/multi-category grouping, 0-fill for missing categories, consistent keys across buckets, transfers/credits excluded, account filter, same weeks as buildWeeklyTotals, Uncategorised fallback, and 12-week cap.
 - **2026-04-30** | #151 | T018 [US4] Add buildWeeklyCategoryTotals to weeklyAggregation | Implemented weekly category-breakdown aggregation with account filtering, 12-week cap, and 0-fill for missing categories in a week so all series are gap-free.
 - **2026-04-30** | #150 | T017 [US3] Tests for LargestTransactions filter chip and category filtering | Added 6 tests covering filter chip visibility (`selectedCategory` null vs set), filtered list, full list on null, list restore on deselect, and empty state when filter matches nothing.
