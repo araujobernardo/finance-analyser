@@ -1,5 +1,6 @@
 # Changelog
 
+- **2026-04-30** | #185 | WeeklyTrendChart: undefined CSS tokens cause black bars and broken tooltip | Replaced 10 undefined CSS token references with actual project tokens, changed bar fill from var(--negative) to #6366f1 (indigo), fixed axis tick colour to var(--muted), and added a legend row above the chart showing "Weekly spend" and "4-wk avg" series.
 - **2026-04-30** | #183 | SpendByCategory: donut off-centre, percentage hidden, font size inconsistent | Fixed three CSS defects: vertically centred donut column with align-items:center on the body, replaced fixed width with flex centering on the chart column, and normalised .spend-row\_\_pct font-size from 0.8rem to 0.9rem.
 - **2026-04-30** | #181 | bug: SpendByCategory legend renders below donut instead of to the left | Wrapped the Dashboard Spending by Category section in a `.dash-cat-body` flex-row container; moved legend items into `.dash-cat-legend-col` (left) and the PieChart into `.dash-cat-chart-col` (right); added 5 co-located layout tests in `DashboardPage.test.tsx`.
 - **2026-04-30** | #157–#160 | [Polish] Feature 007 verification pass | Confirmed MonthlyTrendChart removed, selectedCategory wired, TypeScript (0 errors), ESLint (0 warnings), full test suite (566 tests passing). All verification issues closed without code changes required.
