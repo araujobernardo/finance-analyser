@@ -200,3 +200,101 @@ describe("LargestTransactions", () => {
     expect(onCategoryClick).toHaveBeenCalledWith("Uncategorised");
   });
 });
+
+describe("LargestTransactions filter chip and category filtering", () => {
+  it("does not render the filter chip when selectedCategory is null", () => {
+    render(
+      <LargestTransactions
+        transactions={[tx(-50, "Supermarket", "Groceries")]}
+        selectedCategory={null}
+        onCategoryClick={vi.fn()}
+      />,
+    );
+    expect(screen.queryByText(/^Filtered:/)).not.toBeInTheDocument();
+  });
+
+  it("renders the filter chip with the category name when selectedCategory is set", () => {
+    render(
+      <LargestTransactions
+        transactions={[tx(-50, "Supermarket", "Groceries")]}
+        selectedCategory="Groceries"
+        onCategoryClick={vi.fn()}
+      />,
+    );
+    expect(screen.getByText("Filtered: Groceries")).toBeInTheDocument();
+  });
+
+  it("shows only matching-category transactions when selectedCategory is set", () => {
+    render(
+      <LargestTransactions
+        transactions={[
+          tx(-50, "Supermarket", "Groceries"),
+          tx(-80, "Fuel", "Transport"),
+          tx(-30, "Salad", "Groceries"),
+        ]}
+        selectedCategory="Groceries"
+        onCategoryClick={vi.fn()}
+      />,
+    );
+    const items = screen.getAllByRole("listitem");
+    expect(items).toHaveLength(2);
+    expect(screen.getByText("Supermarket")).toBeInTheDocument();
+    expect(screen.getByText("Salad")).toBeInTheDocument();
+    expect(screen.queryByText("Fuel")).not.toBeInTheDocument();
+  });
+
+  it("shows all transactions when selectedCategory is null", () => {
+    render(
+      <LargestTransactions
+        transactions={[
+          tx(-50, "Supermarket", "Groceries"),
+          tx(-80, "Fuel", "Transport"),
+        ]}
+        selectedCategory={null}
+        onCategoryClick={vi.fn()}
+      />,
+    );
+    expect(screen.getAllByRole("listitem")).toHaveLength(2);
+    expect(screen.getByText("Supermarket")).toBeInTheDocument();
+    expect(screen.getByText("Fuel")).toBeInTheDocument();
+  });
+
+  it("restores full list when selectedCategory changes from a value to null", () => {
+    const { rerender } = render(
+      <LargestTransactions
+        transactions={[
+          tx(-50, "Supermarket", "Groceries"),
+          tx(-80, "Fuel", "Transport"),
+        ]}
+        selectedCategory="Groceries"
+        onCategoryClick={vi.fn()}
+      />,
+    );
+    expect(screen.getAllByRole("listitem")).toHaveLength(1);
+
+    rerender(
+      <LargestTransactions
+        transactions={[
+          tx(-50, "Supermarket", "Groceries"),
+          tx(-80, "Fuel", "Transport"),
+        ]}
+        selectedCategory={null}
+        onCategoryClick={vi.fn()}
+      />,
+    );
+    expect(screen.getAllByRole("listitem")).toHaveLength(2);
+  });
+
+  it("shows empty state when selectedCategory filter results in no matching transactions", () => {
+    render(
+      <LargestTransactions
+        transactions={[tx(-50, "Supermarket", "Groceries")]}
+        selectedCategory="Transport"
+        onCategoryClick={vi.fn()}
+      />,
+    );
+    expect(
+      screen.getByText("No transactions for this period."),
+    ).toBeInTheDocument();
+  });
+});
