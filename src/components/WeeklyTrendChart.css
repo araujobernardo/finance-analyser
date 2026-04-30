@@ -7,24 +7,53 @@
   display: flex;
   flex-direction: column;
   gap: 0.25rem;
-  padding: var(--space-3) var(--space-4);
-  background: var(--bg-elevated);
-  border: 1px solid var(--border-default);
-  border-radius: var(--radius-md);
-  font-size: var(--text-sm);
-  box-shadow: var(--shadow-md);
-  color: var(--text-primary);
+  padding: 0.6rem 0.85rem;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  font-size: 0.8rem;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
+  color: var(--text);
 }
 
 .weekly-trend-tooltip strong {
-  color: var(--text-primary);
-  margin-bottom: var(--space-1);
+  color: var(--text);
+  margin-bottom: 0.25rem;
 }
 
 .weekly-trend-tooltip__row {
-  color: var(--text-secondary);
+  color: var(--subtle);
 }
 
 .weekly-trend-tooltip__avg {
   color: var(--accent);
+}
+
+.weekly-trend-legend {
+  display: flex;
+  gap: 1.25rem;
+  margin-bottom: 0.75rem;
+  font-size: 0.8rem;
+  color: var(--subtle);
+  align-items: center;
+}
+
+.weekly-trend-legend__item {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+}
+
+.weekly-trend-legend__swatch {
+  width: 10px;
+  height: 10px;
+  border-radius: 2px;
+  flex-shrink: 0;
+}
+
+.weekly-trend-legend__line {
+  width: 16px;
+  height: 2px;
+  border-radius: 1px;
+  flex-shrink: 0;
 }

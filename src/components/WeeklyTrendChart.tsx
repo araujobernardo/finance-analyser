@@ -104,53 +104,71 @@ export function WeeklyTrendChart({ data, isLoading }: WeeklyTrendChartProps) {
   const minWidth = Math.max(480, data.length * 80);
 
   return (
-    <div
-      className="weekly-trend-scroll"
-      aria-label="Weekly spending trend chart"
-    >
-      <div style={{ minWidth }}>
-        <ResponsiveContainer width="100%" height={280}>
-          <ComposedChart
-            data={chartData}
-            margin={{ top: 10, right: 20, left: 10, bottom: 0 }}
-          >
-            <CartesianGrid
-              strokeDasharray="3 3"
-              stroke="var(--border-subtle)"
-              strokeOpacity={0.5}
-            />
-            <XAxis
-              dataKey="label"
-              tick={{ fontSize: 12, fill: "var(--text-muted)" }}
-            />
-            <YAxis
-              tickFormatter={(v) => fmt.format(v as number)}
-              tick={{ fontSize: 11, fill: "var(--text-muted)" }}
-              width={80}
-            />
-            <Tooltip content={<CustomTooltip />} />
-            <Bar
-              dataKey="totalSpend"
-              name="Total Spend"
-              radius={[3, 3, 0, 0]}
-              animationDuration={250}
-            >
-              {chartData.map((entry) => (
-                <Cell key={entry.weekStart} fill="var(--negative)" />
-              ))}
-            </Bar>
-            <Line
-              dataKey="avg"
-              name="4-wk avg"
-              type="monotone"
-              stroke="var(--accent)"
-              strokeWidth={2}
-              dot={false}
-              animationDuration={250}
-            />
-          </ComposedChart>
-        </ResponsiveContainer>
+    <>
+      <div className="weekly-trend-legend">
+        <span className="weekly-trend-legend__item">
+          <span
+            className="weekly-trend-legend__swatch"
+            style={{ backgroundColor: "#6366f1" }}
+          />
+          Weekly spend
+        </span>
+        <span className="weekly-trend-legend__item">
+          <span
+            className="weekly-trend-legend__line"
+            style={{ backgroundColor: "var(--accent)" }}
+          />
+          4-wk avg
+        </span>
       </div>
-    </div>
+      <div
+        className="weekly-trend-scroll"
+        aria-label="Weekly spending trend chart"
+      >
+        <div style={{ minWidth }}>
+          <ResponsiveContainer width="100%" height={280}>
+            <ComposedChart
+              data={chartData}
+              margin={{ top: 10, right: 20, left: 10, bottom: 0 }}
+            >
+              <CartesianGrid
+                strokeDasharray="3 3"
+                stroke="var(--border-subtle)"
+                strokeOpacity={0.5}
+              />
+              <XAxis
+                dataKey="label"
+                tick={{ fontSize: 12, fill: "var(--muted)" }}
+              />
+              <YAxis
+                tickFormatter={(v) => fmt.format(v as number)}
+                tick={{ fontSize: 11, fill: "var(--muted)" }}
+                width={80}
+              />
+              <Tooltip content={<CustomTooltip />} />
+              <Bar
+                dataKey="totalSpend"
+                name="Total Spend"
+                radius={[3, 3, 0, 0]}
+                animationDuration={250}
+              >
+                {chartData.map((entry) => (
+                  <Cell key={entry.weekStart} fill="#6366f1" />
+                ))}
+              </Bar>
+              <Line
+                dataKey="avg"
+                name="4-wk avg"
+                type="monotone"
+                stroke="var(--accent)"
+                strokeWidth={2}
+                dot={false}
+                animationDuration={250}
+              />
+            </ComposedChart>
+          </ResponsiveContainer>
+        </div>
+      </div>
+    </>
   );
 }
