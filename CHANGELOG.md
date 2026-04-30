@@ -1,5 +1,6 @@
 # Changelog
 
+- **2026-04-30** | #150 | T017 [US3] Tests for LargestTransactions filter chip and category filtering | Added 6 tests covering filter chip visibility (`selectedCategory` null vs set), filtered list, full list on null, list restore on deselect, and empty state when filter matches nothing.
 - **2026-04-30** | #149 | T016 [US3] Pass selectedCategory prop to LargestTransactions in DashboardPage | Replaced inline "Largest Expenses" section with `LargestTransactions` component; maps `PfaTxn` to `Transaction` shape for the component; wires `selectedCategory` so selecting a donut slice filters the list.
 - **2026-04-30** | #148 | T015 [US3] Add filter chip styles to LargestTransactions.css | Added `.largest-txns__filter-chip` rounded pill styles using `var(--accent)` colour tokens, consistent with existing pill/badge patterns.
 - **2026-04-30** | #147 | T014 [US3] Update LargestTransactions with selectedCategory filter and chip | Added optional `selectedCategory` prop that filters the transaction list to matching category and renders a "Filtered: {name}" chip above the list; backward-compatible default of `null`.
