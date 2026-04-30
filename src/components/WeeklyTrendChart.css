@@ -1,0 +1,30 @@
+.weekly-trend-scroll {
+  overflow-x: auto;
+  margin-bottom: 1.5rem;
+}
+
+.weekly-trend-tooltip {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  padding: var(--space-3) var(--space-4);
+  background: var(--bg-elevated);
+  border: 1px solid var(--border-default);
+  border-radius: var(--radius-md);
+  font-size: var(--text-sm);
+  box-shadow: var(--shadow-md);
+  color: var(--text-primary);
+}
+
+.weekly-trend-tooltip strong {
+  color: var(--text-primary);
+  margin-bottom: var(--space-1);
+}
+
+.weekly-trend-tooltip__row {
+  color: var(--text-secondary);
+}
+
+.weekly-trend-tooltip__avg {
+  color: var(--accent);
+}
