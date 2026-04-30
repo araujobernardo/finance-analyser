@@ -233,11 +233,17 @@
 }
 
 .dash-cat-chart-col {
-  flex: 0 0 200px;
-  width: 200px;
+  flex: 0 0 44%;
+  min-width: 140px;
+  max-width: 300px;
   display: flex;
   align-items: center;
   justify-content: center;
+}
+
+.dash-cat-donut-wrap {
+  width: 100%;
+  aspect-ratio: 1;
 }
 
 .dash-cat-legend {

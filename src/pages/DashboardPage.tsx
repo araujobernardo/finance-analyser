@@ -359,42 +359,44 @@ export function DashboardPage({
               </div>
               {/* Right: donut chart */}
               <div className="dash-cat-chart-col">
-                <ResponsiveContainer width="100%" height={190}>
-                  <PieChart>
-                    <Pie
-                      data={catData}
-                      cx="50%"
-                      cy="50%"
-                      innerRadius={52}
-                      outerRadius={85}
-                      paddingAngle={2}
-                      dataKey="value"
-                    >
-                      {catData.map((d, i) => (
-                        <Cell
-                          key={i}
-                          fill={d.color}
-                          opacity={
-                            selectedCategory === null ||
-                            selectedCategory === d.name
-                              ? 1
-                              : 0.3
-                          }
-                          onClick={() =>
-                            setSelectedCategory(
-                              d.name === selectedCategory ? null : d.name,
-                            )
-                          }
-                          style={{ cursor: "pointer" }}
-                        />
-                      ))}
-                    </Pie>
-                    <Tooltip
-                      formatter={(v) => [fmt(v as number), "Spend"]}
-                      contentStyle={tooltipStyle}
-                    />
-                  </PieChart>
-                </ResponsiveContainer>
+                <div className="dash-cat-donut-wrap">
+                  <ResponsiveContainer width="100%" height="100%">
+                    <PieChart>
+                      <Pie
+                        data={catData}
+                        cx="50%"
+                        cy="50%"
+                        innerRadius="52%"
+                        outerRadius="80%"
+                        paddingAngle={2}
+                        dataKey="value"
+                      >
+                        {catData.map((d, i) => (
+                          <Cell
+                            key={i}
+                            fill={d.color}
+                            opacity={
+                              selectedCategory === null ||
+                              selectedCategory === d.name
+                                ? 1
+                                : 0.3
+                            }
+                            onClick={() =>
+                              setSelectedCategory(
+                                d.name === selectedCategory ? null : d.name,
+                              )
+                            }
+                            style={{ cursor: "pointer" }}
+                          />
+                        ))}
+                      </Pie>
+                      <Tooltip
+                        formatter={(v) => [fmt(v as number), "Spend"]}
+                        contentStyle={tooltipStyle}
+                      />
+                    </PieChart>
+                  </ResponsiveContainer>
+                </div>
               </div>
             </div>
           ) : (
