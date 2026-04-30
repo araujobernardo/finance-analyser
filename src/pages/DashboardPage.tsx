@@ -2,9 +2,13 @@ import { PieChart, Pie, Cell, Tooltip, ResponsiveContainer } from "recharts";
 import { useState } from "react";
 import { ACCOUNT_COLORS } from "../constants/colors";
 import type { PfaTxn, PfaCategory, PfaBudgets } from "../types/pfa";
-import { buildWeeklyTotals } from "../utils/weeklyAggregation";
+import {
+  buildWeeklyTotals,
+  buildWeeklyCategoryTotals,
+} from "../utils/weeklyAggregation";
 import { WeeklyTrendChart } from "../components/WeeklyTrendChart";
 import { LargestTransactions } from "../components/LargestTransactions";
+import { SpendingTrendsByCategoryChart } from "../components/SpendingTrendsByCategoryChart";
 import type { Transaction } from "../utils/csvParser";
 import "./DashboardPage.css";
 
@@ -117,6 +121,7 @@ export function DashboardPage({
   });
 
   const weeklyBuckets = buildWeeklyTotals(txns, acctFilter);
+  const weeklyCategoryBuckets = buildWeeklyCategoryTotals(txns, acctFilter);
 
   const budgetData = Object.entries(budgets)
     .map(([cat, budget]) => ({
@@ -392,6 +397,14 @@ export function DashboardPage({
             onCategoryClick={setSelectedCategory}
           />
         </div>
+      </div>
+
+      {/* Spending Trends by Category */}
+      <div className="card">
+        <SpendingTrendsByCategoryChart
+          data={weeklyCategoryBuckets}
+          selectedCategory={selectedCategory}
+        />
       </div>
 
       {/* Weekly Trends */}
