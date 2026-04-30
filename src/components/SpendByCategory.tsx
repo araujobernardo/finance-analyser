@@ -1,12 +1,5 @@
 import { useState } from "react";
-import {
-  PieChart,
-  Pie,
-  Cell,
-  Tooltip,
-  Legend,
-  ResponsiveContainer,
-} from "recharts";
+import { PieChart, Pie, Cell, Tooltip, ResponsiveContainer } from "recharts";
 import type { TooltipProps } from "recharts";
 import { saveBudget, deleteBudget } from "../services/budgets";
 import { CATEGORIES } from "../services/categorisation";
@@ -233,139 +226,151 @@ export function SpendByCategory({
           />
         ) : (
           <>
-            <div className="spend-by-category__chart" aria-hidden="true">
-              <ResponsiveContainer width="100%" height={220}>
-                <PieChart>
-                  <Pie
-                    data={chartData}
-                    dataKey="value"
-                    nameKey="name"
-                    cx="50%"
-                    cy="50%"
-                    innerRadius="60%"
-                    outerRadius="80%"
-                    strokeWidth={2}
-                    stroke="var(--surface)"
-                  >
-                    {chartData.map((entry, index) => (
-                      <Cell
-                        key={`cell-${index}`}
-                        fill={entry.fill}
-                        opacity={
-                          selectedCategory === null ||
-                          selectedCategory === entry.category
-                            ? 1
-                            : 0.35
-                        }
-                        style={{ cursor: "pointer" }}
+            <div className="spend-by-category__body">
+              {/* Left column: legend list */}
+              <div className="spend-by-category__legend-col">
+                <ul className="spend-by-category__list">
+                  {rows.map((row, i) => {
+                    const budget = budgets[row.category];
+                    const hasBudget = budget != null && budget > 0;
+                    const pct = hasBudget ? (row.total / budget) * 100 : 0;
+                    const colour = getCategoryColour(row.category, i);
+
+                    return (
+                      <li
+                        key={row.category}
+                        className={[
+                          "spend-row",
+                          row.category === "Uncategorised"
+                            ? "spend-row--uncategorised"
+                            : "",
+                          row.category === selectedCategory
+                            ? "spend-row--selected"
+                            : "",
+                        ]
+                          .filter(Boolean)
+                          .join(" ")}
                         onClick={() =>
                           onCategoryClick(
-                            entry.category === selectedCategory
+                            row.category === selectedCategory
                               ? null
-                              : entry.category,
+                              : row.category,
                           )
                         }
-                      />
-                    ))}
-                  </Pie>
-                  <Tooltip
-                    content={(<CategoryTooltip />) as React.ReactElement}
-                  />
-                  <Legend
-                    iconType="circle"
-                    iconSize={8}
-                    formatter={(value) => (
-                      <span className="chart-legend__label">{value}</span>
-                    )}
-                  />
-                </PieChart>
-              </ResponsiveContainer>
-            </div>
-
-            <ul className="spend-by-category__list">
-              {rows.map((row, i) => {
-                const budget = budgets[row.category];
-                const hasBudget = budget != null && budget > 0;
-                const pct = hasBudget ? (row.total / budget) * 100 : 0;
-                const colour = getCategoryColour(row.category, i);
-
-                return (
-                  <li
-                    key={row.category}
-                    className={[
-                      "spend-row",
-                      row.category === "Uncategorised"
-                        ? "spend-row--uncategorised"
-                        : "",
-                      row.category === selectedCategory
-                        ? "spend-row--selected"
-                        : "",
-                    ]
-                      .filter(Boolean)
-                      .join(" ")}
-                    onClick={() =>
-                      onCategoryClick(
-                        row.category === selectedCategory ? null : row.category,
-                      )
-                    }
-                    style={{ cursor: "pointer" }}
-                  >
-                    <div
-                      className="spend-row__pct-bar"
-                      style={{
-                        width: `${row.percentage}%`,
-                        background: colour,
-                      }}
-                      aria-hidden="true"
-                    />
-                    <div className="spend-row__content">
-                      <div className="spend-row__top">
-                        <span
-                          className="spend-row__swatch"
-                          style={{ background: colour }}
+                        style={{
+                          cursor: "pointer",
+                          opacity:
+                            selectedCategory === null ||
+                            row.category === selectedCategory
+                              ? 1
+                              : 0.4,
+                        }}
+                      >
+                        <div
+                          className="spend-row__pct-bar"
+                          style={{
+                            width: `${row.percentage}%`,
+                            background: colour,
+                          }}
                           aria-hidden="true"
                         />
-                        <span className="spend-row__name">{row.category}</span>
-                        <span className="spend-row__amount">
-                          {fmt.format(row.total)}
-                        </span>
-                        <span className="spend-row__pct">
-                          {row.percentage.toFixed(1)}%
-                        </span>
-                        {hasBudget && (
-                          <button
-                            type="button"
-                            className="budget-delete-btn"
-                            aria-label={`Remove budget for ${row.category}`}
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              handleDelete(row.category);
-                            }}
-                          >
-                            ×
-                          </button>
-                        )}
-                      </div>
-                      {hasBudget && (
-                        <div
-                          className="budget-bar"
-                          aria-label={`Budget progress for ${row.category}`}
-                        >
-                          <div
-                            className={budgetBarClass(pct)}
-                            style={{ width: `${Math.min(pct, 100)}%` }}
-                          />
-                          <span className="budget-bar__label">
-                            {fmt.format(row.total)} / {fmt.format(budget)} (
-                            {pct.toFixed(0)}%)
-                          </span>
+                        <div className="spend-row__content">
+                          <div className="spend-row__top">
+                            <span
+                              className="spend-row__swatch"
+                              style={{ background: colour }}
+                              aria-hidden="true"
+                            />
+                            <span className="spend-row__name">
+                              {row.category}
+                            </span>
+                            <span className="spend-row__amount">
+                              {fmt.format(row.total)}
+                            </span>
+                            <span className="spend-row__pct">
+                              {row.percentage.toFixed(1)}%
+                            </span>
+                            {hasBudget && (
+                              <button
+                                type="button"
+                                className="budget-delete-btn"
+                                aria-label={`Remove budget for ${row.category}`}
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  handleDelete(row.category);
+                                }}
+                              >
+                                ×
+                              </button>
+                            )}
+                          </div>
+                          {hasBudget && (
+                            <div
+                              className="budget-bar"
+                              aria-label={`Budget progress for ${row.category}`}
+                            >
+                              <div
+                                className={budgetBarClass(pct)}
+                                style={{ width: `${Math.min(pct, 100)}%` }}
+                              />
+                              <span className="budget-bar__label">
+                                {fmt.format(row.total)} / {fmt.format(budget)} (
+                                {pct.toFixed(0)}%)
+                              </span>
+                            </div>
+                          )}
                         </div>
-                      )}
-                    </div>
-                  </li>
-                );
-              })}
-            </ul>
+                      </li>
+                    );
+                  })}
+                </ul>
+              </div>
+
+              {/* Right column: donut chart */}
+              <div className="spend-by-category__chart-col">
+                <div className="spend-by-category__chart" aria-hidden="true">
+                  <ResponsiveContainer width="100%" height={220}>
+                    <PieChart>
+                      <Pie
+                        data={chartData}
+                        dataKey="value"
+                        nameKey="name"
+                        cx="50%"
+                        cy="50%"
+                        innerRadius="60%"
+                        outerRadius="80%"
+                        strokeWidth={2}
+                        stroke="var(--surface)"
+                      >
+                        {chartData.map((entry, index) => (
+                          <Cell
+                            key={`cell-${index}`}
+                            fill={entry.fill}
+                            opacity={
+                              selectedCategory === null ||
+                              selectedCategory === entry.category
+                                ? 1
+                                : 0.35
+                            }
+                            style={{ cursor: "pointer" }}
+                            onClick={() =>
+                              onCategoryClick(
+                                entry.category === selectedCategory
+                                  ? null
+                                  : entry.category,
+                              )
+                            }
+                          />
+                        ))}
+                      </Pie>
+                      <Tooltip
+                        content={(<CategoryTooltip />) as React.ReactElement}
+                      />
+                    </PieChart>
+                  </ResponsiveContainer>
+                </div>
+              </div>
+            </div>
           </>
         )}
 
