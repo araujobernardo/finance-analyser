@@ -49,6 +49,22 @@ Capture:
 
 ### Phase 2 — Options (present to user, wait for choice)
 
+### Anti-Pattern Check (before presenting options)
+
+Before presenting options to the user, verify that none of the 3 options
+violate these absolute bans from Impeccable. If any option does, revise it:
+
+- No side-stripe borders as the primary card treatment
+- No gradient text
+- No default glassmorphism (backdrop-filter without strong design rationale)
+- No hero-metric card templates (decorative large numbers with no context)
+- No identical card grids (every card must differ in content weight or layout)
+- No modal-first thinking (modals only for true interrupts)
+- No pure black (#000000) without colour tinting
+
+After verifying, append this note to the options presentation:
+"Checked against Impeccable anti-pattern list."
+
 Present exactly **3 UX options** to the user. Each option must include:
 
 1. **Name** — a 2–3 word label (e.g. "Inline Expandable", "Side Drawer", "Full Page")
