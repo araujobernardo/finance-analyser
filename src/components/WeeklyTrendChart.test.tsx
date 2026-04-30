@@ -111,4 +111,90 @@ describe("WeeklyTrendChart", () => {
       );
     });
   });
+
+  describe("legend", () => {
+    it("renders the legend when two or more weeks are provided", () => {
+      const { container } = render(
+        <WeeklyTrendChart
+          data={[
+            bucket("2026-01-27", "Jan 27", 500),
+            bucket("2026-02-03", "Feb 3", 620),
+          ]}
+        />,
+      );
+      expect(
+        container.querySelector(".weekly-trend-legend"),
+      ).toBeInTheDocument();
+    });
+
+    it('renders "Weekly spend" label in the legend', () => {
+      render(
+        <WeeklyTrendChart
+          data={[
+            bucket("2026-01-27", "Jan 27", 500),
+            bucket("2026-02-03", "Feb 3", 620),
+          ]}
+        />,
+      );
+      expect(screen.getByText("Weekly spend")).toBeInTheDocument();
+    });
+
+    it('renders "4-wk avg" label in the legend', () => {
+      render(
+        <WeeklyTrendChart
+          data={[
+            bucket("2026-01-27", "Jan 27", 500),
+            bucket("2026-02-03", "Feb 3", 620),
+          ]}
+        />,
+      );
+      expect(screen.getByText("4-wk avg")).toBeInTheDocument();
+    });
+
+    it("renders the indigo swatch with correct background colour", () => {
+      const { container } = render(
+        <WeeklyTrendChart
+          data={[
+            bucket("2026-01-27", "Jan 27", 500),
+            bucket("2026-02-03", "Feb 3", 620),
+          ]}
+        />,
+      );
+      const swatch = container.querySelector(
+        ".weekly-trend-legend__swatch",
+      ) as HTMLElement;
+      expect(swatch).toBeInTheDocument();
+      expect(swatch.style.backgroundColor).toBe("rgb(99, 102, 241)");
+    });
+
+    it("renders the accent line with correct background colour", () => {
+      const { container } = render(
+        <WeeklyTrendChart
+          data={[
+            bucket("2026-01-27", "Jan 27", 500),
+            bucket("2026-02-03", "Feb 3", 620),
+          ]}
+        />,
+      );
+      const line = container.querySelector(
+        ".weekly-trend-legend__line",
+      ) as HTMLElement;
+      expect(line).toBeInTheDocument();
+      expect(line.style.backgroundColor).toBe("var(--accent)");
+    });
+
+    it("does not render the legend in empty state", () => {
+      const { container } = render(<WeeklyTrendChart data={[]} />);
+      expect(
+        container.querySelector(".weekly-trend-legend"),
+      ).not.toBeInTheDocument();
+    });
+
+    it("does not render the legend in loading state", () => {
+      const { container } = render(<WeeklyTrendChart data={[]} isLoading />);
+      expect(
+        container.querySelector(".weekly-trend-legend"),
+      ).not.toBeInTheDocument();
+    });
+  });
 });
