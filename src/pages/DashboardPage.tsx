@@ -51,6 +51,13 @@ export function DashboardPage({
   categories,
 }: Props) {
   const [acctFilter, setAcctFilter] = useState("all");
+  const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
+
+  // Reset category selection whenever the account filter changes
+  const handleAcctFilterChange = (next: string) => {
+    setAcctFilter(next);
+    setSelectedCategory(null);
+  };
 
   const toggleMonth = (m: string) =>
     setSelectedMonths(
@@ -182,7 +189,7 @@ export function DashboardPage({
         <div className="dash-acct-pills">
           <button
             className={`pill${acctFilter === "all" ? " pill-active" : ""}`}
-            onClick={() => setAcctFilter("all")}
+            onClick={() => handleAcctFilterChange("all")}
           >
             All Accounts
           </button>
@@ -199,8 +206,8 @@ export function DashboardPage({
                     : undefined
                 }
                 onClick={() =>
-                  setAcctFilter((prev) =>
-                    prev === a.display ? "all" : a.display,
+                  handleAcctFilterChange(
+                    acctFilter === a.display ? "all" : a.display,
                   )
                 }
               >
@@ -313,7 +320,22 @@ export function DashboardPage({
                     dataKey="value"
                   >
                     {catData.map((d, i) => (
-                      <Cell key={i} fill={d.color} />
+                      <Cell
+                        key={i}
+                        fill={d.color}
+                        opacity={
+                          selectedCategory === null ||
+                          selectedCategory === d.name
+                            ? 1
+                            : 0.3
+                        }
+                        onClick={() =>
+                          setSelectedCategory(
+                            d.name === selectedCategory ? null : d.name,
+                          )
+                        }
+                        style={{ cursor: "pointer" }}
+                      />
                     ))}
                   </Pie>
                   <Tooltip
@@ -324,7 +346,22 @@ export function DashboardPage({
               </ResponsiveContainer>
               <div className="dash-cat-legend">
                 {catData.slice(0, 7).map((d) => (
-                  <div key={d.name} className="dash-cat-legend-item">
+                  <div
+                    key={d.name}
+                    className="dash-cat-legend-item"
+                    style={{
+                      opacity:
+                        selectedCategory === null || selectedCategory === d.name
+                          ? 1
+                          : 0.4,
+                      cursor: "pointer",
+                    }}
+                    onClick={() =>
+                      setSelectedCategory(
+                        d.name === selectedCategory ? null : d.name,
+                      )
+                    }
+                  >
                     <span
                       className="dash-cat-legend-dot"
                       style={{ background: d.color }}
