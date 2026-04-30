@@ -12,6 +12,24 @@
   gap: 1rem;
 }
 
+/* Left-legend / right-donut layout */
+.spend-by-category__body {
+  display: flex;
+  flex-direction: row;
+  align-items: flex-start;
+  gap: 1rem;
+}
+
+.spend-by-category__legend-col {
+  flex: 1;
+  min-width: 0;
+}
+
+.spend-by-category__chart-col {
+  flex: 0 0 220px;
+  width: 220px;
+}
+
 .spend-by-category__chart {
   width: 100%;
 }
