@@ -1,5 +1,5 @@
 import type { PfaTxn } from "../types/pfa";
-import type { WeekBucket } from "../types/weeklyData";
+import type { WeekBucket, WeeklyCategoryBucket } from "../types/weeklyData";
 
 /**
  * Returns a new Date set to the Monday of the ISO week containing `date`,
@@ -70,4 +70,73 @@ export function buildWeeklyTotals(
     }));
 
   return sorted;
+}
+
+/**
+ * Aggregates transactions into weekly spend totals broken down by category.
+ * Only expense transactions (non-transfer, non-credit) are included.
+ * Returns the last 12 weeks that contain at least one transaction,
+ * ordered oldest → newest. Missing categories for a given week default to 0
+ * (no gaps — all categories seen in any week are present in every bucket).
+ */
+export function buildWeeklyCategoryTotals(
+  transactions: PfaTxn[],
+  activeAccountId: string,
+): WeeklyCategoryBucket[] {
+  const expenses = transactions.filter(
+    (t) =>
+      !t.isTransfer &&
+      !t.isCredit &&
+      (activeAccountId === "all" || t.account === activeAccountId),
+  );
+
+  // Map: weekKey → { weekStart Date, byCategory accumulator }
+  const weekMap = new Map<
+    string,
+    { weekStart: Date; byCategory: Record<string, number> }
+  >();
+
+  // Track all categories seen across all weeks
+  const allCategories = new Set<string>();
+
+  for (const t of expenses) {
+    const date = new Date(`${t.date}T00:00:00`);
+    const monday = isoWeekStart(date);
+    const y = monday.getFullYear();
+    const m = String(monday.getMonth() + 1).padStart(2, "0");
+    const d = String(monday.getDate()).padStart(2, "0");
+    const key = `${y}-${m}-${d}`;
+
+    const cat = t.category ?? "Uncategorised";
+    allCategories.add(cat);
+
+    const existing = weekMap.get(key);
+    if (existing) {
+      existing.byCategory[cat] =
+        (existing.byCategory[cat] ?? 0) + Math.abs(t.amount);
+    } else {
+      weekMap.set(key, {
+        weekStart: monday,
+        byCategory: { [cat]: Math.abs(t.amount) },
+      });
+    }
+  }
+
+  // Keep only the last 12 weeks (sorted oldest → newest)
+  const sorted = Array.from(weekMap.entries())
+    .sort(([a], [b]) => a.localeCompare(b))
+    .slice(-12);
+
+  // Fill in 0 for any category missing from a particular week
+  return sorted.map(([weekStart, { weekStart: date, byCategory }]) => {
+    const filled: Record<string, number> = {};
+    for (const cat of allCategories) {
+      filled[cat] = byCategory[cat] ?? 0;
+    }
+    return {
+      weekStart,
+      label: formatWeekLabel(date),
+      byCategory: filled,
+    };
+  });
 }
