@@ -1,5 +1,6 @@
 # Changelog
 
+- **2026-04-30** | #155 | T022 [US4] Component tests for SpendingTrendsByCategoryChart | Added 13 tests covering empty/loading guards, scroll wrapper, min-width calculation, Recharts ResponsiveContainer presence, selectedCategory rerender smoke test, and hover interaction.
 - **2026-04-30** | #153 | T020 [US4] Create SpendingTrendsByCategoryChart component | Recharts LineChart with one line per category; selectedCategory drives per-line opacity (1 vs 0.25) and strokeWidth (3 vs 1); ReferenceLine on hovered week; EmptyState for < 2 weeks; SkeletonCard for loading state.
 - **2026-04-30** | #154 | T021 [US4] Create SpendingTrendsByCategoryChart.css | Scroll container, tooltip, and legend styles mirroring CategoryTrendChart.css patterns; delivered alongside the component in PR #178.
 - **2026-04-30** | #152 | T019 [US4] Unit tests for buildWeeklyCategoryTotals | Added 10 tests covering empty input, single/multi-category grouping, 0-fill for missing categories, consistent keys across buckets, transfers/credits excluded, account filter, same weeks as buildWeeklyTotals, Uncategorised fallback, and 12-week cap.
