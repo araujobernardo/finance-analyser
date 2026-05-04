@@ -42,6 +42,22 @@ If tests fail:
 4. If failures persist after 3 attempts: stop, notify the user with a clear
    description of what failed and what was tried, and do not merge.
 
+#### Design Audit (UI stories only)
+
+Run the Impeccable design scanner:
+
+```bash
+npx impeccable detect src/ --format summary
+```
+
+Treat results as follows:
+
+- **Minor issues** (spacing inconsistencies, typography deviations): document
+  in the PR description as a follow-up item, do not block merge.
+- **Major issues** (color contrast failures, touch target violations < 44px,
+  missing focus states): fix before merge — treat as a failing test (counts
+  toward the 3-attempt loop).
+
 ## Security Scan
 
 Scan every PR for exposed credentials, API keys, or tokens in code or config:
