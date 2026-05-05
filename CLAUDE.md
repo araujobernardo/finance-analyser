@@ -36,8 +36,8 @@ For project principles, governance, and agent workflow see: constitution.md
 
 ## Active Feature Plan
 
-Current feature: **PostgreSQL Database Provisioning and Schema Migrations** (branch `008-postgresql-schema-migrations`)  
-Implementation plan: [specs/008-postgresql-schema-migrations/plan.md](specs/008-postgresql-schema-migrations/plan.md)  
-Spec: [specs/008-postgresql-schema-migrations/spec.md](specs/008-postgresql-schema-migrations/spec.md)
+Current feature: **Backend API Server Deployment** (branch `009-api-server-deploy`)  
+Implementation plan: [specs/009-api-server-deploy/plan.md](specs/009-api-server-deploy/plan.md)  
+Spec: [specs/009-api-server-deploy/spec.md](specs/009-api-server-deploy/spec.md)
 
 <!-- SPECKIT END -->
