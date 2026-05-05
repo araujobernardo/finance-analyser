@@ -29,7 +29,7 @@ A developer clones the repository, sets the required environment variables in a 
 
 **Why this priority**: Developer velocity depends on a fast local feedback loop. If starting the server locally requires multiple steps or manual setup beyond env vars, iteration slows and bugs go undetected before deployment.
 
-**Independent Test**: Clone the repo on a clean machine → create `.env` from `.env.example` → run `npm run dev` → server starts on the configured port → GET `/health` returns 200 → no additional commands required.
+**Independent Test**: Clone the repo on a clean machine → create `.env` from `.env.example` → run `npm run server:dev` → server starts on the configured port → GET `/health` returns 200 → no additional commands required.
 
 **Acceptance Scenarios**:
 
@@ -112,6 +112,12 @@ A developer adding a new REST route (e.g., `GET /api/accounts`) can do so by add
 - **SC-003**: 100% of error responses under all tested error conditions (404, 500, invalid JSON, CORS rejection) are machine-readable JSON — zero HTML error pages returned.
 - **SC-004**: Requests from unlisted origins are rejected 100% of the time; requests from the configured origin succeed 100% of the time under normal conditions.
 - **SC-005**: Adding a new stub route to the server takes under 5 minutes and requires changing only one file (the new route module) plus one registration line — no changes to core server configuration.
+
+## Clarifications
+
+### Session 2026-05-06
+
+- Q: US2 Independent Test referenced `npm run dev` — is this correct? → A: No, the correct command is `npm run server:dev` (`npm run dev` starts the Vite frontend, not the API server). Fixed in US2 Independent Test.
 
 ## Assumptions
 
