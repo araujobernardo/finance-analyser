@@ -36,8 +36,8 @@ For project principles, governance, and agent workflow see: constitution.md
 
 ## Active Feature Plan
 
-Current feature: **Account Number-Based Categorisation** (branch `006-account-number-categorisation`)  
-Implementation plan: [specs/006-account-number-categorisation/plan.md](specs/006-account-number-categorisation/plan.md)  
-Spec: [specs/006-account-number-categorisation/spec.md](specs/006-account-number-categorisation/spec.md)
+Current feature: **PostgreSQL Database Provisioning and Schema Migrations** (branch `008-postgresql-schema-migrations`)  
+Implementation plan: [specs/008-postgresql-schema-migrations/plan.md](specs/008-postgresql-schema-migrations/plan.md)  
+Spec: [specs/008-postgresql-schema-migrations/spec.md](specs/008-postgresql-schema-migrations/spec.md)
 
 <!-- SPECKIT END -->

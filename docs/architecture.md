@@ -11,6 +11,8 @@
 | Linter       | ESLint                           |
 | Formatter    | Prettier                         |
 | Data storage | Browser `localStorage`           |
+| Database     | Supabase PostgreSQL              |
+| ORM          | Drizzle ORM                      |
 | AI/LLM       | Anthropic Claude API             |
 
 ---
@@ -22,6 +24,7 @@
 - **Data input** — monthly CSV exports from a New Zealand bank account.
 - **Persistence** — `localStorage` only (no external storage).
 - **AI** — Claude API for transaction categorisation and the chat interface.
+- **Server-side only** — `src/db/` must never be imported from React components or the Vite browser bundle. `postgres` (postgres.js) uses Node.js built-ins (`net`, `tls`) that Vite cannot bundle for the browser.
 
 ---
 
