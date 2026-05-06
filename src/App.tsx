@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { Navigate, Route, Routes, useNavigate } from "react-router-dom";
 import { Sidebar } from "./components/Sidebar";
 import { DashboardPage } from "./pages/DashboardPage";
 import { TransactionsPage } from "./pages/TransactionsPage";
@@ -89,10 +90,8 @@ function detectTransfers(allTxns: PfaTxn[]): PfaTxn[] {
 
 // ── Root App ────────────────────────────────────────────────────────────────
 
-type Tab = "dashboard" | "transactions" | "chat" | "settings";
-
 export default function App() {
-  const [tab, setTab] = useState<Tab>("dashboard");
+  const navigate = useNavigate();
   const [txns, setTxnsState] = useState<PfaTxn[]>(() => {
     const t = lsGet<PfaTxn[]>(SK.txns);
     if (!t || !Array.isArray(t)) return [];
@@ -292,7 +291,7 @@ export default function App() {
         msg: `Imported ${allNew.length} transactions${tCount ? ` · ${tCount} transfer${tCount > 1 ? "s" : ""} detected` : ""}`,
       });
       setTimeout(() => setUploadStatus(null), 5000);
-      setTab("dashboard");
+      void navigate("/dashboard");
     } catch (e) {
       setUploadStatus({
         type: "error",
@@ -316,8 +315,6 @@ export default function App() {
   return (
     <div className="app-shell">
       <Sidebar
-        tab={tab}
-        setTab={(t) => setTab(t as Tab)}
         onUpload={handleUpload}
         uploadStatus={uploadStatus}
         txnCount={txns.length}
@@ -325,46 +322,61 @@ export default function App() {
         onRenameAccount={handleRenameAccount}
       />
       <div className="app-content">
-        {tab === "dashboard" && (
-          <DashboardPage
-            txns={txns}
-            months={months}
-            selectedMonths={currentMonths}
-            setSelectedMonths={setSelectedMonths}
-            budgets={budgets}
-            accountList={accountList}
-            categories={categories}
+        <Routes>
+          <Route index element={<Navigate to="/dashboard" replace />} />
+          <Route
+            path="/dashboard"
+            element={
+              <DashboardPage
+                txns={txns}
+                months={months}
+                selectedMonths={currentMonths}
+                setSelectedMonths={setSelectedMonths}
+                budgets={budgets}
+                accountList={accountList}
+                categories={categories}
+              />
+            }
           />
-        )}
-        {tab === "transactions" && (
-          <TransactionsPage
-            txns={txns}
-            accountList={accountList}
-            categories={categories}
-            onBulkCategoryChange={handleBulkCategoryChange}
+          <Route
+            path="/transactions"
+            element={
+              <TransactionsPage
+                txns={txns}
+                accountList={accountList}
+                categories={categories}
+                onBulkCategoryChange={handleBulkCategoryChange}
+              />
+            }
           />
-        )}
-        {tab === "chat" && (
-          <ChatPage
-            txns={txns}
-            budgets={budgets}
-            categories={categories}
-            messages={chatMessages}
-            setMessages={setChatMessages}
+          <Route
+            path="/chat"
+            element={
+              <ChatPage
+                txns={txns}
+                budgets={budgets}
+                categories={categories}
+                messages={chatMessages}
+                setMessages={setChatMessages}
+              />
+            }
           />
-        )}
-        {tab === "settings" && (
-          <SettingsPage
-            categories={categories}
-            setCategories={setCategories}
-            budgets={budgets}
-            setBudgets={setBudgets}
-            txns={txns}
-            setTxns={setTxns}
-            accountList={accountList}
-            onRenameAccount={handleRenameAccount}
+          <Route
+            path="/settings"
+            element={
+              <SettingsPage
+                categories={categories}
+                setCategories={setCategories}
+                budgets={budgets}
+                setBudgets={setBudgets}
+                txns={txns}
+                setTxns={setTxns}
+                accountList={accountList}
+                onRenameAccount={handleRenameAccount}
+              />
+            }
           />
-        )}
+        </Routes>
       </div>
     </div>
   );

@@ -1,4 +1,5 @@
 import { useRef, useState } from "react";
+import { NavLink } from "react-router-dom";
 import { ACCOUNT_COLORS } from "../constants/colors";
 import "./Sidebar.css";
 
@@ -13,8 +14,6 @@ interface AccountEntry {
 }
 
 interface SidebarProps {
-  tab: string;
-  setTab: (t: string) => void;
   onUpload: (files: File[]) => void;
   uploadStatus: UploadStatus | null;
   txnCount: number;
@@ -23,15 +22,13 @@ interface SidebarProps {
 }
 
 const NAV = [
-  { id: "dashboard", icon: "⬡", label: "Dashboard" },
-  { id: "transactions", icon: "≡", label: "Transactions" },
-  { id: "chat", icon: "◎", label: "AI Chat" },
-  { id: "settings", icon: "◈", label: "Settings" },
+  { path: "/dashboard", icon: "⬡", label: "Dashboard" },
+  { path: "/transactions", icon: "≡", label: "Transactions" },
+  { path: "/chat", icon: "◎", label: "AI Chat" },
+  { path: "/settings", icon: "◈", label: "Settings" },
 ];
 
 export function Sidebar({
-  tab,
-  setTab,
   onUpload,
   uploadStatus,
   txnCount,
@@ -141,14 +138,16 @@ export function Sidebar({
 
       <nav className="sidebar-nav">
         {NAV.map((n) => (
-          <button
-            key={n.id}
-            className={`sidebar-nav-btn${tab === n.id ? " active" : ""}`}
-            onClick={() => setTab(n.id)}
+          <NavLink
+            key={n.path}
+            to={n.path}
+            className={({ isActive }) =>
+              `sidebar-nav-btn${isActive ? " active" : ""}`
+            }
           >
             <span className="sidebar-nav-icon">{n.icon}</span>
             {n.label}
-          </button>
+          </NavLink>
         ))}
       </nav>
 
