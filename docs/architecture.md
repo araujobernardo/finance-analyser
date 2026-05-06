@@ -11,6 +11,7 @@
 | Linter       | ESLint                           |
 | Formatter    | Prettier                         |
 | Data storage | Browser `localStorage`           |
+| API server   | Express + Node.js                |
 | AI/LLM       | Anthropic Claude API             |
 
 ---
@@ -22,6 +23,7 @@
 - **Data input** — monthly CSV exports from a New Zealand bank account.
 - **Persistence** — `localStorage` only (no external storage).
 - **AI** — Claude API for transaction categorisation and the chat interface.
+- **Server-side only** — `src/server/` must never be imported from React components or the Vite browser bundle. `express` and `cors` use Node.js built-ins that Vite cannot bundle for the browser.
 
 ---
 
@@ -45,6 +47,18 @@ src/
 │   └── *.ts
 └── App.tsx           # Root component + routing
 ```
+
+---
+
+## Available Commands
+
+| Command                | Description                                |
+| ---------------------- | ------------------------------------------ |
+| `npm run dev`          | Start Vite dev server (browser bundle)     |
+| `npm run server:dev`   | Start Express API server with hot-reload   |
+| `npm run server:start` | Start Express API server (production mode) |
+| `npm run build`        | Build browser bundle for production        |
+| `npm run lint`         | Run ESLint                                 |
 
 ---
 
