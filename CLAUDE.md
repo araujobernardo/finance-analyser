@@ -36,7 +36,7 @@ For project principles, governance, and agent workflow see: constitution.md
 
 ## Active Feature Plan
 
-Current feature: **Email and Password Sign-Up and Sign-In** (branch `010-email-password-auth`)  
+Current feature: **Email and Password Authentication** (branch `010-email-password-auth`)  
 Implementation plan: [specs/010-email-password-auth/plan.md](specs/010-email-password-auth/plan.md)  
 Spec: [specs/010-email-password-auth/spec.md](specs/010-email-password-auth/spec.md)
 
