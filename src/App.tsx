@@ -1,10 +1,17 @@
 import { useState } from "react";
 import { Navigate, Route, Routes, useNavigate } from "react-router-dom";
+import { AuthProvider } from "./context/AuthContext";
+import { ProtectedRoute } from "./components/ProtectedRoute";
 import { Sidebar } from "./components/Sidebar";
 import { DashboardPage } from "./pages/DashboardPage";
 import { TransactionsPage } from "./pages/TransactionsPage";
 import { ChatPage } from "./pages/ChatPage";
 import { SettingsPage } from "./pages/SettingsPage";
+import { SignUpPage } from "./pages/SignUpPage";
+import { VerifyEmailPage } from "./pages/VerifyEmailPage";
+import { LoginPage } from "./pages/LoginPage";
+import { ForgotPasswordPage } from "./pages/ForgotPasswordPage";
+import { ResetPasswordPage } from "./pages/ResetPasswordPage";
 import { parseCsv } from "./utils/csvParser";
 import { parseAccountName } from "./utils/accountParser";
 import { categoriseTransactions } from "./services/categorisation";
@@ -312,7 +319,7 @@ export default function App() {
     setMm(newMm);
   };
 
-  return (
+  const appShell = (
     <div className="app-shell">
       <Sidebar
         onUpload={handleUpload}
@@ -379,5 +386,21 @@ export default function App() {
         </Routes>
       </div>
     </div>
+  );
+
+  return (
+    <AuthProvider>
+      <Routes>
+        {/* Public auth routes */}
+        <Route path="/signup" element={<SignUpPage />} />
+        <Route path="/login" element={<LoginPage />} />
+        <Route path="/verify-email-sent" element={<VerifyEmailPage />} />
+        <Route path="/verify-email" element={<VerifyEmailPage />} />
+        <Route path="/forgot-password" element={<ForgotPasswordPage />} />
+        <Route path="/reset-password" element={<ResetPasswordPage />} />
+        {/* Protected app shell — all other routes */}
+        <Route path="*" element={<ProtectedRoute>{appShell}</ProtectedRoute>} />
+      </Routes>
+    </AuthProvider>
   );
 }
