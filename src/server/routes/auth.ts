@@ -116,11 +116,9 @@ router.post(
       }
 
       if (!user.emailVerified) {
-        res
-          .status(403)
-          .json({
-            error: "Please verify your email address before signing in.",
-          });
+        res.status(403).json({
+          error: "Please verify your email address before signing in.",
+        });
         return;
       }
 
