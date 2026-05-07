@@ -1,9 +1,17 @@
 import { useState } from "react";
+import { Navigate, Route, Routes, useNavigate } from "react-router-dom";
+import { AuthProvider } from "./context/AuthContext";
+import { ProtectedRoute } from "./components/ProtectedRoute";
 import { Sidebar } from "./components/Sidebar";
 import { DashboardPage } from "./pages/DashboardPage";
 import { TransactionsPage } from "./pages/TransactionsPage";
 import { ChatPage } from "./pages/ChatPage";
 import { SettingsPage } from "./pages/SettingsPage";
+import { SignUpPage } from "./pages/SignUpPage";
+import { VerifyEmailPage } from "./pages/VerifyEmailPage";
+import { LoginPage } from "./pages/LoginPage";
+import { ForgotPasswordPage } from "./pages/ForgotPasswordPage";
+import { ResetPasswordPage } from "./pages/ResetPasswordPage";
 import { parseCsv } from "./utils/csvParser";
 import { parseAccountName } from "./utils/accountParser";
 import { categoriseTransactions } from "./services/categorisation";
@@ -89,10 +97,8 @@ function detectTransfers(allTxns: PfaTxn[]): PfaTxn[] {
 
 // ── Root App ────────────────────────────────────────────────────────────────
 
-type Tab = "dashboard" | "transactions" | "chat" | "settings";
-
 export default function App() {
-  const [tab, setTab] = useState<Tab>("dashboard");
+  const navigate = useNavigate();
   const [txns, setTxnsState] = useState<PfaTxn[]>(() => {
     const t = lsGet<PfaTxn[]>(SK.txns);
     if (!t || !Array.isArray(t)) return [];
@@ -292,7 +298,7 @@ export default function App() {
         msg: `Imported ${allNew.length} transactions${tCount ? ` · ${tCount} transfer${tCount > 1 ? "s" : ""} detected` : ""}`,
       });
       setTimeout(() => setUploadStatus(null), 5000);
-      setTab("dashboard");
+      void navigate("/dashboard");
     } catch (e) {
       setUploadStatus({
         type: "error",
@@ -313,11 +319,9 @@ export default function App() {
     setMm(newMm);
   };
 
-  return (
+  const appShell = (
     <div className="app-shell">
       <Sidebar
-        tab={tab}
-        setTab={(t) => setTab(t as Tab)}
         onUpload={handleUpload}
         uploadStatus={uploadStatus}
         txnCount={txns.length}
@@ -325,47 +329,78 @@ export default function App() {
         onRenameAccount={handleRenameAccount}
       />
       <div className="app-content">
-        {tab === "dashboard" && (
-          <DashboardPage
-            txns={txns}
-            months={months}
-            selectedMonths={currentMonths}
-            setSelectedMonths={setSelectedMonths}
-            budgets={budgets}
-            accountList={accountList}
-            categories={categories}
+        <Routes>
+          <Route index element={<Navigate to="/dashboard" replace />} />
+          <Route
+            path="/dashboard"
+            element={
+              <DashboardPage
+                txns={txns}
+                months={months}
+                selectedMonths={currentMonths}
+                setSelectedMonths={setSelectedMonths}
+                budgets={budgets}
+                accountList={accountList}
+                categories={categories}
+              />
+            }
           />
-        )}
-        {tab === "transactions" && (
-          <TransactionsPage
-            txns={txns}
-            accountList={accountList}
-            categories={categories}
-            onBulkCategoryChange={handleBulkCategoryChange}
+          <Route
+            path="/transactions"
+            element={
+              <TransactionsPage
+                txns={txns}
+                accountList={accountList}
+                categories={categories}
+                onBulkCategoryChange={handleBulkCategoryChange}
+              />
+            }
           />
-        )}
-        {tab === "chat" && (
-          <ChatPage
-            txns={txns}
-            budgets={budgets}
-            categories={categories}
-            messages={chatMessages}
-            setMessages={setChatMessages}
+          <Route
+            path="/chat"
+            element={
+              <ChatPage
+                txns={txns}
+                budgets={budgets}
+                categories={categories}
+                messages={chatMessages}
+                setMessages={setChatMessages}
+              />
+            }
           />
-        )}
-        {tab === "settings" && (
-          <SettingsPage
-            categories={categories}
-            setCategories={setCategories}
-            budgets={budgets}
-            setBudgets={setBudgets}
-            txns={txns}
-            setTxns={setTxns}
-            accountList={accountList}
-            onRenameAccount={handleRenameAccount}
+          <Route
+            path="/settings"
+            element={
+              <SettingsPage
+                categories={categories}
+                setCategories={setCategories}
+                budgets={budgets}
+                setBudgets={setBudgets}
+                txns={txns}
+                setTxns={setTxns}
+                accountList={accountList}
+                onRenameAccount={handleRenameAccount}
+              />
+            }
           />
-        )}
+        </Routes>
       </div>
     </div>
+  );
+
+  return (
+    <AuthProvider>
+      <Routes>
+        {/* Public auth routes */}
+        <Route path="/signup" element={<SignUpPage />} />
+        <Route path="/login" element={<LoginPage />} />
+        <Route path="/verify-email-sent" element={<VerifyEmailPage />} />
+        <Route path="/verify-email" element={<VerifyEmailPage />} />
+        <Route path="/forgot-password" element={<ForgotPasswordPage />} />
+        <Route path="/reset-password" element={<ResetPasswordPage />} />
+        {/* Protected app shell — all other routes */}
+        <Route path="*" element={<ProtectedRoute>{appShell}</ProtectedRoute>} />
+      </Routes>
+    </AuthProvider>
   );
 }

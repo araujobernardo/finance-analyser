@@ -15,17 +15,34 @@
 | Database     | Supabase PostgreSQL              |
 | ORM          | Drizzle ORM                      |
 | AI/LLM       | Anthropic Claude API             |
+| Auth         | bcrypt (cost 12) + JWT (15 min)  |
+| Email        | Resend                           |
+
+---
+
+## Environment Variables
+
+| Variable            | Used by        | Purpose                                      |
+| ------------------- | -------------- | -------------------------------------------- |
+| `DATABASE_URL`      | Server         | Supabase PostgreSQL connection string        |
+| `PORT`              | Server         | HTTP listen port (default 3001)              |
+| `CORS_ORIGIN`       | Server         | Allowed CORS origin (warns if unset)         |
+| `JWT_SECRET`        | Server         | HS256 signing key for access tokens          |
+| `RESEND_API_KEY`    | Server         | Resend API key for transactional email       |
+| `RESEND_FROM_EMAIL` | Server         | Sender address for auth emails               |
+| `APP_URL`           | Server         | Base URL for email links (default localhost) |
+| `VITE_API_URL`      | Browser bundle | API base URL for fetch calls (optional)      |
 
 ---
 
 ## Key Constraints
 
 - **Runs entirely in the browser** — no server, no backend, no deployment.
-- **Single user** — no authentication or multi-user support.
+- **Authentication** — email/password via bcrypt + JWT. Tokens stored in `sessionStorage`. Auth pages (`/login`, `/signup`, etc.) are public; all other routes redirect to `/login` if unauthenticated.
 - **Data input** — monthly CSV exports from a New Zealand bank account.
 - **Persistence** — `localStorage` only (no external storage).
 - **AI** — Claude API for transaction categorisation and the chat interface.
-- **Server-side only** —  and  must never be imported from React components or the Vite browser bundle. , , and  (postgres.js) use Node.js built-ins that Vite cannot bundle for the browser.
+- **Server-side only** — and must never be imported from React components or the Vite browser bundle. , , and (postgres.js) use Node.js built-ins that Vite cannot bundle for the browser.
 
 ---
 
