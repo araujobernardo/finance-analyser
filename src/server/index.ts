@@ -1,6 +1,7 @@
 import cors from "cors";
 import express from "express";
 import { errorHandler } from "./middleware/errorHandler.ts";
+import authRouter from "./routes/auth.ts";
 import healthRouter from "./routes/health.ts";
 
 const app = express();
@@ -23,6 +24,7 @@ app.use(
 app.use(express.json());
 
 app.use(healthRouter);
+app.use(authRouter);
 
 app.use((_req, res) => {
   res.status(404).json({ error: "Not Found", status: 404 });
