@@ -112,32 +112,6 @@ export function getAccounts(): Account[] {
   return readJson<Account[]>(ACCOUNTS_KEY) ?? [];
 }
 
-/** Saves (inserts or updates) an account. */
-export function saveAccount(account: Account): void {
-  const accounts = getAccounts();
-  const idx = accounts.findIndex((a) => a.id === account.id);
-  if (idx >= 0) {
-    accounts[idx] = account;
-  } else {
-    accounts.push(account);
-  }
-  localStorage.setItem(ACCOUNTS_KEY, JSON.stringify(accounts));
-}
-
-/** Removes an account and all its transaction data. */
-export function deleteAccount(id: string): void {
-  // Remove all month data
-  const months = getAccountMonths(id);
-  for (const m of months) {
-    localStorage.removeItem(accountTxnKey(id, m));
-  }
-  localStorage.removeItem(accountMonthsKey(id));
-
-  // Remove from accounts list
-  const accounts = getAccounts().filter((a) => a.id !== id);
-  localStorage.setItem(ACCOUNTS_KEY, JSON.stringify(accounts));
-}
-
 // ── Account-scoped transaction API ─────────────────────────────────────────────
 
 /** Returns the list of month keys for an account, in chronological order. */

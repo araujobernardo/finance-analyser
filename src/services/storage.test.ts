@@ -3,11 +3,8 @@ import {
   // New multi-account API
   STORAGE_VERSION,
   DEFAULT_ACCOUNT_ID,
-  ACCOUNT_COLOURS,
   runMigration,
   getAccounts,
-  saveAccount,
-  deleteAccount,
   getAccountMonths,
   getTransactions,
   saveTransactions,
@@ -33,16 +30,6 @@ function makeTransaction(overrides: Partial<Transaction> = {}): Transaction {
     description: "Countdown Supermarket",
     amount: -85.5,
     balance: 1234.0,
-    ...overrides,
-  };
-}
-
-function makeAccount(overrides: Partial<Account> = {}): Account {
-  return {
-    id: "acc-1",
-    name: "Test Account",
-    colour: ACCOUNT_COLOURS[0],
-    createdAt: new Date().toISOString(),
     ...overrides,
   };
 }
@@ -182,53 +169,11 @@ describe("runMigration", () => {
   });
 });
 
-// ── Account CRUD ────────────────────────────────────────────────────────────
+// ── Account read API ────────────────────────────────────────────────────────
 
-describe("getAccounts / saveAccount / deleteAccount", () => {
+describe("getAccounts", () => {
   it("returns empty array when no accounts exist", () => {
     expect(getAccounts()).toEqual([]);
-  });
-
-  it("saves a new account and retrieves it", () => {
-    const acc = makeAccount();
-    saveAccount(acc);
-    const accounts = getAccounts();
-    expect(accounts).toHaveLength(1);
-    expect(accounts[0].id).toBe("acc-1");
-    expect(accounts[0].name).toBe("Test Account");
-  });
-
-  it("updates an existing account (upsert by id)", () => {
-    saveAccount(makeAccount({ name: "Old Name" }));
-    saveAccount(makeAccount({ name: "New Name" }));
-    const accounts = getAccounts();
-    expect(accounts).toHaveLength(1);
-    expect(accounts[0].name).toBe("New Name");
-  });
-
-  it("preserves insertion order when adding multiple accounts", () => {
-    saveAccount(makeAccount({ id: "a", name: "Alpha" }));
-    saveAccount(makeAccount({ id: "b", name: "Beta" }));
-    saveAccount(makeAccount({ id: "c", name: "Gamma" }));
-    const ids = getAccounts().map((a) => a.id);
-    expect(ids).toEqual(["a", "b", "c"]);
-  });
-
-  it("deleteAccount removes the account from the list", () => {
-    saveAccount(makeAccount({ id: "x" }));
-    saveAccount(makeAccount({ id: "y" }));
-    deleteAccount("x");
-    const ids = getAccounts().map((a) => a.id);
-    expect(ids).toEqual(["y"]);
-  });
-
-  it("deleteAccount removes all month data for that account", () => {
-    saveAccount(makeAccount({ id: ACC_ID }));
-    saveTransactions(ACC_ID, MARCH_2024, [makeTransaction()]);
-    saveTransactions(ACC_ID, APRIL_2024, [makeTransaction()]);
-    deleteAccount(ACC_ID);
-    expect(getAccountMonths(ACC_ID)).toEqual([]);
-    expect(getTransactions(ACC_ID, MARCH_2024).transactions).toHaveLength(0);
   });
 });
 
