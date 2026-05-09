@@ -6,8 +6,10 @@
   "scripts": {
     "dev": "vite",
     "build": "tsc -b && vite build",
-    "lint": "eslint .",
+    "lint": "eslint . --max-warnings 0",
     "preview": "vite preview",
+    "test": "vitest run",
+    "typecheck": "tsc -b",
     "prepare": "husky",
     "server:dev": "tsx --env-file=.env watch src/server/index.ts",
     "server:start": "tsx src/server/index.ts",
