@@ -1,5 +1,6 @@
 # Changelog
 
+- **2026-05-09** | #285 | T001 [FA-MIGR-001] Install zod as runtime dependency | Adds zod@4.4.3 to dependencies for server-side request validation in FA-MIGR-001 routes.
 - **2026-05-09** | #269 | T011 [FA-AUTH-002] Verify TypeScript compilation with npm run build | Ran tsc -b + vite build; exits 0 with zero TypeScript errors; dist/ assets produced successfully. FA-AUTH-002 is complete.
 - **2026-05-09** | #268 | T010 [FA-AUTH-002] Run npm test — all 609 tests pass | Ran full Vitest suite; confirmed 42 test files, 609 tests all green after FA-AUTH-002 changes.
 - **2026-05-09** | #267 | T009 [FA-AUTH-002] LoginPage calls login(token, user) after sign-in | Completed as part of #260 — LoginPage already calls login(token, data.user) after successful POST /api/auth/login; both fa-auth-token and fa-auth-user are stored in sessionStorage.
