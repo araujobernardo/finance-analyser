@@ -2,32 +2,62 @@ import { createContext, useContext, useState } from "react";
 import type { ReactNode } from "react";
 
 const STORAGE_KEY = "fa-auth-token";
+const USER_KEY = "fa-auth-user";
+
+export interface AuthUser {
+  id: string;
+  email: string;
+  displayName: string;
+}
 
 interface AuthContextValue {
-  token: string | null;
-  setToken: (token: string | null) => void;
+  accessToken: string | null;
+  user: AuthUser | null;
   isAuthenticated: boolean;
+  login: (token: string, user: AuthUser) => void;
+  logout: () => void;
 }
 
 const AuthContext = createContext<AuthContextValue | null>(null);
 
+function readUser(): AuthUser | null {
+  try {
+    const raw = sessionStorage.getItem(USER_KEY);
+    return raw ? (JSON.parse(raw) as AuthUser) : null;
+  } catch {
+    return null;
+  }
+}
+
 export function AuthProvider({ children }: { children: ReactNode }) {
-  const [token, setTokenState] = useState<string | null>(() =>
+  const [accessToken, setAccessToken] = useState<string | null>(() =>
     sessionStorage.getItem(STORAGE_KEY),
   );
+  const [user, setUser] = useState<AuthUser | null>(readUser);
 
-  const setToken = (next: string | null) => {
-    setTokenState(next);
-    if (next === null) {
-      sessionStorage.removeItem(STORAGE_KEY);
-    } else {
-      sessionStorage.setItem(STORAGE_KEY, next);
-    }
+  const login = (token: string, newUser: AuthUser) => {
+    sessionStorage.setItem(STORAGE_KEY, token);
+    sessionStorage.setItem(USER_KEY, JSON.stringify(newUser));
+    setAccessToken(token);
+    setUser(newUser);
+  };
+
+  const logout = () => {
+    sessionStorage.removeItem(STORAGE_KEY);
+    sessionStorage.removeItem(USER_KEY);
+    setAccessToken(null);
+    setUser(null);
   };
 
   return (
     <AuthContext.Provider
-      value={{ token, setToken, isAuthenticated: token !== null }}
+      value={{
+        accessToken,
+        user,
+        isAuthenticated: accessToken !== null,
+        login,
+        logout,
+      }}
     >
       {children}
     </AuthContext.Provider>

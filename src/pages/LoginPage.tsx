@@ -1,12 +1,13 @@
 import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
+import type { AuthUser } from "../context/AuthContext";
 import { API_BASE } from "../lib/api";
 import "./auth.css";
 
 export function LoginPage() {
   const navigate = useNavigate();
-  const { setToken } = useAuth();
+  const { login } = useAuth();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [errors, setErrors] = useState<Record<string, string>>({});
@@ -39,7 +40,11 @@ export function LoginPage() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ email: email.trim(), password }),
       });
-      const data = (await res.json()) as { token?: string; error?: string };
+      const data = (await res.json()) as {
+        token?: string;
+        user?: AuthUser;
+        error?: string;
+      };
       if (!res.ok) {
         setBanner({
           type: "error",
@@ -47,7 +52,7 @@ export function LoginPage() {
         });
         return;
       }
-      setToken(data.token!);
+      login(data.token!, data.user!);
       navigate("/dashboard");
     } catch {
       setBanner({ type: "error", msg: "Network error. Please try again." });
