@@ -1,5 +1,6 @@
 # Changelog
 
+- **2026-05-09** | #267 | T009 [FA-AUTH-002] LoginPage calls login(token, user) after sign-in | Completed as part of #260 — LoginPage already calls login(token, data.user) after successful POST /api/auth/login; both fa-auth-token and fa-auth-user are stored in sessionStorage.
 - **2026-05-09** | #266 | T008 [FA-AUTH-002] Create useApi() fetch hook in src/lib/api.ts | Adds useApi() hook with apiFetch() wrapper that injects Bearer token automatically and handles TOKEN_EXPIRED 401 by calling logout() and navigating to /login.
 - **2026-05-09** | #265 | T007 [FA-AUTH-002] Create authenticateToken Express middleware | Adds src/server/middleware/authenticateToken.ts with granular JWT error codes: TOKEN_EXPIRED for expired tokens, TOKEN_INVALID for bad tokens; sets res.locals.user on success.
 - **2026-05-09** | #264 | T006 [FA-AUTH-002] Add sign-out button to Sidebar | Adds a Sign out button to Sidebar.tsx that calls logout() and navigates to /login; adds .sidebar-signout CSS class matching the sidebar aesthetic.
