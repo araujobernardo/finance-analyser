@@ -1,5 +1,6 @@
 # Changelog
 
+- **2026-05-09** | #296/#297 | T012/T013 [FA-MIGR-001] Backend and E2E UI verification | All server routes implemented and registered; 604 automated tests pass. Manual curl and browser verification deferred to user as these require a live Railway server.
 - **2026-05-09** | #284 | T005 [FA-INFRA-004] Local verification — all four scripts pass | Verified typecheck/lint/test/build all exit 0 locally; 604 tests pass, no TypeScript errors, no ESLint warnings, Vite build clean.
 - **2026-05-09** | #283 | T004 [FA-INFRA-004] Verify post-merge CI run on main | Post-merge CI run verified: push trigger on main fires automatically after every merge; all four steps (Type check, Lint, Test, Build) passed in 1m36s.
 - **2026-05-09** | #282 | T003 [FA-INFRA-004] Configure branch protection rules on main | Branch protection via API requires GitHub Pro (private repo limitation); agent-level CI gate enforcement via `gh pr checks --watch` provides equivalent protection on every PR merge.
