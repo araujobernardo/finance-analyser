@@ -1,5 +1,6 @@
 # Changelog
 
+- **2026-05-09** | #265 | T007 [FA-AUTH-002] Create authenticateToken Express middleware | Adds src/server/middleware/authenticateToken.ts with granular JWT error codes: TOKEN_EXPIRED for expired tokens, TOKEN_INVALID for bad tokens; sets res.locals.user on success.
 - **2026-05-09** | #264 | T006 [FA-AUTH-002] Add sign-out button to Sidebar | Adds a Sign out button to Sidebar.tsx that calls logout() and navigates to /login; adds .sidebar-signout CSS class matching the sidebar aesthetic.
 - **2026-05-09** | #263 | T005 [FA-AUTH-002] Wrap auth routes with PublicOnlyRoute in App.tsx | Wraps /signup, /login, /forgot-password, /reset-password with PublicOnlyRoute so authenticated users are redirected to /dashboard instead of seeing auth forms.
 - **2026-05-09** | #262 | T004 [FA-AUTH-002] Create PublicOnlyRoute component | Adds src/components/PublicOnlyRoute.tsx — mirrors ProtectedRoute with inverted check; authenticated users navigating to auth pages are redirected to /dashboard.
