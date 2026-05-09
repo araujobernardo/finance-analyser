@@ -1,5 +1,13 @@
 # Changelog
 
+- **2026-05-09** | #305 | T008 [FA-MIGR-002] Full end-to-end verification | Manual E2E verification (quickstart.md Steps 1–8) requiring a live server and browser — deferred to user; all automated stories (T001–T007) are complete and CI passes.
+- **2026-05-09** | #304 | T007 [FA-MIGR-002] Run typecheck across all changed files | `npx tsc --noEmit` exits 0 with zero TypeScript errors across all FA-MIGR-002 changes.
+- **2026-05-09** | #303 | T006 [FA-MIGR-002] Add handleSkip to MigrationPage.tsx | handleSkip sets fa-migration-complete in localStorage and navigates to /dashboard; "Skip, start fresh" button disabled only during importing state.
+- **2026-05-09** | #302 | T005 [FA-MIGR-002] Add progress and error UI states to MigrationPage.tsx | Shows progress string during import (buttons disabled); shows "Import failed. Please try again." + "Try again" button on error; idle state shows both primary buttons enabled.
+- **2026-05-09** | #301 | T004 [FA-MIGR-002] Add import state and handleImport to MigrationPage.tsx | handleImport sequentially POSTs each account via /api/accounts, then each transaction via /api/accounts/:id/transactions; sets fa-migration-complete and navigates to /dashboard on success; sets status to "error" and returns on any API failure.
+- **2026-05-09** | #300 | T003 [FA-MIGR-002] Add migration detection to LoginPage.tsx | After login, checks fa-migration-complete flag, local account count, and cloud accounts (GET /api/accounts) before routing to /migrate or /dashboard; safe fallback to /dashboard on any error.
+- **2026-05-09** | #299 | T002 [FA-MIGR-002] Add /migrate route to App.tsx | Registers <Route path="/migrate" element={<MigrationPage />} /> inside the protected appShell Routes.
+- **2026-05-09** | #298 | T001 [FA-MIGR-002] Create MigrationPage.tsx summary scaffold | Reads legacy localStorage via getAccounts() + getAccountMonths() + getTransactions() to show account and transaction counts before migration; two placeholder action buttons.
 - **2026-05-09** | #297 | T013 [FA-MIGR-001] End-to-end UI verification | Manual verification stories requiring a live server and browser — deferred to user; all automated stories (T001–T011) are complete and CI passes.
 - **2026-05-09** | #296 | T012 [FA-MIGR-001] Backend verification | Manual curl verification stories requiring a live server — deferred to user; all automated stories (T001–T011) are complete and CI passes.
 - **2026-05-09** | #295 | T011 [FA-MIGR-001] Remove saveAccount and deleteAccount from storage.ts | Removes the two account-mutating storage functions now that AccountContext uses the REST API; getAccounts() retained for FA-MIGR-002 one-time migration read; corresponding storage.test.ts describe block and makeAccount helper removed.
