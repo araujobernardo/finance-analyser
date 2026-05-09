@@ -1,5 +1,6 @@
 # Changelog
 
+- **2026-05-09** | #274 | T005 [FA-INFRA-001] Update ForgotPasswordPage.tsx fetch URL to use API_BASE | Prefixes the /api/auth/forgot-password fetch call with API_BASE imported from src/lib/api so the reset-link request targets the correct backend URL in both local dev and production.
 - **2026-05-09** | #273 | T004 [FA-INFRA-001] Update SignUpPage.tsx fetch URL to use API_BASE | Prefixes the /api/auth/register fetch call with API_BASE imported from src/lib/api so the registration request targets the correct backend URL in both local dev and production.
 - **2026-05-09** | #272 | T003 [FA-INFRA-001] Update LoginPage.tsx fetch URL to use API_BASE | Prefixes the /api/auth/login fetch call with API_BASE imported from src/lib/api so the login request targets the correct backend URL in both local dev and production.
 - **2026-05-09** | #270 | T001 [FA-INFRA-001] Create vercel.json with SPA catch-all rewrite rule | Adds vercel.json at the repo root so Vercel serves index.html for all non-static routes, enabling React Router client-side navigation in production.
