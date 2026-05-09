@@ -1,5 +1,6 @@
 # Changelog
 
+- **2026-05-09** | #268 | T010 [FA-AUTH-002] Run npm test — all 609 tests pass | Ran full Vitest suite; confirmed 42 test files, 609 tests all green after FA-AUTH-002 changes.
 - **2026-05-09** | #267 | T009 [FA-AUTH-002] LoginPage calls login(token, user) after sign-in | Completed as part of #260 — LoginPage already calls login(token, data.user) after successful POST /api/auth/login; both fa-auth-token and fa-auth-user are stored in sessionStorage.
 - **2026-05-09** | #266 | T008 [FA-AUTH-002] Create useApi() fetch hook in src/lib/api.ts | Adds useApi() hook with apiFetch() wrapper that injects Bearer token automatically and handles TOKEN_EXPIRED 401 by calling logout() and navigating to /login.
 - **2026-05-09** | #265 | T007 [FA-AUTH-002] Create authenticateToken Express middleware | Adds src/server/middleware/authenticateToken.ts with granular JWT error codes: TOKEN_EXPIRED for expired tokens, TOKEN_INVALID for bad tokens; sets res.locals.user on success.
