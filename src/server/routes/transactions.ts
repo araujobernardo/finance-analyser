@@ -145,6 +145,85 @@ transactionsRouter.post("/", requireAuth, async (req, res, next) => {
   }
 });
 
+// POST /api/accounts/:accountId/transactions/import
+const importTransactionRowSchema = z.object({
+  date: z.string().regex(DATE_REGEX, "date must be YYYY-MM-DD"),
+  amount: z.number(),
+  description: z.string().min(1),
+  category: z.string().optional(),
+  isTransfer: z.boolean().optional().default(false),
+  isManualTransfer: z.boolean().optional().default(false),
+});
+
+const importTransactionsSchema = z.object({
+  transactions: z.array(importTransactionRowSchema),
+});
+
+transactionsRouter.post("/import", requireAuth, async (req, res, next) => {
+  try {
+    const userId = (req as AuthenticatedRequest).userId;
+    const accountId = req.params["accountId"] as string;
+
+    // Verify account ownership
+    const [account] = await db
+      .select({ id: accounts.id })
+      .from(accounts)
+      .where(and(eq(accounts.id, accountId), eq(accounts.userId, userId)));
+    if (!account) {
+      res.status(404).json({ error: "Account not found" });
+      return;
+    }
+
+    const outerParsed = importTransactionsSchema.safeParse(req.body);
+    if (!outerParsed.success) {
+      res.status(400).json({
+        error:
+          outerParsed.error.issues[0]?.message ??
+          "transactions must be an array",
+      });
+      return;
+    }
+
+    const validRows: Array<{
+      userId: string;
+      accountId: string;
+      date: string;
+      amount: string;
+      description: string;
+      category: string | null;
+      isTransfer: boolean;
+      isManualTransfer: boolean;
+    }> = [];
+    let skipped = 0;
+
+    for (const row of outerParsed.data.transactions) {
+      const rowParsed = importTransactionRowSchema.safeParse(row);
+      if (rowParsed.success) {
+        validRows.push({
+          userId,
+          accountId,
+          date: rowParsed.data.date,
+          amount: rowParsed.data.amount.toString(),
+          description: rowParsed.data.description,
+          category: rowParsed.data.category ?? null,
+          isTransfer: rowParsed.data.isTransfer,
+          isManualTransfer: rowParsed.data.isManualTransfer,
+        });
+      } else {
+        skipped++;
+      }
+    }
+
+    if (validRows.length > 0) {
+      await db.insert(transactions).values(validRows);
+    }
+
+    res.json({ imported: validRows.length, skipped });
+  } catch (err) {
+    next(err);
+  }
+});
+
 // PATCH /api/transactions/:id
 // Registered separately on a different router prefix; this file exports a
 // standalone patchDeleteRouter for /api/transactions routes.
