@@ -1,5 +1,6 @@
 # Changelog
 
+- **2026-05-09** | #280 | T001 [FA-INFRA-004] Add test, typecheck scripts and update lint in package.json | Added `vitest run`, `tsc -b`, and `eslint . --max-warnings 0` scripts so all four quality gates (lint, typecheck, test, build) are runnable via npm.
 - **2026-05-09** | #318 | T013 [FA-MIGR-003] Manual verification per quickstart.md Steps 1–8 | Manual E2E verification requiring a live server and browser — deferred to user; all automated stories (T001–T012) complete and CI passes.
 - **2026-05-09** | #317 | T012 [FA-MIGR-003] Run npm run typecheck | `npx tsc --noEmit` exits 0 with zero TypeScript errors across all 11 FA-MIGR-003 changed/created files.
 - **2026-05-09** | #316 | T011 [FA-MIGR-003] Complete App.tsx with Toast render | `<Toast />` rendered inside `AccountProvider` as sibling to `Routes`; complete provider wrapping order: ToastProvider > AccountProvider > Routes + Toast.
