@@ -1,5 +1,18 @@
 # Changelog
 
+- **2026-05-09** | #318 | T013 [FA-MIGR-003] Manual verification per quickstart.md Steps 1–8 | Manual E2E verification requiring a live server and browser — deferred to user; all automated stories (T001–T012) complete and CI passes.
+- **2026-05-09** | #317 | T012 [FA-MIGR-003] Run npm run typecheck | `npx tsc --noEmit` exits 0 with zero TypeScript errors across all 11 FA-MIGR-003 changed/created files.
+- **2026-05-09** | #316 | T011 [FA-MIGR-003] Complete App.tsx with Toast render | `<Toast />` rendered inside `AccountProvider` as sibling to `Routes`; complete provider wrapping order: ToastProvider > AccountProvider > Routes + Toast.
+- **2026-05-09** | #315 | T010 [FA-MIGR-003] Create Toast.tsx and Toast.css | Fixed bottom-right toast container with pointer-events:none on container and auto on items; renders all active ToastItems from useToast().
+- **2026-05-09** | #314 | T009 [FA-MIGR-003] Add isSubmitting to DeleteAccountModal.tsx | handleConfirm made async; setIsSubmitting(true) before removeAccount(); closes on success, re-enables button on failure; Delete button disabled on isLastAccount or isSubmitting.
+- **2026-05-09** | #313 | T008 [FA-MIGR-003] Add isSubmitting to AddAccountModal.tsx | handleSave made async; setIsSubmitting(true) before addAccount(); closes on success, re-enables button on failure; Save button disabled when isSubmitting.
+- **2026-05-09** | #312 | T007 [FA-MIGR-003] Optimistic add/remove/update in AccountContext.tsx | addAccount/removeAccount/updateAccount return Promise<boolean>; each appends/removes/patches state immediately, then rolls back + shows toast on API failure; all three methods updated in AccountContextValue interface.
+- **2026-05-09** | #311 | T006 [FA-MIGR-003] Add skeleton and error card to account list area | Sidebar.tsx imports useAccount; shows Skeleton(count=3) during load, account-list-error div with Try again button on error, existing account list on success.
+- **2026-05-09** | #310 | T005 [FA-MIGR-003] Add refetch() to AccountContext.tsx | refetch() sets isLoading + clears error, fetches accounts, sets error on failure; exposed in AccountContextValue; useToast imported and addToast wired for mutation error feedback.
+- **2026-05-09** | #309 | T004 [FA-MIGR-003] Update App.tsx with ToastProvider wrapping | Wraps appShell content with ToastProvider > AccountProvider; imports ToastProvider, AccountProvider, Toast.
+- **2026-05-09** | #308 | T003 [FA-MIGR-003] Create src/hooks/useToast.ts | Single re-export from ToastContext for conventional hooks/ import path.
+- **2026-05-09** | #307 | T002 [FA-MIGR-003] Create Skeleton.tsx and Skeleton.css | Shimmer skeleton block component with count/height/width props; @keyframes skeleton-shimmer animating background-position.
+- **2026-05-09** | #306 | T001 [FA-MIGR-003] Create src/context/ToastContext.tsx | ToastItem interface, ToastProvider with max-3 queue and 4s auto-dismiss, useToast() hook exported.
 - **2026-05-09** | #305 | T008 [FA-MIGR-002] Full end-to-end verification | Manual E2E verification (quickstart.md Steps 1–8) requiring a live server and browser — deferred to user; all automated stories (T001–T007) are complete and CI passes.
 - **2026-05-09** | #304 | T007 [FA-MIGR-002] Run typecheck across all changed files | `npx tsc --noEmit` exits 0 with zero TypeScript errors across all FA-MIGR-002 changes.
 - **2026-05-09** | #303 | T006 [FA-MIGR-002] Add handleSkip to MigrationPage.tsx | handleSkip sets fa-migration-complete in localStorage and navigates to /dashboard; "Skip, start fresh" button disabled only during importing state.
