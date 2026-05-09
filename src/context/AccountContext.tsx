@@ -2,45 +2,67 @@ import {
   createContext,
   useContext,
   useState,
+  useEffect,
   useMemo,
+  useCallback,
   type ReactNode,
 } from "react";
 import {
-  getAccounts,
   getAccountMonths,
   getTransactions,
-  saveAccount,
-  deleteAccount,
   DEFAULT_ACCOUNT_ID,
+  ACCOUNT_COLOURS,
 } from "../services/storage";
-import type { Account } from "../services/storage";
 import type { Transaction } from "../utils/csvParser";
 import { ACTIVE_ACCOUNT_KEY } from "./accountKeys";
+import { useApi } from "../lib/api";
+import type { ApiAccount } from "../types/api";
+
+export { ACCOUNT_COLOURS };
 
 export const ALL_ACCOUNTS_ID = "all" as const;
+
+/** ApiAccount augmented with a derived display colour (not stored server-side). */
+export type AccountWithColour = ApiAccount & { colour: string };
 
 export interface TransactionWithAccount extends Transaction {
   accountColour?: string;
 }
 
 export interface AccountContextValue {
-  accounts: Account[];
+  accounts: AccountWithColour[];
   activeAccountId: string | typeof ALL_ACCOUNTS_ID;
+  isLoading: boolean;
+  error: string | null;
   setActiveAccountId: (id: string | typeof ALL_ACCOUNTS_ID) => void;
-  addAccount: (account: Account) => void;
-  removeAccount: (id: string) => void;
+  addAccount: (
+    nickname: string,
+    accountType: ApiAccount["accountType"],
+  ) => Promise<void>;
+  removeAccount: (id: string) => Promise<void>;
+  updateAccount: (
+    id: string,
+    updates: { nickname?: string; accountType?: ApiAccount["accountType"] },
+  ) => Promise<void>;
 }
 
 const AccountContext = createContext<AccountContextValue>({
   accounts: [],
   activeAccountId: DEFAULT_ACCOUNT_ID,
+  isLoading: false,
+  error: null,
   setActiveAccountId: () => {},
-  addAccount: () => {},
-  removeAccount: () => {},
+  addAccount: async () => {},
+  removeAccount: async () => {},
+  updateAccount: async () => {},
 });
 
+function deriveColour(index: number): string {
+  return ACCOUNT_COLOURS[index % ACCOUNT_COLOURS.length];
+}
+
 function resolveInitialAccountId(
-  accounts: Account[],
+  accounts: AccountWithColour[],
 ): string | typeof ALL_ACCOUNTS_ID {
   const stored = localStorage.getItem(ACTIVE_ACCOUNT_KEY);
   if (stored === ALL_ACCOUNTS_ID) return ALL_ACCOUNTS_ID;
@@ -49,39 +71,120 @@ function resolveInitialAccountId(
 }
 
 export function AccountProvider({ children }: { children: ReactNode }) {
-  const [accounts, setAccounts] = useState<Account[]>(() => getAccounts());
+  const { apiFetch } = useApi();
+  const [accounts, setAccounts] = useState<AccountWithColour[]>([]);
+  const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
   const [activeAccountId, setActiveAccountIdState] = useState<
     string | typeof ALL_ACCOUNTS_ID
-  >(() => resolveInitialAccountId(getAccounts()));
+  >(DEFAULT_ACCOUNT_ID);
+
+  const fetchAccounts = useCallback(async () => {
+    setIsLoading(true);
+    setError(null);
+    try {
+      const res = await apiFetch("/api/accounts");
+      if (!res.ok) {
+        const body = (await res.json()) as { error?: string };
+        setError(body.error ?? "Failed to load accounts");
+        return;
+      }
+      const data = (await res.json()) as { accounts: ApiAccount[] };
+      const withColour: AccountWithColour[] = data.accounts.map((acc, i) => ({
+        ...acc,
+        colour: deriveColour(i),
+      }));
+      setAccounts(withColour);
+      setActiveAccountIdState((prev) => {
+        // Resolve initial active account based on loaded accounts
+        if (prev === ALL_ACCOUNTS_ID) return ALL_ACCOUNTS_ID;
+        if (withColour.find((a) => a.id === prev)) return prev;
+        // Try to restore from localStorage
+        return resolveInitialAccountId(withColour);
+      });
+    } catch {
+      setError("Failed to load accounts");
+    } finally {
+      setIsLoading(false);
+    }
+  }, [apiFetch]);
+
+  useEffect(() => {
+    void fetchAccounts();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   function setActiveAccountId(id: string | typeof ALL_ACCOUNTS_ID) {
     localStorage.setItem(ACTIVE_ACCOUNT_KEY, id);
     setActiveAccountIdState(id);
   }
 
-  function addAccount(account: Account) {
-    saveAccount(account);
-    setAccounts(getAccounts());
-    setActiveAccountId(account.id);
-  }
+  const addAccount = useCallback(
+    async (nickname: string, accountType: ApiAccount["accountType"]) => {
+      const res = await apiFetch("/api/accounts", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ nickname, accountType }),
+      });
+      if (!res.ok) return;
+      const newAccount = (await res.json()) as ApiAccount;
+      setAccounts((prev) => {
+        const updated = [
+          ...prev,
+          { ...newAccount, colour: deriveColour(prev.length) },
+        ];
+        return updated;
+      });
+      setActiveAccountId(newAccount.id);
+    },
+    [apiFetch],
+  );
 
-  function removeAccount(id: string) {
-    deleteAccount(id);
-    const remaining = getAccounts();
-    setAccounts(remaining);
-    if (remaining.length > 0) {
-      setActiveAccountId(remaining[0].id);
-    }
-  }
+  const removeAccount = useCallback(
+    async (id: string) => {
+      const res = await apiFetch(`/api/accounts/${id}`, { method: "DELETE" });
+      if (!res.ok && res.status !== 204) return;
+      setAccounts((prev) => {
+        const remaining = prev.filter((a) => a.id !== id);
+        if (remaining.length > 0) {
+          setActiveAccountId(remaining[0].id);
+        }
+        return remaining;
+      });
+    },
+    [apiFetch],
+  );
+
+  const updateAccount = useCallback(
+    async (
+      id: string,
+      updates: { nickname?: string; accountType?: ApiAccount["accountType"] },
+    ) => {
+      const res = await apiFetch(`/api/accounts/${id}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(updates),
+      });
+      if (!res.ok) return;
+      const updated = (await res.json()) as ApiAccount;
+      setAccounts((prev) =>
+        prev.map((a) => (a.id === id ? { ...updated, colour: a.colour } : a)),
+      );
+    },
+    [apiFetch],
+  );
 
   return (
     <AccountContext.Provider
       value={{
         accounts,
         activeAccountId,
+        isLoading,
+        error,
         setActiveAccountId,
         addAccount,
         removeAccount,
+        updateAccount,
       }}
     >
       {children}

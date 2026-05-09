@@ -1,7 +1,15 @@
 import { useState } from "react";
-import { ACCOUNT_COLOURS } from "../services/storage";
 import { useAccount } from "../context/AccountContext";
+import type { ApiAccount } from "../types/api";
 import "./AccountModal.css";
+
+const ACCOUNT_TYPES: ApiAccount["accountType"][] = [
+  "Checking",
+  "Savings",
+  "Credit Card",
+  "Investment",
+  "Cash",
+];
 
 interface AddAccountModalProps {
   onClose: () => void;
@@ -9,16 +17,19 @@ interface AddAccountModalProps {
 
 export function AddAccountModal({ onClose }: AddAccountModalProps) {
   const { accounts, addAccount } = useAccount();
-  const [name, setName] = useState("");
-  const [colour, setColour] = useState(ACCOUNT_COLOURS[0]);
-  const [nameError, setNameError] = useState("");
+  const [nickname, setNickname] = useState("");
+  const [accountType, setAccountType] =
+    useState<ApiAccount["accountType"]>("Checking");
+  const [nicknameError, setNicknameError] = useState("");
 
   function validate(value: string): string {
     if (!value.trim()) return "Account name is required.";
-    if (value.trim().length > 40)
-      return "Account name must be 40 characters or fewer.";
+    if (value.trim().length > 100)
+      return "Account name must be 100 characters or fewer.";
     if (
-      accounts.some((a) => a.name.toLowerCase() === value.trim().toLowerCase())
+      accounts.some(
+        (a) => a.nickname.toLowerCase() === value.trim().toLowerCase(),
+      )
     ) {
       return "An account with this name already exists.";
     }
@@ -26,23 +37,18 @@ export function AddAccountModal({ onClose }: AddAccountModalProps) {
   }
 
   function handleSave() {
-    const error = validate(name);
+    const error = validate(nickname);
     if (error) {
-      setNameError(error);
+      setNicknameError(error);
       return;
     }
-    addAccount({
-      id: crypto.randomUUID(),
-      name: name.trim(),
-      colour,
-      createdAt: new Date().toISOString(),
-    });
+    void addAccount(nickname.trim(), accountType);
     onClose();
   }
 
-  function handleNameChange(value: string) {
-    setName(value);
-    if (nameError) setNameError(validate(value));
+  function handleNicknameChange(value: string) {
+    setNickname(value);
+    if (nicknameError) setNicknameError(validate(value));
   }
 
   return (
@@ -64,47 +70,43 @@ export function AddAccountModal({ onClose }: AddAccountModalProps) {
           <input
             id="account-name-input"
             type="text"
-            className={`account-modal__input${nameError ? " account-modal__input--error" : ""}`}
-            value={name}
-            onChange={(e) => handleNameChange(e.target.value)}
-            maxLength={40}
+            className={`account-modal__input${nicknameError ? " account-modal__input--error" : ""}`}
+            value={nickname}
+            onChange={(e) => handleNicknameChange(e.target.value)}
+            maxLength={100}
             placeholder="e.g. Savings"
-            aria-describedby={nameError ? "account-name-error" : undefined}
+            aria-describedby={nicknameError ? "account-name-error" : undefined}
             autoFocus
           />
-          {nameError && (
+          {nicknameError && (
             <span
               id="account-name-error"
               className="account-modal__error"
               role="alert"
             >
-              {nameError}
+              {nicknameError}
             </span>
           )}
         </div>
 
         <div className="account-modal__field">
-          <span className="account-modal__label" id="colour-picker-label">
-            Colour
-          </span>
-          <div
-            className="account-modal__swatches"
-            role="radiogroup"
-            aria-labelledby="colour-picker-label"
+          <label className="account-modal__label" htmlFor="account-type-select">
+            Account Type
+          </label>
+          <select
+            id="account-type-select"
+            className="account-modal__input"
+            value={accountType}
+            onChange={(e) =>
+              setAccountType(e.target.value as ApiAccount["accountType"])
+            }
           >
-            {ACCOUNT_COLOURS.map((c) => (
-              <button
-                key={c}
-                type="button"
-                className={`account-modal__swatch${colour === c ? " account-modal__swatch--selected" : ""}`}
-                style={{ backgroundColor: c }}
-                aria-label={`Colour ${c}`}
-                aria-checked={colour === c}
-                role="radio"
-                onClick={() => setColour(c)}
-              />
+            {ACCOUNT_TYPES.map((t) => (
+              <option key={t} value={t}>
+                {t}
+              </option>
             ))}
-          </div>
+          </select>
         </div>
 
         <div className="account-modal__actions">
