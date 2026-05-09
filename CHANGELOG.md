@@ -1,5 +1,6 @@
 # Changelog
 
+- **2026-05-09** | #287 | T003 [FA-MIGR-001] Create src/server/routes/accounts.ts with 4 CRUD endpoints | Implements GET, POST, PATCH, DELETE /api/accounts using requireAuth, Drizzle ORM user-scoped queries, and Zod validation; PATCH/DELETE return 404 for unknown accounts.
 - **2026-05-09** | #286 | T002 [FA-MIGR-001] Create src/types/api.ts with ApiAccount, ApiTransaction, ImportResult | Defines TypeScript interfaces for FA-MIGR-001 API response shapes used by both server routes and client-side context migrations.
 - **2026-05-09** | #285 | T001 [FA-MIGR-001] Install zod as runtime dependency | Adds zod@4.4.3 to dependencies for server-side request validation in FA-MIGR-001 routes.
 - **2026-05-09** | #269 | T011 [FA-AUTH-002] Verify TypeScript compilation with npm run build | Ran tsc -b + vite build; exits 0 with zero TypeScript errors; dist/ assets produced successfully. FA-AUTH-002 is complete.
