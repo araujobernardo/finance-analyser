@@ -4,9 +4,9 @@ import { z } from "zod";
 import { db } from "../../db/index.ts";
 import { accounts, transactions } from "../../db/schema.ts";
 import {
-  requireAuth,
-  type AuthenticatedRequest,
-} from "../middleware/requireAuth.ts";
+  authenticateToken,
+  type AuthLocals,
+} from "../middleware/authenticateToken.ts";
 
 export const transactionsRouter = Router({ mergeParams: true });
 
@@ -60,9 +60,9 @@ function serializeTransaction(row: {
 }
 
 // GET /api/accounts/:accountId/transactions
-transactionsRouter.get("/", requireAuth, async (req, res, next) => {
+transactionsRouter.get("/", authenticateToken, async (req, res, next) => {
   try {
-    const userId = (req as AuthenticatedRequest).userId;
+    const userId = (res.locals as AuthLocals).user.userId;
     const accountId = req.params["accountId"] as string;
 
     // Verify account ownership
@@ -93,9 +93,9 @@ transactionsRouter.get("/", requireAuth, async (req, res, next) => {
 });
 
 // POST /api/accounts/:accountId/transactions
-transactionsRouter.post("/", requireAuth, async (req, res, next) => {
+transactionsRouter.post("/", authenticateToken, async (req, res, next) => {
   try {
-    const userId = (req as AuthenticatedRequest).userId;
+    const userId = (res.locals as AuthLocals).user.userId;
     const accountId = req.params["accountId"] as string;
 
     // Verify account ownership
@@ -159,136 +159,148 @@ const importTransactionsSchema = z.object({
   transactions: z.array(importTransactionRowSchema),
 });
 
-transactionsRouter.post("/import", requireAuth, async (req, res, next) => {
-  try {
-    const userId = (req as AuthenticatedRequest).userId;
-    const accountId = req.params["accountId"] as string;
+transactionsRouter.post(
+  "/import",
+  authenticateToken,
+  async (req, res, next) => {
+    try {
+      const userId = (res.locals as AuthLocals).user.userId;
+      const accountId = req.params["accountId"] as string;
 
-    // Verify account ownership
-    const [account] = await db
-      .select({ id: accounts.id })
-      .from(accounts)
-      .where(and(eq(accounts.id, accountId), eq(accounts.userId, userId)));
-    if (!account) {
-      res.status(404).json({ error: "Account not found" });
-      return;
-    }
-
-    const outerParsed = importTransactionsSchema.safeParse(req.body);
-    if (!outerParsed.success) {
-      res.status(400).json({
-        error:
-          outerParsed.error.issues[0]?.message ??
-          "transactions must be an array",
-      });
-      return;
-    }
-
-    const validRows: Array<{
-      userId: string;
-      accountId: string;
-      date: string;
-      amount: string;
-      description: string;
-      category: string | null;
-      isTransfer: boolean;
-      isManualTransfer: boolean;
-    }> = [];
-    let skipped = 0;
-
-    for (const row of outerParsed.data.transactions) {
-      const rowParsed = importTransactionRowSchema.safeParse(row);
-      if (rowParsed.success) {
-        validRows.push({
-          userId,
-          accountId,
-          date: rowParsed.data.date,
-          amount: rowParsed.data.amount.toString(),
-          description: rowParsed.data.description,
-          category: rowParsed.data.category ?? null,
-          isTransfer: rowParsed.data.isTransfer,
-          isManualTransfer: rowParsed.data.isManualTransfer,
-        });
-      } else {
-        skipped++;
+      // Verify account ownership
+      const [account] = await db
+        .select({ id: accounts.id })
+        .from(accounts)
+        .where(and(eq(accounts.id, accountId), eq(accounts.userId, userId)));
+      if (!account) {
+        res.status(404).json({ error: "Account not found" });
+        return;
       }
-    }
 
-    if (validRows.length > 0) {
-      await db.insert(transactions).values(validRows);
-    }
+      const outerParsed = importTransactionsSchema.safeParse(req.body);
+      if (!outerParsed.success) {
+        res.status(400).json({
+          error:
+            outerParsed.error.issues[0]?.message ??
+            "transactions must be an array",
+        });
+        return;
+      }
 
-    res.json({ imported: validRows.length, skipped });
-  } catch (err) {
-    next(err);
-  }
-});
+      const validRows: Array<{
+        userId: string;
+        accountId: string;
+        date: string;
+        amount: string;
+        description: string;
+        category: string | null;
+        isTransfer: boolean;
+        isManualTransfer: boolean;
+      }> = [];
+      let skipped = 0;
+
+      for (const row of outerParsed.data.transactions) {
+        const rowParsed = importTransactionRowSchema.safeParse(row);
+        if (rowParsed.success) {
+          validRows.push({
+            userId,
+            accountId,
+            date: rowParsed.data.date,
+            amount: rowParsed.data.amount.toString(),
+            description: rowParsed.data.description,
+            category: rowParsed.data.category ?? null,
+            isTransfer: rowParsed.data.isTransfer,
+            isManualTransfer: rowParsed.data.isManualTransfer,
+          });
+        } else {
+          skipped++;
+        }
+      }
+
+      if (validRows.length > 0) {
+        await db.insert(transactions).values(validRows);
+      }
+
+      res.json({ imported: validRows.length, skipped });
+    } catch (err) {
+      next(err);
+    }
+  },
+);
 
 // PATCH /api/transactions/:id
 // Registered separately on a different router prefix; this file exports a
 // standalone patchDeleteRouter for /api/transactions routes.
 export const transactionOpsRouter = Router();
 
-transactionOpsRouter.patch("/:id", requireAuth, async (req, res, next) => {
-  try {
-    const userId = (req as AuthenticatedRequest).userId;
-    const id = req.params["id"] as string;
+transactionOpsRouter.patch(
+  "/:id",
+  authenticateToken,
+  async (req, res, next) => {
+    try {
+      const userId = (res.locals as AuthLocals).user.userId;
+      const id = req.params["id"] as string;
 
-    const parsed = updateTransactionSchema.safeParse(req.body);
-    if (!parsed.success) {
-      res
-        .status(400)
-        .json({ error: parsed.error.issues[0]?.message ?? "Invalid input" });
-      return;
+      const parsed = updateTransactionSchema.safeParse(req.body);
+      if (!parsed.success) {
+        res
+          .status(400)
+          .json({ error: parsed.error.issues[0]?.message ?? "Invalid input" });
+        return;
+      }
+
+      const updates: Partial<{
+        category: string | null;
+        description: string;
+        isTransfer: boolean;
+        isManualTransfer: boolean;
+      }> = {};
+      if (parsed.data.category !== undefined)
+        updates.category = parsed.data.category;
+      if (parsed.data.description !== undefined)
+        updates.description = parsed.data.description;
+      if (parsed.data.isTransfer !== undefined)
+        updates.isTransfer = parsed.data.isTransfer;
+      if (parsed.data.isManualTransfer !== undefined)
+        updates.isManualTransfer = parsed.data.isManualTransfer;
+
+      const [updated] = await db
+        .update(transactions)
+        .set(updates)
+        .where(and(eq(transactions.id, id), eq(transactions.userId, userId)))
+        .returning();
+
+      if (!updated) {
+        res.status(404).json({ error: "Transaction not found" });
+        return;
+      }
+      res.json(serializeTransaction(updated));
+    } catch (err) {
+      next(err);
     }
+  },
+);
 
-    const updates: Partial<{
-      category: string | null;
-      description: string;
-      isTransfer: boolean;
-      isManualTransfer: boolean;
-    }> = {};
-    if (parsed.data.category !== undefined)
-      updates.category = parsed.data.category;
-    if (parsed.data.description !== undefined)
-      updates.description = parsed.data.description;
-    if (parsed.data.isTransfer !== undefined)
-      updates.isTransfer = parsed.data.isTransfer;
-    if (parsed.data.isManualTransfer !== undefined)
-      updates.isManualTransfer = parsed.data.isManualTransfer;
+transactionOpsRouter.delete(
+  "/:id",
+  authenticateToken,
+  async (req, res, next) => {
+    try {
+      const userId = (res.locals as AuthLocals).user.userId;
+      const id = req.params["id"] as string;
 
-    const [updated] = await db
-      .update(transactions)
-      .set(updates)
-      .where(and(eq(transactions.id, id), eq(transactions.userId, userId)))
-      .returning();
+      const [deleted] = await db
+        .delete(transactions)
+        .where(and(eq(transactions.id, id), eq(transactions.userId, userId)))
+        .returning();
 
-    if (!updated) {
-      res.status(404).json({ error: "Transaction not found" });
-      return;
+      if (!deleted) {
+        res.status(404).json({ error: "Transaction not found" });
+        return;
+      }
+      res.status(204).send();
+    } catch (err) {
+      next(err);
     }
-    res.json(serializeTransaction(updated));
-  } catch (err) {
-    next(err);
-  }
-});
-
-transactionOpsRouter.delete("/:id", requireAuth, async (req, res, next) => {
-  try {
-    const userId = (req as AuthenticatedRequest).userId;
-    const id = req.params["id"] as string;
-
-    const [deleted] = await db
-      .delete(transactions)
-      .where(and(eq(transactions.id, id), eq(transactions.userId, userId)))
-      .returning();
-
-    if (!deleted) {
-      res.status(404).json({ error: "Transaction not found" });
-      return;
-    }
-    res.status(204).send();
-  } catch (err) {
-    next(err);
-  }
-});
+  },
+);
