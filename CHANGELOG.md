@@ -1,5 +1,6 @@
 # Changelog
 
+- **2026-05-09** | #279 | T010 [FA-INFRA-001] FA-AUTH-002 coordination note posted on #266 | Posted a comment on issue #266 informing the FA-AUTH-002 implementer that src/lib/api.ts is created by FA-INFRA-001, what it exports, and how to import API_BASE without re-declaring it.
 - **2026-05-09** | #278 | T009 [FA-INFRA-001] npm run build verification | Confirmed `npm run build` exits 0 with zero TypeScript errors; dist/index.html and hashed JS/CSS assets produced successfully. All API_BASE imports resolve correctly across all auth pages.
 - **2026-05-09** | #277 | T008 [FA-INFRA-001] Update .env.example to add VITE_API_URL entry | Documents VITE_API_URL in .env.example with a comment explaining when to set it in .env.local vs the Vercel dashboard, preventing silent fetch failures in local dev.
 - **2026-05-09** | #276 | T007 [FA-INFRA-001] Update VerifyEmailPage.tsx — prefix both fetch URLs with API_BASE | Prefixes both the /api/auth/verify-email and /api/auth/resend-verification fetch calls with API_BASE so both verification actions target the correct backend URL in production.
