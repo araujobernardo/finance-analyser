@@ -1,5 +1,6 @@
 # Changelog
 
+- **2026-05-09** | #261 | T003 [FA-AUTH-002] Update App.test.tsx to seed fa-auth-user | Added fa-auth-user sessionStorage seed to all 3 beforeEach blocks in App.test.tsx so AuthContext hydrates both token and user during tests.
 - **2026-05-09** | #260 | T002 [FA-AUTH-002] Expand AuthContext with AuthUser, login(), logout() | Replaced the token/setToken AuthContext shape with accessToken, user (AuthUser), login(token, user), and logout(); state hydrates from sessionStorage on mount. LoginPage updated to call login(token, user).
 - **2026-05-09** | #259 | T001 [FA-AUTH-002] Update login route to return user profile | Extended POST /api/auth/login response from {token} to {token, user: {id, email, displayName}} so AuthContext can hydrate the user object on sign-in.
 - **2026-05-09** | #279 | T010 [FA-INFRA-001] FA-AUTH-002 coordination note posted on #266 | Posted a comment on issue #266 informing the FA-AUTH-002 implementer that src/lib/api.ts is created by FA-INFRA-001, what it exports, and how to import API_BASE without re-declaring it.
