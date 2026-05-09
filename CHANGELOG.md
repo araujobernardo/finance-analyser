@@ -1,5 +1,6 @@
 # Changelog
 
+- **2026-05-09** | #290 | T006 [FA-MIGR-001] Create src/server/routes/transactions.ts with 4 CRUD endpoints | Implements GET/POST /api/accounts/:accountId/transactions (with account ownership check) and PATCH/DELETE /api/transactions/:id; serializeTransaction applies parseFloat to Drizzle numeric string amounts.
 - **2026-05-09** | #289 | T005 [FA-MIGR-001] Migrate AccountContext to API (useApi() for data loading/mutation) | Rewrites AccountContext to load/create/delete accounts via REST API; adds isLoading, error, updateAccount; derives colour by index; updates AddAccountModal (nickname+accountType) and DeleteAccountModal; rewrites tests with vi.mock("../lib/api").
 - **2026-05-09** | #288 | T004 [FA-MIGR-001] Register accountsRouter in src/server/index.ts | Imports and mounts accountsRouter at /api/accounts so all four CRUD endpoints are active; existing /api/auth/\* routes unchanged.
 - **2026-05-09** | #287 | T003 [FA-MIGR-001] Create src/server/routes/accounts.ts with 4 CRUD endpoints | Implements GET, POST, PATCH, DELETE /api/accounts using requireAuth, Drizzle ORM user-scoped queries, and Zod validation; PATCH/DELETE return 404 for unknown accounts.
