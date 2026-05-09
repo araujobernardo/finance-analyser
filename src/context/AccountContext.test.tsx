@@ -8,13 +8,8 @@ import {
   ALL_ACCOUNTS_ID,
 } from "./AccountContext";
 import { ACTIVE_ACCOUNT_KEY } from "./accountKeys";
-import {
-  ACCOUNT_COLOURS,
-  DEFAULT_ACCOUNT_ID,
-  saveTransactions,
-} from "../services/storage";
-import type { ApiAccount } from "../types/api";
-import type { Transaction } from "../utils/csvParser";
+import { ACCOUNT_COLOURS, DEFAULT_ACCOUNT_ID } from "../services/storage";
+import type { ApiAccount, ApiTransaction } from "../types/api";
 
 // ── Mock useApi ────────────────────────────────────────────────────────────
 
@@ -38,11 +33,37 @@ function makeApiAccount(overrides: Partial<ApiAccount> = {}): ApiAccount {
   };
 }
 
+function makeApiTransaction(
+  overrides: Partial<ApiTransaction> = {},
+): ApiTransaction {
+  return {
+    id: "txn-1",
+    userId: "user-1",
+    accountId: "acc-1",
+    date: "2024-03-15",
+    amount: -85.5,
+    description: "COUNTDOWN SUPERMARKET",
+    category: "Groceries",
+    isTransfer: false,
+    isManualTransfer: false,
+    createdAt: new Date().toISOString(),
+    ...overrides,
+  };
+}
+
 function mockGetAccounts(accounts: ApiAccount[]) {
   mockApiFetch.mockResolvedValueOnce({
     ok: true,
     status: 200,
     json: async () => ({ accounts }),
+  });
+}
+
+function mockGetTransactions(transactions: ApiTransaction[]) {
+  mockApiFetch.mockResolvedValueOnce({
+    ok: true,
+    status: 200,
+    json: async () => ({ transactions }),
   });
 }
 
@@ -81,6 +102,8 @@ describe("AccountProvider", () => {
   it("exposes accounts loaded from API", async () => {
     const acc = makeApiAccount({ id: "acc-1" });
     mockGetAccounts([acc]);
+    // transaction fetch after accounts load
+    mockGetTransactions([]);
     let ctx!: ReturnType<typeof useAccount>;
     render(
       <AccountProvider>
@@ -97,6 +120,8 @@ describe("AccountProvider", () => {
       makeApiAccount({ id: "a1" }),
       makeApiAccount({ id: "a2" }),
     ]);
+    // transaction fetch for each account (activeAccountId = ALL or first)
+    mockGetTransactions([]);
     let ctx!: ReturnType<typeof useAccount>;
     render(
       <AccountProvider>
@@ -113,6 +138,7 @@ describe("AccountProvider", () => {
       makeApiAccount({ id: "first" }),
       makeApiAccount({ id: "second" }),
     ]);
+    mockGetTransactions([]);
     let ctx!: ReturnType<typeof useAccount>;
     render(
       <AccountProvider>
@@ -140,6 +166,7 @@ describe("AccountProvider", () => {
       makeApiAccount({ id: "acc-a" }),
       makeApiAccount({ id: "acc-b" }),
     ]);
+    mockGetTransactions([]);
     localStorage.setItem(ACTIVE_ACCOUNT_KEY, "acc-b");
     let ctx!: ReturnType<typeof useAccount>;
     render(
@@ -153,6 +180,7 @@ describe("AccountProvider", () => {
 
   it("ignores a stored activeAccountId that no longer exists in accounts", async () => {
     mockGetAccounts([makeApiAccount({ id: "acc-a" })]);
+    mockGetTransactions([]);
     localStorage.setItem(ACTIVE_ACCOUNT_KEY, "deleted-acc");
     let ctx!: ReturnType<typeof useAccount>;
     render(
@@ -169,6 +197,9 @@ describe("AccountProvider", () => {
       makeApiAccount({ id: "acc-a" }),
       makeApiAccount({ id: "acc-b" }),
     ]);
+    // transaction fetches: initial load (acc-a), then after setActiveAccountId (acc-b)
+    mockGetTransactions([]);
+    mockGetTransactions([]);
     let ctx!: ReturnType<typeof useAccount>;
     render(
       <AccountProvider>
@@ -189,6 +220,8 @@ describe("AccountProvider", () => {
       status: 201,
       json: async () => newAccount,
     });
+    // transaction fetch after new account becomes active
+    mockGetTransactions([]);
 
     let ctx!: ReturnType<typeof useAccount>;
     render(
@@ -211,11 +244,15 @@ describe("AccountProvider", () => {
       makeApiAccount({ id: "acc-a" }),
       makeApiAccount({ id: "acc-b" }),
     ]);
+    // transaction fetch for initial active account
+    mockGetTransactions([]);
     mockApiFetch.mockResolvedValueOnce({
       ok: true,
       status: 204,
       json: async () => null,
     });
+    // transaction fetch after switch to acc-b
+    mockGetTransactions([]);
 
     let ctx!: ReturnType<typeof useAccount>;
     render(
@@ -272,6 +309,8 @@ describe("ALL_ACCOUNTS_ID sentinel", () => {
 
   it("restores 'all' as activeAccountId from localStorage", async () => {
     mockGetAccounts([makeApiAccount({ id: "acc-a" })]);
+    // When 'all' is active, fetches transactions for every account
+    mockGetTransactions([]);
     localStorage.setItem(ACTIVE_ACCOUNT_KEY, ALL_ACCOUNTS_ID);
     let ctx!: ReturnType<typeof useAccount>;
     render(
@@ -285,6 +324,10 @@ describe("ALL_ACCOUNTS_ID sentinel", () => {
 
   it("setActiveAccountId accepts 'all' and persists it", async () => {
     mockGetAccounts([makeApiAccount({ id: "acc-a" })]);
+    // initial transaction fetch (acc-a)
+    mockGetTransactions([]);
+    // fetch after switching to 'all'
+    mockGetTransactions([]);
     let ctx!: ReturnType<typeof useAccount>;
     render(
       <AccountProvider>
@@ -315,12 +358,9 @@ describe("useActiveMonths", () => {
   it("returns months for the active single account", async () => {
     mockGetAccounts([makeApiAccount({ id: "acc-a" })]);
     localStorage.setItem(ACTIVE_ACCOUNT_KEY, "acc-a");
-    const txn: Transaction = {
-      date: new Date(2024, 2, 1),
-      description: "Test",
-      amount: -10,
-    };
-    saveTransactions("acc-a", "2024-03", [txn]);
+    mockGetTransactions([
+      makeApiTransaction({ id: "t1", accountId: "acc-a", date: "2024-03-15" }),
+    ]);
 
     let months: string[] = [];
     render(
@@ -337,13 +377,13 @@ describe("useActiveMonths", () => {
       makeApiAccount({ id: "acc-b" }),
     ]);
     localStorage.setItem(ACTIVE_ACCOUNT_KEY, ALL_ACCOUNTS_ID);
-    const txn: Transaction = {
-      date: new Date(2024, 2, 1),
-      description: "T",
-      amount: -1,
-    };
-    saveTransactions("acc-a", "2024-03", [txn]);
-    saveTransactions("acc-b", "2024-04", [txn]);
+    // When 'all', fetches transactions for acc-a and acc-b in parallel
+    mockGetTransactions([
+      makeApiTransaction({ id: "t1", accountId: "acc-a", date: "2024-03-01" }),
+    ]);
+    mockGetTransactions([
+      makeApiTransaction({ id: "t2", accountId: "acc-b", date: "2024-04-01" }),
+    ]);
 
     let months: string[] = [];
     render(
@@ -362,9 +402,12 @@ describe("useActiveMonths", () => {
       makeApiAccount({ id: "acc-b" }),
     ]);
     localStorage.setItem(ACTIVE_ACCOUNT_KEY, ALL_ACCOUNTS_ID);
-    const txn: Transaction = { date: new Date(), description: "T", amount: -1 };
-    saveTransactions("acc-b", "2024-01", [txn]);
-    saveTransactions("acc-a", "2024-03", [txn]);
+    mockGetTransactions([
+      makeApiTransaction({ id: "t1", accountId: "acc-a", date: "2024-03-01" }),
+    ]);
+    mockGetTransactions([
+      makeApiTransaction({ id: "t2", accountId: "acc-b", date: "2024-01-01" }),
+    ]);
 
     let months: string[] = [];
     render(
@@ -378,7 +421,8 @@ describe("useActiveMonths", () => {
 
   it("returns empty array when no accounts have data", async () => {
     mockGetAccounts([makeApiAccount({ id: "acc-a" })]);
-    localStorage.setItem(ACTIVE_ACCOUNT_KEY, ALL_ACCOUNTS_ID);
+    localStorage.setItem(ACTIVE_ACCOUNT_KEY, "acc-a");
+    mockGetTransactions([]);
 
     let months: string[] = [];
     render(
@@ -386,7 +430,6 @@ describe("useActiveMonths", () => {
         <ActiveMonthsReader onRender={(m) => (months = m)} />
       </AccountProvider>,
     );
-    // After load, still no months
     await waitFor(() => {});
     expect(months).toHaveLength(0);
   });
@@ -410,12 +453,14 @@ describe("useActiveTransactions", () => {
   it("returns transactions for the active single account and month", async () => {
     mockGetAccounts([makeApiAccount({ id: "acc-a" })]);
     localStorage.setItem(ACTIVE_ACCOUNT_KEY, "acc-a");
-    const txn: Transaction = {
-      date: new Date(2024, 2, 1),
-      description: "Groceries",
-      amount: -50,
-    };
-    saveTransactions("acc-a", "2024-03", [txn]);
+    mockGetTransactions([
+      makeApiTransaction({
+        id: "t1",
+        accountId: "acc-a",
+        date: "2024-03-15",
+        description: "Groceries",
+      }),
+    ]);
 
     let result: ReturnType<typeof useActiveTransactions> = [];
     render(
@@ -432,6 +477,7 @@ describe("useActiveTransactions", () => {
 
   it("returns empty array when monthKey is null", async () => {
     mockGetAccounts([makeApiAccount({ id: "acc-a" })]);
+    mockGetTransactions([]);
     let result: ReturnType<typeof useActiveTransactions> = [];
     render(
       <AccountProvider>
@@ -451,18 +497,24 @@ describe("useActiveTransactions", () => {
       makeApiAccount({ id: "acc-b" }),
     ]);
     localStorage.setItem(ACTIVE_ACCOUNT_KEY, ALL_ACCOUNTS_ID);
-    const txnA: Transaction = {
-      date: new Date(2024, 2, 1),
-      description: "A",
-      amount: -10,
-    };
-    const txnB: Transaction = {
-      date: new Date(2024, 2, 2),
-      description: "B",
-      amount: -20,
-    };
-    saveTransactions("acc-a", "2024-03", [txnA]);
-    saveTransactions("acc-b", "2024-03", [txnB]);
+    mockGetTransactions([
+      makeApiTransaction({
+        id: "t1",
+        accountId: "acc-a",
+        date: "2024-03-01",
+        description: "A",
+        amount: -10,
+      }),
+    ]);
+    mockGetTransactions([
+      makeApiTransaction({
+        id: "t2",
+        accountId: "acc-b",
+        date: "2024-03-02",
+        description: "B",
+        amount: -20,
+      }),
+    ]);
 
     let result: ReturnType<typeof useActiveTransactions> = [];
     render(
@@ -483,18 +535,12 @@ describe("useActiveTransactions", () => {
       makeApiAccount({ id: "acc-b" }),
     ]);
     localStorage.setItem(ACTIVE_ACCOUNT_KEY, ALL_ACCOUNTS_ID);
-    const txnA: Transaction = {
-      date: new Date(2024, 2, 1),
-      description: "A",
-      amount: -10,
-    };
-    const txnB: Transaction = {
-      date: new Date(2024, 2, 2),
-      description: "B",
-      amount: -20,
-    };
-    saveTransactions("acc-a", "2024-03", [txnA]);
-    saveTransactions("acc-b", "2024-03", [txnB]);
+    mockGetTransactions([
+      makeApiTransaction({ id: "t1", accountId: "acc-a", date: "2024-03-01" }),
+    ]);
+    mockGetTransactions([
+      makeApiTransaction({ id: "t2", accountId: "acc-b", date: "2024-03-02" }),
+    ]);
 
     let result: ReturnType<typeof useActiveTransactions> = [];
     render(
@@ -514,12 +560,9 @@ describe("useActiveTransactions", () => {
   it("does not attach accountColour in single-account mode", async () => {
     mockGetAccounts([makeApiAccount({ id: "acc-a" })]);
     localStorage.setItem(ACTIVE_ACCOUNT_KEY, "acc-a");
-    const txn: Transaction = {
-      date: new Date(2024, 2, 1),
-      description: "T",
-      amount: -1,
-    };
-    saveTransactions("acc-a", "2024-03", [txn]);
+    mockGetTransactions([
+      makeApiTransaction({ id: "t1", accountId: "acc-a", date: "2024-03-01" }),
+    ]);
 
     let result: ReturnType<typeof useActiveTransactions> = [];
     render(

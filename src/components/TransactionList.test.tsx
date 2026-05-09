@@ -1,37 +1,52 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
-import { render, screen, fireEvent } from "@testing-library/react";
+import { render, screen, fireEvent, waitFor } from "@testing-library/react";
 import { TransactionList } from "./TransactionList";
-import type { Transaction } from "../utils/csvParser";
-import * as storage from "../services/storage";
+import type { ApiTransaction } from "../types/api";
 
-function makeTransaction(overrides: Partial<Transaction> = {}): Transaction {
+// ── Mock useApi ────────────────────────────────────────────────────────────
+
+const mockApiFetch = vi.fn();
+vi.mock("../lib/api", () => ({
+  useApi: () => ({ apiFetch: mockApiFetch }),
+  API_BASE: "",
+}));
+
+// ── Helpers ────────────────────────────────────────────────────────────────
+
+function makeTransaction(
+  overrides: Partial<ApiTransaction> = {},
+): ApiTransaction {
   return {
-    date: new Date("2024-03-15"),
-    description: "COUNTDOWN SUPERMARKET",
+    id: "txn-1",
+    userId: "user-1",
+    accountId: "acc-1",
+    date: "2024-03-15",
     amount: -85.5,
+    description: "COUNTDOWN SUPERMARKET",
     category: "Groceries",
+    isTransfer: false,
+    isManualTransfer: false,
+    createdAt: new Date().toISOString(),
     ...overrides,
   };
 }
 
-const MONTH_KEY = "2024-03";
-
 beforeEach(() => {
-  vi.restoreAllMocks();
+  vi.clearAllMocks();
 });
 
 describe("TransactionList", () => {
   it("renders a row for each transaction", () => {
     const txns = [
-      makeTransaction({ description: "COUNTDOWN" }),
-      makeTransaction({ description: "UBER EATS", category: "Dining" }),
+      makeTransaction({ id: "t1", description: "COUNTDOWN" }),
+      makeTransaction({
+        id: "t2",
+        description: "UBER EATS",
+        category: "Dining",
+      }),
     ];
     render(
-      <TransactionList
-        monthKey={MONTH_KEY}
-        transactions={txns}
-        onTransactionsChange={vi.fn()}
-      />,
+      <TransactionList transactions={txns} onTransactionsChange={vi.fn()} />,
     );
     expect(screen.getByText("COUNTDOWN")).toBeInTheDocument();
     expect(screen.getByText("UBER EATS")).toBeInTheDocument();
@@ -39,11 +54,7 @@ describe("TransactionList", () => {
 
   it("shows an empty state message when there are no transactions", () => {
     render(
-      <TransactionList
-        monthKey={MONTH_KEY}
-        transactions={[]}
-        onTransactionsChange={vi.fn()}
-      />,
+      <TransactionList transactions={[]} onTransactionsChange={vi.fn()} />,
     );
     expect(screen.getByText(/no transactions/i)).toBeInTheDocument();
   });
@@ -51,11 +62,7 @@ describe("TransactionList", () => {
   it("displays negative amounts in a negative style", () => {
     const txns = [makeTransaction({ amount: -50 })];
     render(
-      <TransactionList
-        monthKey={MONTH_KEY}
-        transactions={txns}
-        onTransactionsChange={vi.fn()}
-      />,
+      <TransactionList transactions={txns} onTransactionsChange={vi.fn()} />,
     );
     const amountCell = screen.getByText("-50.00");
     expect(amountCell).toHaveClass("txn-negative");
@@ -64,11 +71,7 @@ describe("TransactionList", () => {
   it("displays positive amounts in a positive style with a + prefix", () => {
     const txns = [makeTransaction({ amount: 3000 })];
     render(
-      <TransactionList
-        monthKey={MONTH_KEY}
-        transactions={txns}
-        onTransactionsChange={vi.fn()}
-      />,
+      <TransactionList transactions={txns} onTransactionsChange={vi.fn()} />,
     );
     const amountCell = screen.getByText("+3000.00");
     expect(amountCell).toHaveClass("txn-positive");
@@ -76,33 +79,27 @@ describe("TransactionList", () => {
 
   it("renders CategoryBadge for each transaction", () => {
     const txns = [
-      makeTransaction({ category: "Groceries" }),
-      makeTransaction({ category: "Transport" }),
+      makeTransaction({ id: "t1", category: "Groceries" }),
+      makeTransaction({ id: "t2", category: "Transport" }),
     ];
     render(
-      <TransactionList
-        monthKey={MONTH_KEY}
-        transactions={txns}
-        onTransactionsChange={vi.fn()}
-      />,
+      <TransactionList transactions={txns} onTransactionsChange={vi.fn()} />,
     );
     expect(screen.getByText("Groceries")).toBeInTheDocument();
     expect(screen.getByText("Transport")).toBeInTheDocument();
   });
 
-  it("calls updateTransactionCategory and onTransactionsChange when category is changed", () => {
-    const updateSpy = vi
-      .spyOn(storage, "updateTransactionCategory")
-      .mockReturnValue({ success: true });
+  it("PATCHes /api/transactions/:id and calls onTransactionsChange when category is changed", async () => {
+    mockApiFetch.mockResolvedValueOnce({
+      ok: true,
+      status: 200,
+      json: async () => makeTransaction({ category: "Dining" }),
+    });
     const onChange = vi.fn();
-    const txns = [makeTransaction({ category: "Groceries" })];
+    const txns = [makeTransaction({ id: "txn-1", category: "Groceries" })];
 
     render(
-      <TransactionList
-        monthKey={MONTH_KEY}
-        transactions={txns}
-        onTransactionsChange={onChange}
-      />,
+      <TransactionList transactions={txns} onTransactionsChange={onChange} />,
     );
 
     // Open the dropdown for the first badge
@@ -110,20 +107,45 @@ describe("TransactionList", () => {
     // Select a new category
     fireEvent.mouseDown(screen.getByRole("option", { name: "Dining" }));
 
-    expect(updateSpy).toHaveBeenCalledWith(MONTH_KEY, 0, "Dining");
-    expect(onChange).toHaveBeenCalledWith(
-      expect.arrayContaining([expect.objectContaining({ category: "Dining" })]),
+    await waitFor(() => {
+      expect(mockApiFetch).toHaveBeenCalledWith(
+        "/api/transactions/txn-1",
+        expect.objectContaining({ method: "PATCH" }),
+      );
+      expect(onChange).toHaveBeenCalledWith(
+        expect.arrayContaining([
+          expect.objectContaining({ category: "Dining" }),
+        ]),
+      );
+    });
+  });
+
+  it("does not call onTransactionsChange when PATCH fails", async () => {
+    mockApiFetch.mockResolvedValueOnce({
+      ok: false,
+      status: 500,
+      json: async () => ({ error: "Server error" }),
+    });
+    const onChange = vi.fn();
+    const txns = [makeTransaction({ id: "txn-1", category: "Groceries" })];
+
+    render(
+      <TransactionList transactions={txns} onTransactionsChange={onChange} />,
     );
+
+    fireEvent.click(screen.getByRole("button", { name: /groceries/i }));
+    fireEvent.mouseDown(screen.getByRole("option", { name: "Dining" }));
+
+    await waitFor(() => {
+      expect(mockApiFetch).toHaveBeenCalled();
+    });
+    expect(onChange).not.toHaveBeenCalled();
   });
 
   it("shows Uncategorised badge for transactions with no category", () => {
-    const txns = [makeTransaction({ category: undefined })];
+    const txns = [makeTransaction({ category: null })];
     render(
-      <TransactionList
-        monthKey={MONTH_KEY}
-        transactions={txns}
-        onTransactionsChange={vi.fn()}
-      />,
+      <TransactionList transactions={txns} onTransactionsChange={vi.fn()} />,
     );
     expect(
       screen.getByRole("button", { name: /uncategorised/i }),
