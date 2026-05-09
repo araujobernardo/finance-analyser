@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { Link } from "react-router-dom";
+import { API_BASE } from "../lib/api";
 import "./auth.css";
 
 export function ForgotPasswordPage() {
@@ -28,7 +29,7 @@ export function ForgotPasswordPage() {
     setErrors({});
     setLoading(true);
     try {
-      await fetch("/api/auth/forgot-password", {
+      await fetch(`${API_BASE}/api/auth/forgot-password`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ email: email.trim() }),
