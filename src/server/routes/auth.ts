@@ -123,7 +123,10 @@ router.post(
       }
 
       const token = generateAccessToken(user.id);
-      res.json({ token });
+      res.json({
+        token,
+        user: { id: user.id, email: user.email, displayName: user.displayName },
+      });
     } catch (err) {
       next(err);
     }
