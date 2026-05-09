@@ -7,6 +7,7 @@ import { Sidebar } from "./components/Sidebar";
 import { DashboardPage } from "./pages/DashboardPage";
 import { TransactionsPage } from "./pages/TransactionsPage";
 import { ChatPage } from "./pages/ChatPage";
+import { MigrationPage } from "./pages/MigrationPage";
 import { SettingsPage } from "./pages/SettingsPage";
 import { SignUpPage } from "./pages/SignUpPage";
 import { VerifyEmailPage } from "./pages/VerifyEmailPage";
@@ -384,6 +385,7 @@ export default function App() {
               />
             }
           />
+          <Route path="/migrate" element={<MigrationPage />} />
         </Routes>
       </div>
     </div>
