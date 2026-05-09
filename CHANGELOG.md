@@ -1,5 +1,6 @@
 # Changelog
 
+- **2026-05-09** | #277 | T008 [FA-INFRA-001] Update .env.example to add VITE_API_URL entry | Documents VITE_API_URL in .env.example with a comment explaining when to set it in .env.local vs the Vercel dashboard, preventing silent fetch failures in local dev.
 - **2026-05-09** | #276 | T007 [FA-INFRA-001] Update VerifyEmailPage.tsx — prefix both fetch URLs with API_BASE | Prefixes both the /api/auth/verify-email and /api/auth/resend-verification fetch calls with API_BASE so both verification actions target the correct backend URL in production.
 - **2026-05-09** | #275 | T006 [FA-INFRA-001] Update ResetPasswordPage.tsx fetch URL to use API_BASE | Prefixes the /api/auth/reset-password fetch call with API_BASE imported from src/lib/api so the reset-password request targets the correct backend URL in both local dev and production.
 - **2026-05-09** | #274 | T005 [FA-INFRA-001] Update ForgotPasswordPage.tsx fetch URL to use API_BASE | Prefixes the /api/auth/forgot-password fetch call with API_BASE imported from src/lib/api so the reset-link request targets the correct backend URL in both local dev and production.
