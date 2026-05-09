@@ -1,9 +1,12 @@
 import { useState } from "react";
 import { Navigate, Route, Routes, useNavigate } from "react-router-dom";
 import { AuthProvider } from "./context/AuthContext";
+import { ToastProvider } from "./context/ToastContext";
+import { AccountProvider } from "./context/AccountContext";
 import { ProtectedRoute } from "./components/ProtectedRoute";
 import { PublicOnlyRoute } from "./components/PublicOnlyRoute";
 import { Sidebar } from "./components/Sidebar";
+import { Toast } from "./components/Toast";
 import { DashboardPage } from "./pages/DashboardPage";
 import { TransactionsPage } from "./pages/TransactionsPage";
 import { ChatPage } from "./pages/ChatPage";
@@ -322,73 +325,78 @@ export default function App() {
   };
 
   const appShell = (
-    <div className="app-shell">
-      <Sidebar
-        onUpload={handleUpload}
-        uploadStatus={uploadStatus}
-        txnCount={txns.length}
-        accountList={accountList}
-        onRenameAccount={handleRenameAccount}
-      />
-      <div className="app-content">
-        <Routes>
-          <Route index element={<Navigate to="/dashboard" replace />} />
-          <Route
-            path="/dashboard"
-            element={
-              <DashboardPage
-                txns={txns}
-                months={months}
-                selectedMonths={currentMonths}
-                setSelectedMonths={setSelectedMonths}
-                budgets={budgets}
-                accountList={accountList}
-                categories={categories}
-              />
-            }
+    <ToastProvider>
+      <AccountProvider>
+        <div className="app-shell">
+          <Sidebar
+            onUpload={handleUpload}
+            uploadStatus={uploadStatus}
+            txnCount={txns.length}
+            accountList={accountList}
+            onRenameAccount={handleRenameAccount}
           />
-          <Route
-            path="/transactions"
-            element={
-              <TransactionsPage
-                txns={txns}
-                accountList={accountList}
-                categories={categories}
-                onBulkCategoryChange={handleBulkCategoryChange}
+          <div className="app-content">
+            <Routes>
+              <Route index element={<Navigate to="/dashboard" replace />} />
+              <Route
+                path="/dashboard"
+                element={
+                  <DashboardPage
+                    txns={txns}
+                    months={months}
+                    selectedMonths={currentMonths}
+                    setSelectedMonths={setSelectedMonths}
+                    budgets={budgets}
+                    accountList={accountList}
+                    categories={categories}
+                  />
+                }
               />
-            }
-          />
-          <Route
-            path="/chat"
-            element={
-              <ChatPage
-                txns={txns}
-                budgets={budgets}
-                categories={categories}
-                messages={chatMessages}
-                setMessages={setChatMessages}
+              <Route
+                path="/transactions"
+                element={
+                  <TransactionsPage
+                    txns={txns}
+                    accountList={accountList}
+                    categories={categories}
+                    onBulkCategoryChange={handleBulkCategoryChange}
+                  />
+                }
               />
-            }
-          />
-          <Route
-            path="/settings"
-            element={
-              <SettingsPage
-                categories={categories}
-                setCategories={setCategories}
-                budgets={budgets}
-                setBudgets={setBudgets}
-                txns={txns}
-                setTxns={setTxns}
-                accountList={accountList}
-                onRenameAccount={handleRenameAccount}
+              <Route
+                path="/chat"
+                element={
+                  <ChatPage
+                    txns={txns}
+                    budgets={budgets}
+                    categories={categories}
+                    messages={chatMessages}
+                    setMessages={setChatMessages}
+                  />
+                }
               />
-            }
-          />
-          <Route path="/migrate" element={<MigrationPage />} />
-        </Routes>
-      </div>
-    </div>
+              <Route
+                path="/settings"
+                element={
+                  <SettingsPage
+                    categories={categories}
+                    setCategories={setCategories}
+                    budgets={budgets}
+                    setBudgets={setBudgets}
+                    txns={txns}
+                    setTxns={setTxns}
+                    accountList={accountList}
+                    onRenameAccount={handleRenameAccount}
+                  />
+                }
+              />
+              <Route path="/migrate" element={<MigrationPage />} />
+            </Routes>
+          </div>
+        </div>
+        <Toast />
+      </AccountProvider>
+    </ToastProvider>
   );
 
   return (

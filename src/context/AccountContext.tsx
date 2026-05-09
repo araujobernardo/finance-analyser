@@ -12,6 +12,7 @@ import {
 import { DEFAULT_ACCOUNT_ID, ACCOUNT_COLOURS } from "../services/storage";
 import { ACTIVE_ACCOUNT_KEY } from "./accountKeys";
 import { useApi } from "../lib/api";
+import { useToast } from "../hooks/useToast";
 import type { ApiAccount, ApiTransaction } from "../types/api";
 
 export { ACCOUNT_COLOURS };
@@ -34,12 +35,13 @@ export interface AccountContextValue {
   addAccount: (
     nickname: string,
     accountType: ApiAccount["accountType"],
-  ) => Promise<void>;
-  removeAccount: (id: string) => Promise<void>;
+  ) => Promise<boolean>;
+  removeAccount: (id: string) => Promise<boolean>;
   updateAccount: (
     id: string,
     updates: { nickname?: string; accountType?: ApiAccount["accountType"] },
-  ) => Promise<void>;
+  ) => Promise<boolean>;
+  refetch: () => Promise<void>;
 }
 
 const AccountContext = createContext<AccountContextValue>({
@@ -48,9 +50,10 @@ const AccountContext = createContext<AccountContextValue>({
   isLoading: false,
   error: null,
   setActiveAccountId: () => {},
-  addAccount: async () => {},
-  removeAccount: async () => {},
-  updateAccount: async () => {},
+  addAccount: async () => false,
+  removeAccount: async () => false,
+  updateAccount: async () => false,
+  refetch: async () => {},
 });
 
 function deriveColour(index: number): string {
@@ -68,6 +71,7 @@ function resolveInitialAccountId(
 
 export function AccountProvider({ children }: { children: ReactNode }) {
   const { apiFetch } = useApi();
+  const { addToast } = useToast();
   const [accounts, setAccounts] = useState<AccountWithColour[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -101,6 +105,27 @@ export function AccountProvider({ children }: { children: ReactNode }) {
       });
     } catch {
       setError("Failed to load accounts");
+    } finally {
+      setIsLoading(false);
+    }
+  }, [apiFetch]);
+
+  const refetch = useCallback(async () => {
+    setIsLoading(true);
+    setError(null);
+    try {
+      const res = await apiFetch("/api/accounts");
+      if (!res.ok) {
+        const body = (await res.json()) as { error?: string };
+        setError(body.error ?? "Failed to load accounts.");
+        return;
+      }
+      const data = (await res.json()) as { accounts: ApiAccount[] };
+      setAccounts(
+        data.accounts.map((acc, i) => ({ ...acc, colour: deriveColour(i) })),
+      );
+    } catch (e) {
+      setError(e instanceof Error ? e.message : "Failed to load accounts.");
     } finally {
       setIsLoading(false);
     }
@@ -164,60 +189,141 @@ export function AccountProvider({ children }: { children: ReactNode }) {
   }
 
   const addAccount = useCallback(
-    async (nickname: string, accountType: ApiAccount["accountType"]) => {
-      const res = await apiFetch("/api/accounts", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ nickname, accountType }),
-      });
-      if (!res.ok) return;
-      const newAccount = (await res.json()) as ApiAccount;
-      setAccounts((prev) => {
-        const updated = [
-          ...prev,
-          { ...newAccount, colour: deriveColour(prev.length) },
-        ];
-        return updated;
-      });
-      setActiveAccountId(newAccount.id);
+    async (
+      nickname: string,
+      accountType: ApiAccount["accountType"],
+    ): Promise<boolean> => {
+      // Optimistic: append a temp record immediately
+      const tempId = "optimistic-" + crypto.randomUUID();
+      setAccounts((prev) => [
+        ...prev,
+        {
+          id: tempId,
+          nickname,
+          accountType,
+          accountNumber: "",
+          userId: "",
+          createdAt: new Date().toISOString(),
+          colour: deriveColour(prev.length),
+        },
+      ]);
+      try {
+        const res = await apiFetch("/api/accounts", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ nickname, accountType }),
+        });
+        if (!res.ok) {
+          setAccounts((prev) => prev.filter((a) => a.id !== tempId));
+          addToast("Failed to add account. Please try again.");
+          return false;
+        }
+        const newAccount = (await res.json()) as ApiAccount;
+        setAccounts((prev) =>
+          prev.map((a) =>
+            a.id === tempId ? { ...newAccount, colour: a.colour } : a,
+          ),
+        );
+        setActiveAccountId(newAccount.id);
+        return true;
+      } catch {
+        setAccounts((prev) => prev.filter((a) => a.id !== tempId));
+        addToast("Failed to add account. Please try again.");
+        return false;
+      }
     },
-    [apiFetch],
+    [apiFetch, addToast],
   );
 
   const removeAccount = useCallback(
-    async (id: string) => {
-      const res = await apiFetch(`/api/accounts/${id}`, { method: "DELETE" });
-      if (!res.ok && res.status !== 204) return;
+    async (id: string): Promise<boolean> => {
+      // Optimistic: remove immediately, save snapshot for rollback
+      let snapshot: AccountWithColour | undefined;
+      let snapshotIndex = -1;
       setAccounts((prev) => {
+        snapshotIndex = prev.findIndex((a) => a.id === id);
+        snapshot = prev[snapshotIndex];
         const remaining = prev.filter((a) => a.id !== id);
         if (remaining.length > 0) {
           setActiveAccountId(remaining[0].id);
         }
         return remaining;
       });
-      // Remove transactions for the deleted account from local state
       setRawTransactions((prev) => prev.filter((t) => t.accountId !== id));
+      try {
+        const res = await apiFetch(`/api/accounts/${id}`, {
+          method: "DELETE",
+        });
+        if (!res.ok && res.status !== 204) {
+          // Rollback
+          if (snapshot !== undefined) {
+            setAccounts((prev) => {
+              const copy = [...prev];
+              copy.splice(snapshotIndex, 0, snapshot!);
+              return copy;
+            });
+          }
+          addToast("Failed to delete account. Please try again.");
+          return false;
+        }
+        return true;
+      } catch {
+        if (snapshot !== undefined) {
+          setAccounts((prev) => {
+            const copy = [...prev];
+            copy.splice(snapshotIndex, 0, snapshot!);
+            return copy;
+          });
+        }
+        addToast("Failed to delete account. Please try again.");
+        return false;
+      }
     },
-    [apiFetch],
+    [apiFetch, addToast],
   );
 
   const updateAccount = useCallback(
     async (
       id: string,
       updates: { nickname?: string; accountType?: ApiAccount["accountType"] },
-    ) => {
-      const res = await apiFetch(`/api/accounts/${id}`, {
-        method: "PATCH",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(updates),
+    ): Promise<boolean> => {
+      // Optimistic: apply patch immediately, save previous for rollback
+      let previousAccount: AccountWithColour | undefined;
+      setAccounts((prev) => {
+        previousAccount = prev.find((a) => a.id === id);
+        return prev.map((a) => (a.id === id ? { ...a, ...updates } : a));
       });
-      if (!res.ok) return;
-      const updated = (await res.json()) as ApiAccount;
-      setAccounts((prev) =>
-        prev.map((a) => (a.id === id ? { ...updated, colour: a.colour } : a)),
-      );
+      try {
+        const res = await apiFetch(`/api/accounts/${id}`, {
+          method: "PATCH",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(updates),
+        });
+        if (!res.ok) {
+          if (previousAccount) {
+            setAccounts((prev) =>
+              prev.map((a) => (a.id === id ? previousAccount! : a)),
+            );
+          }
+          addToast("Failed to update account. Please try again.");
+          return false;
+        }
+        const updated = (await res.json()) as ApiAccount;
+        setAccounts((prev) =>
+          prev.map((a) => (a.id === id ? { ...updated, colour: a.colour } : a)),
+        );
+        return true;
+      } catch {
+        if (previousAccount) {
+          setAccounts((prev) =>
+            prev.map((a) => (a.id === id ? previousAccount! : a)),
+          );
+        }
+        addToast("Failed to update account. Please try again.");
+        return false;
+      }
     },
-    [apiFetch],
+    [apiFetch, addToast],
   );
 
   return (
@@ -231,6 +337,7 @@ export function AccountProvider({ children }: { children: ReactNode }) {
         addAccount,
         removeAccount,
         updateAccount,
+        refetch,
       }}
     >
       {/* Pass rawTransactions down via a separate context so hooks can read it */}

@@ -1,6 +1,8 @@
 import { useRef, useState } from "react";
 import { NavLink, useNavigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
+import { useAccount } from "../context/AccountContext";
+import { Skeleton } from "./Skeleton";
 import { ACCOUNT_COLORS } from "../constants/colors";
 import "./Sidebar.css";
 
@@ -37,6 +39,11 @@ export function Sidebar({
   onRenameAccount,
 }: SidebarProps) {
   const { logout } = useAuth();
+  const {
+    isLoading: accountsLoading,
+    error: accountsError,
+    refetch,
+  } = useAccount();
   const navigate = useNavigate();
   const fileRef = useRef<HTMLInputElement>(null);
   const [editingShort, setEditingShort] = useState<string | null>(null);
@@ -68,10 +75,17 @@ export function Sidebar({
         <div className="sidebar-brand-count">{txnCount} transactions</div>
       </div>
 
-      {accountList.length > 0 && (
-        <div className="sidebar-accounts">
-          <div className="sidebar-section-label">Accounts</div>
-          {accountList.map((acct, i) => (
+      <div className="sidebar-accounts">
+        <div className="sidebar-section-label">Accounts</div>
+        {accountsLoading ? (
+          <Skeleton count={3} height="2.5rem" />
+        ) : accountsError ? (
+          <div className="account-list-error">
+            <p>Failed to load accounts.</p>
+            <button onClick={() => void refetch()}>Try again</button>
+          </div>
+        ) : (
+          accountList.map((acct, i) => (
             <div key={acct.short} className="sidebar-account-row">
               <div
                 className="sidebar-account-dot"
@@ -104,9 +118,9 @@ export function Sidebar({
                 </button>
               )}
             </div>
-          ))}
-        </div>
-      )}
+          ))
+        )}
+      </div>
 
       <div className="sidebar-upload">
         <button

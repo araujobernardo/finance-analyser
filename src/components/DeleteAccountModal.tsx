@@ -1,3 +1,4 @@
+import { useState } from "react";
 import { useAccount } from "../context/AccountContext";
 import { getAccountMonths } from "../services/storage";
 import "./AccountModal.css";
@@ -12,15 +13,21 @@ export function DeleteAccountModal({
   onClose,
 }: DeleteAccountModalProps) {
   const { accounts, removeAccount } = useAccount();
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const account = accounts.find((a) => a.id === accountId);
   const monthCount = getAccountMonths(accountId).length;
   const isLastAccount = accounts.length <= 1;
 
   if (!account) return null;
 
-  function handleConfirm() {
-    removeAccount(accountId);
-    onClose();
+  async function handleConfirm() {
+    setIsSubmitting(true);
+    const success = await removeAccount(accountId);
+    if (success) {
+      onClose();
+    } else {
+      setIsSubmitting(false);
+    }
   }
 
   return (
@@ -62,9 +69,9 @@ export function DeleteAccountModal({
             <button
               type="button"
               className="account-modal__btn account-modal__btn--danger"
-              onClick={handleConfirm}
-              disabled={isLastAccount}
-              aria-disabled={isLastAccount}
+              onClick={() => void handleConfirm()}
+              disabled={isLastAccount || isSubmitting}
+              aria-disabled={isLastAccount || isSubmitting}
               aria-label={
                 isLastAccount
                   ? "Delete account — disabled: cannot delete the last account"
