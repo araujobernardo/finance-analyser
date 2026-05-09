@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { Link, useLocation, useSearchParams } from "react-router-dom";
+import { API_BASE } from "../lib/api";
 import "./auth.css";
 
 function SentConfirmation({ email }: { email?: string }) {
@@ -11,7 +12,7 @@ function SentConfirmation({ email }: { email?: string }) {
     if (!email) return;
     setResendStatus("sending");
     try {
-      await fetch("/api/auth/resend-verification", {
+      await fetch(`${API_BASE}/api/auth/resend-verification`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ email }),
@@ -78,7 +79,7 @@ function TokenVerification({ token }: { token: string }) {
   useEffect(() => {
     async function verify() {
       try {
-        const res = await fetch("/api/auth/verify-email", {
+        const res = await fetch(`${API_BASE}/api/auth/verify-email`, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ token }),
