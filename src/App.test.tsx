@@ -20,6 +20,14 @@ function renderApp(initialPath = "/dashboard") {
 describe("App shell", () => {
   beforeEach(() => {
     sessionStorage.setItem("fa-auth-token", FAKE_TOKEN);
+    sessionStorage.setItem(
+      "fa-auth-user",
+      JSON.stringify({
+        id: "test-user-id",
+        email: "test@example.com",
+        displayName: "Test User",
+      }),
+    );
   });
   afterEach(() => {
     sessionStorage.clear();
@@ -42,6 +50,14 @@ describe("App shell", () => {
 describe("App -- detectTransfers sets category to 'Savings' on detected transfer pairs", () => {
   beforeEach(() => {
     sessionStorage.setItem("fa-auth-token", FAKE_TOKEN);
+    sessionStorage.setItem(
+      "fa-auth-user",
+      JSON.stringify({
+        id: "test-user-id",
+        email: "test@example.com",
+        displayName: "Test User",
+      }),
+    );
   });
   afterEach(() => {
     localStorage.clear();
@@ -99,6 +115,14 @@ describe("App -- detectTransfers sets category to 'Savings' on detected transfer
 describe("App -- load-time normalisation of legacy Savings & Transfers category", () => {
   beforeEach(() => {
     sessionStorage.setItem("fa-auth-token", FAKE_TOKEN);
+    sessionStorage.setItem(
+      "fa-auth-user",
+      JSON.stringify({
+        id: "test-user-id",
+        email: "test@example.com",
+        displayName: "Test User",
+      }),
+    );
   });
   afterEach(() => {
     localStorage.clear();
