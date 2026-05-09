@@ -4,9 +4,9 @@ import { z } from "zod";
 import { db } from "../../db/index.ts";
 import { accounts } from "../../db/schema.ts";
 import {
-  requireAuth,
-  type AuthenticatedRequest,
-} from "../middleware/requireAuth.ts";
+  authenticateToken,
+  type AuthLocals,
+} from "../middleware/authenticateToken.ts";
 
 export const accountsRouter = Router();
 
@@ -37,9 +37,9 @@ const updateAccountSchema = z
   );
 
 // GET /api/accounts
-accountsRouter.get("/", requireAuth, async (req, res, next) => {
+accountsRouter.get("/", authenticateToken, async (_req, res, next) => {
   try {
-    const userId = (req as AuthenticatedRequest).userId;
+    const userId = (res.locals as AuthLocals).user.userId;
     const rows = await db
       .select()
       .from(accounts)
@@ -52,9 +52,9 @@ accountsRouter.get("/", requireAuth, async (req, res, next) => {
 });
 
 // POST /api/accounts
-accountsRouter.post("/", requireAuth, async (req, res, next) => {
+accountsRouter.post("/", authenticateToken, async (req, res, next) => {
   try {
-    const userId = (req as AuthenticatedRequest).userId;
+    const userId = (res.locals as AuthLocals).user.userId;
     const parsed = createAccountSchema.safeParse(req.body);
     if (!parsed.success) {
       res
@@ -74,9 +74,9 @@ accountsRouter.post("/", requireAuth, async (req, res, next) => {
 });
 
 // PATCH /api/accounts/:id
-accountsRouter.patch("/:id", requireAuth, async (req, res, next) => {
+accountsRouter.patch("/:id", authenticateToken, async (req, res, next) => {
   try {
-    const userId = (req as AuthenticatedRequest).userId;
+    const userId = (res.locals as AuthLocals).user.userId;
     const id = req.params["id"] as string;
     const parsed = updateAccountSchema.safeParse(req.body);
     if (!parsed.success) {
@@ -107,9 +107,9 @@ accountsRouter.patch("/:id", requireAuth, async (req, res, next) => {
 });
 
 // DELETE /api/accounts/:id
-accountsRouter.delete("/:id", requireAuth, async (req, res, next) => {
+accountsRouter.delete("/:id", authenticateToken, async (req, res, next) => {
   try {
-    const userId = (req as AuthenticatedRequest).userId;
+    const userId = (res.locals as AuthLocals).user.userId;
     const id = req.params["id"] as string;
     const [deleted] = await db
       .delete(accounts)
