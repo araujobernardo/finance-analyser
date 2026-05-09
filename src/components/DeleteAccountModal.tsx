@@ -36,7 +36,7 @@ export function DeleteAccountModal({
         </h2>
 
         <p className="account-modal__body">
-          You are about to delete <strong>{account.name}</strong>.
+          You are about to delete <strong>{account.nickname}</strong>.
         </p>
 
         <div className="account-modal__warning" role="note">
@@ -68,7 +68,7 @@ export function DeleteAccountModal({
               aria-label={
                 isLastAccount
                   ? "Delete account — disabled: cannot delete the last account"
-                  : `Delete ${account.name}`
+                  : `Delete ${account.nickname}`
               }
             >
               Delete

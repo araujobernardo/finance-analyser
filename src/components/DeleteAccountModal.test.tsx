@@ -1,30 +1,32 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
-import { render, screen } from "@testing-library/react";
+import { render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { DeleteAccountModal } from "./DeleteAccountModal";
 import { AccountProvider } from "../context/AccountContext";
-import { ACCOUNT_COLOURS } from "../services/storage";
-import type { Account } from "../services/storage";
+import type { ApiAccount } from "../types/api";
 
-const ACCOUNTS_KEY = "finance_analyser_accounts";
+// ── Mock useApi ────────────────────────────────────────────────────────────
 
-function seedAccounts(accounts: Account[]) {
-  localStorage.setItem(ACCOUNTS_KEY, JSON.stringify(accounts));
+const mockApiFetch = vi.fn();
+vi.mock("../lib/api", () => ({
+  useApi: () => ({ apiFetch: mockApiFetch }),
+  API_BASE: "",
+}));
+
+function makeApiAccount(overrides: Partial<ApiAccount> = {}): ApiAccount {
+  return {
+    id: "acc-a",
+    userId: "user-1",
+    accountNumber: "",
+    nickname: "Checking",
+    accountType: "Checking",
+    createdAt: new Date().toISOString(),
+    ...overrides,
+  };
 }
 
-const ACCOUNT_A: Account = {
-  id: "acc-a",
-  name: "Checking",
-  colour: ACCOUNT_COLOURS[0],
-  createdAt: "",
-};
-
-const ACCOUNT_B: Account = {
-  id: "acc-b",
-  name: "Savings",
-  colour: ACCOUNT_COLOURS[1],
-  createdAt: "",
-};
+const ACCOUNT_A = makeApiAccount({ id: "acc-a", nickname: "Checking" });
+const ACCOUNT_B = makeApiAccount({ id: "acc-b", nickname: "Savings" });
 
 function renderModal(accountId: string, onClose = vi.fn()) {
   return render(
@@ -36,74 +38,136 @@ function renderModal(accountId: string, onClose = vi.fn()) {
 
 beforeEach(() => {
   localStorage.clear();
+  vi.clearAllMocks();
 });
 
 // ── Render ─────────────────────────────────────────────────────────────────
 
 describe("DeleteAccountModal — render", () => {
-  it("renders the modal title", () => {
-    seedAccounts([ACCOUNT_A, ACCOUNT_B]);
+  it("renders the modal title", async () => {
+    mockApiFetch.mockResolvedValue({
+      ok: true,
+      status: 200,
+      json: async () => ({ accounts: [ACCOUNT_A, ACCOUNT_B] }),
+    });
     renderModal("acc-a");
-    expect(
-      screen.getByRole("heading", { name: /delete account/i }),
-    ).toBeInTheDocument();
+    await waitFor(() =>
+      expect(
+        screen.getByRole("heading", { name: /delete account/i }),
+      ).toBeInTheDocument(),
+    );
   });
 
-  it("renders the account name in the body", () => {
-    seedAccounts([ACCOUNT_A, ACCOUNT_B]);
+  it("renders the account nickname in the body", async () => {
+    mockApiFetch.mockResolvedValue({
+      ok: true,
+      status: 200,
+      json: async () => ({ accounts: [ACCOUNT_A, ACCOUNT_B] }),
+    });
     renderModal("acc-a");
-    expect(screen.getByText(/checking/i)).toBeInTheDocument();
+    await waitFor(() =>
+      expect(screen.getByText(/checking/i)).toBeInTheDocument(),
+    );
   });
 
-  it("shows a data-loss warning when no months are stored", () => {
-    seedAccounts([ACCOUNT_A, ACCOUNT_B]);
+  it("shows a data-loss warning when no months are stored", async () => {
+    mockApiFetch.mockResolvedValue({
+      ok: true,
+      status: 200,
+      json: async () => ({ accounts: [ACCOUNT_A, ACCOUNT_B] }),
+    });
     renderModal("acc-a");
-    expect(screen.getByRole("note")).toHaveTextContent(/no transaction data/i);
+    await waitFor(() =>
+      expect(screen.getByRole("note")).toHaveTextContent(
+        /no transaction data/i,
+      ),
+    );
   });
 
-  it("renders Cancel and Delete buttons", () => {
-    seedAccounts([ACCOUNT_A, ACCOUNT_B]);
+  it("renders Cancel and Delete buttons", async () => {
+    mockApiFetch.mockResolvedValue({
+      ok: true,
+      status: 200,
+      json: async () => ({ accounts: [ACCOUNT_A, ACCOUNT_B] }),
+    });
     renderModal("acc-a");
-    expect(screen.getByRole("button", { name: /cancel/i })).toBeInTheDocument();
-    expect(screen.getByRole("button", { name: /delete/i })).toBeInTheDocument();
+    await waitFor(() => {
+      expect(
+        screen.getByRole("button", { name: /cancel/i }),
+      ).toBeInTheDocument();
+      expect(
+        screen.getByRole("button", { name: /delete/i }),
+      ).toBeInTheDocument();
+    });
   });
 
-  it('has role="dialog" and aria-modal="true"', () => {
-    seedAccounts([ACCOUNT_A, ACCOUNT_B]);
+  it('has role="dialog" and aria-modal="true"', async () => {
+    mockApiFetch.mockResolvedValue({
+      ok: true,
+      status: 200,
+      json: async () => ({ accounts: [ACCOUNT_A, ACCOUNT_B] }),
+    });
     renderModal("acc-a");
-    const dialog = screen.getByRole("dialog");
-    expect(dialog).toHaveAttribute("aria-modal", "true");
+    await waitFor(() => {
+      const dialog = screen.getByRole("dialog");
+      expect(dialog).toHaveAttribute("aria-modal", "true");
+    });
   });
 
-  it("returns null when the account does not exist", () => {
-    seedAccounts([ACCOUNT_A]);
+  it("returns null when the account does not exist in the loaded list", async () => {
+    mockApiFetch.mockResolvedValue({
+      ok: true,
+      status: 200,
+      json: async () => ({ accounts: [ACCOUNT_A] }),
+    });
     const { container } = renderModal("non-existent");
-    expect(container.firstChild).toBeNull();
+    // Initially loading, once loaded, account not found -> null
+    await waitFor(() => expect(container.firstChild).toBeNull());
   });
 });
 
 // ── Disabled state (last account) ─────────────────────────────────────────
 
 describe("DeleteAccountModal — last account protection", () => {
-  it("disables the Delete button when only one account remains", () => {
-    seedAccounts([ACCOUNT_A]);
+  it("disables the Delete button when only one account remains", async () => {
+    mockApiFetch.mockResolvedValue({
+      ok: true,
+      status: 200,
+      json: async () => ({ accounts: [ACCOUNT_A] }),
+    });
     renderModal("acc-a");
-    expect(screen.getByRole("button", { name: /delete/i })).toBeDisabled();
-  });
-
-  it("has aria-disabled on the delete button for the last account", () => {
-    seedAccounts([ACCOUNT_A]);
-    renderModal("acc-a");
-    expect(screen.getByRole("button", { name: /delete/i })).toHaveAttribute(
-      "aria-disabled",
-      "true",
+    await waitFor(() =>
+      expect(screen.getByRole("button", { name: /delete/i })).toBeDisabled(),
     );
   });
 
-  it("enables the Delete button when multiple accounts exist", () => {
-    seedAccounts([ACCOUNT_A, ACCOUNT_B]);
+  it("has aria-disabled on the delete button for the last account", async () => {
+    mockApiFetch.mockResolvedValue({
+      ok: true,
+      status: 200,
+      json: async () => ({ accounts: [ACCOUNT_A] }),
+    });
     renderModal("acc-a");
-    expect(screen.getByRole("button", { name: /delete/i })).not.toBeDisabled();
+    await waitFor(() =>
+      expect(screen.getByRole("button", { name: /delete/i })).toHaveAttribute(
+        "aria-disabled",
+        "true",
+      ),
+    );
+  });
+
+  it("enables the Delete button when multiple accounts exist", async () => {
+    mockApiFetch.mockResolvedValue({
+      ok: true,
+      status: 200,
+      json: async () => ({ accounts: [ACCOUNT_A, ACCOUNT_B] }),
+    });
+    renderModal("acc-a");
+    await waitFor(() =>
+      expect(
+        screen.getByRole("button", { name: /delete/i }),
+      ).not.toBeDisabled(),
+    );
   });
 });
 
@@ -111,27 +175,41 @@ describe("DeleteAccountModal — last account protection", () => {
 
 describe("DeleteAccountModal — confirm action", () => {
   it("calls onClose after confirming deletion", async () => {
-    seedAccounts([ACCOUNT_A, ACCOUNT_B]);
+    mockApiFetch
+      .mockResolvedValueOnce({
+        ok: true,
+        status: 200,
+        json: async () => ({ accounts: [ACCOUNT_A, ACCOUNT_B] }),
+      })
+      .mockResolvedValueOnce({
+        ok: true,
+        status: 204,
+        json: async () => null,
+      });
     const onClose = vi.fn();
     renderModal("acc-a", onClose);
+    await waitFor(() =>
+      expect(
+        screen.getByRole("button", { name: /delete/i }),
+      ).not.toBeDisabled(),
+    );
     await userEvent.click(screen.getByRole("button", { name: /delete/i }));
     expect(onClose).toHaveBeenCalledOnce();
   });
 
-  it("removes the account from localStorage after confirming", async () => {
-    seedAccounts([ACCOUNT_A, ACCOUNT_B]);
-    renderModal("acc-a");
-    await userEvent.click(screen.getByRole("button", { name: /delete/i }));
-    const stored = JSON.parse(
-      localStorage.getItem(ACCOUNTS_KEY) ?? "[]",
-    ) as Account[];
-    expect(stored.find((a) => a.id === "acc-a")).toBeUndefined();
-  });
-
   it("calls onClose when Cancel is clicked", async () => {
-    seedAccounts([ACCOUNT_A, ACCOUNT_B]);
+    mockApiFetch.mockResolvedValue({
+      ok: true,
+      status: 200,
+      json: async () => ({ accounts: [ACCOUNT_A, ACCOUNT_B] }),
+    });
     const onClose = vi.fn();
     renderModal("acc-a", onClose);
+    await waitFor(() =>
+      expect(
+        screen.getByRole("button", { name: /cancel/i }),
+      ).toBeInTheDocument(),
+    );
     await userEvent.click(screen.getByRole("button", { name: /cancel/i }));
     expect(onClose).toHaveBeenCalledOnce();
   });
