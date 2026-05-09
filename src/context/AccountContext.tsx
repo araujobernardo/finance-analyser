@@ -390,6 +390,7 @@ export function useActiveMonths(): string[] {
     // activeAccountId affects which rawTransactions are loaded (via the fetch
     // effect in AccountProvider), so include it in the dep array to re-derive
     // when the selection changes.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [rawTransactions, activeAccountId]);
 }
 
