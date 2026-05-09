@@ -2,6 +2,7 @@ import { useState } from "react";
 import { Navigate, Route, Routes, useNavigate } from "react-router-dom";
 import { AuthProvider } from "./context/AuthContext";
 import { ProtectedRoute } from "./components/ProtectedRoute";
+import { PublicOnlyRoute } from "./components/PublicOnlyRoute";
 import { Sidebar } from "./components/Sidebar";
 import { DashboardPage } from "./pages/DashboardPage";
 import { TransactionsPage } from "./pages/TransactionsPage";
@@ -391,13 +392,41 @@ export default function App() {
   return (
     <AuthProvider>
       <Routes>
-        {/* Public auth routes */}
-        <Route path="/signup" element={<SignUpPage />} />
-        <Route path="/login" element={<LoginPage />} />
+        {/* Public auth routes — redirect to /dashboard if already signed in */}
+        <Route
+          path="/signup"
+          element={
+            <PublicOnlyRoute>
+              <SignUpPage />
+            </PublicOnlyRoute>
+          }
+        />
+        <Route
+          path="/login"
+          element={
+            <PublicOnlyRoute>
+              <LoginPage />
+            </PublicOnlyRoute>
+          }
+        />
         <Route path="/verify-email-sent" element={<VerifyEmailPage />} />
         <Route path="/verify-email" element={<VerifyEmailPage />} />
-        <Route path="/forgot-password" element={<ForgotPasswordPage />} />
-        <Route path="/reset-password" element={<ResetPasswordPage />} />
+        <Route
+          path="/forgot-password"
+          element={
+            <PublicOnlyRoute>
+              <ForgotPasswordPage />
+            </PublicOnlyRoute>
+          }
+        />
+        <Route
+          path="/reset-password"
+          element={
+            <PublicOnlyRoute>
+              <ResetPasswordPage />
+            </PublicOnlyRoute>
+          }
+        />
         {/* Protected app shell — all other routes */}
         <Route path="*" element={<ProtectedRoute>{appShell}</ProtectedRoute>} />
       </Routes>
