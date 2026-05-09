@@ -3,12 +3,11 @@ import { parseCsv } from "../utils/csvParser";
 import type { ParseError, Transaction } from "../utils/csvParser";
 import {
   getAccountMonths,
-  getTransactions,
   monthKeyFromDate,
-  saveTransactions,
   DEFAULT_ACCOUNT_ID,
 } from "../services/storage";
 import { categoriseTransactions } from "../services/categorisation";
+import { useApi } from "../lib/api";
 
 interface MonthGroup {
   monthKey: string;
@@ -28,6 +27,8 @@ export interface UseFileUploadResult {
   isCategorising: boolean;
   savedMonthKey: string | null;
   savedMonthCount: number;
+  importedCount: number;
+  skippedCount: number;
   handleFile: (file: File) => void;
   confirmReplace: () => void;
   cancelReplace: () => void;
@@ -58,10 +59,19 @@ function groupByMonth(transactions: Transaction[]): MonthGroup[] {
     .map(([monthKey, txns]) => ({ monthKey, transactions: txns }));
 }
 
+/** Formats a Date to "YYYY-MM-DD" for the API. */
+function formatDateToYMD(date: Date): string {
+  const y = date.getFullYear();
+  const m = String(date.getMonth() + 1).padStart(2, "0");
+  const d = String(date.getDate()).padStart(2, "0");
+  return `${y}-${m}-${d}`;
+}
+
 export function useFileUpload(
   options: UseFileUploadOptions = {},
 ): UseFileUploadResult {
   const accountId = options.accountId ?? DEFAULT_ACCOUNT_ID;
+  const { apiFetch } = useApi();
 
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [parseErrors, setParseErrors] = useState<ParseError[]>([]);
@@ -69,33 +79,59 @@ export function useFileUpload(
   const [isCategorising, setIsCategorising] = useState(false);
   const [savedMonthKey, setSavedMonthKey] = useState<string | null>(null);
   const [savedMonthCount, setSavedMonthCount] = useState(0);
+  const [importedCount, setImportedCount] = useState(0);
+  const [skippedCount, setSkippedCount] = useState(0);
 
-  async function saveGroup(group: MonthGroup): Promise<void> {
-    const { monthKey, transactions } = group;
-    // Preserve manually-set categories already in storage for this month + account
-    const { transactions: stored } = getTransactions(accountId, monthKey);
-    const storedCats = new Map(
-      stored
-        .filter((t) => t.category && t.category !== "Uncategorised")
-        .map((t) => [`${t.description}|||${t.amount}`, t.category]),
-    );
-    const withPreserved = transactions.map((t) => {
-      const existing = storedCats.get(`${t.description}|||${t.amount}`);
-      return existing ? { ...t, category: existing } : t;
-    });
-    const categorised = await categoriseTransactions(withPreserved);
-    saveTransactions(accountId, monthKey, categorised);
+  async function saveGroup(group: MonthGroup): Promise<{
+    imported: number;
+    skipped: number;
+  }> {
+    const { transactions } = group;
+    const categorised = await categoriseTransactions(transactions);
+
+    const payload = {
+      transactions: categorised.map((t) => ({
+        date: formatDateToYMD(t.date),
+        amount: t.amount,
+        description: t.description,
+        category: t.category ?? undefined,
+        isTransfer: false,
+        isManualTransfer: false,
+      })),
+    };
+
+    try {
+      const res = await apiFetch(
+        `/api/accounts/${accountId}/transactions/import`,
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(payload),
+        },
+      );
+      if (!res.ok) return { imported: 0, skipped: payload.transactions.length };
+      const data = (await res.json()) as { imported: number; skipped: number };
+      return data;
+    } catch {
+      return { imported: 0, skipped: payload.transactions.length };
+    }
   }
 
   async function saveAllGroups(groups: MonthGroup[]): Promise<void> {
     setIsCategorising(true);
+    let totalImported = 0;
+    let totalSkipped = 0;
     try {
       for (const group of groups) {
-        await saveGroup(group);
+        const { imported, skipped } = await saveGroup(group);
+        totalImported += imported;
+        totalSkipped += skipped;
       }
       const mostRecent = groups[groups.length - 1].monthKey;
       setSavedMonthKey(mostRecent);
       setSavedMonthCount(groups.length);
+      setImportedCount(totalImported);
+      setSkippedCount(totalSkipped);
     } finally {
       setIsCategorising(false);
     }
@@ -114,7 +150,10 @@ export function useFileUpload(
       if (transactions.length === 0) return;
 
       const groups = groupByMonth(transactions);
-      // Duplicate detection is scoped to the current account only
+      // Duplicate detection is scoped to the current account only.
+      // getAccountMonths reads the legacy localStorage index; for API-backed
+      // accounts this will return [] (no false positives). FA-MIGR-002 will
+      // replace this with an API-based check.
       const storedMonths = getAccountMonths(accountId);
       const duplicateMonthKeys = groups
         .map((g) => g.monthKey)
@@ -154,6 +193,8 @@ export function useFileUpload(
     isCategorising,
     savedMonthKey,
     savedMonthCount,
+    importedCount,
+    skippedCount,
     handleFile,
     confirmReplace,
     cancelReplace,
