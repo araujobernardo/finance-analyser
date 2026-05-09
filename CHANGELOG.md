@@ -1,5 +1,6 @@
 # Changelog
 
+- **2026-05-09** | #258 | Consolidate requireAuth and authenticateToken middleware | Removed requireAuth.ts; all protected API routes now use authenticateToken with typed TOKEN_EXPIRED/TOKEN_INVALID error codes via res.locals.user.userId pattern.
 - **2026-05-09** | #296/#297 | T012/T013 [FA-MIGR-001] Backend and E2E UI verification | All server routes implemented and registered; 604 automated tests pass. Manual curl and browser verification deferred to user as these require a live Railway server.
 - **2026-05-09** | #284 | T005 [FA-INFRA-004] Local verification — all four scripts pass | Verified typecheck/lint/test/build all exit 0 locally; 604 tests pass, no TypeScript errors, no ESLint warnings, Vite build clean.
 - **2026-05-09** | #283 | T004 [FA-INFRA-004] Verify post-merge CI run on main | Post-merge CI run verified: push trigger on main fires automatically after every merge; all four steps (Type check, Lint, Test, Build) passed in 1m36s.
