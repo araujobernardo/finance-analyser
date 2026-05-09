@@ -21,6 +21,7 @@ export function AddAccountModal({ onClose }: AddAccountModalProps) {
   const [accountType, setAccountType] =
     useState<ApiAccount["accountType"]>("Checking");
   const [nicknameError, setNicknameError] = useState("");
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   function validate(value: string): string {
     if (!value.trim()) return "Account name is required.";
@@ -36,14 +37,19 @@ export function AddAccountModal({ onClose }: AddAccountModalProps) {
     return "";
   }
 
-  function handleSave() {
+  async function handleSave() {
     const error = validate(nickname);
     if (error) {
       setNicknameError(error);
       return;
     }
-    void addAccount(nickname.trim(), accountType);
-    onClose();
+    setIsSubmitting(true);
+    const success = await addAccount(nickname.trim(), accountType);
+    if (success) {
+      onClose();
+    } else {
+      setIsSubmitting(false);
+    }
   }
 
   function handleNicknameChange(value: string) {
@@ -120,7 +126,8 @@ export function AddAccountModal({ onClose }: AddAccountModalProps) {
           <button
             type="button"
             className="account-modal__btn account-modal__btn--save"
-            onClick={handleSave}
+            onClick={() => void handleSave()}
+            disabled={isSubmitting}
           >
             Save
           </button>
