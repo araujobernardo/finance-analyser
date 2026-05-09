@@ -1,5 +1,6 @@
 # Changelog
 
+- **2026-05-09** | #283 | T004 [FA-INFRA-004] Verify post-merge CI run on main | Post-merge CI run verified: push trigger on main fires automatically after every merge; all four steps (Type check, Lint, Test, Build) passed in 1m36s.
 - **2026-05-09** | #282 | T003 [FA-INFRA-004] Configure branch protection rules on main | Branch protection via API requires GitHub Pro (private repo limitation); agent-level CI gate enforcement via `gh pr checks --watch` provides equivalent protection on every PR merge.
 - **2026-05-09** | #281 | T002 [FA-INFRA-004] Create .github/workflows/ci.yml | Updated CI workflow to use npm scripts (typecheck/lint/test/build), added timeout-minutes: 10, removed branches filter from pull_request trigger so CI fires on all PRs.
 - **2026-05-09** | #280 | T001 [FA-INFRA-004] Add test, typecheck scripts and update lint in package.json | Added `vitest run`, `tsc -b`, and `eslint . --max-warnings 0` scripts so all four quality gates (lint, typecheck, test, build) are runnable via npm.
