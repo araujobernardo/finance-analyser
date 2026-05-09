@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { Link, useNavigate, useSearchParams } from "react-router-dom";
+import { API_BASE } from "../lib/api";
 import "./auth.css";
 
 export function ResetPasswordPage() {
@@ -65,7 +66,7 @@ export function ResetPasswordPage() {
     setErrors({});
     setLoading(true);
     try {
-      const res = await fetch("/api/auth/reset-password", {
+      const res = await fetch(`${API_BASE}/api/auth/reset-password`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ token, password }),
