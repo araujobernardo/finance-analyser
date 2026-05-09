@@ -1,5 +1,6 @@
 import { useRef, useState } from "react";
-import { NavLink } from "react-router-dom";
+import { NavLink, useNavigate } from "react-router-dom";
+import { useAuth } from "../context/AuthContext";
 import { ACCOUNT_COLORS } from "../constants/colors";
 import "./Sidebar.css";
 
@@ -35,6 +36,8 @@ export function Sidebar({
   accountList,
   onRenameAccount,
 }: SidebarProps) {
+  const { logout } = useAuth();
+  const navigate = useNavigate();
   const fileRef = useRef<HTMLInputElement>(null);
   const [editingShort, setEditingShort] = useState<string | null>(null);
   const [editVal, setEditVal] = useState("");
@@ -152,6 +155,15 @@ export function Sidebar({
       </nav>
 
       <div className="sidebar-footer">ASB Bank · NZD</div>
+      <button
+        className="sidebar-signout"
+        onClick={() => {
+          logout();
+          navigate("/login");
+        }}
+      >
+        Sign out
+      </button>
     </aside>
   );
 }
