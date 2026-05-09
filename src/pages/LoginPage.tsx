@@ -3,6 +3,7 @@ import { Link, useNavigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
 import type { AuthUser } from "../context/AuthContext";
 import { API_BASE } from "../lib/api";
+import { getAccounts } from "../services/storage";
 import "./auth.css";
 
 export function LoginPage() {
@@ -53,7 +54,37 @@ export function LoginPage() {
         return;
       }
       login(data.token!, data.user!);
-      navigate("/dashboard");
+
+      // Migration detection: decide whether to route to /migrate or /dashboard
+      try {
+        // 1. Guard: already migrated
+        if (localStorage.getItem("fa-migration-complete") === "true") {
+          void navigate("/dashboard");
+          return;
+        }
+        // 2. No local data: nothing to migrate
+        const localAccounts = getAccounts();
+        if (localAccounts.length === 0) {
+          void navigate("/dashboard");
+          return;
+        }
+        // 3. Cloud accounts already exist: skip migration
+        const cloudRes = await fetch(`${API_BASE}/api/accounts`, {
+          headers: { Authorization: `Bearer ${data.token!}` },
+        });
+        if (cloudRes.ok) {
+          const json = (await cloudRes.json()) as { accounts: unknown[] };
+          if (json.accounts.length > 0) {
+            void navigate("/dashboard");
+            return;
+          }
+        }
+        // All checks passed — user has local data and no cloud accounts yet
+        void navigate("/migrate");
+      } catch {
+        void navigate("/dashboard");
+      }
+      return;
     } catch {
       setBanner({ type: "error", msg: "Network error. Please try again." });
     } finally {
