@@ -1,4 +1,5 @@
-import jwt, { TokenExpiredError, JsonWebTokenError } from "jsonwebtoken";
+import jwt from "jsonwebtoken";
+const { TokenExpiredError, JsonWebTokenError } = jwt;
 import type { Request, Response, NextFunction } from "express";
 
 export type AuthLocals = { user: { userId: string } };
