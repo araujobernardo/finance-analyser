@@ -175,6 +175,7 @@ export function Sidebar({
       <div className="sidebar-footer">ASB Bank · NZD</div>
       <button
         className="sidebar-signout"
+        data-testid="sidebar-signout"
         onClick={() => {
           logout();
           navigate("/login");
