@@ -12,6 +12,11 @@ export default defineConfig({
     // .mjs entry points via require(), causing SyntaxError on Linux CI for
     // packages like recharts, @reduxjs/toolkit, and react-router.
     pool: "forks",
+    // IMPORTANT: must be setupFiles (not globalSetup). Vitest 4.x requires
+    // afterEach / beforeEach calls in setup files to run inside a suite context,
+    // which only happens when the file is loaded via setupFiles. Using globalSetup
+    // would execute the file outside any suite and throw:
+    //   "Vitest failed to find the current suite."
     setupFiles: ["./src/test-setup.ts"],
     reporters: ["default", "junit"],
     outputFile: {
