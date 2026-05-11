@@ -86,7 +86,11 @@ export function Sidebar({
           </div>
         ) : (
           accountList.map((acct, i) => (
-            <div key={acct.short} className="sidebar-account-row">
+            <div
+              key={acct.short}
+              className="sidebar-account-row"
+              data-testid="account-item"
+            >
               <div
                 className="sidebar-account-dot"
                 style={{

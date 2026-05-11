@@ -18,6 +18,7 @@ export default defineConfig({
     // would execute the file outside any suite and throw:
     //   "Vitest failed to find the current suite."
     setupFiles: ["./src/test-setup.ts"],
+    exclude: ["**/node_modules/**", "**/dist/**", "e2e/**"],
     reporters: ["default", "junit"],
     outputFile: {
       junit: "./test-results/junit.xml",
