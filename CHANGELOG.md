@@ -1,5 +1,6 @@
 # Changelog
 
+- **2026-05-11** | #357 | T005 [FA-NW-001] Run npm run typecheck — must exit 0 | Confirmed `npm run typecheck` exits 0 after FA-NW-001 schema changes; Asset, Liability, NewAsset, NewLiability types all updated correctly by Drizzle type inference.
 - **2026-05-11** | #356 | T004 [FA-NW-001] Run npm run db:migrate to apply migration to live database | Applied migration `0003_skinny_scarecrow.sql` to the live Supabase database, adding `updated_at` to assets and `linked_account_id` + `updated_at` to liabilities; also merged FA-NW-001 spec files to main.
 - **2026-05-11** | #355 | T003 [FA-NW-001] Run npm run db:generate to produce migration 0003_skinny_scarecrow.sql | Generated Drizzle migration `0003_skinny_scarecrow.sql` with 4 SQL statements to add `updated_at` to assets, and `linked_account_id` + `updated_at` to liabilities.
 - **2026-05-11** | #354 | T002 [FA-NW-001] Add linkedAccountId FK and updatedAt to liabilities table | Added nullable `linkedAccountId` FK (ON DELETE SET NULL) and `updatedAt` timestamp to the `liabilities` table in `src/db/schema.ts`, completing the schema phase of FA-NW-001.
