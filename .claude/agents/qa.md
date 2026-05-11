@@ -25,12 +25,28 @@ Before starting any review, read:
 
 ## Review Process
 
-See [docs/standards/testing-strategy.md](../../docs/standards/testing-strategy.md) for:
+See [docs/standards/testing-strategy.md](../../docs/standards/testing-strategy.md) for the full rules. Summary:
 
 - What to test (functional correctness, code quality, coverage)
-- Test file conventions and co-location rules
+- Test file conventions and co-location rules (Vitest in `src/`, Playwright in `e2e/`)
+- E2E automation evaluation — required on every PR
 - Manual testing requirements for UI stories
 - PR review comment format
+
+### E2E Automation Step (required on every PR)
+
+For every PR, before writing the review comment:
+
+1. Read each manual test step and each acceptance criterion.
+2. For each one, apply the decision tree in `testing-strategy.md`:
+   - Multi-step browser flow, API-driven data, form submission → **automate with Playwright**
+   - Visual quality, file picker, complex browser state → **manual only** (document why)
+3. For each scenario you automate:
+   - Create or extend `e2e/<feature-slug>.spec.ts`
+   - Add `data-testid` attributes to any component elements needed by the test (in the same PR)
+   - Use `process.env.E2E_EMAIL` / `process.env.E2E_PASSWORD` — never hardcode credentials
+   - Commit the spec to the PR branch; CI will run it automatically
+4. Document every decision in the PR review comment under "E2E Tests Written"
 
 ## Test Failure Protocol
 

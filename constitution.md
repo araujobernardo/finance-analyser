@@ -1,6 +1,23 @@
 <!--
 Sync Impact Report
 ==================
+Version change: 2.4.0 → 2.5.0 (MINOR — E2E automation evaluation added to QA workflow)
+Modified sections:
+  - Automation Rules: new auto-approved action — E2E automation evaluation on every PR
+    (QA writes Playwright tests for any automatable acceptance criterion or manual test step)
+  - Feature Lifecycle: Step 6 (QA) updated to reference E2E automation evaluation
+Agent files updated:
+  - .claude/agents/qa.md: new "E2E Automation Step" section in Review Process
+Other files updated:
+  - docs/standards/testing-strategy.md: full E2E section added (decision tree, selector
+    policy, file conventions, data-testid DoD requirement, PR comment format updated)
+Deferred TODOs:
+  - Run E2E against Vercel Preview URL (not just production) — tracked as future story
+-->
+
+<!--
+Sync Impact Report
+==================
 Version change: 2.3.0 → 2.4.0 (MINOR — parallel agent execution prohibited)
 Modified sections:
   - Agent Coordination: "Multiple Developer agents may run in parallel" replaced
@@ -140,9 +157,10 @@ report that to the user. Do not start work on a story that is already claimed.
    Non-UI stories skip this step entirely.
 5. **Developer agent**: claims issue → creates branch → implements →
    opens PR → transitions label to `status:in-review`.
-6. **QA agent**: writes tests → checks DoR/DoD → security scan →
-   if pass: squash merges automatically. If fail: fixes autonomously,
-   loops max 3 attempts, then stops and notifies user.
+6. **QA agent**: writes unit/component tests → evaluates every acceptance criterion
+   and manual test step for E2E automation → writes Playwright tests for automatable
+   scenarios → checks DoR/DoD → security scan → if pass: squash merges automatically.
+   If fail: fixes autonomously, loops max 3 attempts, then stops and notifies user.
 7. Repeat until backlog is empty.
 
 ---
@@ -178,6 +196,7 @@ report that to the user. Do not start work on a story that is already claimed.
 - Designer: posting handoff comment on GitHub issue
 - **Session-start branch cleanup**: `git fetch --prune`, delete merged and `worktree-agent-*` local branches, pull latest `main` — Delivery Lead runs this before every story search
 - **CI gate check**: `gh pr checks <number> --watch` — QA runs this before every merge; a failing check is treated as a test failure (counts toward the 3-attempt loop)
+- **E2E automation evaluation**: QA evaluates every acceptance criterion and manual test step for Playwright automation on every PR — writing tests and adding `data-testid` attributes as needed, with no user confirmation required
 
 ### Stop and Ask User Only When
 
@@ -244,4 +263,4 @@ Versions follow Semantic Versioning (`MAJOR.MINOR.PATCH`):
 - Any agent that cannot comply with a rule MUST stop and surface the conflict
   to the user rather than proceeding.
 
-**Version**: 2.4.0 | **Ratified**: 2026-04-19 | **Last Amended**: 2026-04-29
+**Version**: 2.5.0 | **Ratified**: 2026-04-19 | **Last Amended**: 2026-05-12
