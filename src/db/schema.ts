@@ -98,6 +98,9 @@ export const assets = pgTable("assets", {
   createdAt: timestamp("created_at", { withTimezone: true })
     .defaultNow()
     .notNull(),
+  updatedAt: timestamp("updated_at", { withTimezone: true })
+    .defaultNow()
+    .notNull(),
 });
 
 export const liabilities = pgTable("liabilities", {
