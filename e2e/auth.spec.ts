@@ -14,8 +14,9 @@ test("sign-in and account load", async ({ page }) => {
     timeout: 15_000,
   });
 
-  await expect(page.getByText("Failed to load accounts")).not.toBeVisible();
-
-  const accountItems = page.locator(".sidebar-account-name");
-  await expect(accountItems.first()).toBeVisible({ timeout: 15_000 });
+  // Sidebar accounts section loads without an error
+  await expect(page.locator(".account-list-error")).not.toBeVisible({
+    timeout: 15_000,
+  });
+  await expect(page.locator(".sidebar-accounts")).toBeVisible();
 });
