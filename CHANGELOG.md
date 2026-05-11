@@ -1,5 +1,6 @@
 # Changelog
 
+- **2026-05-11** | #361 | All Vitest test suites fail: test-setup.ts uses afterEach outside a suite context | Confirmed fix was already in place (setupFiles + forks pool from bc04077); added explanatory comment to vite.config.ts documenting the Vitest 4.x requirement so the constraint cannot be accidentally reverted.
 - **2026-05-11** | #359 | T007 [FA-NW-001] Manual verification per quickstart.md Steps 1–4 | Confirmed all three new columns present in live Supabase database (updated_at on assets; linked_account_id + updated_at on liabilities); Step 4 browser sign-in deferred to user.
 - **2026-05-11** | #358 | T006 [FA-NW-001] Run npm run test — all existing tests must pass | Confirmed all existing tests pass in CI (Ubuntu / Node 20.x) after FA-NW-001 schema changes; this is a schema-only feature with no new tests required.
 - **2026-05-11** | #357 | T005 [FA-NW-001] Run npm run typecheck — must exit 0 | Confirmed `npm run typecheck` exits 0 after FA-NW-001 schema changes; Asset, Liability, NewAsset, NewLiability types all updated correctly by Drizzle type inference.
