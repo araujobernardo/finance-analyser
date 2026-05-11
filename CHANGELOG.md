@@ -1,5 +1,6 @@
 # Changelog
 
+- **2026-05-11** | #355 | T003 [FA-NW-001] Run npm run db:generate to produce migration 0003_skinny_scarecrow.sql | Generated Drizzle migration `0003_skinny_scarecrow.sql` with 4 SQL statements to add `updated_at` to assets, and `linked_account_id` + `updated_at` to liabilities.
 - **2026-05-11** | #354 | T002 [FA-NW-001] Add linkedAccountId FK and updatedAt to liabilities table | Added nullable `linkedAccountId` FK (ON DELETE SET NULL) and `updatedAt` timestamp to the `liabilities` table in `src/db/schema.ts`, completing the schema phase of FA-NW-001.
 - **2026-05-11** | #353 | T001 [FA-NW-001] Add updatedAt column to assets table | Added `updatedAt: timestamp("updated_at", { withTimezone: true }).defaultNow().notNull()` to the `assets` table in `src/db/schema.ts`, enabling the Drizzle migration for FA-NW-001 Phase 1.
 - **2026-05-11** | #351 | [BUG] Sidebar fails to load accounts after sign-in on production | Fixed apiFetch in src/lib/api.ts to prepend API_BASE to all URLs so requests reach the Railway API instead of resolving relative to the Vercel domain; added 3 unit tests covering URL construction, Bearer token attachment, and TOKEN_EXPIRED auto-logout.
