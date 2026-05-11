@@ -36,8 +36,8 @@ For project principles, governance, and agent workflow see: constitution.md
 
 ## Active Feature Plan
 
-Current feature: **Email and Password Authentication** (branch `010-email-password-auth`)  
-Implementation plan: [specs/010-email-password-auth/plan.md](specs/010-email-password-auth/plan.md)  
-Spec: [specs/010-email-password-auth/spec.md](specs/010-email-password-auth/spec.md)
+Current feature: **Playwright End-to-End Test Suite** (branch `018-playwright-e2e`)  
+Implementation plan: [specs/018-playwright-e2e/plan.md](specs/018-playwright-e2e/plan.md)  
+Spec: [specs/018-playwright-e2e/spec.md](specs/018-playwright-e2e/spec.md)
 
 <!-- SPECKIT END -->
