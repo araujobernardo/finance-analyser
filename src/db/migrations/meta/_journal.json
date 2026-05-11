@@ -22,6 +22,13 @@
       "when": 1778062608732,
       "tag": "0002_tan_ultimo",
       "breakpoints": true
+    },
+    {
+      "idx": 3,
+      "version": "7",
+      "when": 1778483766583,
+      "tag": "0003_skinny_scarecrow",
+      "breakpoints": true
     }
   ]
 }
