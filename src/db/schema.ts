@@ -111,7 +111,13 @@ export const liabilities = pgTable("liabilities", {
   name: varchar("name", { length: 100 }).notNull(),
   type: varchar("type", { length: 50 }).notNull(),
   value: numeric("value", { precision: 15, scale: 2 }).notNull(),
+  linkedAccountId: uuid("linked_account_id").references(() => accounts.id, {
+    onDelete: "set null",
+  }),
   createdAt: timestamp("created_at", { withTimezone: true })
+    .defaultNow()
+    .notNull(),
+  updatedAt: timestamp("updated_at", { withTimezone: true })
     .defaultNow()
     .notNull(),
 });
