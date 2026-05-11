@@ -1,5 +1,6 @@
 # Changelog
 
+- **2026-05-11** | #358 | T006 [FA-NW-001] Run npm run test — all existing tests must pass | Confirmed all existing tests pass in CI (Ubuntu / Node 20.x) after FA-NW-001 schema changes; this is a schema-only feature with no new tests required.
 - **2026-05-11** | #357 | T005 [FA-NW-001] Run npm run typecheck — must exit 0 | Confirmed `npm run typecheck` exits 0 after FA-NW-001 schema changes; Asset, Liability, NewAsset, NewLiability types all updated correctly by Drizzle type inference.
 - **2026-05-11** | #356 | T004 [FA-NW-001] Run npm run db:migrate to apply migration to live database | Applied migration `0003_skinny_scarecrow.sql` to the live Supabase database, adding `updated_at` to assets and `linked_account_id` + `updated_at` to liabilities; also merged FA-NW-001 spec files to main.
 - **2026-05-11** | #355 | T003 [FA-NW-001] Run npm run db:generate to produce migration 0003_skinny_scarecrow.sql | Generated Drizzle migration `0003_skinny_scarecrow.sql` with 4 SQL statements to add `updated_at` to assets, and `linked_account_id` + `updated_at` to liabilities.
