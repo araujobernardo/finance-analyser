@@ -15,7 +15,7 @@ export function useApi() {
         headers.set("Authorization", `Bearer ${accessToken}`);
       }
       const mergedInit: RequestInit = { ...init, headers };
-      const response = await fetch(url, mergedInit);
+      const response = await fetch(API_BASE + url, mergedInit);
 
       if (response.status === 401) {
         const clone = response.clone();
