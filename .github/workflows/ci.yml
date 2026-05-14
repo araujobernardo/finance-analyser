@@ -6,9 +6,55 @@ on:
   pull_request:
 
 jobs:
+  # Detects which path groups changed on PRs.
+  # On push to main, all outputs are 'true' so every job runs unconditionally.
+  changes:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      pull-requests: read
+    outputs:
+      # true when any source, config, or dependency file changed
+      code: ${{ github.event_name != 'pull_request' || steps.filter.outputs.code == 'true' }}
+      # true when app code or E2E tests/config changed (subset that needs browser tests)
+      e2e: ${{ github.event_name != 'pull_request' || steps.filter.outputs.e2e == 'true' }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dorny/paths-filter@v3
+        id: filter
+        if: github.event_name == 'pull_request'
+        with:
+          filters: |
+            code:
+              # Application source and tests
+              - 'src/**'
+              - 'e2e/**'
+              - 'api/**'
+              - 'public/**'
+              - 'index.html'
+              # Build and tooling config
+              - 'vite.config.ts'
+              - 'drizzle.config.ts'
+              - 'eslint.config.js'
+              - 'tsconfig*.json'
+              # Dependencies
+              - 'package.json'
+              - 'package-lock.json'
+            e2e:
+              # Any app or server change could cause a regression
+              - 'src/**'
+              # E2E spec files and Playwright config
+              - 'e2e/**'
+              - 'playwright.config.ts'
+              # Dependency changes can affect runtime behaviour
+              - 'package.json'
+              - 'package-lock.json'
+
   quality:
     runs-on: ubuntu-latest
     timeout-minutes: 10
+    needs: [changes]
+    if: needs.changes.outputs.code == 'true'
 
     permissions:
       contents: read
@@ -53,7 +99,14 @@ jobs:
   e2e:
     name: E2E Tests
     runs-on: ubuntu-latest
-    needs: [quality]
+    needs: [changes, quality]
+    # always() lets this job evaluate even when quality was skipped (e2e-only PR).
+    # Still blocks if quality actually failed or was cancelled.
+    if: |
+      always() &&
+      needs.changes.outputs.e2e == 'true' &&
+      needs.quality.result != 'failure' &&
+      needs.quality.result != 'cancelled'
     permissions:
       contents: read
       deployments: read
