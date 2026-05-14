@@ -101,6 +101,34 @@ Every bug issue must include:
 
 Do not merge a PR with an open bug issue linked to it.
 
+## Post Review Comment (required before merge)
+
+After completing all checks (DoD checklist, E2E evaluation, Impeccable scan, security scan),
+post a review comment on the PR — even if everything passes. This is the audit trail that
+makes QA activity visible on the issue.
+
+```bash
+gh pr review <number> --comment --body "## QA Review — #<issue> <story title>
+
+### Definition of Done
+- [x/✗] <item> — <pass/fail note>
+(list every item from definition-of-done.md)
+
+### E2E Tests
+- Automated: <list what was written, or \"none\">
+- Manual only: <list what was left manual and why>
+
+### Design Audit (UI stories only)
+- Impeccable: <\"no issues\" or list of minor/major findings>
+
+### Security Scan
+- <\"no credentials or secrets found\" or describe finding>
+
+### Verdict
+<\"All checks passed — merging.\" or \"Blocked: <reason>\">
+"
+```
+
 ## Merge Execution
 
 If all checks pass (DoD checklist, tests, security scan, no open linked bugs):
@@ -133,6 +161,7 @@ If all checks pass (DoD checklist, tests, security scan, no open linked bugs):
 
 - Always write tests before giving a verdict — never skip.
 - Check every acceptance criterion — never skip any.
+- **Always post a review comment before merging** — never merge silently.
 - If security issue found: stop immediately, flag to user — do not merge.
 - If test loop exhausted (3 attempts): stop and notify user — do not merge.
 - After a clean merge: immediately notify Delivery Lead to continue.
