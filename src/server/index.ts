@@ -37,7 +37,11 @@ function isOriginAllowed(origin: string): boolean {
 
 app.use(
   cors({
-    origin: corsOrigins.length > 0 ? isOriginAllowed : false,
+    origin:
+      corsOrigins.length > 0
+        ? (origin, callback) =>
+            callback(null, !origin || isOriginAllowed(origin))
+        : false,
     credentials: true,
   }),
 );
