@@ -26,7 +26,7 @@ test("sign-in and account load", async ({ page }) => {
 test("sign-out returns to login page", async ({ page }) => {
   await signIn(page);
 
-  await page.getByTestId("sidebar-signout").click();
+  await page.getByRole("button", { name: /sign out/i }).click();
 
   await page.waitForURL((url) => url.pathname.includes("/login"), {
     timeout: 10_000,
