@@ -8,6 +8,12 @@ export default defineConfig({
   use: {
     baseURL: process.env.E2E_BASE_URL ?? "http://localhost:5173",
     headless: !!process.env.CI,
+    ...(process.env.VERCEL_AUTOMATION_BYPASS_SECRET && {
+      extraHTTPHeaders: {
+        "x-vercel-protection-bypass":
+          process.env.VERCEL_AUTOMATION_BYPASS_SECRET,
+      },
+    }),
   },
   projects: [
     {
