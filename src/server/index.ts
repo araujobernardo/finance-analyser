@@ -12,16 +12,32 @@ import {
 const app = express();
 const PORT = process.env.PORT ?? 3001;
 
-const corsOrigin = process.env.CORS_ORIGIN;
-if (!corsOrigin) {
+const corsOrigins = (process.env.CORS_ORIGIN ?? "")
+  .split(",")
+  .map((s) => s.trim())
+  .filter(Boolean);
+
+if (corsOrigins.length === 0) {
   console.warn(
     "[server] CORS_ORIGIN is not set — all cross-origin requests will be denied",
   );
 }
 
+function isOriginAllowed(origin: string): boolean {
+  return corsOrigins.some((allowed) => {
+    if (allowed.includes("*")) {
+      const pattern = allowed
+        .replace(/[.+?^${}()|[\]\\]/g, "\\$&")
+        .replace(/\*/g, ".*");
+      return new RegExp(`^${pattern}$`).test(origin);
+    }
+    return allowed === origin;
+  });
+}
+
 app.use(
   cors({
-    origin: corsOrigin ?? false,
+    origin: corsOrigins.length > 0 ? isOriginAllowed : false,
     credentials: true,
   }),
 );
