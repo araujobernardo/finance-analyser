@@ -116,3 +116,4 @@
 - **2026-05-15** | #390 | CI path-based filtering | Added dorny/paths-filter to skip quality and E2E jobs on docs/agent/workflow-only PRs; push to main always runs everything.
 - **2026-05-15** | #396 | T002 [FA-NW-002] Add ApiAsset and ApiLiability interfaces to src/types/api.ts | Added ApiAsset and ApiLiability TypeScript interfaces to src/types/api.ts with all required fields including value typed as string to match postgres-js behavior.
 - **2026-05-15** | #397 | T003 [FA-NW-002] Create src/server/routes/assets.ts | Created assetsRouter with full CRUD for /api/assets — GET, POST, PATCH (with updatedAt), DELETE — following accounts.ts pattern with Zod validation and authenticateToken middleware.
+- **2026-05-15** | #398 | T004 [FA-NW-002] Create src/server/routes/liabilities.ts | Created liabilitiesRouter with full CRUD for /api/liabilities — identical structure to assetsRouter with LIABILITY_TYPES and liabilities table references.
