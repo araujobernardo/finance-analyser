@@ -10,7 +10,7 @@
     "preview": "vite preview",
     "test": "vitest run",
     "typecheck": "tsc -b",
-    "prepare": "husky",
+    "prepare": "husky || true",
     "server:dev": "tsx watch --env-file=.env src/server/index.ts",
     "server:start": "tsx src/server/index.ts",
     "db:generate": "drizzle-kit generate",
