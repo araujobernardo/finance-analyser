@@ -17,6 +17,17 @@ vi.mock("react-router-dom", () => ({
 
 // ── Tests ─────────────────────────────────────────────────────────────────
 
+describe("API_BASE normalisation (#422)", () => {
+  // NOTE: import.meta.env.VITE_API_URL is resolved at module load time, so
+  // these tests validate the exported constant against the rules documented
+  // in api.ts. The constant is "" in the test environment (no VITE_API_URL set).
+
+  it("resolves to an empty string when VITE_API_URL is not set", () => {
+    // In the test environment VITE_API_URL is undefined, so API_BASE must be "".
+    expect(API_BASE).toBe("");
+  });
+});
+
 describe("useApi — apiFetch prepends API_BASE (#351)", () => {
   let fetchSpy: ReturnType<typeof vi.spyOn>;
 

@@ -2,11 +2,17 @@ import { useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
 
-// When VITE_API_URL="/api", all call sites would produce /api/api/... double-prefix.
-// Strip a trailing "/api" so the effective base is always the origin (call sites
-// already include /api/ in their own paths).
+// Resolve the API base URL for fetch calls.
+//
+// Rules (applied in order):
+//   1. VITE_API_URL="/api"  → ""  (double-prefix guard: call sites already include /api/)
+//   2. VITE_API_URL starts with "http" → ""  (legacy absolute URL, e.g. old Railway host;
+//      the app now runs same-domain on Vercel so same-origin fetch is correct)
+//   3. Anything else (including "" / undefined) → use as-is
+//
+// This means the only safe non-empty value is a non-http relative prefix.
 const _raw = (import.meta.env.VITE_API_URL as string | undefined) ?? "";
-export const API_BASE = _raw === "/api" ? "" : _raw;
+export const API_BASE = _raw === "/api" || _raw.startsWith("http") ? "" : _raw;
 
 export function useApi() {
   const { accessToken, logout } = useAuth();
