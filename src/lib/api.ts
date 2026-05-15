@@ -5,14 +5,13 @@ import { useAuth } from "../context/AuthContext";
 // Resolve the API base URL for fetch calls.
 //
 // Rules (applied in order):
-//   1. VITE_API_URL="/api"  → ""  (double-prefix guard: call sites already include /api/)
-//   2. VITE_API_URL starts with "http" → ""  (legacy absolute URL, e.g. old Railway host;
-//      the app now runs same-domain on Vercel so same-origin fetch is correct)
-//   3. Anything else (including "" / undefined) → use as-is
+//   1. VITE_API_URL="/api" → ""  (double-prefix guard: call sites already include /api/)
+//   2. Anything else (absolute URL or "" / undefined) → use as-is
 //
-// This means the only safe non-empty value is a non-http relative prefix.
+// On Render the frontend and API are on separate domains, so VITE_API_URL must
+// be set to the absolute web service URL (e.g. https://finance-analyser-web-service.onrender.com).
 const _raw = (import.meta.env.VITE_API_URL as string | undefined) ?? "";
-export const API_BASE = _raw === "/api" || _raw.startsWith("http") ? "" : _raw;
+export const API_BASE = _raw === "/api" ? "" : _raw;
 
 export function useApi() {
   const { accessToken, logout } = useAuth();
