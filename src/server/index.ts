@@ -1,3 +1,4 @@
+import cors from "cors";
 import express from "express";
 import { errorHandler } from "./middleware/errorHandler.ts";
 import { accountsRouter } from "./routes/accounts.ts";
@@ -12,6 +13,14 @@ import {
 
 const app = express();
 const PORT = process.env.PORT ?? 3001;
+
+const corsOrigin = process.env.CORS_ORIGIN;
+if (!corsOrigin) {
+  console.warn(
+    "[server] CORS_ORIGIN is not set — cross-origin requests will be blocked",
+  );
+}
+app.use(cors({ origin: corsOrigin }));
 
 app.use(express.json());
 
@@ -31,9 +40,6 @@ app.use(errorHandler);
 
 export default app;
 
-// Only start the HTTP server when running directly (not on Vercel)
-if (!process.env.VERCEL) {
-  app.listen(PORT, () => {
-    console.log(`Server running on port ${PORT}`);
-  });
-}
+app.listen(PORT, () => {
+  console.log(`Server running on port ${PORT}`);
+});
