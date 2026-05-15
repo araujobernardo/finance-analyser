@@ -1,5 +1,6 @@
 # Changelog
 
+- **2026-05-15** | #412–#413 | T018–T019 [FA-NW-002] Quality gates and smoke test | npm run typecheck exits 0, npm run lint exits 0, 607 tests pass across 43 test files. Manual smoke test checklist documented on issue #413 for user to verify against live environment. FA-NW-002 feature complete.
 - **2026-05-15** | #403–#411 | T009–T017 [FA-NW-002] Net Worth UI components and full NetWorthPage | Created AssetList (groups by type, parseFloat totals, add/edit/delete), AssetModal (name/type/value/linked-account), LiabilityList (same pattern with LIABILITY_TYPES), LiabilityModal, NetWorthPage.css (two-column grid, 768px breakpoint), NetWorthModal.css (matching account modal style), and full NetWorthPage with summary bar (net worth green ≥ 0, red < 0).
 - **2026-05-15** | #402 | T008 [FA-NW-002] Add Net Worth nav entry to src/components/Sidebar.tsx | Added { path: "/net-worth", icon: "◈", label: "Net Worth" } to the NAV array in Sidebar.tsx; updated Settings icon to ⚙ to avoid icon duplication.
 - **2026-05-11** | #361 | All Vitest test suites fail: test-setup.ts uses afterEach outside a suite context | Confirmed fix was already in place (setupFiles + forks pool from bc04077); added explanatory comment to vite.config.ts documenting the Vitest 4.x requirement so the constraint cannot be accidentally reverted.
