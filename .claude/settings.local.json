@@ -10,7 +10,11 @@
       "Grep(*)",
       "WebSearch(*)",
       "WebFetch(*)",
-      "PowerShell(*)"
+      "PowerShell(*)",
+      "mcp__railway__list_projects",
+      "mcp__railway__list_services",
+      "mcp__railway__get_logs",
+      "mcp__railway__list_variables"
     ],
     "deny": []
   }
