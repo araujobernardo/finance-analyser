@@ -1,5 +1,6 @@
 # Changelog
 
+- **2026-05-16** | #428 | feat(deploy): add public/\_redirects and update .env.example for Render | Added `public/_redirects` with a catch-all rule so Render Static Site serves `index.html` for all React Router routes; updated `.env.example` to remove Vercel artefacts and document `CORS_ORIGIN`, port-5432 `DATABASE_URL`, and Render-correct `APP_URL`/`E2E_BASE_URL`.
 - **2026-05-16** | #427 | feat(server): add CORS middleware and always start HTTP listener for Render | Moved `tsx` and `cors` to production dependencies, removed the Vercel `app.listen()` guard, and added `cors` middleware reading `CORS_ORIGIN` from env so the Express API starts and accepts cross-origin requests on Render.
 - **2026-05-16** | #426 | feat(deploy): remove Vercel and Railway artefacts from repository | Deleted `vercel.json`, `api/index.ts`, `railway.toml` and removed the `vercel-build` script from `package.json`, leaving no Vercel or Railway configuration in the codebase.
 - **2026-05-16** | #424 | Production sign-in fails — ERR_MODULE_NOT_FOUND in Vercel serverless function | Added a `vercel-build` script using esbuild to bundle `api/index.ts` and all relative TypeScript server imports into a self-contained `api/index.js`, resolving the runtime module resolution failure on Vercel.
