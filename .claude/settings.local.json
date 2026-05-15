@@ -22,7 +22,9 @@
       "Skill(speckit-plan)",
       "Skill(speckit-plan:*)",
       "Skill(speckit-git-commit)",
-      "Skill(speckit-git-commit:*)"
+      "Skill(speckit-git-commit:*)",
+      "Skill(speckit-tasks)",
+      "Skill(speckit-tasks:*)"
     ],
     "deny": []
   }
