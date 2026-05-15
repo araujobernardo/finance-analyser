@@ -109,7 +109,6 @@ jobs:
       needs.quality.result != 'cancelled'
     permissions:
       contents: read
-      deployments: read
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
@@ -122,47 +121,25 @@ jobs:
           HUSKY: 0
       - name: Install Playwright browsers
         run: npx playwright install --with-deps chromium
-      - name: Resolve target URL
-        id: target-url
+      - name: Start API server
+        run: npm run server:start &
         env:
-          GH_TOKEN: ${{ github.token }}
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
+          JWT_SECRET: ${{ secrets.JWT_SECRET }}
+          PORT: 3001
+      - name: Start Vite dev server
+        run: npm run dev &
+        env:
+          VITE_API_URL: http://localhost:3001
+      - name: Wait for servers to be ready
         run: |
-          if [[ "${{ github.event_name }}" == "pull_request" ]]; then
-            SHA="${{ github.event.pull_request.head.sha }}"
-            ATTEMPTS=0
-            URL=""
-            while [[ $ATTEMPTS -lt 20 ]]; do
-              DEPLOY_ID=$(gh api \
-                "repos/${{ github.repository }}/deployments?ref=$SHA&per_page=10" \
-                --jq '[.[] | select(.environment | test("preview"; "i"))][0].id // empty' \
-                2>/dev/null || true)
-              if [[ -n "$DEPLOY_ID" ]]; then
-                URL=$(gh api \
-                  "repos/${{ github.repository }}/deployments/$DEPLOY_ID/statuses?per_page=5" \
-                  --jq '[.[] | select(.state == "success")][0].target_url // empty' \
-                  2>/dev/null || true)
-                if [[ -n "$URL" ]]; then
-                  break
-                fi
-              fi
-              ATTEMPTS=$((ATTEMPTS + 1))
-              sleep 15
-            done
-            if [[ -z "$URL" ]]; then
-              echo "::warning::No Vercel preview deployment found – falling back to production URL"
-              URL="https://finance-analyser-seven.vercel.app"
-            fi
-            echo "url=$URL" >> "$GITHUB_OUTPUT"
-          else
-            echo "url=https://finance-analyser-seven.vercel.app" >> "$GITHUB_OUTPUT"
-          fi
+          npx wait-on http://localhost:3001/health http://localhost:5173 --timeout 60000
       - name: Run E2E tests
         run: npm run e2e
         env:
-          E2E_BASE_URL: ${{ steps.target-url.outputs.url }}
+          E2E_BASE_URL: http://localhost:5173
           E2E_EMAIL: ${{ secrets.E2E_EMAIL }}
           E2E_PASSWORD: ${{ secrets.E2E_PASSWORD }}
-          VERCEL_AUTOMATION_BYPASS_SECRET: ${{ secrets.VERCEL_AUTOMATION_BYPASS_SECRET }}
       - name: Upload Playwright report
         if: failure()
         uses: actions/upload-artifact@v4
