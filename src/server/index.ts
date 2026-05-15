@@ -1,4 +1,3 @@
-import cors from "cors";
 import express from "express";
 import { errorHandler } from "./middleware/errorHandler.ts";
 import { accountsRouter } from "./routes/accounts.ts";
@@ -11,40 +10,6 @@ import {
 
 const app = express();
 const PORT = process.env.PORT ?? 3001;
-
-const corsOrigins = (process.env.CORS_ORIGIN ?? "")
-  .split(",")
-  .map((s) => s.trim())
-  .filter(Boolean);
-
-if (corsOrigins.length === 0) {
-  console.warn(
-    "[server] CORS_ORIGIN is not set — all cross-origin requests will be denied",
-  );
-}
-
-function isOriginAllowed(origin: string): boolean {
-  return corsOrigins.some((allowed) => {
-    if (allowed.includes("*")) {
-      const pattern = allowed
-        .replace(/[.+?^${}()|[\]\\]/g, "\\$&")
-        .replace(/\*/g, ".*");
-      return new RegExp(`^${pattern}$`).test(origin);
-    }
-    return allowed === origin;
-  });
-}
-
-app.use(
-  cors({
-    origin:
-      corsOrigins.length > 0
-        ? (origin, callback) =>
-            callback(null, !origin || isOriginAllowed(origin))
-        : false,
-    credentials: true,
-  }),
-);
 
 app.use(express.json());
 
@@ -60,6 +25,11 @@ app.use((_req, res) => {
 
 app.use(errorHandler);
 
-app.listen(PORT, () => {
-  console.log(`Server running on port ${PORT}`);
-});
+export default app;
+
+// Only start the HTTP server when running directly (not on Vercel)
+if (!process.env.VERCEL) {
+  app.listen(PORT, () => {
+    console.log(`Server running on port ${PORT}`);
+  });
+}
