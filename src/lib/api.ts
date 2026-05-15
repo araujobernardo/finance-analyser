@@ -2,7 +2,11 @@ import { useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
 
-export const API_BASE = import.meta.env.VITE_API_URL ?? "";
+// When VITE_API_URL="/api", all call sites would produce /api/api/... double-prefix.
+// Strip a trailing "/api" so the effective base is always the origin (call sites
+// already include /api/ in their own paths).
+const _raw = (import.meta.env.VITE_API_URL as string | undefined) ?? "";
+export const API_BASE = _raw === "/api" ? "" : _raw;
 
 export function useApi() {
   const { accessToken, logout } = useAuth();
