@@ -28,7 +28,8 @@ const NAV = [
   { path: "/dashboard", icon: "⬡", label: "Dashboard" },
   { path: "/transactions", icon: "≡", label: "Transactions" },
   { path: "/chat", icon: "◎", label: "AI Chat" },
-  { path: "/settings", icon: "◈", label: "Settings" },
+  { path: "/net-worth", icon: "◈", label: "Net Worth" },
+  { path: "/settings", icon: "⚙", label: "Settings" },
 ];
 
 export function Sidebar({
