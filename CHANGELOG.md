@@ -114,3 +114,4 @@
 - **2026-04-20** | #57 | FA-37-S5: Dashboard empty & loading states | Added EmptyState and SkeletonCard shared UI components and wired themed empty/loading states into all six dashboard panels, with a CTA button linking to Upload on MonthlySummary.
 - **2026-04-20** | #56 | FA-37-S4: Monthly trend chart panel | Added MonthlyTrendChart bar chart showing total spend per month with selected-month highlight and empty state guard.
 - **2026-05-15** | #390 | CI path-based filtering | Added dorny/paths-filter to skip quality and E2E jobs on docs/agent/workflow-only PRs; push to main always runs everything.
+- **2026-05-15** | #396 | T002 [FA-NW-002] Add ApiAsset and ApiLiability interfaces to src/types/api.ts | Added ApiAsset and ApiLiability TypeScript interfaces to src/types/api.ts with all required fields including value typed as string to match postgres-js behavior.
