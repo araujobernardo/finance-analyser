@@ -1,5 +1,6 @@
 # Changelog
 
+- **2026-05-16** | #427 | feat(server): add CORS middleware and always start HTTP listener for Render | Moved `tsx` and `cors` to production dependencies, removed the Vercel `app.listen()` guard, and added `cors` middleware reading `CORS_ORIGIN` from env so the Express API starts and accepts cross-origin requests on Render.
 - **2026-05-16** | #426 | feat(deploy): remove Vercel and Railway artefacts from repository | Deleted `vercel.json`, `api/index.ts`, `railway.toml` and removed the `vercel-build` script from `package.json`, leaving no Vercel or Railway configuration in the codebase.
 - **2026-05-16** | #424 | Production sign-in fails — ERR_MODULE_NOT_FOUND in Vercel serverless function | Added a `vercel-build` script using esbuild to bundle `api/index.ts` and all relative TypeScript server imports into a self-contained `api/index.js`, resolving the runtime module resolution failure on Vercel.
 - **2026-05-15** | #422 | Bug: Sign-in throws network error — server unreachable on production | Extended API_BASE normalisation in src/lib/api.ts to collapse any absolute VITE_API_URL (http/https) to same-origin empty string, fixing a network-level fetch failure when the Vercel environment still held the legacy Railway API URL.
