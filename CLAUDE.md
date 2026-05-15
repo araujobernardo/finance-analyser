@@ -36,8 +36,8 @@ For project principles, governance, and agent workflow see: constitution.md
 
 ## Active Feature Plan
 
-Current feature: **Asset and Liability Management** (branch `019-asset-liability-management`)  
-Implementation plan: [specs/019-asset-liability-management/plan.md](specs/019-asset-liability-management/plan.md)  
-Spec: [specs/019-asset-liability-management/spec.md](specs/019-asset-liability-management/spec.md)
+Current feature: **Migrate Deployment from Vercel to Render** (branch `020-migrate-vercel-to-render`)  
+Implementation plan: [specs/020-migrate-vercel-to-render/plan.md](specs/020-migrate-vercel-to-render/plan.md)  
+Spec: [specs/020-migrate-vercel-to-render/spec.md](specs/020-migrate-vercel-to-render/spec.md)
 
 <!-- SPECKIT END -->
