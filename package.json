@@ -6,7 +6,6 @@
   "scripts": {
     "dev": "vite",
     "build": "tsc -b && vite build",
-    "vercel-build": "esbuild api/index.ts --bundle --platform=node --format=esm --packages=external --outfile=api/index.js && tsc -b && vite build",
     "lint": "eslint . --max-warnings 0",
     "preview": "vite preview",
     "test": "vitest run",
