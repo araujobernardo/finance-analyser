@@ -36,8 +36,8 @@ For project principles, governance, and agent workflow see: constitution.md
 
 ## Active Feature Plan
 
-Current feature: **Playwright End-to-End Test Suite** (branch `018-playwright-e2e`)  
-Implementation plan: [specs/018-playwright-e2e/plan.md](specs/018-playwright-e2e/plan.md)  
-Spec: [specs/018-playwright-e2e/spec.md](specs/018-playwright-e2e/spec.md)
+Current feature: **Asset and Liability Management** (branch `019-asset-liability-management`)  
+Implementation plan: [specs/019-asset-liability-management/plan.md](specs/019-asset-liability-management/plan.md)  
+Spec: [specs/019-asset-liability-management/spec.md](specs/019-asset-liability-management/spec.md)
 
 <!-- SPECKIT END -->

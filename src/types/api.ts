@@ -24,3 +24,25 @@ export interface ImportResult {
   imported: number;
   skipped: number;
 }
+
+export interface ApiAsset {
+  id: string;
+  userId: string;
+  name: string;
+  type: string;
+  value: string; // postgres-js returns numeric columns as strings; always call parseFloat() before arithmetic
+  linkedAccountId: string | null;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface ApiLiability {
+  id: string;
+  userId: string;
+  name: string;
+  type: string;
+  value: string; // postgres-js returns numeric columns as strings; always call parseFloat() before arithmetic
+  linkedAccountId: string | null;
+  createdAt: string;
+  updatedAt: string;
+}
