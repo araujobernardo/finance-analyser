@@ -1,5 +1,6 @@
 # Changelog
 
+- **2026-05-16** | #430 | chore(deploy): verify Render migration — all acceptance criteria pass | Ran full verification sweep confirming zero Vercel/Railway artefacts, lint/typecheck/build/test all pass, `dist/_redirects` present in build output, and CORS middleware correctly configured.
 - **2026-05-16** | #429 | feat(e2e): update Playwright config for Render deployment | Raised global E2E timeout to 60 s to accommodate Render free-tier cold-start delays; removed the Vercel automation bypass header that is no longer applicable.
 - **2026-05-16** | #428 | feat(deploy): add public/\_redirects and update .env.example for Render | Added `public/_redirects` with a catch-all rule so Render Static Site serves `index.html` for all React Router routes; updated `.env.example` to remove Vercel artefacts and document `CORS_ORIGIN`, port-5432 `DATABASE_URL`, and Render-correct `APP_URL`/`E2E_BASE_URL`.
 - **2026-05-16** | #427 | feat(server): add CORS middleware and always start HTTP listener for Render | Moved `tsx` and `cors` to production dependencies, removed the Vercel `app.listen()` guard, and added `cors` middleware reading `CORS_ORIGIN` from env so the Express API starts and accepts cross-origin requests on Render.
