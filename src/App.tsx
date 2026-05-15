@@ -3,6 +3,7 @@ import { Navigate, Route, Routes, useNavigate } from "react-router-dom";
 import { AuthProvider } from "./context/AuthContext";
 import { ToastProvider } from "./context/ToastContext";
 import { AccountProvider } from "./context/AccountContext";
+import { NetWorthProvider } from "./context/NetWorthContext";
 import { ProtectedRoute } from "./components/ProtectedRoute";
 import { PublicOnlyRoute } from "./components/PublicOnlyRoute";
 import { Sidebar } from "./components/Sidebar";
@@ -12,6 +13,7 @@ import { TransactionsPage } from "./pages/TransactionsPage";
 import { ChatPage } from "./pages/ChatPage";
 import { MigrationPage } from "./pages/MigrationPage";
 import { SettingsPage } from "./pages/SettingsPage";
+import NetWorthPage from "./pages/NetWorthPage";
 import { SignUpPage } from "./pages/SignUpPage";
 import { VerifyEmailPage } from "./pages/VerifyEmailPage";
 import { LoginPage } from "./pages/LoginPage";
@@ -391,6 +393,14 @@ export default function App() {
                 }
               />
               <Route path="/migrate" element={<MigrationPage />} />
+              <Route
+                path="/net-worth"
+                element={
+                  <NetWorthProvider>
+                    <NetWorthPage />
+                  </NetWorthProvider>
+                }
+              />
             </Routes>
           </div>
         </div>
