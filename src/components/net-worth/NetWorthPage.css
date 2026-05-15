@@ -1,0 +1,218 @@
+/* ── Net Worth Page Layout ─────────────────────────────────────────────────── */
+
+.nw-page {
+  padding: 2rem;
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+
+.nw-page__title {
+  font-size: 1.4rem;
+  font-weight: 600;
+  color: var(--text);
+  margin: 0;
+}
+
+/* Summary bar */
+.nw-summary {
+  display: flex;
+  gap: 1.5rem;
+  background-color: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 0.75rem;
+  padding: 1.25rem 1.5rem;
+  flex-wrap: wrap;
+}
+
+.nw-summary__item {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  flex: 1;
+  min-width: 140px;
+}
+
+.nw-summary__label {
+  font-size: 0.8rem;
+  color: var(--muted);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.nw-summary__value {
+  font-size: 1.2rem;
+  font-weight: 700;
+  color: var(--text);
+}
+
+.nw-summary__value--positive {
+  color: var(--accent);
+}
+
+.nw-summary__value--negative {
+  color: var(--red);
+}
+
+/* Two-column grid */
+.nw-columns {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1.5rem;
+}
+
+/* Asset / Liability list panel */
+.nw-list {
+  background-color: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 0.75rem;
+  padding: 1.25rem 1.5rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.nw-list__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.nw-list__title {
+  font-size: 1rem;
+  font-weight: 600;
+  color: var(--text);
+  margin: 0;
+}
+
+.nw-list__add-btn {
+  font-size: 0.85rem;
+  font-weight: 500;
+  color: var(--accent);
+  background: none;
+  border: 1px solid var(--accent);
+  border-radius: 0.4rem;
+  padding: 0.25rem 0.75rem;
+  cursor: pointer;
+  transition: background-color 0.15s ease;
+}
+
+.nw-list__add-btn:hover {
+  background-color: rgba(16, 185, 129, 0.1);
+}
+
+.nw-list__empty {
+  font-size: 0.875rem;
+  color: var(--muted);
+  margin: 0;
+  padding: 1rem 0;
+}
+
+/* Group */
+.nw-list__group {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.nw-list__group-header {
+  display: flex;
+  justify-content: space-between;
+  padding: 0.25rem 0;
+  border-bottom: 1px solid var(--border);
+  margin-bottom: 0.25rem;
+}
+
+.nw-list__group-label {
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: var(--muted);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.nw-list__group-total {
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: var(--muted);
+}
+
+/* Row */
+.nw-list__row {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.4rem 0;
+}
+
+.nw-list__row-name {
+  flex: 1;
+  font-size: 0.9rem;
+  color: var(--text);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.nw-list__row-value {
+  font-size: 0.9rem;
+  font-weight: 500;
+  color: var(--text);
+  white-space: nowrap;
+}
+
+.nw-list__row-actions {
+  display: flex;
+  gap: 0.25rem;
+}
+
+.nw-list__row-btn {
+  background: none;
+  border: none;
+  padding: 0.2rem 0.4rem;
+  cursor: pointer;
+  font-size: 0.85rem;
+  color: var(--muted);
+  border-radius: 0.3rem;
+  transition: color 0.15s ease;
+}
+
+.nw-list__row-btn:hover {
+  color: var(--text);
+}
+
+.nw-list__row-btn--danger:hover {
+  color: var(--red);
+}
+
+/* Total row */
+.nw-list__total-row {
+  display: flex;
+  justify-content: space-between;
+  padding: 0.75rem 0 0;
+  border-top: 1px solid var(--border);
+  margin-top: 0.25rem;
+}
+
+.nw-list__total-label {
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: var(--text);
+}
+
+.nw-list__total-value {
+  font-size: 0.875rem;
+  font-weight: 700;
+  color: var(--accent);
+}
+
+/* Stack at 768px */
+@media (max-width: 768px) {
+  .nw-page {
+    padding: 1rem;
+  }
+
+  .nw-columns {
+    grid-template-columns: 1fr;
+  }
+}
