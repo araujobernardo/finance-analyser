@@ -1,5 +1,6 @@
 # Changelog
 
+- **2026-05-16** | #426 | feat(deploy): remove Vercel and Railway artefacts from repository | Deleted `vercel.json`, `api/index.ts`, `railway.toml` and removed the `vercel-build` script from `package.json`, leaving no Vercel or Railway configuration in the codebase.
 - **2026-05-16** | #424 | Production sign-in fails — ERR_MODULE_NOT_FOUND in Vercel serverless function | Added a `vercel-build` script using esbuild to bundle `api/index.ts` and all relative TypeScript server imports into a self-contained `api/index.js`, resolving the runtime module resolution failure on Vercel.
 - **2026-05-15** | #422 | Bug: Sign-in throws network error — server unreachable on production | Extended API_BASE normalisation in src/lib/api.ts to collapse any absolute VITE_API_URL (http/https) to same-origin empty string, fixing a network-level fetch failure when the Vercel environment still held the legacy Railway API URL.
 - **2026-05-15** | #412–#413 | T018–T019 [FA-NW-002] Quality gates and smoke test | npm run typecheck exits 0, npm run lint exits 0, 607 tests pass across 43 test files. Manual smoke test checklist documented on issue #413 for user to verify against live environment. FA-NW-002 feature complete.
