@@ -65,7 +65,9 @@ violate these absolute bans from Impeccable. If any option does, revise it:
 After verifying, append this note to the options presentation:
 "Checked against Impeccable anti-pattern list."
 
-Present exactly **3 UX options** to the user. Each option must include:
+Present exactly **3 UX options** to the user. Each option must represent a meaningfully different design philosophy — not three variations of the same layout. If the options feel similar, revise until each one would surprise a reader who expected the others.
+
+Each option must include:
 
 1. **Name** — a 2–3 word label (e.g. "Inline Expandable", "Side Drawer", "Full Page")
 2. **Description** — 2–3 sentences describing layout, interaction model, key
