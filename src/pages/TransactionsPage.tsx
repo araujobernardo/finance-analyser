@@ -207,10 +207,13 @@ export function TransactionsPage({
               checked={showTransfers}
               onChange={(e) => setShowTransfers(e.target.checked)}
               style={{ accentColor: "var(--accent)" }}
+              data-testid="show-transfers"
             />
             Show transfers
           </label>
-          <span className="txn-row-count">{filtered.length} rows</span>
+          <span className="txn-row-count" data-testid="txn-row-count">
+            {filtered.length} rows
+          </span>
         </div>
         {toast && <div className="txn-toast">&#10003; {toast}</div>}
       </div>
@@ -279,7 +282,7 @@ export function TransactionsPage({
       )}
 
       <div className="txn-table-wrap">
-        <table className="txn-table">
+        <table className="txn-table" data-testid="txn-table">
           <thead>
             <tr>
               {[
