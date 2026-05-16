@@ -153,23 +153,28 @@ This project is developed using a squad of Claude Code agents coordinated by a `
 
 ### Agents
 
-| Agent             | Role                                                                                                                                                    |
-| ----------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| **Delivery Lead** | Coordinates the squad. Picks up the next unblocked story from the backlog, spawns Developer and QA, updates the changelog, and loops to the next story. |
-| **Developer**     | Implements one story at a time on a feature branch. Opens a PR and transitions the issue to `status:in-review`. Never merges.                           |
-| **QA**            | Reviews the PR against the Definition of Done, writes automated tests, runs CI checks, and squash-merges when all checks pass.                          |
-| **Product Owner** | Defines and prioritises stories. Writes specs via `/speckit-specify`.                                                                                   |
+| Agent             | Role                                                                                                                                                         |
+| ----------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| **Delivery Lead** | Coordinates the squad. Picks up the next unblocked story from the backlog, spawns Designer/Developer/QA, updates the changelog, and loops to the next story. |
+| **Designer**      | UI stories only. Presents 3 UX options to the user, waits for a choice, writes `specs/[dir]/ux-brief.md`, then hands off to Developer.                       |
+| **Developer**     | Implements one story at a time on a feature branch. Opens a PR and transitions the issue to `status:in-review`. Never merges.                                |
+| **QA**            | Reviews the PR against the Definition of Done, writes automated tests, runs CI checks, and squash-merges when all checks pass.                               |
+
+> Speckit (`/speckit-specify` → `/speckit-plan` → `/speckit-tasks` → `/speckit-taskstoissues`) is run by the **user** to define and populate the backlog before the Delivery Lead picks up stories.
 
 ### Workflow per Story
 
 ```
-Product Owner → /speckit-specify → /speckit-plan → /speckit-tasks → /speckit-taskstoissues
-                                                                            │
-                                                                            ▼
-                                                                    GitHub Issues (backlog)
-                                                                            │
-Delivery Lead ──────────────────────────────────────────────────────────────┘
+User → /speckit-specify → /speckit-plan → /speckit-tasks → /speckit-taskstoissues
+                                                                    │
+                                                                    ▼
+                                                            GitHub Issues (backlog)
+                                                                    │
+Delivery Lead ──────────────────────────────────────────────────────┘
     │  picks next unblocked story
+    │
+    ├─► Designer agent (UI stories only)
+    │       presents 3 UX options → user chooses → writes ux-brief.md
     │
     ├─► Developer agent
     │       creates branch → implements → opens PR → labels status:in-review
