@@ -1,0 +1,8 @@
+Account Name,Account Number,Account Type
+"Test Account A","Account 1111111-01","Branch 001"
+,,
+,,
+,,
+,,
+Date,Unique Id,Tran Type,Cheque Number,Payee,Memo,Amount
+2000/01/15,10000001,TFER,,Transfer to Account B,,-100.00

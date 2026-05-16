@@ -140,6 +140,7 @@ export function Sidebar({
           accept=".csv"
           multiple
           style={{ display: "none" }}
+          data-testid="csv-file-input"
           onChange={(e) => {
             if (e.target.files?.length) {
               onUpload(Array.from(e.target.files));
@@ -148,7 +149,11 @@ export function Sidebar({
           }}
         />
         {uploadStatus && (
-          <div className="sidebar-upload-status" style={{ color: statusColor }}>
+          <div
+            className="sidebar-upload-status"
+            style={{ color: statusColor }}
+            data-testid="upload-status"
+          >
             {uploadStatus.type === "loading" && "⟳ "}
             {uploadStatus.msg}
           </div>
