@@ -22,7 +22,7 @@ const AuthContext = createContext<AuthContextValue | null>(null);
 
 function readUser(): AuthUser | null {
   try {
-    const raw = sessionStorage.getItem(USER_KEY);
+    const raw = localStorage.getItem(USER_KEY);
     return raw ? (JSON.parse(raw) as AuthUser) : null;
   } catch {
     return null;
@@ -31,20 +31,20 @@ function readUser(): AuthUser | null {
 
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [accessToken, setAccessToken] = useState<string | null>(() =>
-    sessionStorage.getItem(STORAGE_KEY),
+    localStorage.getItem(STORAGE_KEY),
   );
   const [user, setUser] = useState<AuthUser | null>(readUser);
 
   const login = (token: string, newUser: AuthUser) => {
-    sessionStorage.setItem(STORAGE_KEY, token);
-    sessionStorage.setItem(USER_KEY, JSON.stringify(newUser));
+    localStorage.setItem(STORAGE_KEY, token);
+    localStorage.setItem(USER_KEY, JSON.stringify(newUser));
     setAccessToken(token);
     setUser(newUser);
   };
 
   const logout = () => {
-    sessionStorage.removeItem(STORAGE_KEY);
-    sessionStorage.removeItem(USER_KEY);
+    localStorage.removeItem(STORAGE_KEY);
+    localStorage.removeItem(USER_KEY);
     setAccessToken(null);
     setUser(null);
   };
