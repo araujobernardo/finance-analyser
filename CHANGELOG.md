@@ -1,5 +1,6 @@
 # Changelog
 
+- **2026-05-16** | #450 | feat(e2e): Stage 1b — add E2E job to CI pipeline | Added an `e2e` job to `.github/workflows/ci.yml` that runs after `quality` passes, installs Playwright + Chromium, runs `npm run e2e` against the live Render deployment with secrets injected, uploads the HTML report on failure, and is skipped on doc-only PRs via the existing `changes` filter.
 - **2026-05-16** | #448 | feat(e2e): Stage 1 — global auth setup + login/logout spec | Introduced global-setup.ts for single-session authentication, authenticatedPage fixture for reuse across specs, and clean login/logout tests in auth.spec.ts; navigation.spec.ts refactored to use the shared fixture.
 - **2026-05-16** | #430 | chore(deploy): verify Render migration — all acceptance criteria pass | Ran full verification sweep confirming zero Vercel/Railway artefacts, lint/typecheck/build/test all pass, `dist/_redirects` present in build output, and CORS middleware correctly configured.
 - **2026-05-16** | #429 | feat(e2e): update Playwright config for Render deployment | Raised global E2E timeout to 60 s to accommodate Render free-tier cold-start delays; removed the Vercel automation bypass header that is no longer applicable.
