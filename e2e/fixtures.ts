@@ -45,3 +45,4 @@ export async function uploadFixtures(page: Page): Promise<void> {
 }
 
 export { expect };
+// smoke-test: verifies CI e2e job runs end-to-end against the production deployment
