@@ -36,4 +36,6 @@ are in [constitution.md](constitution.md).
 
 For project principles, governance, and agent workflow see: constitution.md
 
+**Active feature plan**: [specs/021-net-worth-dashboard-history/plan.md](specs/021-net-worth-dashboard-history/plan.md)
+
 <!-- SPECKIT END -->

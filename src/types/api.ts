@@ -46,3 +46,13 @@ export interface ApiLiability {
   createdAt: string;
   updatedAt: string;
 }
+
+export interface ApiSnapshot {
+  id: string;
+  userId: string;
+  totalAssets: string; // postgres-js returns numeric columns as strings; always call parseFloat() before arithmetic
+  totalLiabilities: string;
+  netWorth: string;
+  snapshotDate: string;
+  createdAt: string;
+}

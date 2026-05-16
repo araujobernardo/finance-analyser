@@ -24,8 +24,14 @@
       "Skill(speckit-git-commit)",
       "Skill(speckit-git-commit:*)",
       "Skill(speckit-tasks)",
-      "Skill(speckit-tasks:*)"
+      "Skill(speckit-tasks:*)",
+      "Bash(printf '#!/usr/bin/env sh\\\\nnpx lint-staged\\\\n' > \"c:/Users/barbo/Projects/finance-analyser/.husky/pre-commit\")",
+      "Bash(mkdir -p \"c:\\\\Users\\\\barbo\\\\Projects\\\\finance-analyser\\\\.claude\\\\skills\\\\delivery-implement\")"
     ],
-    "deny": []
+    "deny": [],
+    "additionalDirectories": [
+      "c:\\Users\\barbo\\Projects\\finance-analyser\\.husky",
+      "c:\\Users\\barbo\\Projects\\finance-analyser\\.claude\\skills"
+    ]
   }
 }

@@ -108,6 +108,19 @@ jobs:
       - name: Install Playwright browsers
         run: npx playwright install --with-deps chromium
 
+      - name: Warm up Render deployment
+        run: |
+          echo "Waiting for app to be ready..."
+          for i in $(seq 1 30); do
+            STATUS=$(curl -s -o /dev/null -w "%{http_code}" https://finance-analyser-dmff.onrender.com/api/health)
+            if [ "$STATUS" = "200" ]; then
+              echo "App is ready (attempt $i)"
+              break
+            fi
+            echo "Attempt $i: status $STATUS, retrying in 10s..."
+            sleep 10
+          done
+
       - name: Run E2E tests
         run: npm run e2e
         env:

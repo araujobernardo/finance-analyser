@@ -1,6 +1,12 @@
+import { useState, useEffect } from "react";
 import { useNetWorth } from "../context/NetWorthContext";
+import { useApi } from "../lib/api";
 import { AssetList } from "../components/net-worth/AssetList";
 import { LiabilityList } from "../components/net-worth/LiabilityList";
+import { NetWorthBreakdownChart } from "../components/net-worth/NetWorthBreakdownChart";
+import { NetWorthHistoryChart } from "../components/net-worth/NetWorthHistoryChart";
+import { SkeletonCard } from "../components/ui/SkeletonCard";
+import type { ApiSnapshot } from "../types/api";
 import "../components/net-worth/NetWorthPage.css";
 
 const NZD = new Intl.NumberFormat("en-NZ", {
@@ -10,6 +16,10 @@ const NZD = new Intl.NumberFormat("en-NZ", {
 
 export default function NetWorthPage() {
   const { assets, liabilities, isLoading } = useNetWorth();
+  const { apiFetch } = useApi();
+
+  const [snapshots, setSnapshots] = useState<ApiSnapshot[]>([]);
+  const [snapshotsLoading, setSnapshotsLoading] = useState(true);
 
   const totalAssets = assets.reduce((sum, a) => sum + parseFloat(a.value), 0);
   const totalLiabilities = liabilities.reduce(
@@ -18,6 +28,42 @@ export default function NetWorthPage() {
   );
   const netWorth = totalAssets - totalLiabilities;
   const netWorthPositive = netWorth >= 0;
+
+  // Fetch snapshot history
+  useEffect(() => {
+    let cancelled = false;
+    setSnapshotsLoading(true);
+    apiFetch("/api/net-worth/snapshots")
+      .then(async (res) => {
+        if (cancelled) return;
+        if (res.ok) {
+          const data = (await res.json()) as ApiSnapshot[];
+          if (!cancelled) setSnapshots(data);
+        }
+      })
+      .catch(() => {
+        // silently fail — history chart will show empty state
+      })
+      .finally(() => {
+        if (!cancelled) setSnapshotsLoading(false);
+      });
+    return () => {
+      cancelled = true;
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  // Fire-and-forget daily snapshot POST once assets/liabilities have loaded
+  useEffect(() => {
+    if (!isLoading) {
+      apiFetch("/api/net-worth/snapshots", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ totalAssets, totalLiabilities }),
+      }).catch(() => {});
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isLoading]);
 
   return (
     <div className="nw-page" data-testid="net-worth-page">
@@ -48,11 +94,27 @@ export default function NetWorthPage() {
         </div>
       </div>
 
+      {/* Breakdown chart — visual composition of assets/liabilities by type */}
+      {!isLoading && (
+        <section className="nw-breakdown" data-testid="nw-breakdown">
+          <NetWorthBreakdownChart assets={assets} liabilities={liabilities} />
+        </section>
+      )}
+
       {/* Two-column grid */}
       <div className="nw-columns">
         <AssetList />
         <LiabilityList />
       </div>
+
+      {/* History chart */}
+      <section className="nw-history-section" data-testid="nw-history-section">
+        {snapshotsLoading ? (
+          <SkeletonCard rows={3} />
+        ) : (
+          <NetWorthHistoryChart snapshots={snapshots} />
+        )}
+      </section>
     </div>
   );
 }
