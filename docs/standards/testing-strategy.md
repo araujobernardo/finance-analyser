@@ -98,7 +98,7 @@ npm run e2e -- --debug         # step through with Playwright Inspector
 npx playwright show-report     # open HTML report from last run
 ```
 
-CI runs E2E tests against the live production Vercel deployment (`https://finance-analyser-seven.vercel.app`) after the `quality` job passes. See `specs/018-playwright-e2e/quickstart.md`.
+CI runs E2E tests against the live production Render deployment (`https://finance-analyser-dmff.onrender.com`) after the `quality` job passes. See `specs/018-playwright-e2e/quickstart.md`.
 
 ### Writing a new E2E test
 
