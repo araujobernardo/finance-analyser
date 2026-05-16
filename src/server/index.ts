@@ -6,6 +6,7 @@ import { assetsRouter } from "./routes/assets.ts";
 import authRouter from "./routes/auth.ts";
 import healthRouter from "./routes/health.ts";
 import { liabilitiesRouter } from "./routes/liabilities.ts";
+import { netWorthRouter } from "./routes/netWorth.ts";
 import {
   transactionsRouter,
   transactionOpsRouter,
@@ -31,6 +32,7 @@ app.use("/api/accounts/:accountId/transactions", transactionsRouter);
 app.use("/api/transactions", transactionOpsRouter);
 app.use("/api/assets", assetsRouter);
 app.use("/api/liabilities", liabilitiesRouter);
+app.use("/api/net-worth", netWorthRouter);
 
 app.use((_req, res) => {
   res.status(404).json({ error: "Not Found", status: 404 });
