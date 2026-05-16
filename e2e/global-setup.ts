@@ -23,6 +23,19 @@ async function globalSetup(config: FullConfig) {
     timeout: 60_000,
   });
 
+  // Clear any pre-existing app data so every test starts from a clean slate.
+  // Auth tokens (fa-auth-token, fa-auth-user) are intentionally kept.
+  await page.evaluate(() => {
+    const appKeys = [
+      "pfa-v3-transactions",
+      "pfa-v3-merchants",
+      "pfa-v3-budgets",
+      "pfa-v3-accounts",
+      "pfa-v3-categories",
+    ];
+    appKeys.forEach((k) => localStorage.removeItem(k));
+  });
+
   fs.mkdirSync(".playwright", { recursive: true });
   await page.context().storageState({ path: ".playwright/auth.json" });
   await browser.close();
