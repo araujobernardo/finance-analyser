@@ -264,6 +264,7 @@ export function SettingsPage({
         {flash && (
           <div
             className="settings-flash"
+            data-testid="settings-flash"
             style={{
               color: isWarning ? "var(--amber)" : "var(--accent)",
               background: isWarning
@@ -398,7 +399,11 @@ export function SettingsPage({
           </button>
         </div>
 
-        <button className="btn-accent" onClick={saveCategories}>
+        <button
+          className="btn-accent"
+          data-testid="budget-save"
+          onClick={saveCategories}
+        >
           Save Categories &amp; Budgets
         </button>
       </div>

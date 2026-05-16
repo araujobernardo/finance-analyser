@@ -431,7 +431,7 @@ export function DashboardPage({
 
       {/* Budget vs Actual */}
       {budgetData.length > 0 && (
-        <div className="card">
+        <div className="card" data-testid="budget-section">
           <div className="card-title">
             Budget vs Actual{multiMonth ? ` (${n}-month total)` : ""}
           </div>
