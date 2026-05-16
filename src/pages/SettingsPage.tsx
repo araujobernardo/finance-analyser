@@ -336,7 +336,7 @@ export function SettingsPage({
         {/* Category rows */}
         <div className="settings-cat-list">
           {catEdits.map((cat, i) => (
-            <div key={i} className="settings-cat-row">
+            <div key={i} className="settings-cat-row" data-category={cat.name}>
               <input
                 type="color"
                 value={cat.color}
