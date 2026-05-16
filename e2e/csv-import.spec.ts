@@ -1,8 +1,10 @@
 import path from "path";
+import { fileURLToPath } from "url";
 import { test, expect } from "./fixtures";
 
 // Two files uploaded together — matching debit/credit triggers transfer
 // detection, so needsCat is empty and the Claude API is never called.
+const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const FIXTURE_A = path.join(__dirname, "fixtures/sample-statement.csv");
 const FIXTURE_B = path.join(__dirname, "fixtures/sample-statement-b.csv");
 
