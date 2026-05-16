@@ -132,7 +132,7 @@
 - Saw QA agent catch subtle bugs — tests are a safety net, not a vanity metric
 - Learned that `.env` values leak into Vitest — fixed with `vi.stubEnv()`
 - Added `chatStorage.test.ts`, `useChatHistory.test.ts`, `claudeChat.test.ts` as part of FA-53
-- Built full E2E test suite (Stage 1–4): auth, CSV import, dashboard, and transactions — all using shared `authenticatedPage` fixture and `uploadFixtures()` helper; transactions tests cover default state, show-transfers toggle, month filter, and account filter (#472)
+- Built full E2E test suite (Stage 1–5): auth, CSV import, dashboard, transactions, and budget — all using shared `authenticatedPage` fixture and `uploadFixtures()` helper; transactions tests cover default state, show-transfers toggle, month filter, and account filter (#472); budget tests cover hidden-when-no-budgets state and full set-budget-in-settings → verify-on-dashboard flow (#474)
 
 ---
 

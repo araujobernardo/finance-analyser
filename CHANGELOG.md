@@ -1,5 +1,6 @@
 # Changelog
 
+- **2026-05-16** | #474 | feat(e2e): Stage 5 — budget spec | Added data-testid attributes to SettingsPage (settings-flash, budget-save) and DashboardPage (budget-section), and two Playwright tests in e2e/budget.spec.ts covering budget-section hidden state and the full set-budget-in-settings → verify-on-dashboard flow.
 - **2026-05-16** | #472 | feat(e2e): Stage 4 — transactions spec | Added data-testid attributes to TransactionsPage (txn-table, show-transfers, txn-row-count) and four Playwright tests in e2e/transactions.spec.ts covering the default hidden-transfers state, show-transfers toggle, month filter content, and account filter listing.
 - **2026-05-16** | #470 | feat(e2e): Stage 3 — dashboard spec | Added data-testid attributes to DashboardPage (month-filter, summary-stats, transfer-notice), uploadFixtures() helper and shared FIXTURE_A/FIXTURE_B paths to e2e/fixtures.ts, and four Playwright tests covering empty state, month filter, transfer notice, and active pill heading.
 - **2026-05-16** | #468 | feat(e2e): Stage 2 — CSV import spec | Added paired transfer fixture CSVs (no Claude API calls), data-testid attributes to Sidebar file input and upload status, and csv-import.spec.ts with upload-success and duplicate-rejection tests.
