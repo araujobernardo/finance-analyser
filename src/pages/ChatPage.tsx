@@ -138,7 +138,7 @@ export function ChatPage({
         </div>
       </div>
 
-      <div className="chat-messages">
+      <div className="chat-messages" data-testid="chat-messages">
         {messages.map((m, i) => (
           <div
             key={i}
@@ -188,6 +188,7 @@ export function ChatPage({
         <div className="chat-input-row">
           <input
             className="chat-input"
+            data-testid="chat-input"
             value={input}
             onChange={(e) => setInput(e.target.value)}
             onKeyDown={(e) => {
@@ -200,6 +201,7 @@ export function ChatPage({
           />
           <button
             className="chat-send"
+            data-testid="chat-send"
             disabled={!input.trim() || loading}
             onClick={() => send()}
             style={{
