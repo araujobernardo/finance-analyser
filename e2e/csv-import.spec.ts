@@ -11,11 +11,14 @@ const FIXTURE_B = path.join(__dirname, "fixtures/sample-statement-b.csv");
 test("CSV upload imports transactions and navigates to dashboard", async ({
   authenticatedPage: page,
 }) => {
-  await page.goto("/");
+  // Navigate directly to /dashboard and wait for the sidebar to be ready
+  await page.goto("/dashboard");
+  await page.waitForURL(/\/dashboard/, { timeout: 15_000 });
+  await expect(page.locator('[data-testid="csv-file-input"]')).toBeAttached();
 
   await page
     .locator('[data-testid="csv-file-input"]')
-    .setInputFiles([FIXTURE_A, FIXTURE_B], { force: true });
+    .setInputFiles([FIXTURE_A, FIXTURE_B]);
 
   await expect(page.locator('[data-testid="upload-status"]')).toContainText(
     "Imported",
@@ -28,11 +31,14 @@ test("CSV upload imports transactions and navigates to dashboard", async ({
 test("CSV upload rejects a duplicate import", async ({
   authenticatedPage: page,
 }) => {
-  await page.goto("/");
+  // Navigate directly to /dashboard and wait for the sidebar to be ready
+  await page.goto("/dashboard");
+  await page.waitForURL(/\/dashboard/, { timeout: 15_000 });
+  await expect(page.locator('[data-testid="csv-file-input"]')).toBeAttached();
 
   await page
     .locator('[data-testid="csv-file-input"]')
-    .setInputFiles([FIXTURE_A, FIXTURE_B], { force: true });
+    .setInputFiles([FIXTURE_A, FIXTURE_B]);
   await expect(page.locator('[data-testid="upload-status"]')).toContainText(
     "Imported",
     { timeout: 15_000 },
@@ -41,7 +47,7 @@ test("CSV upload rejects a duplicate import", async ({
   // Second upload of the same files — duplicate detection should block it
   await page
     .locator('[data-testid="csv-file-input"]')
-    .setInputFiles([FIXTURE_A, FIXTURE_B], { force: true });
+    .setInputFiles([FIXTURE_A, FIXTURE_B]);
   await expect(page.locator('[data-testid="upload-status"]')).toContainText(
     "No new transactions",
     { timeout: 10_000 },
