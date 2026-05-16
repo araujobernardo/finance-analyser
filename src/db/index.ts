@@ -16,7 +16,7 @@ function getInstance(): Db {
 }
 
 // Proxy defers postgres() call until first use, preventing module-load crashes
-// in Vercel function runtime when DATABASE_URL is not yet resolved at startup.
+// when DATABASE_URL is not yet resolved at startup.
 export const db = new Proxy<Db>({} as Db, {
   get(_target, prop, receiver) {
     return Reflect.get(getInstance(), prop, receiver);

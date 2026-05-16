@@ -12,7 +12,7 @@
 | Formatter    | Prettier                         |
 | Data storage | Browser `localStorage`           |
 | API server   | Express + Node.js                |
-| Database     | Supabase PostgreSQL              |
+| Database     | Neon PostgreSQL                  |
 | ORM          | Drizzle ORM                      |
 | AI/LLM       | Anthropic Claude API             |
 | Auth         | bcrypt (cost 12) + JWT (15 min)  |
@@ -24,7 +24,7 @@
 
 | Variable            | Used by        | Purpose                                      |
 | ------------------- | -------------- | -------------------------------------------- |
-| `DATABASE_URL`      | Server         | Supabase PostgreSQL connection string        |
+| `DATABASE_URL`      | Server         | Neon PostgreSQL connection string            |
 | `PORT`              | Server         | HTTP listen port (default 3001)              |
 | `CORS_ORIGIN`       | Server         | Allowed CORS origin (warns if unset)         |
 | `JWT_SECRET`        | Server         | HS256 signing key for access tokens          |
@@ -37,12 +37,12 @@
 
 ## Key Constraints
 
-- **Runs entirely in the browser** — no server, no backend, no deployment.
+- **Full-stack** — React SPA frontend (Render Static Site) + Express REST API (Render Web Service) + Neon PostgreSQL database.
 - **Authentication** — email/password via bcrypt + JWT. Tokens stored in `sessionStorage`. Auth pages (`/login`, `/signup`, etc.) are public; all other routes redirect to `/login` if unauthenticated.
 - **Data input** — monthly CSV exports from a New Zealand bank account.
-- **Persistence** — `localStorage` only (no external storage).
+- **Persistence** — Neon PostgreSQL for user data; `localStorage` for UI state.
 - **AI** — Claude API for transaction categorisation and the chat interface.
-- **Server-side only** — and must never be imported from React components or the Vite browser bundle. , , and (postgres.js) use Node.js built-ins that Vite cannot bundle for the browser.
+- **Server-side only** — `src/server/` and `src/db/` must never be imported from React components or the Vite browser bundle. They use Node.js built-ins that Vite cannot bundle for the browser.
 
 ---
 

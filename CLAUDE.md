@@ -34,10 +34,4 @@ are in [constitution.md](constitution.md).
 
 For project principles, governance, and agent workflow see: constitution.md
 
-## Active Feature Plan
-
-Current feature: **Migrate Deployment from Vercel to Render** (branch `020-migrate-vercel-to-render`)  
-Implementation plan: [specs/020-migrate-vercel-to-render/plan.md](specs/020-migrate-vercel-to-render/plan.md)  
-Spec: [specs/020-migrate-vercel-to-render/spec.md](specs/020-migrate-vercel-to-render/spec.md)
-
 <!-- SPECKIT END -->
