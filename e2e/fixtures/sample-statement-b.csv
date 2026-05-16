@@ -1,8 +1,8 @@
 Account Name,Account Number,Account Type
-"Test Account A","Account 1111111-01","Branch 001"
+"Test Account B","Account 2222222-02","Branch 001"
 ,,
 ,,
 ,,
 ,,
 Date,Unique Id,Tran Type,Cheque Number,Payee,Memo,Amount
-2000/01/15,10000001,TFER,,Transfer to Account B,,-100.00
+2000/01/15,20000001,TFER,,Transfer from Account A,,100.00
