@@ -22,10 +22,12 @@ See [docs/requirements.md](docs/requirements.md) for full requirements.
 
 | Agent         | Definition                                                         |
 | ------------- | ------------------------------------------------------------------ |
-| Developer     | [.claude/agents/developer.md](.claude/agents/developer.md)         |
-| Product Owner | [.claude/agents/product-owner.md](.claude/agents/product-owner.md) |
-| QA            | [.claude/agents/qa.md](.claude/agents/qa.md)                       |
 | Delivery Lead | [.claude/agents/delivery-lead.md](.claude/agents/delivery-lead.md) |
+| Designer      | [.claude/agents/designer.md](.claude/agents/designer.md)           |
+| Developer     | [.claude/agents/developer.md](.claude/agents/developer.md)         |
+| QA            | [.claude/agents/qa.md](.claude/agents/qa.md)                       |
+
+> Speckit commands (`/speckit-specify`, `/speckit-plan`, `/speckit-tasks`, `/speckit-taskstoissues`) are run by the **user** to populate the backlog. There is no Product Owner agent.
 
 All governance rules (golden rules, approval gates, auto-approved actions)
 are in [constitution.md](constitution.md).
