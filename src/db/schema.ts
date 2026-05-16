@@ -6,6 +6,7 @@ import {
   pgTable,
   text,
   timestamp,
+  uniqueIndex,
   uuid,
   varchar,
 } from "drizzle-orm/pg-core";
@@ -140,6 +141,32 @@ export const goals = pgTable("goals", {
     .notNull(),
 });
 
+export const netWorthSnapshots = pgTable(
+  "net_worth_snapshots",
+  {
+    id: uuid("id").defaultRandom().primaryKey(),
+    userId: uuid("user_id")
+      .notNull()
+      .references(() => users.id, { onDelete: "cascade" }),
+    totalAssets: numeric("total_assets", { precision: 15, scale: 2 }).notNull(),
+    totalLiabilities: numeric("total_liabilities", {
+      precision: 15,
+      scale: 2,
+    }).notNull(),
+    netWorth: numeric("net_worth", { precision: 15, scale: 2 }).notNull(),
+    snapshotDate: date("snapshot_date").notNull(),
+    createdAt: timestamp("created_at", { withTimezone: true })
+      .defaultNow()
+      .notNull(),
+  },
+  (table) => ({
+    userIdDateUniq: uniqueIndex("net_worth_snapshots_user_id_date_uniq").on(
+      table.userId,
+      table.snapshotDate,
+    ),
+  }),
+);
+
 export type User = typeof users.$inferSelect;
 export type Account = typeof accounts.$inferSelect;
 export type Transaction = typeof transactions.$inferSelect;
@@ -155,3 +182,5 @@ export type NewCategory = typeof categories.$inferInsert;
 export type NewAsset = typeof assets.$inferInsert;
 export type NewLiability = typeof liabilities.$inferInsert;
 export type NewGoal = typeof goals.$inferInsert;
+export type NetWorthSnapshot = typeof netWorthSnapshots.$inferSelect;
+export type NewNetWorthSnapshot = typeof netWorthSnapshots.$inferInsert;
