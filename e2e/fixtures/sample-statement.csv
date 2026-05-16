@@ -1,0 +1,10 @@
+Account Name,Account Number,Account Type
+"Test Account","Account 0000000-01","Branch 001"
+,,
+,,
+,,
+,,
+Date,Unique Id,Tran Type,Cheque Number,Payee,Memo,Amount
+2000/01/15,10000001,EFTPOS,,COUNTDOWN SUPERMARKET,,-45.50
+2000/01/16,10000002,EFTPOS,,Z PETROL STATION,,-60.00
+2000/01/20,10000003,CREDIT,,SALARY,,2500.00
