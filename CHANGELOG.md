@@ -1,5 +1,6 @@
 # Changelog
 
+- **2026-05-16** | #472 | feat(e2e): Stage 4 — transactions spec | Added data-testid attributes to TransactionsPage (txn-table, show-transfers, txn-row-count) and four Playwright tests in e2e/transactions.spec.ts covering the default hidden-transfers state, show-transfers toggle, month filter content, and account filter listing.
 - **2026-05-16** | #470 | feat(e2e): Stage 3 — dashboard spec | Added data-testid attributes to DashboardPage (month-filter, summary-stats, transfer-notice), uploadFixtures() helper and shared FIXTURE_A/FIXTURE_B paths to e2e/fixtures.ts, and four Playwright tests covering empty state, month filter, transfer notice, and active pill heading.
 - **2026-05-16** | #468 | feat(e2e): Stage 2 — CSV import spec | Added paired transfer fixture CSVs (no Claude API calls), data-testid attributes to Sidebar file input and upload status, and csv-import.spec.ts with upload-success and duplicate-rejection tests.
 - **2026-05-16** | #450 | feat(e2e): Stage 1b — add E2E job to CI pipeline | Added an `e2e` job to `.github/workflows/ci.yml` that runs after `quality` passes, installs Playwright + Chromium, runs `npm run e2e` against the live Render deployment with secrets injected, uploads the HTML report on failure, and is skipped on doc-only PRs via the existing `changes` filter.
