@@ -181,7 +181,7 @@ export function DashboardPage({
             </div>
           )}
         </div>
-        <div className="dash-month-pills">
+        <div className="dash-month-pills" data-testid="month-filter">
           {months.map((m) => (
             <button
               key={m}
@@ -229,7 +229,7 @@ export function DashboardPage({
       )}
 
       {/* Summary stats */}
-      <div className="dash-stats-grid">
+      <div className="dash-stats-grid" data-testid="summary-stats">
         <div className="card">
           <Stat
             label="Income"
@@ -269,7 +269,7 @@ export function DashboardPage({
 
       {/* Transfer notice */}
       {transferAmt > 0 && (
-        <div className="dash-transfer-notice">
+        <div className="dash-transfer-notice" data-testid="transfer-notice">
           ↔ {fmt(transferAmt)} in inter-account transfers detected and excluded
           from all totals.
         </div>
