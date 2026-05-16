@@ -11,7 +11,8 @@ export const errorHandler: ErrorRequestHandler = (
   _next,
 ) => {
   const status = err.status ?? 500;
-  res
-    .status(status)
-    .json({ error: err.message || "Internal Server Error", status });
+  console.error(`[${status}]`, err);
+  const clientMessage =
+    status < 500 ? (err.message ?? "Bad Request") : "Internal Server Error";
+  res.status(status).json({ error: clientMessage });
 };
