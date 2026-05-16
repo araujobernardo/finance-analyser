@@ -6,6 +6,7 @@ export default defineConfig({
   // 60-second timeout to accommodate Render free-tier cold-start delays (~30 s)
   timeout: 60_000,
   retries: process.env.CI ? 1 : 0,
+  globalSetup: "./e2e/global-setup.ts",
   use: {
     // Production (Render): https://finance-analyser-dmff.onrender.com
     baseURL: process.env.E2E_BASE_URL ?? "http://localhost:5173",

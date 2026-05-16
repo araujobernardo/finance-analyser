@@ -1,17 +1,4 @@
-import { test, expect, type Page } from "@playwright/test";
-
-const email = process.env.E2E_EMAIL!;
-const password = process.env.E2E_PASSWORD!;
-
-async function signIn(page: Page) {
-  await page.goto("/login");
-  await page.getByLabel(/email/i).fill(email);
-  await page.getByLabel(/password/i).fill(password);
-  await page.getByRole("button", { name: /sign in/i }).click();
-  await page.waitForURL((url) => !url.pathname.includes("/login"), {
-    timeout: 15_000,
-  });
-}
+import { test, expect } from "./fixtures";
 
 const NAV_LINKS = [
   { label: /dashboard/i, path: "/dashboard" },
@@ -20,8 +7,10 @@ const NAV_LINKS = [
   { label: /settings/i, path: "/settings" },
 ];
 
-test("sidebar navigation reaches all main sections", async ({ page }) => {
-  await signIn(page);
+test("sidebar navigation reaches all main sections", async ({
+  authenticatedPage: page,
+}) => {
+  await page.goto("/");
 
   for (const { label, path } of NAV_LINKS) {
     await page.getByRole("link", { name: label }).click();

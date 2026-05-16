@@ -1,5 +1,6 @@
 # Changelog
 
+- **2026-05-16** | #448 | feat(e2e): Stage 1 — global auth setup + login/logout spec | Introduced global-setup.ts for single-session authentication, authenticatedPage fixture for reuse across specs, and clean login/logout tests in auth.spec.ts; navigation.spec.ts refactored to use the shared fixture.
 - **2026-05-16** | #430 | chore(deploy): verify Render migration — all acceptance criteria pass | Ran full verification sweep confirming zero Vercel/Railway artefacts, lint/typecheck/build/test all pass, `dist/_redirects` present in build output, and CORS middleware correctly configured.
 - **2026-05-16** | #429 | feat(e2e): update Playwright config for Render deployment | Raised global E2E timeout to 60 s to accommodate Render free-tier cold-start delays; removed the Vercel automation bypass header that is no longer applicable.
 - **2026-05-16** | #428 | feat(deploy): add public/\_redirects and update .env.example for Render | Added `public/_redirects` with a catch-all rule so Render Static Site serves `index.html` for all React Router routes; updated `.env.example` to remove Vercel artefacts and document `CORS_ORIGIN`, port-5432 `DATABASE_URL`, and Render-correct `APP_URL`/`E2E_BASE_URL`.
