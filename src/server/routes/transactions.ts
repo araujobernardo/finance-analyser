@@ -7,6 +7,7 @@ import {
   authenticateToken,
   type AuthLocals,
 } from "../middleware/authenticateToken.ts";
+import { syncLinkedAssets } from "../utils/syncLinkedAssets.ts";
 
 export const transactionsRouter = Router({ mergeParams: true });
 
@@ -139,6 +140,9 @@ transactionsRouter.post("/", authenticateToken, async (req, res, next) => {
       })
       .returning();
 
+    // FA-NW-004 US3: sync any assets/liabilities linked to this account
+    await syncLinkedAssets(accountId, userId, db);
+
     res.status(201).json(serializeTransaction(row));
   } catch (err) {
     next(err);
@@ -219,6 +223,8 @@ transactionsRouter.post(
 
       if (validRows.length > 0) {
         await db.insert(transactions).values(validRows);
+        // FA-NW-004 US3: sync any assets/liabilities linked to this account
+        await syncLinkedAssets(accountId, userId, db);
       }
 
       res.json({ imported: validRows.length, skipped });
@@ -274,6 +280,10 @@ transactionOpsRouter.patch(
         res.status(404).json({ error: "Transaction not found" });
         return;
       }
+
+      // FA-NW-004 US3: sync any assets/liabilities linked to this transaction's account
+      await syncLinkedAssets(updated.accountId, userId, db);
+
       res.json(serializeTransaction(updated));
     } catch (err) {
       next(err);
@@ -298,6 +308,10 @@ transactionOpsRouter.delete(
         res.status(404).json({ error: "Transaction not found" });
         return;
       }
+
+      // FA-NW-004 US3: sync any assets/liabilities linked to this transaction's account
+      await syncLinkedAssets(deleted.accountId, userId, db);
+
       res.status(204).send();
     } catch (err) {
       next(err);
