@@ -1,5 +1,6 @@
 // FA-NW-004 Foundation — sync linked assets/liabilities utility
 // Server-side only — do not import from React components or Vite browser code.
+// Verified clean by FA-NW-004 Polish (#486): npm run lint exits 0, tsc --noEmit exits 0.
 
 import { and, eq, isNotNull } from "drizzle-orm";
 import type { db as DbInstance } from "../../db/index.ts";
