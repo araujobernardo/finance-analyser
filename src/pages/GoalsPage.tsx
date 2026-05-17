@@ -1,16 +1,23 @@
 import { useState } from "react";
+import type { ApiGoal } from "../types/api";
 import { useGoals } from "../context/GoalsContext";
 import { GoalCard } from "../components/goals/GoalCard";
 import { GoalModal } from "../components/goals/GoalModal";
 import "./GoalsPage.css";
 
+// null = closed, "add" = add mode, ApiGoal instance = edit mode
+type ModalState = ApiGoal | "add" | null;
+
 export function GoalsPage() {
   const { goals, isLoading } = useGoals();
-  const [modalOpen, setModalOpen] = useState(false);
+  const [modalState, setModalState] = useState<ModalState>(null);
   const [completedOpen, setCompletedOpen] = useState(false);
 
   const active = goals.filter((g) => g.status === "active");
   const completed = goals.filter((g) => g.status !== "active");
+
+  const editGoal =
+    modalState !== null && modalState !== "add" ? modalState : undefined;
 
   return (
     <div className="goals-page" data-testid="goals-page">
@@ -21,7 +28,7 @@ export function GoalsPage() {
           type="button"
           className="goals-page__add-btn"
           data-testid="goals-add-btn"
-          onClick={() => setModalOpen(true)}
+          onClick={() => setModalState("add")}
         >
           + Add Goal
         </button>
@@ -47,7 +54,7 @@ export function GoalsPage() {
               <ul className="goals-page__list" data-testid="goals-list">
                 {active.map((goal) => (
                   <li key={goal.id}>
-                    <GoalCard goal={goal} />
+                    <GoalCard goal={goal} onEdit={(g) => setModalState(g)} />
                   </li>
                 ))}
               </ul>
@@ -82,7 +89,7 @@ export function GoalsPage() {
                 >
                   {completed.map((goal) => (
                     <li key={goal.id}>
-                      <GoalCard goal={goal} />
+                      <GoalCard goal={goal} onEdit={(g) => setModalState(g)} />
                     </li>
                   ))}
                 </ul>
@@ -93,7 +100,9 @@ export function GoalsPage() {
       )}
 
       {/* Modal */}
-      {modalOpen && <GoalModal onClose={() => setModalOpen(false)} />}
+      {modalState !== null && (
+        <GoalModal onClose={() => setModalState(null)} goal={editGoal} />
+      )}
     </div>
   );
 }
