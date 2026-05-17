@@ -189,6 +189,7 @@ export function GoalModal({ onClose }: GoalModalProps) {
             </label>
             <input
               id="goal-name-input"
+              data-testid="goal-modal-name-input"
               type="text"
               className={`goal-modal__input${nameError ? " goal-modal__input--error" : ""}`}
               value={name}
@@ -211,12 +212,14 @@ export function GoalModal({ onClose }: GoalModalProps) {
           <div className="goal-modal__field">
             <span className="goal-modal__label">Goal Type</span>
             <div
+              data-testid="goal-modal-tiles"
               className={`goal-modal__tiles${tilesLocked ? " goal-modal__tiles--locked" : ""}`}
             >
               {GOAL_TILES.map((tile) => (
                 <button
                   key={tile.type}
                   type="button"
+                  data-testid={`goal-tile-${tile.type}`}
                   className={`goal-modal__tile${type === tile.type ? " goal-modal__tile--selected" : ""}`}
                   onClick={() => handleTileSelect(tile.type)}
                   tabIndex={tilesLocked ? -1 : 0}
@@ -233,12 +236,18 @@ export function GoalModal({ onClose }: GoalModalProps) {
           {/* Adaptive fields */}
           <div
             ref={adaptiveRef}
+            data-testid="goal-modal-adaptive"
             className={`goal-modal__adaptive${typeSelected ? " goal-modal__adaptive--visible" : ""}`}
             aria-hidden={!typeSelected}
           >
             {/* Context hint */}
             {type && (
-              <p className="goal-modal__context-hint">{CONTEXT_HINTS[type]}</p>
+              <p
+                data-testid="goal-modal-context-hint"
+                className="goal-modal__context-hint"
+              >
+                {CONTEXT_HINTS[type]}
+              </p>
             )}
 
             {/* Amount */}
@@ -250,6 +259,7 @@ export function GoalModal({ onClose }: GoalModalProps) {
                 <span className="goal-modal__prefix">NZD</span>
                 <input
                   id="goal-amount-input"
+                  data-testid="goal-modal-amount-input"
                   type="number"
                   min="0.01"
                   step="0.01"
@@ -272,6 +282,7 @@ export function GoalModal({ onClose }: GoalModalProps) {
 
             {/* Spending Category — only for spending_limit */}
             <div
+              data-testid="goal-modal-category-field"
               className={`goal-modal__category${type === "spending_limit" ? " goal-modal__category--visible" : ""}`}
             >
               <label
@@ -282,6 +293,7 @@ export function GoalModal({ onClose }: GoalModalProps) {
               </label>
               <input
                 id="goal-category-input"
+                data-testid="goal-modal-category-input"
                 type="text"
                 className="goal-modal__input"
                 value={categoryName}
@@ -353,6 +365,7 @@ export function GoalModal({ onClose }: GoalModalProps) {
           </button>
           <button
             type="button"
+            data-testid="goal-modal-save-btn"
             className="goal-modal__btn goal-modal__btn--save"
             onClick={() => void handleSave()}
             disabled={isSubmitting}
