@@ -200,4 +200,8 @@
     align-items: flex-start;
     gap: 6px;
   }
+
+  .goals-page__completed-toggle {
+    min-height: 44px;
+  }
 }
