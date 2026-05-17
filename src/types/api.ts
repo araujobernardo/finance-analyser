@@ -32,6 +32,9 @@ export interface ApiAsset {
   type: string;
   value: string; // postgres-js returns numeric columns as strings; always call parseFloat() before arithmetic
   linkedAccountId: string | null;
+  // FA-NW-004: auto-sync fields (added by migration 0006_auto_sync_flag.sql)
+  autoSync: boolean;
+  balanceClamped: boolean;
   createdAt: string;
   updatedAt: string;
 }
@@ -43,6 +46,9 @@ export interface ApiLiability {
   type: string;
   value: string; // postgres-js returns numeric columns as strings; always call parseFloat() before arithmetic
   linkedAccountId: string | null;
+  // FA-NW-004: auto-sync fields (added by migration 0006_auto_sync_flag.sql)
+  autoSync: boolean;
+  balanceClamped: boolean;
   createdAt: string;
   updatedAt: string;
 }
