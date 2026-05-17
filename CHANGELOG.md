@@ -1,5 +1,6 @@
 # Changelog
 
+- **2026-05-17** | #516 | T019 [Polish] TypeScript type check — zero errors | Ran `npx tsc --noEmit` across all goals-management files; exits 0 with no type errors; all numeric-string fields, optimistic update helpers, and Zod enum literals are correctly typed from implementation stories T007–T018.
 - **2026-05-17** | #515 | T018 [US5] Add delete confirmation flow to GoalsPage.tsx | Added `pendingDeleteId` state, inline confirmation prompt ("Delete this goal? This cannot be undone.") with Cancel and Confirm buttons, `onDelete` callback passed to all GoalCard instances; on Confirm calls `removeGoal()` from context (optimistic with rollback); confirmation CSS panel added; 6 new Vitest tests added (28 total in GoalsPage.test.tsx).
 - **2026-05-17** | #514 | T017 [US5] Add delete button to GoalCard.tsx | Added optional `onDelete?: (id: string) => void` prop and a "Delete" ghost-style button with red/danger colour tinting to GoalCard; button renders for all goals (active and completed); GoalsPage handles confirmation in T018; 5 new Vitest tests added.
 - **2026-05-17** | #513 | T016 [US4] Wire status change in GoalsPage.tsx | Pass `onStatusChange={(id, status) => void updateGoal(id, { status })}` to active GoalCards; optimistic `updateGoal` in context moves goal between active/completed sections automatically; 3 new Vitest tests added.
