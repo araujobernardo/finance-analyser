@@ -44,6 +44,7 @@ export interface NetWorthContextValue {
       type?: string;
       value?: number;
       linkedAccountId?: string | null;
+      autoSync?: boolean;
     },
   ) => Promise<boolean>;
   removeLiability: (id: string) => Promise<boolean>;
@@ -300,6 +301,7 @@ export function NetWorthProvider({ children }: { children: ReactNode }) {
         type?: string;
         value?: number;
         linkedAccountId?: string | null;
+        autoSync?: boolean;
       },
     ): Promise<boolean> => {
       let previousLiability: ApiLiability | undefined;

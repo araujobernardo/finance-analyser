@@ -7,6 +7,7 @@ import {
   authenticateToken,
   type AuthLocals,
 } from "../middleware/authenticateToken.ts";
+import { syncLinkedAssets } from "../utils/syncLinkedAssets.ts";
 
 export const liabilitiesRouter = Router();
 
@@ -32,6 +33,7 @@ const updateLiabilitySchema = z
     type: z.enum(LIABILITY_TYPES).optional(),
     value: z.number().min(0).optional(),
     linkedAccountId: z.string().uuid().nullable().optional(),
+    autoSync: z.boolean().optional(),
   })
   .refine((data) => Object.keys(data).length > 0, {
     message: "At least one field required",
@@ -64,7 +66,7 @@ liabilitiesRouter.post("/", authenticateToken, async (req, res, next) => {
       return;
     }
     const { name, type, value, linkedAccountId } = parsed.data;
-    const [liability] = await db
+    const [inserted] = await db
       .insert(liabilities)
       .values({
         userId,
@@ -74,7 +76,21 @@ liabilitiesRouter.post("/", authenticateToken, async (req, res, next) => {
         linkedAccountId: linkedAccountId ?? null,
       })
       .returning();
-    res.status(201).json(liability);
+
+    // FA-NW-004: if a linked account was provided, sync the value immediately
+    if (inserted.linkedAccountId) {
+      await syncLinkedAssets(inserted.linkedAccountId, userId, db);
+      const [synced] = await db
+        .select()
+        .from(liabilities)
+        .where(
+          and(eq(liabilities.id, inserted.id), eq(liabilities.userId, userId)),
+        );
+      res.status(201).json(synced ?? inserted);
+      return;
+    }
+
+    res.status(201).json(inserted);
   } catch (err) {
     next(err);
   }
@@ -92,11 +108,24 @@ liabilitiesRouter.patch("/:id", authenticateToken, async (req, res, next) => {
         .json({ error: parsed.error.issues[0]?.message ?? "Invalid input" });
       return;
     }
+
     const updates: Record<string, unknown> = { updatedAt: new Date() };
+
     if (parsed.data.name !== undefined) updates.name = parsed.data.name;
     if (parsed.data.type !== undefined) updates.type = parsed.data.type;
-    if (parsed.data.value !== undefined)
+
+    if (parsed.data.value !== undefined) {
+      // Branch (a): explicit value → disable auto-sync
       updates.value = String(parsed.data.value);
+      updates.autoSync = false;
+      updates.balanceClamped = false;
+    } else if (parsed.data.autoSync === true) {
+      // Branch (b): re-enable auto-sync → will sync after update
+      updates.autoSync = true;
+    } else if (parsed.data.autoSync === false) {
+      updates.autoSync = false;
+    }
+
     if ("linkedAccountId" in parsed.data)
       updates.linkedAccountId = parsed.data.linkedAccountId ?? null;
 
@@ -105,10 +134,28 @@ liabilitiesRouter.patch("/:id", authenticateToken, async (req, res, next) => {
       .set(updates)
       .where(and(eq(liabilities.id, id), eq(liabilities.userId, userId)))
       .returning();
+
     if (!updated) {
       res.status(404).json({ error: "Liability not found" });
       return;
     }
+
+    // FA-NW-004: sync after re-enabling or after linkedAccountId change with autoSync=true
+    const shouldSync =
+      updated.linkedAccountId !== null &&
+      (parsed.data.autoSync === true ||
+        ("linkedAccountId" in parsed.data && updated.autoSync));
+
+    if (shouldSync && updated.linkedAccountId) {
+      await syncLinkedAssets(updated.linkedAccountId, userId, db);
+      const [synced] = await db
+        .select()
+        .from(liabilities)
+        .where(and(eq(liabilities.id, id), eq(liabilities.userId, userId)));
+      res.json(synced ?? updated);
+      return;
+    }
+
     res.json(updated);
   } catch (err) {
     next(err);
