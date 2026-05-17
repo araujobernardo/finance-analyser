@@ -5,6 +5,7 @@ import { accountsRouter } from "./routes/accounts.ts";
 import { assetsRouter } from "./routes/assets.ts";
 import authRouter from "./routes/auth.ts";
 import healthRouter from "./routes/health.ts";
+import { goalsRouter } from "./routes/goals.ts";
 import { liabilitiesRouter } from "./routes/liabilities.ts";
 import { netWorthRouter } from "./routes/netWorth.ts";
 import {
@@ -32,6 +33,7 @@ app.use("/api/accounts/:accountId/transactions", transactionsRouter);
 app.use("/api/transactions", transactionOpsRouter);
 app.use("/api/assets", assetsRouter);
 app.use("/api/liabilities", liabilitiesRouter);
+app.use("/api/goals", goalsRouter);
 app.use("/api/net-worth", netWorthRouter);
 
 app.use((_req, res) => {
