@@ -1,5 +1,6 @@
 # Changelog
 
+- **2026-05-17** | #488 | T001 [Foundational] Create goals schema migration | Added `src/db/migrations/0005_goals_schema_complete.sql` extending the goals table with `category_name` (nullable varchar), `current_amount` (nullable numeric), and `updated_at` (non-nullable with server-side default), consistent with assets/liabilities pattern.
 - **2026-05-16** | #476 | feat(e2e): Stage 6 — chat spec | Added data-testid attributes to ChatPage (chat-messages, chat-input, chat-send) and three Playwright tests in e2e/chat.spec.ts covering empty state, welcome message after data upload, and send-message-receives-AI-response with a 30 s Haiku API timeout.
 - **2026-05-16** | #474 | feat(e2e): Stage 5 — budget spec | Added data-testid attributes to SettingsPage (settings-flash, budget-save) and DashboardPage (budget-section), and two Playwright tests in e2e/budget.spec.ts covering budget-section hidden state and the full set-budget-in-settings → verify-on-dashboard flow.
 - **2026-05-16** | #472 | feat(e2e): Stage 4 — transactions spec | Added data-testid attributes to TransactionsPage (txn-table, show-transfers, txn-row-count) and four Playwright tests in e2e/transactions.spec.ts covering the default hidden-transfers state, show-transfers toggle, month filter content, and account filter listing.
