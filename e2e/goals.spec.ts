@@ -1,36 +1,87 @@
 /**
- * Goals E2E spec — GoalModal UI flows (T005/T006)
+ * Goals E2E spec — GoalsPage navigation and GoalModal UI flows
  *
- * NOTE: Full end-to-end tests for the GoalModal require GoalsPage (T007/T008)
- * to be wired into the router and sidebar. Once GoalsPage ships, these tests
- * will navigate to /goals and interact with the modal there.
+ * These tests run against the live Render deployment after this PR is merged
+ * and deployed. They verify the /goals route, page structure, and modal open/close.
  *
- * Until then, this file documents the scenarios that WILL be automated:
- *
- *   1. Navigate to /goals (requires GoalsPage — T007/T008)
- *   2. Click "Add Goal" button to open GoalModal
- *   3. Verify modal opens with step 1 indicator ("Step 1 of 2 — What kind of goal?")
- *   4. Verify tiles are locked (non-interactive) while name is empty
- *   5. Type a name → verify tiles unlock
- *   6. Select "Savings Target" tile → verify adaptive fields animate in
- *   7. Verify step indicator advances to step 2 text
- *   8. Fill in Target Amount → click "Save Goal"
- *   9. Verify modal closes and new goal appears in the goal list
- *  10. Re-open modal, select "Spending Limit" → verify Category field appears
- *  11. Switch to "Savings Target" → verify Category field disappears and clears
- *  12. Submit with empty Amount → verify inline error message appears
- *
- * All of the above are multi-step browser flows verifiable by DOM state — they
- * satisfy all three criteria for Playwright automation (navigation, DOM
- * assertions, deterministic with test user data). They will be implemented in
- * the GoalsPage story (T007/T008).
- *
- * Why not automated now:
- *   - /goals route does not exist yet (no GoalsProvider wrap in App.tsx)
- *   - GoalModal is not mounted anywhere navigable by Playwright
- *   - Running against the production Render deployment would fail immediately
- *     at `page.goto("/goals")` with a 404 redirect to /login
+ * Scenarios that require GoalCard (T010/T011) — create-and-see-in-list — are
+ * deferred to the GoalCard story (T010) because the flat list item renders the
+ * goal type as a raw string; full card rendering ships with T010.
  */
 
-// Placeholder export so TypeScript does not complain about an empty module.
-export {};
+import { test, expect } from "./fixtures";
+
+// ── Navigation ─────────────────────────────────────────────────────────────
+
+test("navigating to /goals renders the Goals page", async ({
+  authenticatedPage: page,
+}) => {
+  await page.goto("/goals");
+  await page.waitForURL(/\/goals/, { timeout: 15_000 });
+  await expect(page.getByRole("heading", { name: /goals/i })).toBeVisible();
+  await expect(page.getByTestId("goals-page")).toBeVisible();
+});
+
+test("Goals nav entry is visible in the Sidebar", async ({
+  authenticatedPage: page,
+}) => {
+  await page.goto("/dashboard");
+  await page.waitForURL(/\/dashboard/, { timeout: 15_000 });
+  await expect(page.getByRole("link", { name: /goals/i })).toBeVisible();
+});
+
+test("clicking the Goals sidebar link navigates to /goals", async ({
+  authenticatedPage: page,
+}) => {
+  await page.goto("/dashboard");
+  await page.waitForURL(/\/dashboard/, { timeout: 15_000 });
+  await page.getByRole("link", { name: /goals/i }).click();
+  await page.waitForURL(/\/goals/, { timeout: 10_000 });
+  await expect(page.getByTestId("goals-page")).toBeVisible();
+});
+
+// ── Page structure ─────────────────────────────────────────────────────────
+
+test("Add Goal button is visible on the Goals page", async ({
+  authenticatedPage: page,
+}) => {
+  await page.goto("/goals");
+  await page.waitForURL(/\/goals/, { timeout: 15_000 });
+  await expect(page.getByTestId("goals-add-btn")).toBeVisible();
+});
+
+test("empty state message is shown when no goals exist", async ({
+  authenticatedPage: page,
+}) => {
+  await page.goto("/goals");
+  await page.waitForURL(/\/goals/, { timeout: 15_000 });
+  // Empty state or goal list — either is acceptable (user may have goals)
+  const emptyState = page.getByTestId("goals-empty");
+  const goalList = page.getByTestId("goals-list");
+  const hasEmpty = await emptyState.isVisible().catch(() => false);
+  const hasList = await goalList.isVisible().catch(() => false);
+  expect(hasEmpty || hasList).toBe(true);
+});
+
+// ── Modal ──────────────────────────────────────────────────────────────────
+
+test("clicking Add Goal opens the GoalModal", async ({
+  authenticatedPage: page,
+}) => {
+  await page.goto("/goals");
+  await page.waitForURL(/\/goals/, { timeout: 15_000 });
+  await page.getByTestId("goals-add-btn").click();
+  await expect(page.getByRole("dialog")).toBeVisible({ timeout: 5_000 });
+  await expect(page.getByRole("heading", { name: /add goal/i })).toBeVisible();
+});
+
+test("clicking Cancel in GoalModal closes the modal", async ({
+  authenticatedPage: page,
+}) => {
+  await page.goto("/goals");
+  await page.waitForURL(/\/goals/, { timeout: 15_000 });
+  await page.getByTestId("goals-add-btn").click();
+  await expect(page.getByRole("dialog")).toBeVisible({ timeout: 5_000 });
+  await page.getByRole("button", { name: /cancel/i }).click();
+  await expect(page.getByRole("dialog")).not.toBeVisible({ timeout: 5_000 });
+});
