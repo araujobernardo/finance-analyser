@@ -327,3 +327,46 @@ describe("GoalCard — status change buttons", () => {
     ).toBeInTheDocument();
   });
 });
+
+// ── Delete button ───────────────────────────────────────────────────────────
+
+describe("GoalCard — delete button", () => {
+  it("renders a Delete button", () => {
+    render(<GoalCard goal={makeGoal()} />);
+    expect(screen.getByTestId("goal-card-delete-btn-g1")).toBeInTheDocument();
+  });
+
+  it("renders Delete button for both active and completed goals", () => {
+    const { rerender } = render(
+      <GoalCard goal={makeGoal({ status: "active" })} />,
+    );
+    expect(screen.getByTestId("goal-card-delete-btn-g1")).toBeInTheDocument();
+    rerender(<GoalCard goal={makeGoal({ status: "achieved" })} />);
+    expect(screen.getByTestId("goal-card-delete-btn-g1")).toBeInTheDocument();
+  });
+
+  it("calls onDelete with the goal id when Delete is clicked", async () => {
+    const onDelete = vi.fn();
+    render(<GoalCard goal={makeGoal({ id: "g1" })} onDelete={onDelete} />);
+    await userEvent.click(screen.getByTestId("goal-card-delete-btn-g1"));
+    expect(onDelete).toHaveBeenCalledOnce();
+    expect(onDelete).toHaveBeenCalledWith("g1");
+  });
+
+  it("renders Delete button without onDelete prop (no-op — no error thrown)", () => {
+    expect(() => render(<GoalCard goal={makeGoal()} />)).not.toThrow();
+    expect(screen.getByTestId("goal-card-delete-btn-g1")).toBeInTheDocument();
+  });
+
+  it("Delete button has accessible aria-label with goal name", () => {
+    render(
+      <GoalCard
+        goal={makeGoal({ name: "Emergency Fund" })}
+        onDelete={vi.fn()}
+      />,
+    );
+    expect(
+      screen.getByRole("button", { name: /delete goal: emergency fund/i }),
+    ).toBeInTheDocument();
+  });
+});
