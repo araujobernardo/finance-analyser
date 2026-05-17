@@ -9,7 +9,7 @@ import "./GoalsPage.css";
 type ModalState = ApiGoal | "add" | null;
 
 export function GoalsPage() {
-  const { goals, isLoading } = useGoals();
+  const { goals, isLoading, updateGoal } = useGoals();
   const [modalState, setModalState] = useState<ModalState>(null);
   const [completedOpen, setCompletedOpen] = useState(false);
 
@@ -54,7 +54,13 @@ export function GoalsPage() {
               <ul className="goals-page__list" data-testid="goals-list">
                 {active.map((goal) => (
                   <li key={goal.id}>
-                    <GoalCard goal={goal} onEdit={(g) => setModalState(g)} />
+                    <GoalCard
+                      goal={goal}
+                      onEdit={(g) => setModalState(g)}
+                      onStatusChange={(id, status) =>
+                        void updateGoal(id, { status })
+                      }
+                    />
                   </li>
                 ))}
               </ul>
