@@ -56,7 +56,7 @@ test("account filter lists both fixture accounts", async ({
   await expect(accountSelect).toBeVisible();
   await expect(accountSelect.locator("option")).toContainText([
     "All accounts",
-    "1111111-01",
-    "2222222-02",
+    "A",
+    "B",
   ]);
 });

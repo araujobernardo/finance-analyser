@@ -19,7 +19,9 @@ test("setting a budget in settings shows it on the dashboard", async ({
   await page.waitForURL(/\/settings/);
 
   await page
-    .locator('[data-category="Groceries"] input[type="number"]')
+    .locator(".settings-cat-row")
+    .nth(0)
+    .locator('input[type="number"]')
     .fill("500");
 
   await page.locator('[data-testid="budget-save"]').click();
