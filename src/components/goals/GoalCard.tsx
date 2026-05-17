@@ -65,9 +65,19 @@ interface GoalCardProps {
    * Only rendered for active goals. GoalsPage wires this in T016.
    */
   onStatusChange?: (id: string, status: "achieved" | "abandoned") => void;
+  /**
+   * Called when the user clicks the Delete button — receives the goal id.
+   * GoalsPage handles the confirmation prompt in T018.
+   */
+  onDelete?: (id: string) => void;
 }
 
-export function GoalCard({ goal, onEdit, onStatusChange }: GoalCardProps) {
+export function GoalCard({
+  goal,
+  onEdit,
+  onStatusChange,
+  onDelete,
+}: GoalCardProps) {
   const percent = goalPercent(goal);
   const overTarget = isOverTarget(goal);
   const formattedDate = formatDate(goal.targetDate);
@@ -135,6 +145,15 @@ export function GoalCard({ goal, onEdit, onStatusChange }: GoalCardProps) {
             aria-label={`Edit goal: ${goal.name}`}
           >
             Edit
+          </button>
+          <button
+            type="button"
+            className="goal-card__delete-btn"
+            data-testid={`goal-card-delete-btn-${goal.id}`}
+            onClick={() => onDelete?.(goal.id)}
+            aria-label={`Delete goal: ${goal.name}`}
+          >
+            Delete
           </button>
         </div>
       </div>
