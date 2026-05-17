@@ -55,9 +55,14 @@ function formatDate(dateStr: string | null | undefined): string | null {
 
 interface GoalCardProps {
   goal: ApiGoal;
+  /**
+   * Called when the user clicks the Edit button — receives the goal to edit.
+   * GoalsPage wires this in T014. Defaults to a no-op if not provided.
+   */
+  onEdit?: (goal: ApiGoal) => void;
 }
 
-export function GoalCard({ goal }: GoalCardProps) {
+export function GoalCard({ goal, onEdit }: GoalCardProps) {
   const percent = goalPercent(goal);
   const overTarget = isOverTarget(goal);
   const formattedDate = formatDate(goal.targetDate);
@@ -85,15 +90,26 @@ export function GoalCard({ goal }: GoalCardProps) {
           </span>
         </div>
 
-        {/* Status badge for non-active goals */}
-        {isCompleted && (
-          <span
-            className={`goal-card__status-badge goal-card__status-badge--${goal.status}`}
-            data-testid={`goal-card-status-${goal.id}`}
+        {/* Right-side: status badge + edit button */}
+        <div className="goal-card__actions">
+          {isCompleted && (
+            <span
+              className={`goal-card__status-badge goal-card__status-badge--${goal.status}`}
+              data-testid={`goal-card-status-${goal.id}`}
+            >
+              {goal.status === "achieved" ? "Achieved" : "Abandoned"}
+            </span>
+          )}
+          <button
+            type="button"
+            className="goal-card__edit-btn"
+            data-testid={`goal-card-edit-btn-${goal.id}`}
+            onClick={() => onEdit?.(goal)}
+            aria-label={`Edit goal: ${goal.name}`}
           >
-            {goal.status === "achieved" ? "Achieved" : "Abandoned"}
-          </span>
-        )}
+            Edit
+          </button>
+        </div>
       </div>
 
       {/* Progress section */}

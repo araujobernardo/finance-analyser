@@ -1,5 +1,6 @@
-import { describe, it, expect } from "vitest";
+import { describe, it, expect, vi } from "vitest";
 import { render, screen } from "@testing-library/react";
+import userEvent from "@testing-library/user-event";
 import { GoalCard } from "./GoalCard";
 import type { ApiGoal } from "../../types/api";
 
@@ -199,5 +200,41 @@ describe("GoalCard — status badges", () => {
     expect(screen.getByTestId("goal-card-g1").className).not.toContain(
       "goal-card--completed",
     );
+  });
+});
+
+// ── Edit button ─────────────────────────────────────────────────────────────
+
+describe("GoalCard — edit button", () => {
+  it("renders an Edit button", () => {
+    render(<GoalCard goal={makeGoal()} onEdit={vi.fn()} />);
+    expect(screen.getByTestId("goal-card-edit-btn-g1")).toBeInTheDocument();
+    expect(
+      screen.getByRole("button", { name: /edit goal/i }),
+    ).toBeInTheDocument();
+  });
+
+  it("calls onEdit with the goal when Edit button is clicked", async () => {
+    const goal = makeGoal({ name: "House Deposit" });
+    const onEdit = vi.fn();
+    render(<GoalCard goal={goal} onEdit={onEdit} />);
+    await userEvent.click(screen.getByTestId("goal-card-edit-btn-g1"));
+    expect(onEdit).toHaveBeenCalledOnce();
+    expect(onEdit).toHaveBeenCalledWith(goal);
+  });
+
+  it("renders the Edit button without onEdit prop (no-op — no error thrown)", () => {
+    // onEdit is optional; GoalsPage wires it in T014
+    expect(() => render(<GoalCard goal={makeGoal()} />)).not.toThrow();
+    expect(screen.getByTestId("goal-card-edit-btn-g1")).toBeInTheDocument();
+  });
+
+  it("Edit button has an accessible aria-label containing the goal name", () => {
+    render(
+      <GoalCard goal={makeGoal({ name: "Emergency Fund" })} onEdit={vi.fn()} />,
+    );
+    expect(
+      screen.getByRole("button", { name: /edit goal: emergency fund/i }),
+    ).toBeInTheDocument();
   });
 });
