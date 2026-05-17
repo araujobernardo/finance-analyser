@@ -123,3 +123,61 @@
 .nw-modal__btn--danger:focus-visible:not(:disabled) {
   opacity: 0.9;
 }
+
+/* ── FA-NW-004 Auto-sync styles ─────────────────────────────────────────────── */
+
+.nw-modal__label-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.nw-modal__auto-badge {
+  font-size: 0.7rem;
+  font-weight: 600;
+  color: #3b82f6;
+  background: rgba(59, 130, 246, 0.1);
+  border: 1px solid rgba(59, 130, 246, 0.3);
+  border-radius: 20px;
+  padding: 2px 8px;
+  white-space: nowrap;
+}
+
+.nw-modal__clamp-warning {
+  font-size: 0.78rem;
+  color: var(--amber);
+  margin: 0;
+  line-height: 1.4;
+}
+
+.nw-modal__input--readonly {
+  opacity: 0.65;
+  cursor: not-allowed;
+  background-color: var(--modal-cancel-bg);
+}
+
+.nw-modal__re-enable-btn {
+  align-self: flex-start;
+  background: transparent;
+  border: 1px solid var(--modal-cancel-border);
+  border-radius: 6px;
+  color: var(--subtle);
+  cursor: pointer;
+  font-size: 0.78rem;
+  font-weight: 500;
+  padding: 4px 12px;
+  transition:
+    background 0.15s,
+    color 0.15s;
+  margin-top: 2px;
+}
+
+.nw-modal__re-enable-btn:hover:not(:disabled) {
+  background: var(--card);
+  color: var(--text);
+}
+
+.nw-modal__re-enable-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
