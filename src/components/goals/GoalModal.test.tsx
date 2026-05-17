@@ -4,6 +4,7 @@ import userEvent from "@testing-library/user-event";
 import { GoalModal } from "./GoalModal";
 import { GoalsProvider } from "../../context/GoalsContext";
 import { AccountProvider } from "../../context/AccountContext";
+import type { ApiGoal } from "../../types/api";
 
 // ── Mock useApi ────────────────────────────────────────────────────────────
 
@@ -51,22 +52,22 @@ function renderModal(onClose = vi.fn()) {
 }
 
 /** Minimal ApiGoal fixture for edit-mode tests */
-const MOCK_GOAL = {
+const MOCK_GOAL: ApiGoal = {
   id: "goal-123",
   userId: "user-1",
   name: "Emergency Fund",
-  type: "savings_target" as const,
+  type: "savings_target",
   targetAmount: "20000",
   targetDate: "2026-12-31",
   linkedAccountId: null,
   categoryName: null,
   currentAmount: "8000",
-  status: "active" as const,
+  status: "active",
   createdAt: "2026-01-01T00:00:00Z",
   updatedAt: "2026-01-01T00:00:00Z",
 };
 
-function renderEditModal(goal = MOCK_GOAL, onClose = vi.fn()) {
+function renderEditModal(goal: ApiGoal = MOCK_GOAL, onClose = vi.fn()) {
   return render(
     <AccountProvider>
       <GoalsProvider>
