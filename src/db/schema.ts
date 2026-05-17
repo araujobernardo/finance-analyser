@@ -136,6 +136,11 @@ export const goals = pgTable("goals", {
     onDelete: "set null",
   }),
   status: varchar("status", { length: 20 }).notNull().default("active"),
+  categoryName: varchar("category_name", { length: 100 }),
+  currentAmount: numeric("current_amount", { precision: 15, scale: 2 }),
+  updatedAt: timestamp("updated_at", { withTimezone: true })
+    .defaultNow()
+    .notNull(),
   createdAt: timestamp("created_at", { withTimezone: true })
     .defaultNow()
     .notNull(),
