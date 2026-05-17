@@ -43,12 +43,22 @@ vi.mock("../context/GoalsContext", async (importOriginal) => {
 vi.mock("../components/goals/GoalCard", () => ({
   GoalCard: ({
     goal,
+    onEdit,
   }: {
     goal: { id: string; name: string; type: string };
+    onEdit?: (goal: { id: string; name: string; type: string }) => void;
   }) => (
     <div data-testid={`mock-goal-card-${goal.id}`}>
       <span>{goal.name}</span>
       <span>{goal.type}</span>
+      {onEdit && (
+        <button
+          data-testid={`mock-edit-btn-${goal.id}`}
+          onClick={() => onEdit(goal)}
+        >
+          Edit
+        </button>
+      )}
     </div>
   ),
 }));
@@ -56,8 +66,15 @@ vi.mock("../components/goals/GoalCard", () => ({
 // ── Mock GoalModal to avoid full modal render ──────────────────────────────
 
 vi.mock("../components/goals/GoalModal", () => ({
-  GoalModal: ({ onClose }: { onClose: () => void }) => (
+  GoalModal: ({
+    onClose,
+    goal,
+  }: {
+    onClose: () => void;
+    goal?: { id: string; name: string };
+  }) => (
     <div data-testid="mock-goal-modal">
+      {goal && <span data-testid="mock-modal-goal-name">{goal.name}</span>}
       <button onClick={onClose}>Close Modal</button>
     </div>
   ),
@@ -221,7 +238,7 @@ describe("GoalsPage — completed section", () => {
   });
 });
 
-// ── Modal ──────────────────────────────────────────────────────────────────
+// ── Modal (add mode) ───────────────────────────────────────────────────────
 
 describe("GoalsPage — modal", () => {
   it("modal is not visible on initial render", () => {
@@ -241,5 +258,83 @@ describe("GoalsPage — modal", () => {
     expect(screen.getByTestId("mock-goal-modal")).toBeInTheDocument();
     await userEvent.click(screen.getByRole("button", { name: /close modal/i }));
     expect(screen.queryByTestId("mock-goal-modal")).not.toBeInTheDocument();
+  });
+
+  it("opens modal without a goal when Add Goal is clicked (add mode)", async () => {
+    renderPage();
+    await userEvent.click(screen.getByTestId("goals-add-btn"));
+    expect(screen.getByTestId("mock-goal-modal")).toBeInTheDocument();
+    expect(
+      screen.queryByTestId("mock-modal-goal-name"),
+    ).not.toBeInTheDocument();
+  });
+});
+
+// ── Edit flow ──────────────────────────────────────────────────────────────
+
+describe("GoalsPage — edit flow", () => {
+  function makeGoal(overrides: Partial<ApiGoal> = {}): ApiGoal {
+    return {
+      id: "ge",
+      userId: "u1",
+      name: "My Goal",
+      type: "savings_target",
+      targetAmount: "5000",
+      targetDate: null,
+      linkedAccountId: null,
+      categoryName: null,
+      currentAmount: null,
+      status: "active",
+      createdAt: "2026-05-17T00:00:00.000Z",
+      updatedAt: "2026-05-17T00:00:00.000Z",
+      ...overrides,
+    };
+  }
+
+  it("passes onEdit to GoalCard for active goals", () => {
+    mockGoals.push(makeGoal({ id: "g1", name: "Emergency Fund" }));
+    renderPage();
+    expect(screen.getByTestId("mock-edit-btn-g1")).toBeInTheDocument();
+  });
+
+  it("clicking GoalCard edit button opens modal in edit mode with goal data", async () => {
+    mockGoals.push(makeGoal({ id: "g1", name: "Emergency Fund" }));
+    renderPage();
+    await userEvent.click(screen.getByTestId("mock-edit-btn-g1"));
+    expect(screen.getByTestId("mock-goal-modal")).toBeInTheDocument();
+    expect(screen.getByTestId("mock-modal-goal-name")).toHaveTextContent(
+      "Emergency Fund",
+    );
+  });
+
+  it("closing the edit modal hides it", async () => {
+    mockGoals.push(makeGoal({ id: "g1", name: "Emergency Fund" }));
+    renderPage();
+    await userEvent.click(screen.getByTestId("mock-edit-btn-g1"));
+    expect(screen.getByTestId("mock-goal-modal")).toBeInTheDocument();
+    await userEvent.click(screen.getByRole("button", { name: /close modal/i }));
+    expect(screen.queryByTestId("mock-goal-modal")).not.toBeInTheDocument();
+  });
+
+  it("passes onEdit to GoalCard for completed goals", async () => {
+    mockGoals.push(
+      makeGoal({ id: "gc", name: "Old Goal", status: "achieved" }),
+    );
+    renderPage();
+    await userEvent.click(screen.getByTestId("goals-completed-toggle"));
+    expect(screen.getByTestId("mock-edit-btn-gc")).toBeInTheDocument();
+  });
+
+  it("clicking completed GoalCard edit button opens modal with that goal", async () => {
+    mockGoals.push(
+      makeGoal({ id: "gc", name: "Old Goal", status: "achieved" }),
+    );
+    renderPage();
+    await userEvent.click(screen.getByTestId("goals-completed-toggle"));
+    await userEvent.click(screen.getByTestId("mock-edit-btn-gc"));
+    expect(screen.getByTestId("mock-goal-modal")).toBeInTheDocument();
+    expect(screen.getByTestId("mock-modal-goal-name")).toHaveTextContent(
+      "Old Goal",
+    );
   });
 });
