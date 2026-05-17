@@ -21,8 +21,9 @@ vi.mock("../../hooks/useToast", () => ({
 
 // ── Helpers ────────────────────────────────────────────────────────────────
 
-// mockAddGoal is used to intercept addGoal calls without going through the real context
+// mockAddGoal / mockUpdateGoal intercept context calls without going through the real context
 const mockAddGoal = vi.fn();
+const mockUpdateGoal = vi.fn();
 
 vi.mock("../../context/GoalsContext", async (importOriginal) => {
   const original =
@@ -33,7 +34,7 @@ vi.mock("../../context/GoalsContext", async (importOriginal) => {
       goals: [],
       isLoading: false,
       addGoal: mockAddGoal,
-      updateGoal: vi.fn(),
+      updateGoal: mockUpdateGoal,
       removeGoal: vi.fn(),
     }),
   };
@@ -49,6 +50,32 @@ function renderModal(onClose = vi.fn()) {
   );
 }
 
+/** Minimal ApiGoal fixture for edit-mode tests */
+const MOCK_GOAL = {
+  id: "goal-123",
+  userId: "user-1",
+  name: "Emergency Fund",
+  type: "savings_target" as const,
+  targetAmount: "20000",
+  targetDate: "2026-12-31",
+  linkedAccountId: null,
+  categoryName: null,
+  currentAmount: "8000",
+  status: "active" as const,
+  createdAt: "2026-01-01T00:00:00Z",
+  updatedAt: "2026-01-01T00:00:00Z",
+};
+
+function renderEditModal(goal = MOCK_GOAL, onClose = vi.fn()) {
+  return render(
+    <AccountProvider>
+      <GoalsProvider>
+        <GoalModal onClose={onClose} goal={goal} />
+      </GoalsProvider>
+    </AccountProvider>,
+  );
+}
+
 beforeEach(() => {
   localStorage.clear();
   vi.clearAllMocks();
@@ -58,8 +85,9 @@ beforeEach(() => {
     status: 200,
     json: async () => ({ accounts: [], goals: [] }),
   });
-  // Default: addGoal resolves to true (success)
+  // Default: addGoal and updateGoal resolve to true (success)
   mockAddGoal.mockResolvedValue(true);
+  mockUpdateGoal.mockResolvedValue(true);
 });
 
 // ── Render ─────────────────────────────────────────────────────────────────
@@ -345,5 +373,181 @@ describe("GoalModal — successful save", () => {
       expect(saveBtn.textContent).toMatch(/saving/i);
       expect(cancelBtn).toBeDisabled();
     });
+  });
+});
+
+// ── Edit mode ──────────────────────────────────────────────────────────────
+
+describe("GoalModal — edit mode render", () => {
+  it('renders "Edit Goal" heading when goal prop is provided', () => {
+    renderEditModal();
+    expect(
+      screen.getByRole("heading", { name: /edit goal/i }),
+    ).toBeInTheDocument();
+  });
+
+  it('shows "Editing: [goal name]" subtitle instead of step indicator', () => {
+    renderEditModal();
+    expect(screen.getByText(/editing: emergency fund/i)).toBeInTheDocument();
+    expect(screen.queryByText(/step 1 of 2/i)).not.toBeInTheDocument();
+  });
+
+  it("pre-populates the name field from the goal prop", () => {
+    renderEditModal();
+    const nameInput = screen.getByTestId(
+      "goal-modal-name-input",
+    ) as HTMLInputElement;
+    expect(nameInput.value).toBe("Emergency Fund");
+  });
+
+  it("pre-populates the target amount field from the goal prop", () => {
+    renderEditModal();
+    const amountInput = screen.getByTestId(
+      "goal-modal-amount-input",
+    ) as HTMLInputElement;
+    expect(amountInput.value).toBe("20000");
+  });
+
+  it("pre-populates the currentAmount field from the goal prop", () => {
+    renderEditModal();
+    const currentInput = screen.getByTestId(
+      "goal-modal-current-amount-input",
+    ) as HTMLInputElement;
+    expect(currentInput.value).toBe("8000");
+  });
+
+  it("shows the currentAmount field in edit mode", () => {
+    renderEditModal();
+    expect(
+      screen.getByTestId("goal-modal-current-amount-field"),
+    ).toBeInTheDocument();
+  });
+
+  it("does NOT show currentAmount field in add mode", () => {
+    renderModal();
+    expect(
+      screen.queryByTestId("goal-modal-current-amount-field"),
+    ).not.toBeInTheDocument();
+  });
+
+  it("adaptive fields are immediately visible in edit mode (no step-gate)", () => {
+    renderEditModal();
+    expect(screen.getByTestId("goal-modal-adaptive").className).toContain(
+      "goal-modal__adaptive--visible",
+    );
+  });
+
+  it("selected tile is highlighted when pre-populated from goal prop", () => {
+    renderEditModal();
+    expect(screen.getByTestId("goal-tile-savings_target").className).toContain(
+      "goal-modal__tile--selected",
+    );
+  });
+
+  it("shows Save Changes button instead of Save Goal in edit mode", () => {
+    renderEditModal();
+    expect(
+      screen.getByRole("button", { name: /save changes/i }),
+    ).toBeInTheDocument();
+    expect(
+      screen.queryByRole("button", { name: /save goal/i }),
+    ).not.toBeInTheDocument();
+  });
+});
+
+describe("GoalModal — edit mode save", () => {
+  it("calls updateGoal (not addGoal) with correct data on save", async () => {
+    const onClose = vi.fn();
+    renderEditModal(MOCK_GOAL, onClose);
+
+    // Change the name
+    const nameInput = screen.getByTestId("goal-modal-name-input");
+    await userEvent.clear(nameInput);
+    await userEvent.type(nameInput, "Updated Fund");
+
+    await userEvent.click(
+      screen.getByRole("button", { name: /save changes/i }),
+    );
+
+    await waitFor(() => {
+      expect(mockUpdateGoal).toHaveBeenCalledWith(
+        "goal-123",
+        expect.objectContaining({
+          name: "Updated Fund",
+          type: "savings_target",
+          targetAmount: 20000,
+          currentAmount: 8000,
+        }),
+      );
+      expect(mockAddGoal).not.toHaveBeenCalled();
+      expect(onClose).toHaveBeenCalledOnce();
+    });
+  });
+
+  it("passes null for currentAmount when the field is cleared", async () => {
+    const onClose = vi.fn();
+    renderEditModal(MOCK_GOAL, onClose);
+
+    const currentInput = screen.getByTestId("goal-modal-current-amount-input");
+    await userEvent.clear(currentInput);
+
+    await userEvent.click(
+      screen.getByRole("button", { name: /save changes/i }),
+    );
+
+    await waitFor(() => {
+      expect(mockUpdateGoal).toHaveBeenCalledWith(
+        "goal-123",
+        expect.objectContaining({ currentAmount: null }),
+      );
+    });
+  });
+
+  it("stays open when updateGoal returns false", async () => {
+    const onClose = vi.fn();
+    mockUpdateGoal.mockResolvedValueOnce(false);
+    renderEditModal(MOCK_GOAL, onClose);
+
+    await userEvent.click(
+      screen.getByRole("button", { name: /save changes/i }),
+    );
+
+    await waitFor(() => {
+      expect(onClose).not.toHaveBeenCalled();
+    });
+  });
+});
+
+describe("GoalModal — edit mode category field (spending_limit)", () => {
+  it("shows category field pre-populated when goal type is spending_limit", () => {
+    const spendingGoal = {
+      ...MOCK_GOAL,
+      type: "spending_limit" as const,
+      categoryName: "Dining",
+      targetAmount: "500",
+      currentAmount: null,
+    };
+    renderEditModal(spendingGoal);
+    const catField = screen.getByTestId("goal-modal-category-field");
+    expect(catField.className).toContain("goal-modal__category--visible");
+    const catInput = screen.getByTestId(
+      "goal-modal-category-input",
+    ) as HTMLInputElement;
+    expect(catInput.value).toBe("Dining");
+  });
+
+  it("hides category field when switching away from spending_limit in edit mode", async () => {
+    const spendingGoal = {
+      ...MOCK_GOAL,
+      type: "spending_limit" as const,
+      categoryName: "Dining",
+      targetAmount: "500",
+      currentAmount: null,
+    };
+    renderEditModal(spendingGoal);
+    await userEvent.click(screen.getByTestId("goal-tile-savings_target"));
+    expect(
+      screen.getByTestId("goal-modal-category-field").className,
+    ).not.toContain("goal-modal__category--visible");
   });
 });
