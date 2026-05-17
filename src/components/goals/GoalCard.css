@@ -150,6 +150,34 @@
   outline-offset: 2px;
 }
 
+/* ── Delete button ───────────────────────────────────────────────────────────── */
+
+.goal-card__delete-btn {
+  background: transparent;
+  border: 1px solid rgba(239, 68, 68, 0.35);
+  border-radius: 6px;
+  color: var(--color-danger);
+  cursor: pointer;
+  font-size: 0.72rem;
+  font-weight: 500;
+  padding: 3px 10px;
+  transition:
+    background 0.15s,
+    border-color 0.15s,
+    color 0.15s;
+  white-space: nowrap;
+}
+
+.goal-card__delete-btn:hover {
+  background: rgba(239, 68, 68, 0.08);
+  border-color: var(--color-danger);
+}
+
+.goal-card__delete-btn:focus-visible {
+  outline: 2px solid var(--color-danger);
+  outline-offset: 2px;
+}
+
 /* ── Progress ────────────────────────────────────────────────────────────────── */
 
 .goal-card__progress-section {
