@@ -173,6 +173,14 @@ export function LiabilityModal({ liability, onClose }: LiabilityModalProps) {
                 Auto-synced
               </span>
             )}
+            {isEditing && !isAutoSynced && liability?.linkedAccountId && (
+              <span
+                className="nw-modal__manual-badge"
+                data-testid="manual-override-badge"
+              >
+                Manual override
+              </span>
+            )}
           </div>
           {isAutoSynced && liability?.balanceClamped && (
             <p
