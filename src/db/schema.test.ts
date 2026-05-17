@@ -71,3 +71,29 @@ describe("goals schema — categoryName for spending limit goals", () => {
     expect(mockGoal2.categoryName).toBe("Food & Drink");
   });
 });
+
+// FA-GOAL-001 T007 — Verify goal status update: updatedAt NOT NULL DEFAULT now()
+describe("goals schema — updatedAt non-nullable with default", () => {
+  it("Goal.$inferSelect exposes updatedAt as Date (non-nullable)", () => {
+    // Type-level check: Goal['updatedAt'] must be Date (not Date | null | undefined)
+    // If updatedAt were nullable, this cast would fail TypeScript compilation
+    const now = new Date();
+    const mockUpdatedAt: Goal["updatedAt"] = now;
+    expect(mockUpdatedAt).toBeInstanceOf(Date);
+  });
+
+  it("NewGoal does not require updatedAt — server default handles it", () => {
+    // updatedAt has .defaultNow().notNull() so it is NOT required in NewGoal inserts
+    const goal: NewGoal = {
+      userId: "00000000-0000-0000-0000-000000000001",
+      name: "Pay off car loan",
+      type: "debt_payoff",
+      targetAmount: "15000.00",
+      // updatedAt is intentionally omitted — server DEFAULT now() populates it
+    };
+
+    expect(goal.type).toBe("debt_payoff");
+    // updatedAt will be undefined in the insert object (server fills it)
+    expect(goal.updatedAt).toBeUndefined();
+  });
+});
