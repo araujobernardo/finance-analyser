@@ -23,6 +23,7 @@ vi.mock("../hooks/useToast", () => ({
 const mockGoals: ApiGoal[] = [];
 let mockIsLoading = false;
 const mockUpdateGoal = vi.fn().mockResolvedValue(true);
+const mockRemoveGoal = vi.fn().mockResolvedValue(true);
 
 vi.mock("../context/GoalsContext", async (importOriginal) => {
   const original =
@@ -34,7 +35,7 @@ vi.mock("../context/GoalsContext", async (importOriginal) => {
       isLoading: mockIsLoading,
       addGoal: vi.fn().mockResolvedValue(true),
       updateGoal: mockUpdateGoal,
-      removeGoal: vi.fn(),
+      removeGoal: mockRemoveGoal,
     }),
   };
 });
@@ -46,10 +47,12 @@ vi.mock("../components/goals/GoalCard", () => ({
     goal,
     onEdit,
     onStatusChange,
+    onDelete,
   }: {
     goal: { id: string; name: string; type: string };
     onEdit?: (goal: { id: string; name: string; type: string }) => void;
     onStatusChange?: (id: string, status: string) => void;
+    onDelete?: (id: string) => void;
   }) => (
     <div data-testid={`mock-goal-card-${goal.id}`}>
       <span>{goal.name}</span>
@@ -77,6 +80,14 @@ vi.mock("../components/goals/GoalCard", () => ({
             Mark abandoned
           </button>
         </>
+      )}
+      {onDelete && (
+        <button
+          data-testid={`mock-delete-btn-${goal.id}`}
+          onClick={() => onDelete(goal.id)}
+        >
+          Delete
+        </button>
       )}
     </div>
   ),
@@ -115,6 +126,7 @@ beforeEach(() => {
     json: async () => ({ goals: [] }),
   });
   mockUpdateGoal.mockResolvedValue(true);
+  mockRemoveGoal.mockResolvedValue(true);
 });
 
 // ── Render ─────────────────────────────────────────────────────────────────
@@ -399,5 +411,81 @@ describe("GoalsPage — status change flow", () => {
     renderPage();
     await userEvent.click(screen.getByTestId("mock-abandon-btn-g1"));
     expect(mockUpdateGoal).toHaveBeenCalledWith("g1", { status: "abandoned" });
+  });
+});
+
+// ── Delete flow ────────────────────────────────────────────────────────────
+
+describe("GoalsPage — delete flow", () => {
+  function makeGoal(overrides: Partial<ApiGoal> = {}): ApiGoal {
+    return {
+      id: "gd",
+      userId: "u1",
+      name: "Goal to Delete",
+      type: "savings_target",
+      targetAmount: "5000",
+      targetDate: null,
+      linkedAccountId: null,
+      categoryName: null,
+      currentAmount: null,
+      status: "active",
+      createdAt: "2026-05-17T00:00:00.000Z",
+      updatedAt: "2026-05-17T00:00:00.000Z",
+      ...overrides,
+    };
+  }
+
+  it("passes onDelete to active GoalCards", () => {
+    mockGoals.push(makeGoal({ id: "g1" }));
+    renderPage();
+    expect(screen.getByTestId("mock-delete-btn-g1")).toBeInTheDocument();
+  });
+
+  it("confirmation prompt is not visible initially", () => {
+    renderPage();
+    expect(
+      screen.queryByTestId("goals-delete-confirm"),
+    ).not.toBeInTheDocument();
+  });
+
+  it("clicking Delete on a GoalCard shows the confirmation prompt", async () => {
+    mockGoals.push(makeGoal({ id: "g1" }));
+    renderPage();
+    await userEvent.click(screen.getByTestId("mock-delete-btn-g1"));
+    expect(screen.getByTestId("goals-delete-confirm")).toBeInTheDocument();
+    expect(
+      screen.getByText(/delete this goal\? this cannot be undone/i),
+    ).toBeInTheDocument();
+  });
+
+  it("clicking Cancel hides the confirmation prompt without calling removeGoal", async () => {
+    mockGoals.push(makeGoal({ id: "g1" }));
+    renderPage();
+    await userEvent.click(screen.getByTestId("mock-delete-btn-g1"));
+    expect(screen.getByTestId("goals-delete-confirm")).toBeInTheDocument();
+    await userEvent.click(screen.getByTestId("goals-delete-cancel"));
+    expect(
+      screen.queryByTestId("goals-delete-confirm"),
+    ).not.toBeInTheDocument();
+    expect(mockRemoveGoal).not.toHaveBeenCalled();
+  });
+
+  it("clicking Confirm calls removeGoal with the pending id and hides the prompt", async () => {
+    mockGoals.push(makeGoal({ id: "g1" }));
+    renderPage();
+    await userEvent.click(screen.getByTestId("mock-delete-btn-g1"));
+    await userEvent.click(screen.getByTestId("goals-delete-confirm-btn"));
+    expect(mockRemoveGoal).toHaveBeenCalledOnce();
+    expect(mockRemoveGoal).toHaveBeenCalledWith("g1");
+    expect(
+      screen.queryByTestId("goals-delete-confirm"),
+    ).not.toBeInTheDocument();
+  });
+
+  it("passes onDelete to completed GoalCards", async () => {
+    mockGoals.push(makeGoal({ id: "gc", status: "achieved" }));
+    renderPage();
+    await userEvent.click(screen.getByTestId("goals-completed-toggle"));
+    expect(screen.getByTestId("mock-delete-btn-gc")).toBeInTheDocument();
   });
 });

@@ -9,15 +9,23 @@ import "./GoalsPage.css";
 type ModalState = ApiGoal | "add" | null;
 
 export function GoalsPage() {
-  const { goals, isLoading, updateGoal } = useGoals();
+  const { goals, isLoading, updateGoal, removeGoal } = useGoals();
   const [modalState, setModalState] = useState<ModalState>(null);
   const [completedOpen, setCompletedOpen] = useState(false);
+  const [pendingDeleteId, setPendingDeleteId] = useState<string | null>(null);
 
   const active = goals.filter((g) => g.status === "active");
   const completed = goals.filter((g) => g.status !== "active");
 
   const editGoal =
     modalState !== null && modalState !== "add" ? modalState : undefined;
+
+  function handleConfirmDelete() {
+    if (pendingDeleteId) {
+      void removeGoal(pendingDeleteId);
+      setPendingDeleteId(null);
+    }
+  }
 
   return (
     <div className="goals-page" data-testid="goals-page">
@@ -33,6 +41,37 @@ export function GoalsPage() {
           + Add Goal
         </button>
       </div>
+
+      {/* Delete confirmation prompt */}
+      {pendingDeleteId !== null && (
+        <div
+          className="goals-page__delete-confirm"
+          data-testid="goals-delete-confirm"
+          role="alert"
+        >
+          <p className="goals-page__delete-confirm-text">
+            Delete this goal? This cannot be undone.
+          </p>
+          <div className="goals-page__delete-confirm-actions">
+            <button
+              type="button"
+              className="goals-page__delete-confirm-btn goals-page__delete-confirm-btn--cancel"
+              data-testid="goals-delete-cancel"
+              onClick={() => setPendingDeleteId(null)}
+            >
+              Cancel
+            </button>
+            <button
+              type="button"
+              className="goals-page__delete-confirm-btn goals-page__delete-confirm-btn--confirm"
+              data-testid="goals-delete-confirm-btn"
+              onClick={handleConfirmDelete}
+            >
+              Confirm
+            </button>
+          </div>
+        </div>
+      )}
 
       {/* Content */}
       {isLoading ? (
@@ -60,6 +99,7 @@ export function GoalsPage() {
                       onStatusChange={(id, status) =>
                         void updateGoal(id, { status })
                       }
+                      onDelete={(id) => setPendingDeleteId(id)}
                     />
                   </li>
                 ))}
@@ -95,7 +135,11 @@ export function GoalsPage() {
                 >
                   {completed.map((goal) => (
                     <li key={goal.id}>
-                      <GoalCard goal={goal} onEdit={(g) => setModalState(g)} />
+                      <GoalCard
+                        goal={goal}
+                        onEdit={(g) => setModalState(g)}
+                        onDelete={(id) => setPendingDeleteId(id)}
+                      />
                     </li>
                   ))}
                 </ul>
