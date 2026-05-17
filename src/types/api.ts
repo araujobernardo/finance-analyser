@@ -56,3 +56,22 @@ export interface ApiSnapshot {
   snapshotDate: string;
   createdAt: string;
 }
+
+export interface ApiGoal {
+  id: string;
+  userId: string;
+  name: string;
+  type:
+    | "savings_target"
+    | "debt_payoff"
+    | "net_worth_milestone"
+    | "spending_limit";
+  targetAmount: string; // numeric string — call parseFloat() before arithmetic
+  targetDate: string | null; // YYYY-MM-DD
+  linkedAccountId: string | null;
+  categoryName: string | null;
+  currentAmount: string | null; // numeric string — call parseFloat() before arithmetic
+  status: "active" | "achieved" | "abandoned";
+  createdAt: string;
+  updatedAt: string;
+}
