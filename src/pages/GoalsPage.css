@@ -1,0 +1,120 @@
+/* ── Goals Page Styles ──────────────────────────────────────────────────────── */
+
+.goals-page {
+  padding: 28px 32px;
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+  min-height: 100%;
+}
+
+/* ── Header ─────────────────────────────────────────────────────────────────── */
+
+.goals-page__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+}
+
+.goals-page__title {
+  margin: 0;
+  font-size: 1.25rem;
+  font-weight: 600;
+  color: var(--text);
+}
+
+.goals-page__add-btn {
+  padding: 9px 18px;
+  background: var(--accent);
+  color: #fff;
+  border: none;
+  border-radius: 8px;
+  font-size: 0.88rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: opacity 0.15s;
+}
+
+.goals-page__add-btn:hover {
+  opacity: 0.88;
+}
+
+/* ── Loading ─────────────────────────────────────────────────────────────────── */
+
+.goals-page__loading {
+  font-size: 0.88rem;
+  color: var(--muted);
+  padding: 12px 0;
+}
+
+/* ── Empty state ─────────────────────────────────────────────────────────────── */
+
+.goals-page__empty {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 48px 24px;
+  background: var(--card);
+  border: 1px dashed var(--border);
+  border-radius: 12px;
+}
+
+.goals-page__empty p {
+  margin: 0;
+  font-size: 0.9rem;
+  color: var(--muted);
+}
+
+/* ── Goal list ───────────────────────────────────────────────────────────────── */
+
+.goals-page__list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.goals-page__item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 14px 18px;
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  gap: 12px;
+}
+
+.goals-page__item-name {
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: var(--text);
+}
+
+.goals-page__item-type {
+  font-size: 0.75rem;
+  color: var(--muted);
+  text-transform: capitalize;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 20px;
+  padding: 3px 10px;
+  white-space: nowrap;
+}
+
+/* ── Responsive: mobile ──────────────────────────────────────────────────────── */
+
+@media (max-width: 480px) {
+  .goals-page {
+    padding: 16px;
+  }
+
+  .goals-page__item {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 6px;
+  }
+}
