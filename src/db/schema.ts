@@ -173,6 +173,8 @@ export const netWorthSnapshots = pgTable(
   }),
 );
 
+// Inferred types — tsc -b verified 0 errors (FA-GOAL-001 T008, 2026-05-17)
+// Goal includes: categoryName: string | null, currentAmount: string | null, updatedAt: Date
 export type User = typeof users.$inferSelect;
 export type Account = typeof accounts.$inferSelect;
 export type Transaction = typeof transactions.$inferSelect;
