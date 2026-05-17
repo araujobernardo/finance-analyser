@@ -14,6 +14,7 @@
     "server:dev": "tsx watch --env-file=.env src/server/index.ts",
     "server:start": "tsx src/server/index.ts",
     "db:generate": "drizzle-kit generate",
+    "db:check": "drizzle-kit check",
     "db:migrate": "tsx --env-file=.env src/db/migrate.ts",
     "db:studio": "drizzle-kit studio",
     "e2e": "playwright test"
