@@ -4,6 +4,7 @@ import { AuthProvider } from "./context/AuthContext";
 import { ToastProvider } from "./context/ToastContext";
 import { AccountProvider } from "./context/AccountContext";
 import { NetWorthProvider } from "./context/NetWorthContext";
+import { GoalsProvider } from "./context/GoalsContext";
 import { ProtectedRoute } from "./components/ProtectedRoute";
 import { PublicOnlyRoute } from "./components/PublicOnlyRoute";
 import { Sidebar } from "./components/Sidebar";
@@ -14,6 +15,7 @@ import { ChatPage } from "./pages/ChatPage";
 import { MigrationPage } from "./pages/MigrationPage";
 import { SettingsPage } from "./pages/SettingsPage";
 import NetWorthPage from "./pages/NetWorthPage";
+import { GoalsPage } from "./pages/GoalsPage";
 import { SignUpPage } from "./pages/SignUpPage";
 import { VerifyEmailPage } from "./pages/VerifyEmailPage";
 import { LoginPage } from "./pages/LoginPage";
@@ -399,6 +401,14 @@ export default function App() {
                   <NetWorthProvider>
                     <NetWorthPage />
                   </NetWorthProvider>
+                }
+              />
+              <Route
+                path="/goals"
+                element={
+                  <GoalsProvider>
+                    <GoalsPage />
+                  </GoalsProvider>
                 }
               />
             </Routes>
