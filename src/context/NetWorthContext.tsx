@@ -27,6 +27,7 @@ export interface NetWorthContextValue {
       type?: string;
       value?: number;
       linkedAccountId?: string | null;
+      autoSync?: boolean;
     },
   ) => Promise<boolean>;
   removeAsset: (id: string) => Promise<boolean>;
@@ -120,6 +121,8 @@ export function NetWorthProvider({ children }: { children: ReactNode }) {
         type: data.type,
         value: String(data.value),
         linkedAccountId: data.linkedAccountId ?? null,
+        autoSync: true,
+        balanceClamped: false,
         createdAt: new Date().toISOString(),
         updatedAt: new Date().toISOString(),
       };
@@ -155,6 +158,7 @@ export function NetWorthProvider({ children }: { children: ReactNode }) {
         type?: string;
         value?: number;
         linkedAccountId?: string | null;
+        autoSync?: boolean;
       },
     ): Promise<boolean> => {
       let previousAsset: ApiAsset | undefined;
@@ -257,6 +261,8 @@ export function NetWorthProvider({ children }: { children: ReactNode }) {
         type: data.type,
         value: String(data.value),
         linkedAccountId: data.linkedAccountId ?? null,
+        autoSync: true,
+        balanceClamped: false,
         createdAt: new Date().toISOString(),
         updatedAt: new Date().toISOString(),
       };
