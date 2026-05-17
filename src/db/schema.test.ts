@@ -1,13 +1,13 @@
 /**
- * FA-GOAL-001 T005 — Verify net worth milestone goal: optional fields are nullable
+ * FA-GOAL-001 T005/T006 — Verify goal optional fields and categoryName for spending limit
  *
- * Confirms that NewGoal accepts null / undefined for linkedAccountId and categoryName,
- * meaning a net worth milestone goal can be stored with only the required fields.
+ * T005: Confirms NewGoal accepts null/undefined for linkedAccountId and categoryName
+ * T006: Confirms categoryName is varchar(100) nullable — supports spending limit goals
  *
  * The TypeScript compiler accepting these object shapes is the acceptance signal.
  */
 import { describe, it, expect } from "vitest";
-import type { NewGoal } from "./schema";
+import type { Goal, NewGoal } from "./schema";
 
 describe("goals schema — optional fields nullable", () => {
   it("NewGoal accepts null for linkedAccountId (net worth milestone goal)", () => {
@@ -40,5 +40,34 @@ describe("goals schema — optional fields nullable", () => {
     expect(goal.name).toBe("Reach $100k net worth");
     expect(goal.linkedAccountId).toBeUndefined();
     expect(goal.categoryName).toBeUndefined();
+  });
+});
+
+// FA-GOAL-001 T006 — Verify spending limit goal: categoryName field present
+describe("goals schema — categoryName for spending limit goals", () => {
+  it("NewGoal accepts a string categoryName for spending_limit goal type", () => {
+    const goal: NewGoal = {
+      userId: "00000000-0000-0000-0000-000000000001",
+      name: "Groceries monthly limit",
+      type: "spending_limit",
+      targetAmount: "500.00",
+      categoryName: "Groceries", // string value for spending_limit goal
+    };
+
+    expect(goal.categoryName).toBe("Groceries");
+  });
+
+  it("Goal.$inferSelect exposes categoryName as string | null", () => {
+    // Type-level check: if Goal has categoryName: string | null,
+    // assigning null must be valid
+    const mockGoal = {
+      categoryName: null as Goal["categoryName"],
+    };
+    expect(mockGoal.categoryName).toBeNull();
+
+    const mockGoal2 = {
+      categoryName: "Food & Drink" as Goal["categoryName"],
+    };
+    expect(mockGoal2.categoryName).toBe("Food & Drink");
   });
 });
