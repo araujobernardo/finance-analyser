@@ -92,6 +92,7 @@ export function LiabilityModal({ liability, onClose }: LiabilityModalProps) {
     }
   }
 
+  // FA-NW-004 US5: send autoSync:true to re-enable sync and trigger immediate balance refresh
   async function handleReEnableAutoSync() {
     if (!liability) return;
     setIsSubmitting(true);
