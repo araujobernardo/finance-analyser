@@ -38,6 +38,21 @@ vi.mock("../context/GoalsContext", async (importOriginal) => {
   };
 });
 
+// ── Mock GoalCard to avoid full card render ────────────────────────────────
+
+vi.mock("../components/goals/GoalCard", () => ({
+  GoalCard: ({
+    goal,
+  }: {
+    goal: { id: string; name: string; type: string };
+  }) => (
+    <div data-testid={`mock-goal-card-${goal.id}`}>
+      <span>{goal.name}</span>
+      <span>{goal.type}</span>
+    </div>
+  ),
+}));
+
 // ── Mock GoalModal to avoid full modal render ──────────────────────────────
 
 vi.mock("../components/goals/GoalModal", () => ({
@@ -84,7 +99,7 @@ describe("GoalsPage — render", () => {
     renderPage();
     expect(screen.getByTestId("goals-empty")).toBeInTheDocument();
     expect(
-      screen.getByText(/no goals yet — add one to get started/i),
+      screen.getByText(/no active goals yet — add one to get started/i),
     ).toBeInTheDocument();
   });
 
@@ -132,9 +147,77 @@ describe("GoalsPage — goal list", () => {
     renderPage();
     expect(screen.getByTestId("goals-list")).toBeInTheDocument();
     expect(screen.getByText("Emergency Fund")).toBeInTheDocument();
-    expect(screen.getByText("savings_target")).toBeInTheDocument();
+    expect(screen.getByText("savings_target")).toBeInTheDocument(); // mock renders raw type
     expect(screen.getByText("Car Loan")).toBeInTheDocument();
-    expect(screen.getByText("debt_payoff")).toBeInTheDocument();
+    expect(screen.getByText("debt_payoff")).toBeInTheDocument(); // mock renders raw type
+  });
+});
+
+// ── Completed section ──────────────────────────────────────────────────────
+
+describe("GoalsPage — completed section", () => {
+  function makeGoal(overrides: Partial<ApiGoal> = {}): ApiGoal {
+    return {
+      id: "gx",
+      userId: "u1",
+      name: "Old Goal",
+      type: "savings_target",
+      targetAmount: "1000",
+      targetDate: null,
+      linkedAccountId: null,
+      categoryName: null,
+      currentAmount: null,
+      status: "active",
+      createdAt: "2026-05-17T00:00:00.000Z",
+      updatedAt: "2026-05-17T00:00:00.000Z",
+      ...overrides,
+    };
+  }
+
+  it("does not render completed section when no completed goals", () => {
+    mockGoals.push(makeGoal({ id: "ga", status: "active" }));
+    renderPage();
+    expect(
+      screen.queryByTestId("goals-completed-section"),
+    ).not.toBeInTheDocument();
+  });
+
+  it("renders completed toggle button when completed goals exist", () => {
+    mockGoals.push(makeGoal({ id: "gc", status: "achieved" }));
+    renderPage();
+    expect(screen.getByTestId("goals-completed-toggle")).toBeInTheDocument();
+    expect(screen.getByTestId("goals-completed-toggle").textContent).toMatch(
+      /show 1 completed goal/i,
+    );
+  });
+
+  it("completed list is hidden by default", () => {
+    mockGoals.push(makeGoal({ id: "gc", status: "achieved" }));
+    renderPage();
+    expect(
+      screen.queryByTestId("goals-completed-list"),
+    ).not.toBeInTheDocument();
+  });
+
+  it("completed list shows after clicking toggle", async () => {
+    mockGoals.push(
+      makeGoal({ id: "gc", status: "achieved", name: "Done Goal" }),
+    );
+    renderPage();
+    await userEvent.click(screen.getByTestId("goals-completed-toggle"));
+    expect(screen.getByTestId("goals-completed-list")).toBeInTheDocument();
+    expect(screen.getByText("Done Goal")).toBeInTheDocument();
+  });
+
+  it("completed list hides again after second toggle click", async () => {
+    mockGoals.push(makeGoal({ id: "gc", status: "achieved" }));
+    renderPage();
+    await userEvent.click(screen.getByTestId("goals-completed-toggle"));
+    expect(screen.getByTestId("goals-completed-list")).toBeInTheDocument();
+    await userEvent.click(screen.getByTestId("goals-completed-toggle"));
+    expect(
+      screen.queryByTestId("goals-completed-list"),
+    ).not.toBeInTheDocument();
   });
 });
 

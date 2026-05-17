@@ -66,6 +66,18 @@
   color: var(--muted);
 }
 
+/* ── Sections ────────────────────────────────────────────────────────────────── */
+
+.goals-page__section {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.goals-page__section--completed {
+  margin-top: 4px;
+}
+
 /* ── Goal list ───────────────────────────────────────────────────────────────── */
 
 .goals-page__list {
@@ -77,32 +89,38 @@
   gap: 10px;
 }
 
-.goals-page__item {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 14px 18px;
-  background: var(--card);
-  border: 1px solid var(--border);
-  border-radius: 10px;
-  gap: 12px;
+.goals-page__list--completed {
+  margin-top: 10px;
 }
 
-.goals-page__item-name {
-  font-size: 0.9rem;
+/* ── Completed toggle ────────────────────────────────────────────────────────── */
+
+.goals-page__completed-toggle {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  background: transparent;
+  border: none;
+  color: var(--subtle);
+  font-size: 0.82rem;
   font-weight: 600;
+  cursor: pointer;
+  padding: 6px 0;
+  transition: color 0.15s;
+}
+
+.goals-page__completed-toggle:hover {
   color: var(--text);
 }
 
-.goals-page__item-type {
-  font-size: 0.75rem;
-  color: var(--muted);
-  text-transform: capitalize;
-  background: var(--surface);
-  border: 1px solid var(--border);
-  border-radius: 20px;
-  padding: 3px 10px;
-  white-space: nowrap;
+.goals-page__toggle-icon {
+  font-size: 0.8rem;
+  transition: transform 0.2s;
+  display: inline-block;
+}
+
+.goals-page__toggle-icon--open {
+  transform: rotate(180deg);
 }
 
 /* ── Responsive: mobile ──────────────────────────────────────────────────────── */
