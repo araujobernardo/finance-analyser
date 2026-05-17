@@ -1,76 +1,105 @@
-# Implementation Plan: Net Worth Dashboard & History Snapshots
+# Implementation Plan: [FEATURE]
 
-**Branch**: `021-net-worth-dashboard-history` | **Date**: 2026-05-16 | **Spec**: [spec.md](spec.md)  
-**Input**: Feature specification from `/specs/021-net-worth-dashboard-history/spec.md`
+**Branch**: `[###-feature-name]` | **Date**: [DATE] | **Spec**: [link]
+**Input**: Feature specification from `/specs/[###-feature-name]/spec.md`
+
+**Note**: This template is filled in by the `/speckit.plan` command. See `.specify/templates/plan-template.md` for the execution workflow.
 
 ## Summary
 
-Extend the existing Net Worth page (built in FA-NW-002) with a daily snapshot system and history chart. On every page mount the frontend posts current totals to a new `/api/net-worth/snapshots` endpoint; the server upserts one row per day using a DB-level unique constraint. A `GET` endpoint returns up to 24 months of snapshots ordered by date, which are rendered as a Recharts `LineChart` below the existing summary bar. Empty and single-point states are handled gracefully with a message rather than a broken chart.
+[Extract from feature spec: primary requirement + technical approach from research]
 
 ## Technical Context
 
-**Language/Version**: TypeScript 5.x — React 19 (frontend) + Node.js / Express 5.x (backend)  
-**Primary Dependencies**: Drizzle ORM 0.45.x, postgres-js 3.x, Recharts 3.8.x, Zod 4.x, JWT auth  
-**Storage**: PostgreSQL — new `net_worth_snapshots` table (migration 0004)  
-**Testing**: Vitest (unit/component), Playwright (E2E)  
-**Target Platform**: Web browser (SPA) + Node.js server  
-**Project Type**: Fullstack web application — React SPA + Express REST API  
-**Performance Goals**: Standard interactive web app; chart must render without perceptible lag for ≤24 months of daily data (~730 rows)  
-**Constraints**: Single-user app; at most one snapshot per calendar day (UTC); 24-month window on GET; snapshot failure must not block page load  
-**Scale/Scope**: Single authenticated user; small data volume
+<!--
+  ACTION REQUIRED: Replace the content in this section with the technical details
+  for the project. The structure here is presented in advisory capacity to guide
+  the iteration process.
+-->
+
+**Language/Version**: [e.g., Python 3.11, Swift 5.9, Rust 1.75 or NEEDS CLARIFICATION]  
+**Primary Dependencies**: [e.g., FastAPI, UIKit, LLVM or NEEDS CLARIFICATION]  
+**Storage**: [if applicable, e.g., PostgreSQL, CoreData, files or N/A]  
+**Testing**: [e.g., pytest, XCTest, cargo test or NEEDS CLARIFICATION]  
+**Target Platform**: [e.g., Linux server, iOS 15+, WASM or NEEDS CLARIFICATION]
+**Project Type**: [e.g., library/cli/web-service/mobile-app/compiler/desktop-app or NEEDS CLARIFICATION]  
+**Performance Goals**: [domain-specific, e.g., 1000 req/s, 10k lines/sec, 60 fps or NEEDS CLARIFICATION]  
+**Constraints**: [domain-specific, e.g., <200ms p95, <100MB memory, offline-capable or NEEDS CLARIFICATION]  
+**Scale/Scope**: [domain-specific, e.g., 10k users, 1M LOC, 50 screens or NEEDS CLARIFICATION]
 
 ## Constitution Check
 
-_GATE: Must pass before Phase 0 research. Re-checked after Phase 1 design._
+_GATE: Must pass before Phase 0 research. Re-check after Phase 1 design._
 
-| Rule                                 | Check                                                             | Status  |
-| ------------------------------------ | ----------------------------------------------------------------- | ------- |
-| GR-1: No silent product assumptions  | Spec and user input fully specify all behaviour; no gaps          | ✅ PASS |
-| GR-2: No credentials/secrets exposed | New route reads userId from JWT; no secrets in code               | ✅ PASS |
-| GR-3: No localStorage schema changes | All persistence is server-side PostgreSQL; localStorage untouched | ✅ PASS |
-| GR-4: DoR before implementation      | This plan is the DoR artifact; tasks follow                       | ✅ PASS |
-| GR-5: DoD before merging             | QA enforces DoD at PR time                                        | ✅ PASS |
-| GR-6: When in doubt, do less and ask | Spec is complete; no ambiguity requiring escalation               | ✅ PASS |
-
-No violations. Complexity Tracking section omitted.
+[Gates determined based on constitution file]
 
 ## Project Structure
 
 ### Documentation (this feature)
 
 ```text
-specs/021-net-worth-dashboard-history/
-├── plan.md              ← this file
-├── research.md          ← Phase 0 output
-├── data-model.md        ← Phase 1 output
-├── contracts/
-│   └── api-net-worth-snapshots.md   ← Phase 1 output
-└── tasks.md             ← Phase 2 output (/speckit-tasks — not created here)
+specs/[###-feature]/
+├── plan.md              # This file (/speckit.plan command output)
+├── research.md          # Phase 0 output (/speckit.plan command)
+├── data-model.md        # Phase 1 output (/speckit.plan command)
+├── quickstart.md        # Phase 1 output (/speckit.plan command)
+├── contracts/           # Phase 1 output (/speckit.plan command)
+└── tasks.md             # Phase 2 output (/speckit.tasks command - NOT created by /speckit.plan)
 ```
 
 ### Source Code (repository root)
 
+<!--
+  ACTION REQUIRED: Replace the placeholder tree below with the concrete layout
+  for this feature. Delete unused options and expand the chosen structure with
+  real paths (e.g., apps/admin, packages/something). The delivered plan must
+  not include Option labels.
+-->
+
 ```text
+# [REMOVE IF UNUSED] Option 1: Single project (DEFAULT)
 src/
-├── db/
-│   ├── schema.ts                              ← ADD netWorthSnapshots table + exports
-│   └── migrations/
-│       └── 0004_net_worth_snapshots.sql       ← NEW migration file
-│
-├── server/
-│   ├── index.ts                               ← REGISTER /api/net-worth router
-│   └── routes/
-│       └── netWorth.ts                        ← NEW route file (GET + POST /api/net-worth/snapshots)
-│
-├── pages/
-│   └── NetWorthPage.tsx                       ← UPDATE (snapshot POST on mount + chart section)
-│
-├── components/
-│   └── net-worth/
-│       └── NetWorthHistoryChart.tsx            ← NEW chart component (Recharts LineChart)
-│
-└── types/
-    └── api.ts                                 ← ADD ApiSnapshot interface
+├── models/
+├── services/
+├── cli/
+└── lib/
+
+tests/
+├── contract/
+├── integration/
+└── unit/
+
+# [REMOVE IF UNUSED] Option 2: Web application (when "frontend" + "backend" detected)
+backend/
+├── src/
+│   ├── models/
+│   ├── services/
+│   └── api/
+└── tests/
+
+frontend/
+├── src/
+│   ├── components/
+│   ├── pages/
+│   └── services/
+└── tests/
+
+# [REMOVE IF UNUSED] Option 3: Mobile + API (when "iOS/Android" detected)
+api/
+└── [same as backend above]
+
+ios/ or android/
+└── [platform-specific structure: feature modules, UI flows, platform tests]
 ```
 
-**Structure Decision**: Single fullstack project (no mono-repo split). Frontend lives under `src/`, backend under `src/server/`. This matches the existing layout exactly — new files follow the same patterns as `src/server/routes/assets.ts` (route) and `src/components/net-worth/AssetList.tsx` (component).
+**Structure Decision**: [Document the selected structure and reference the real
+directories captured above]
+
+## Complexity Tracking
+
+> **Fill ONLY if Constitution Check has violations that must be justified**
+
+| Violation                  | Why Needed         | Simpler Alternative Rejected Because |
+| -------------------------- | ------------------ | ------------------------------------ |
+| [e.g., 4th project]        | [current need]     | [why 3 projects insufficient]        |
+| [e.g., Repository pattern] | [specific problem] | [why direct DB access insufficient]  |
