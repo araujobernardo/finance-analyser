@@ -103,6 +103,15 @@
   line-height: 1;
 }
 
+/* ── Edit mode subtitle ──────────────────────────────────────────────────────── */
+
+.goal-modal__edit-subtitle {
+  font-size: 0.72rem;
+  color: var(--muted);
+  margin: 0;
+  line-height: 1;
+}
+
 /* ── Fields ──────────────────────────────────────────────────────────────────── */
 
 .goal-modal__field {

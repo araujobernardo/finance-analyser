@@ -1,6 +1,7 @@
 import { useRef, useState } from "react";
 import { useGoals } from "../../context/GoalsContext";
 import { useAccount } from "../../context/AccountContext";
+import type { ApiGoal } from "../../types/api";
 import "./GoalModal.css";
 
 type GoalType =
@@ -11,6 +12,8 @@ type GoalType =
 
 interface GoalModalProps {
   onClose: () => void;
+  /** When provided the modal opens in edit mode, pre-populated with this goal's data. */
+  goal?: ApiGoal;
 }
 
 const GOAL_TILES: {
@@ -63,16 +66,27 @@ const CONTEXT_HINTS: Record<GoalType, string> = {
     "Set a monthly cap on spending in a specific transaction category. Your spending will be tracked against this limit.",
 };
 
-export function GoalModal({ onClose }: GoalModalProps) {
-  const { addGoal } = useGoals();
+export function GoalModal({ onClose, goal }: GoalModalProps) {
+  const { addGoal, updateGoal } = useGoals();
   const { accounts } = useAccount();
 
-  const [name, setName] = useState("");
-  const [type, setType] = useState<GoalType | null>(null);
-  const [targetAmount, setTargetAmount] = useState("");
-  const [targetDate, setTargetDate] = useState("");
-  const [linkedAccountId, setLinkedAccountId] = useState("");
-  const [categoryName, setCategoryName] = useState("");
+  const isEditMode = goal !== undefined;
+
+  const [name, setName] = useState(goal?.name ?? "");
+  const [type, setType] = useState<GoalType | null>(
+    (goal?.type as GoalType) ?? null,
+  );
+  const [targetAmount, setTargetAmount] = useState(
+    goal?.targetAmount ? String(parseFloat(goal.targetAmount)) : "",
+  );
+  const [targetDate, setTargetDate] = useState(goal?.targetDate ?? "");
+  const [linkedAccountId, setLinkedAccountId] = useState(
+    goal?.linkedAccountId ?? "",
+  );
+  const [categoryName, setCategoryName] = useState(goal?.categoryName ?? "");
+  const [currentAmount, setCurrentAmount] = useState(
+    goal?.currentAmount ? String(parseFloat(goal.currentAmount)) : "",
+  );
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const [nameError, setNameError] = useState("");
@@ -80,7 +94,9 @@ export function GoalModal({ onClose }: GoalModalProps) {
 
   const adaptiveRef = useRef<HTMLDivElement>(null);
 
-  const tilesLocked = name.trim().length === 0;
+  // In add mode: tiles are locked until a name is entered; type must be chosen.
+  // In edit mode: both gates are bypassed — fields are pre-populated.
+  const tilesLocked = !isEditMode && name.trim().length === 0;
   const typeSelected = type !== null;
 
   function validateName(v: string): string {
@@ -123,14 +139,33 @@ export function GoalModal({ onClose }: GoalModalProps) {
 
     setIsSubmitting(true);
 
-    const success = await addGoal({
-      name: name.trim(),
-      type,
-      targetAmount: parseFloat(targetAmount),
-      targetDate: targetDate || null,
-      linkedAccountId: linkedAccountId || null,
-      categoryName: type === "spending_limit" ? categoryName || null : null,
-    });
+    let success: boolean;
+
+    if (isEditMode && goal) {
+      // Edit mode: PATCH the existing goal.
+      const parsedCurrentAmount =
+        currentAmount.trim() !== "" ? parseFloat(currentAmount) : null;
+
+      success = await updateGoal(goal.id, {
+        name: name.trim(),
+        type,
+        targetAmount: parseFloat(targetAmount),
+        targetDate: targetDate || null,
+        linkedAccountId: linkedAccountId || null,
+        categoryName: type === "spending_limit" ? categoryName || null : null,
+        currentAmount: parsedCurrentAmount,
+      });
+    } else {
+      // Add mode: POST a new goal.
+      success = await addGoal({
+        name: name.trim(),
+        type,
+        targetAmount: parseFloat(targetAmount),
+        targetDate: targetDate || null,
+        linkedAccountId: linkedAccountId || null,
+        categoryName: type === "spending_limit" ? categoryName || null : null,
+      });
+    }
 
     if (success) {
       onClose();
@@ -139,6 +174,7 @@ export function GoalModal({ onClose }: GoalModalProps) {
     }
   }
 
+  // Step indicator is only shown in add mode.
   const stepOneDot = typeSelected ? "complete" : "active";
   const stepTwoDot = typeSelected ? "active" : "";
   const stepText = typeSelected
@@ -156,7 +192,7 @@ export function GoalModal({ onClose }: GoalModalProps) {
         {/* Header */}
         <div className="goal-modal__header">
           <h2 className="goal-modal__title" id="goal-modal-title">
-            Add Goal
+            {isEditMode ? "Edit Goal" : "Add Goal"}
           </h2>
           <button
             type="button"
@@ -171,16 +207,22 @@ export function GoalModal({ onClose }: GoalModalProps) {
 
         {/* Body */}
         <div className="goal-modal__body">
-          {/* Step indicator */}
-          <div className="goal-modal__step-indicator" aria-hidden="true">
-            <div
-              className={`goal-modal__step-dot${stepOneDot ? ` goal-modal__step-dot--${stepOneDot}` : ""}`}
-            />
-            <div
-              className={`goal-modal__step-dot${stepTwoDot ? ` goal-modal__step-dot--${stepTwoDot}` : ""}`}
-            />
-            <span className="goal-modal__step-text">{stepText}</span>
-          </div>
+          {/* Step indicator (add mode only) / Edit subtitle */}
+          {isEditMode ? (
+            <p className="goal-modal__edit-subtitle" aria-hidden="true">
+              Editing: {goal?.name}
+            </p>
+          ) : (
+            <div className="goal-modal__step-indicator" aria-hidden="true">
+              <div
+                className={`goal-modal__step-dot${stepOneDot ? ` goal-modal__step-dot--${stepOneDot}` : ""}`}
+              />
+              <div
+                className={`goal-modal__step-dot${stepTwoDot ? ` goal-modal__step-dot--${stepTwoDot}` : ""}`}
+              />
+              <span className="goal-modal__step-text">{stepText}</span>
+            </div>
+          )}
 
           {/* Goal Name */}
           <div className="goal-modal__field">
@@ -233,12 +275,12 @@ export function GoalModal({ onClose }: GoalModalProps) {
             </div>
           </div>
 
-          {/* Adaptive fields */}
+          {/* Adaptive fields — always visible in edit mode */}
           <div
             ref={adaptiveRef}
             data-testid="goal-modal-adaptive"
-            className={`goal-modal__adaptive${typeSelected ? " goal-modal__adaptive--visible" : ""}`}
-            aria-hidden={!typeSelected}
+            className={`goal-modal__adaptive${typeSelected || isEditMode ? " goal-modal__adaptive--visible" : ""}`}
+            aria-hidden={!typeSelected && !isEditMode}
           >
             {/* Context hint */}
             {type && (
@@ -279,6 +321,39 @@ export function GoalModal({ onClose }: GoalModalProps) {
                 </span>
               )}
             </div>
+
+            {/* Current Amount — shown in edit mode only */}
+            {isEditMode && (
+              <div
+                className="goal-modal__field"
+                data-testid="goal-modal-current-amount-field"
+              >
+                <label
+                  className="goal-modal__label"
+                  htmlFor="goal-current-amount-input"
+                >
+                  Current progress (NZD)
+                  <span className="goal-modal__label-badge">(optional)</span>
+                </label>
+                <div className="goal-modal__prefix-wrap">
+                  <span className="goal-modal__prefix">NZD</span>
+                  <input
+                    id="goal-current-amount-input"
+                    data-testid="goal-modal-current-amount-input"
+                    type="number"
+                    min="0"
+                    step="0.01"
+                    className="goal-modal__input"
+                    value={currentAmount}
+                    onChange={(e) => setCurrentAmount(e.target.value)}
+                    placeholder="0.00"
+                  />
+                </div>
+                <span className="goal-modal__hint">
+                  Leave blank to keep the existing progress unchanged.
+                </span>
+              </div>
+            )}
 
             {/* Spending Category — only for spending_limit */}
             <div
@@ -370,7 +445,11 @@ export function GoalModal({ onClose }: GoalModalProps) {
             onClick={() => void handleSave()}
             disabled={isSubmitting}
           >
-            {isSubmitting ? "Saving…" : "Save Goal"}
+            {isSubmitting
+              ? "Saving…"
+              : isEditMode
+                ? "Save Changes"
+                : "Save Goal"}
           </button>
         </div>
       </div>
