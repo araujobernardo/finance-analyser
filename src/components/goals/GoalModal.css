@@ -1,0 +1,421 @@
+/* ── Goal Modal Styles ──────────────────────────────────────────────────────── */
+
+.goal-modal__backdrop {
+  position: fixed;
+  inset: 0;
+  background-color: var(--modal-overlay);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 100;
+}
+
+.goal-modal__panel {
+  background-color: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 0.75rem;
+  max-width: 540px;
+  width: 90%;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  box-shadow: 0 24px 64px rgba(0, 0, 0, 0.5);
+}
+
+/* ── Header ─────────────────────────────────────────────────────────────────── */
+
+.goal-modal__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 20px 24px 18px;
+  border-bottom: 1px solid var(--border);
+}
+
+.goal-modal__title {
+  margin: 0;
+  font-size: 1rem;
+  font-weight: 600;
+  color: var(--text);
+}
+
+.goal-modal__close {
+  width: 32px;
+  height: 32px;
+  border-radius: 8px;
+  border: 1px solid var(--border);
+  background: transparent;
+  color: var(--muted);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.1rem;
+  transition:
+    background 0.15s,
+    color 0.15s,
+    border-color 0.15s;
+}
+
+.goal-modal__close:hover {
+  background: var(--card);
+  color: var(--text);
+  border-color: var(--subtle);
+}
+
+/* ── Body ────────────────────────────────────────────────────────────────────── */
+
+.goal-modal__body {
+  padding: 24px;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+/* ── Step indicator ──────────────────────────────────────────────────────────── */
+
+.goal-modal__step-indicator {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 0.72rem;
+  color: var(--muted);
+}
+
+.goal-modal__step-dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: var(--border);
+  transition: background 0.2s;
+  flex-shrink: 0;
+}
+
+.goal-modal__step-dot--active {
+  background: var(--accent);
+}
+
+.goal-modal__step-dot--complete {
+  background: var(--accent-dim);
+}
+
+.goal-modal__step-text {
+  line-height: 1;
+}
+
+/* ── Fields ──────────────────────────────────────────────────────────────────── */
+
+.goal-modal__field {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.goal-modal__label {
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: var(--subtle);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.goal-modal__label-badge {
+  font-size: 0.68rem;
+  font-weight: 400;
+  color: var(--muted);
+  text-transform: none;
+  letter-spacing: 0;
+  margin-left: 5px;
+}
+
+.goal-modal__input {
+  width: 100%;
+  padding: 10px 14px;
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  color: var(--text);
+  font-size: 0.9rem;
+  outline: none;
+  appearance: none;
+  -webkit-appearance: none;
+  transition:
+    border-color 0.15s,
+    box-shadow 0.15s;
+}
+
+.goal-modal__input:focus {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.15);
+}
+
+.goal-modal__input:hover:not(:focus) {
+  border-color: var(--subtle);
+}
+
+.goal-modal__input::placeholder {
+  color: var(--muted);
+}
+
+.goal-modal__input--error {
+  border-color: var(--color-danger);
+}
+
+.goal-modal__error {
+  font-size: 0.8rem;
+  color: var(--color-danger);
+  margin-top: 0.1rem;
+}
+
+/* ── Goal type tile grid ─────────────────────────────────────────────────────── */
+
+.goal-modal__tiles {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+  transition: opacity 0.2s;
+}
+
+.goal-modal__tiles--locked .goal-modal__tile {
+  opacity: 0.45;
+  cursor: default;
+  pointer-events: none;
+}
+
+.goal-modal__tile {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 12px 14px;
+  background: var(--card);
+  border: 2px solid var(--border);
+  border-radius: 10px;
+  cursor: pointer;
+  text-align: left;
+  transition:
+    border-color 0.15s,
+    background 0.15s,
+    transform 0.1s;
+}
+
+.goal-modal__tile:hover {
+  border-color: var(--subtle);
+  background: #152234;
+}
+
+.goal-modal__tile:active {
+  transform: scale(0.97);
+}
+
+.goal-modal__tile--selected {
+  border-color: var(--accent);
+  background: rgba(16, 185, 129, 0.08);
+}
+
+.goal-modal__tile-icon {
+  font-size: 1.1rem;
+  line-height: 1;
+  margin-bottom: 2px;
+}
+
+.goal-modal__tile-name {
+  font-size: 0.82rem;
+  font-weight: 600;
+  color: var(--text);
+  line-height: 1.2;
+}
+
+.goal-modal__tile--selected .goal-modal__tile-name {
+  color: var(--accent);
+}
+
+.goal-modal__tile-desc {
+  font-size: 0.7rem;
+  color: var(--muted);
+  line-height: 1.35;
+}
+
+/* ── Adaptive fields container ───────────────────────────────────────────────── */
+
+.goal-modal__adaptive {
+  overflow: hidden;
+  max-height: 0;
+  opacity: 0;
+  transition:
+    max-height 0.35s ease,
+    opacity 0.3s ease;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.goal-modal__adaptive--visible {
+  max-height: 600px;
+  opacity: 1;
+}
+
+/* ── Context hint banner ─────────────────────────────────────────────────────── */
+
+.goal-modal__context-hint {
+  background: rgba(16, 185, 129, 0.07);
+  border: 1px solid rgba(16, 185, 129, 0.2);
+  border-radius: 8px;
+  padding: 10px 14px;
+  font-size: 0.75rem;
+  color: var(--subtle);
+  line-height: 1.5;
+}
+
+/* ── NZD prefix wrap ─────────────────────────────────────────────────────────── */
+
+.goal-modal__prefix-wrap {
+  position: relative;
+}
+
+.goal-modal__prefix-wrap .goal-modal__input {
+  padding-left: 44px;
+}
+
+.goal-modal__prefix {
+  position: absolute;
+  left: 0;
+  top: 0;
+  bottom: 0;
+  width: 38px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: var(--muted);
+  border-right: 1px solid var(--border);
+  pointer-events: none;
+}
+
+/* ── Custom select wrapper ───────────────────────────────────────────────────── */
+
+.goal-modal__select-wrap {
+  position: relative;
+}
+
+.goal-modal__select-wrap::after {
+  content: "▾";
+  position: absolute;
+  right: 14px;
+  top: 50%;
+  transform: translateY(-50%);
+  color: var(--muted);
+  pointer-events: none;
+  font-size: 0.85rem;
+}
+
+.goal-modal__select-wrap .goal-modal__input {
+  padding-right: 36px;
+  cursor: pointer;
+}
+
+.goal-modal__select-wrap .goal-modal__input option {
+  background: var(--card);
+  color: var(--text);
+}
+
+/* ── Category conditional field ──────────────────────────────────────────────── */
+
+.goal-modal__category {
+  display: none;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.goal-modal__category--visible {
+  display: flex;
+}
+
+/* ── Field hint ──────────────────────────────────────────────────────────────── */
+
+.goal-modal__hint {
+  font-size: 0.72rem;
+  color: var(--muted);
+  line-height: 1.4;
+}
+
+/* ── Footer ──────────────────────────────────────────────────────────────────── */
+
+.goal-modal__footer {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+  padding: 16px 24px 20px;
+  border-top: 1px solid var(--border);
+}
+
+/* ── Buttons ─────────────────────────────────────────────────────────────────── */
+
+.goal-modal__btn {
+  padding: 10px 20px;
+  border-radius: 8px;
+  font-size: 0.88rem;
+  font-weight: 600;
+  cursor: pointer;
+  border: none;
+  transition:
+    opacity 0.15s,
+    background 0.15s,
+    transform 0.1s;
+}
+
+.goal-modal__btn:active:not(:disabled) {
+  transform: scale(0.97);
+}
+
+.goal-modal__btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.goal-modal__btn--cancel {
+  background: transparent;
+  border: 1px solid var(--border);
+  color: var(--subtle);
+}
+
+.goal-modal__btn--cancel:hover:not(:disabled) {
+  background: var(--card);
+  border-color: var(--subtle);
+  color: var(--text);
+}
+
+.goal-modal__btn--save {
+  background: var(--accent);
+  color: #fff;
+}
+
+.goal-modal__btn--save:hover:not(:disabled) {
+  opacity: 0.88;
+}
+
+/* ── Responsive: 375px mobile ────────────────────────────────────────────────── */
+
+@media (max-width: 480px) {
+  .goal-modal__body {
+    padding: 16px;
+  }
+
+  .goal-modal__header {
+    padding: 14px 16px;
+  }
+
+  .goal-modal__footer {
+    padding: 12px 16px 16px;
+  }
+
+  /* Tiles remain two columns — narrow enough at 375px */
+  .goal-modal__tiles {
+    grid-template-columns: 1fr 1fr;
+  }
+
+  .goal-modal__input {
+    width: 100%;
+    max-width: 100%;
+  }
+}
