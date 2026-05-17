@@ -96,6 +96,9 @@ export const assets = pgTable("assets", {
   linkedAccountId: uuid("linked_account_id").references(() => accounts.id, {
     onDelete: "set null",
   }),
+  // FA-NW-004 — auto-sync columns added by migration 0006_auto_sync_flag.sql
+  autoSync: boolean("auto_sync").notNull().default(true),
+  balanceClamped: boolean("balance_clamped").notNull().default(false),
   createdAt: timestamp("created_at", { withTimezone: true })
     .defaultNow()
     .notNull(),
@@ -115,6 +118,9 @@ export const liabilities = pgTable("liabilities", {
   linkedAccountId: uuid("linked_account_id").references(() => accounts.id, {
     onDelete: "set null",
   }),
+  // FA-NW-004 — auto-sync columns added by migration 0006_auto_sync_flag.sql
+  autoSync: boolean("auto_sync").notNull().default(true),
+  balanceClamped: boolean("balance_clamped").notNull().default(false),
   createdAt: timestamp("created_at", { withTimezone: true })
     .defaultNow()
     .notNull(),
