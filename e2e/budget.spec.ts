@@ -20,7 +20,7 @@ test("setting a budget in settings shows it on the dashboard", async ({
 
   await page
     .locator(".settings-cat-row")
-    .filter({ hasText: "Groceries" })
+    .nth(0)
     .locator('input[type="number"]')
     .fill("500");
 

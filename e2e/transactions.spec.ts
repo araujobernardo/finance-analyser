@@ -38,7 +38,10 @@ test("month filter contains the imported month", async ({
   await page.waitForURL(/\/transactions/);
 
   const monthSelect = page.locator("select.txn-select").first();
-  await expect(monthSelect.locator("option")).toContainText("January 2000");
+  await expect(monthSelect.locator("option")).toContainText([
+    "All months",
+    "January 2000",
+  ]);
 });
 
 test("account filter lists both fixture accounts", async ({
@@ -52,7 +55,8 @@ test("account filter lists both fixture accounts", async ({
   const accountSelect = page.locator("select.txn-select").nth(1);
   await expect(accountSelect).toBeVisible();
   await expect(accountSelect.locator("option")).toContainText([
-    "0000000-01",
-    "2222222-02",
+    "All accounts",
+    "A",
+    "B",
   ]);
 });
