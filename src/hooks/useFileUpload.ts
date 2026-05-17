@@ -37,6 +37,12 @@ export interface UseFileUploadResult {
 export interface UseFileUploadOptions {
   /** The account ID to scope uploads to. Defaults to DEFAULT_ACCOUNT_ID. */
   accountId?: string;
+  /**
+   * FA-NW-004 US3: Optional callback invoked after a successful import so
+   * callers can refresh net-worth data (assets/liabilities) that may be linked
+   * to the account that just received new transactions.
+   */
+  onImportComplete?: () => void;
 }
 
 /** Formats a "YYYY-MM" key into a human-readable month name, e.g. "March 2024". */
@@ -71,6 +77,7 @@ export function useFileUpload(
   options: UseFileUploadOptions = {},
 ): UseFileUploadResult {
   const accountId = options.accountId ?? DEFAULT_ACCOUNT_ID;
+  const onImportComplete = options.onImportComplete;
   const { apiFetch } = useApi();
 
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
@@ -132,6 +139,8 @@ export function useFileUpload(
       setSavedMonthCount(groups.length);
       setImportedCount(totalImported);
       setSkippedCount(totalSkipped);
+      // FA-NW-004 US3: notify caller so net-worth data can be refreshed
+      onImportComplete?.();
     } finally {
       setIsCategorising(false);
     }

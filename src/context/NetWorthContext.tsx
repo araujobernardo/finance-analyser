@@ -14,6 +14,7 @@ export interface NetWorthContextValue {
   assets: ApiAsset[];
   liabilities: ApiLiability[];
   isLoading: boolean;
+  refreshNetWorth: () => void;
   addAsset: (data: {
     name: string;
     type: string;
@@ -54,6 +55,7 @@ const NetWorthContext = createContext<NetWorthContextValue>({
   assets: [],
   liabilities: [],
   isLoading: false,
+  refreshNetWorth: () => undefined,
   addAsset: async () => false,
   updateAsset: async () => false,
   removeAsset: async () => false,
@@ -104,6 +106,31 @@ export function NetWorthProvider({ children }: { children: ReactNode }) {
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+
+  // FA-NW-004 US3: re-fetch net worth data after transaction mutations
+  const refreshNetWorth = useCallback(() => {
+    async function doRefresh() {
+      try {
+        const [assetsRes, liabilitiesRes] = await Promise.all([
+          apiFetch("/api/assets"),
+          apiFetch("/api/liabilities"),
+        ]);
+        if (assetsRes.ok) {
+          const data = (await assetsRes.json()) as { assets: ApiAsset[] };
+          setAssets(data.assets);
+        }
+        if (liabilitiesRes.ok) {
+          const data = (await liabilitiesRes.json()) as {
+            liabilities: ApiLiability[];
+          };
+          setLiabilities(data.liabilities);
+        }
+      } catch {
+        // silently ignore refresh errors — stale data is acceptable
+      }
+    }
+    void doRefresh();
+  }, [apiFetch]);
 
   // ── Assets ────────────────────────────────────────────────────────────────
 
@@ -395,6 +422,7 @@ export function NetWorthProvider({ children }: { children: ReactNode }) {
         assets,
         liabilities,
         isLoading,
+        refreshNetWorth,
         addAsset,
         updateAsset,
         removeAsset,
