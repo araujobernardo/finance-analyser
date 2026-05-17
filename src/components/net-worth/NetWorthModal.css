@@ -143,6 +143,17 @@
   white-space: nowrap;
 }
 
+.nw-modal__manual-badge {
+  font-size: 0.7rem;
+  font-weight: 600;
+  color: var(--muted);
+  background: rgba(100, 116, 139, 0.1);
+  border: 1px solid rgba(100, 116, 139, 0.3);
+  border-radius: 20px;
+  padding: 2px 8px;
+  white-space: nowrap;
+}
+
 .nw-modal__clamp-warning {
   font-size: 0.78rem;
   color: var(--amber);

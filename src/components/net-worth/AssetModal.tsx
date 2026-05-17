@@ -168,6 +168,14 @@ export function AssetModal({ asset, onClose }: AssetModalProps) {
                 Auto-synced
               </span>
             )}
+            {isEditing && !isAutoSynced && asset?.linkedAccountId && (
+              <span
+                className="nw-modal__manual-badge"
+                data-testid="manual-override-badge"
+              >
+                Manual override
+              </span>
+            )}
           </div>
           {isAutoSynced && asset?.balanceClamped && (
             <p
