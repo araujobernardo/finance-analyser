@@ -238,3 +238,92 @@ describe("GoalCard — edit button", () => {
     ).toBeInTheDocument();
   });
 });
+
+// ── Status change buttons ───────────────────────────────────────────────────
+
+describe("GoalCard — status change buttons", () => {
+  it("renders 'Mark achieved' and 'Mark abandoned' buttons for active goals", () => {
+    render(<GoalCard goal={makeGoal({ status: "active" })} />);
+    expect(screen.getByTestId("goal-card-achieve-btn-g1")).toBeInTheDocument();
+    expect(screen.getByTestId("goal-card-abandon-btn-g1")).toBeInTheDocument();
+  });
+
+  it("does not render status change buttons for non-active goals", () => {
+    render(<GoalCard goal={makeGoal({ status: "achieved" })} />);
+    expect(
+      screen.queryByTestId("goal-card-achieve-btn-g1"),
+    ).not.toBeInTheDocument();
+    expect(
+      screen.queryByTestId("goal-card-abandon-btn-g1"),
+    ).not.toBeInTheDocument();
+  });
+
+  it("does not render status change buttons for abandoned goals", () => {
+    render(<GoalCard goal={makeGoal({ status: "abandoned" })} />);
+    expect(
+      screen.queryByTestId("goal-card-achieve-btn-g1"),
+    ).not.toBeInTheDocument();
+    expect(
+      screen.queryByTestId("goal-card-abandon-btn-g1"),
+    ).not.toBeInTheDocument();
+  });
+
+  it("calls onStatusChange with 'achieved' when Mark achieved is clicked", async () => {
+    const onStatusChange = vi.fn();
+    render(
+      <GoalCard
+        goal={makeGoal({ id: "g1" })}
+        onStatusChange={onStatusChange}
+      />,
+    );
+    await userEvent.click(screen.getByTestId("goal-card-achieve-btn-g1"));
+    expect(onStatusChange).toHaveBeenCalledOnce();
+    expect(onStatusChange).toHaveBeenCalledWith("g1", "achieved");
+  });
+
+  it("calls onStatusChange with 'abandoned' when Mark abandoned is clicked", async () => {
+    const onStatusChange = vi.fn();
+    render(
+      <GoalCard
+        goal={makeGoal({ id: "g1" })}
+        onStatusChange={onStatusChange}
+      />,
+    );
+    await userEvent.click(screen.getByTestId("goal-card-abandon-btn-g1"));
+    expect(onStatusChange).toHaveBeenCalledOnce();
+    expect(onStatusChange).toHaveBeenCalledWith("g1", "abandoned");
+  });
+
+  it("renders status change buttons without onStatusChange prop (no-op — no error thrown)", () => {
+    expect(() => render(<GoalCard goal={makeGoal()} />)).not.toThrow();
+    expect(screen.getByTestId("goal-card-achieve-btn-g1")).toBeInTheDocument();
+  });
+
+  it("'Mark achieved' button has accessible aria-label with goal name", () => {
+    render(
+      <GoalCard
+        goal={makeGoal({ name: "Emergency Fund" })}
+        onStatusChange={vi.fn()}
+      />,
+    );
+    expect(
+      screen.getByRole("button", {
+        name: /mark goal as achieved: emergency fund/i,
+      }),
+    ).toBeInTheDocument();
+  });
+
+  it("'Mark abandoned' button has accessible aria-label with goal name", () => {
+    render(
+      <GoalCard
+        goal={makeGoal({ name: "Emergency Fund" })}
+        onStatusChange={vi.fn()}
+      />,
+    );
+    expect(
+      screen.getByRole("button", {
+        name: /mark goal as abandoned: emergency fund/i,
+      }),
+    ).toBeInTheDocument();
+  });
+});

@@ -60,9 +60,14 @@ interface GoalCardProps {
    * GoalsPage wires this in T014. Defaults to a no-op if not provided.
    */
   onEdit?: (goal: ApiGoal) => void;
+  /**
+   * Called when the user clicks a status change button.
+   * Only rendered for active goals. GoalsPage wires this in T016.
+   */
+  onStatusChange?: (id: string, status: "achieved" | "abandoned") => void;
 }
 
-export function GoalCard({ goal, onEdit }: GoalCardProps) {
+export function GoalCard({ goal, onEdit, onStatusChange }: GoalCardProps) {
   const percent = goalPercent(goal);
   const overTarget = isOverTarget(goal);
   const formattedDate = formatDate(goal.targetDate);
@@ -90,7 +95,7 @@ export function GoalCard({ goal, onEdit }: GoalCardProps) {
           </span>
         </div>
 
-        {/* Right-side: status badge + edit button */}
+        {/* Right-side: status badge + action buttons */}
         <div className="goal-card__actions">
           {isCompleted && (
             <span
@@ -99,6 +104,28 @@ export function GoalCard({ goal, onEdit }: GoalCardProps) {
             >
               {goal.status === "achieved" ? "Achieved" : "Abandoned"}
             </span>
+          )}
+          {!isCompleted && (
+            <>
+              <button
+                type="button"
+                className="goal-card__status-btn goal-card__status-btn--achieved"
+                data-testid={`goal-card-achieve-btn-${goal.id}`}
+                onClick={() => onStatusChange?.(goal.id, "achieved")}
+                aria-label={`Mark goal as achieved: ${goal.name}`}
+              >
+                Mark achieved
+              </button>
+              <button
+                type="button"
+                className="goal-card__status-btn goal-card__status-btn--abandoned"
+                data-testid={`goal-card-abandon-btn-${goal.id}`}
+                onClick={() => onStatusChange?.(goal.id, "abandoned")}
+                aria-label={`Mark goal as abandoned: ${goal.name}`}
+              >
+                Mark abandoned
+              </button>
+            </>
           )}
           <button
             type="button"
