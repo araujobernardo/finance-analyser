@@ -136,8 +136,9 @@ export const goals = pgTable("goals", {
     onDelete: "set null",
   }),
   status: varchar("status", { length: 20 }).notNull().default("active"),
-  categoryName: varchar("category_name", { length: 100 }),
-  currentAmount: numeric("current_amount", { precision: 15, scale: 2 }),
+  // FA-GOAL-001 Phase 2 — new columns added by migration 0005_goals_schema_complete.sql
+  categoryName: varchar("category_name", { length: 100 }), // nullable; for spending_limit goals only
+  currentAmount: numeric("current_amount", { precision: 15, scale: 2 }), // nullable; populated by FA-GOAL-003
   updatedAt: timestamp("updated_at", { withTimezone: true })
     .defaultNow()
     .notNull(),
