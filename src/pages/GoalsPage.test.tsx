@@ -22,6 +22,7 @@ vi.mock("../hooks/useToast", () => ({
 
 const mockGoals: ApiGoal[] = [];
 let mockIsLoading = false;
+const mockUpdateGoal = vi.fn().mockResolvedValue(true);
 
 vi.mock("../context/GoalsContext", async (importOriginal) => {
   const original =
@@ -32,7 +33,7 @@ vi.mock("../context/GoalsContext", async (importOriginal) => {
       goals: mockGoals,
       isLoading: mockIsLoading,
       addGoal: vi.fn().mockResolvedValue(true),
-      updateGoal: vi.fn(),
+      updateGoal: mockUpdateGoal,
       removeGoal: vi.fn(),
     }),
   };
@@ -44,9 +45,11 @@ vi.mock("../components/goals/GoalCard", () => ({
   GoalCard: ({
     goal,
     onEdit,
+    onStatusChange,
   }: {
     goal: { id: string; name: string; type: string };
     onEdit?: (goal: { id: string; name: string; type: string }) => void;
+    onStatusChange?: (id: string, status: string) => void;
   }) => (
     <div data-testid={`mock-goal-card-${goal.id}`}>
       <span>{goal.name}</span>
@@ -58,6 +61,22 @@ vi.mock("../components/goals/GoalCard", () => ({
         >
           Edit
         </button>
+      )}
+      {onStatusChange && (
+        <>
+          <button
+            data-testid={`mock-achieve-btn-${goal.id}`}
+            onClick={() => onStatusChange(goal.id, "achieved")}
+          >
+            Mark achieved
+          </button>
+          <button
+            data-testid={`mock-abandon-btn-${goal.id}`}
+            onClick={() => onStatusChange(goal.id, "abandoned")}
+          >
+            Mark abandoned
+          </button>
+        </>
       )}
     </div>
   ),
@@ -95,6 +114,7 @@ beforeEach(() => {
     status: 200,
     json: async () => ({ goals: [] }),
   });
+  mockUpdateGoal.mockResolvedValue(true);
 });
 
 // ── Render ─────────────────────────────────────────────────────────────────
@@ -336,5 +356,48 @@ describe("GoalsPage — edit flow", () => {
     expect(screen.getByTestId("mock-modal-goal-name")).toHaveTextContent(
       "Old Goal",
     );
+  });
+});
+
+// ── Status change flow ─────────────────────────────────────────────────────
+
+describe("GoalsPage — status change flow", () => {
+  function makeGoal(overrides: Partial<ApiGoal> = {}): ApiGoal {
+    return {
+      id: "gs",
+      userId: "u1",
+      name: "My Goal",
+      type: "savings_target",
+      targetAmount: "5000",
+      targetDate: null,
+      linkedAccountId: null,
+      categoryName: null,
+      currentAmount: null,
+      status: "active",
+      createdAt: "2026-05-17T00:00:00.000Z",
+      updatedAt: "2026-05-17T00:00:00.000Z",
+      ...overrides,
+    };
+  }
+
+  it("passes onStatusChange to active GoalCards", () => {
+    mockGoals.push(makeGoal({ id: "g1" }));
+    renderPage();
+    expect(screen.getByTestId("mock-achieve-btn-g1")).toBeInTheDocument();
+    expect(screen.getByTestId("mock-abandon-btn-g1")).toBeInTheDocument();
+  });
+
+  it("calls updateGoal with 'achieved' status when Mark achieved is clicked", async () => {
+    mockGoals.push(makeGoal({ id: "g1" }));
+    renderPage();
+    await userEvent.click(screen.getByTestId("mock-achieve-btn-g1"));
+    expect(mockUpdateGoal).toHaveBeenCalledWith("g1", { status: "achieved" });
+  });
+
+  it("calls updateGoal with 'abandoned' status when Mark abandoned is clicked", async () => {
+    mockGoals.push(makeGoal({ id: "g1" }));
+    renderPage();
+    await userEvent.click(screen.getByTestId("mock-abandon-btn-g1"));
+    expect(mockUpdateGoal).toHaveBeenCalledWith("g1", { status: "abandoned" });
   });
 });
