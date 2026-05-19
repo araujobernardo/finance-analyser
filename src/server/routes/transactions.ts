@@ -8,6 +8,7 @@ import {
   type AuthLocals,
 } from "../middleware/authenticateToken.ts";
 import { syncLinkedAssets } from "../utils/syncLinkedAssets.ts";
+import { recalculateUserGoals } from "../utils/recalculateUserGoals.ts";
 
 export const transactionsRouter = Router({ mergeParams: true });
 
@@ -142,6 +143,8 @@ transactionsRouter.post("/", authenticateToken, async (req, res, next) => {
 
     // FA-NW-004 US3: sync any assets/liabilities linked to this account
     await syncLinkedAssets(accountId, userId, db);
+    // FA-GOAL-003 T005: recalculate savings_target goal progress after a new transaction
+    await recalculateUserGoals(userId, db);
 
     res.status(201).json(serializeTransaction(row));
   } catch (err) {
