@@ -1,7 +1,132 @@
 import { useState, useEffect } from "react";
 import { ACCOUNT_COLORS } from "../constants/colors";
+import { useApi } from "../lib/api";
 import type { PfaTxn, PfaCategory, PfaBudgets } from "../types/pfa";
 import "./SettingsPage.css";
+
+// ── AlertPreferencesSection ──────────────────────────────────────────────────
+// Self-contained: fetches /api/preferences directly via useApi.
+// Does not use the props-based pattern of the parent SettingsPage component.
+
+export function AlertPreferencesSection() {
+  const { apiFetch } = useApi();
+  const [threshold, setThreshold] = useState<number | null>(null);
+  const [inputValue, setInputValue] = useState("");
+  const [validationError, setValidationError] = useState("");
+  const [saveStatus, setSaveStatus] = useState<"idle" | "saving" | "saved">(
+    "idle",
+  );
+
+  useEffect(() => {
+    apiFetch("/api/preferences")
+      .then((data: unknown) => {
+        const prefs = data as { alertThreshold?: number | null };
+        const val = prefs.alertThreshold ?? 80;
+        setThreshold(val);
+        setInputValue(String(val));
+      })
+      .catch(() => {
+        // Leave inputs empty on fetch error; user can still type a value
+      });
+    // apiFetch identity is stable per render — exhaustive-deps would cause an
+    // infinite loop if apiFetch were inadvertently recreated on every render.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  const validate = (raw: string): string => {
+    const n = Number(raw);
+    if (raw.trim() === "" || !Number.isInteger(n))
+      return "Enter a whole number between 50 and 100";
+    if (n < 50 || n > 100) return "Threshold must be between 50 and 100";
+    return "";
+  };
+
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const raw = e.target.value;
+    setInputValue(raw);
+    setValidationError(validate(raw));
+    setSaveStatus("idle");
+  };
+
+  const handleBlur = async () => {
+    const error = validate(inputValue);
+    if (error) {
+      setValidationError(error);
+      return;
+    }
+    const newVal = Number(inputValue);
+    if (newVal === threshold) return; // no change
+
+    setSaveStatus("saving");
+    try {
+      const updated = (await apiFetch("/api/preferences", {
+        method: "PATCH",
+        body: JSON.stringify({ alertThreshold: newVal }),
+      })) as { alertThreshold?: number };
+      setThreshold(updated.alertThreshold ?? newVal);
+      setSaveStatus("saved");
+      setTimeout(() => setSaveStatus("idle"), 2000);
+    } catch {
+      setSaveStatus("idle");
+      setValidationError("Failed to save — please try again");
+    }
+  };
+
+  return (
+    <div
+      className="card settings-section"
+      data-testid="alert-preferences-section"
+    >
+      <div className="settings-section-title">Alert Preferences</div>
+      <div className="settings-section-sub">
+        Set the budget usage percentage at which an alert banner appears. Must
+        be a whole number between 50 and 100.
+      </div>
+
+      <div className="settings-alert-row">
+        <label htmlFor="alert-threshold" className="settings-alert-label">
+          Alert threshold (%)
+        </label>
+        <input
+          id="alert-threshold"
+          type="number"
+          min={50}
+          max={100}
+          step={1}
+          className="settings-input settings-alert-input mono"
+          value={inputValue}
+          onChange={handleChange}
+          onBlur={handleBlur}
+          data-testid="alert-threshold-input"
+          aria-describedby={
+            validationError ? "alert-threshold-error" : undefined
+          }
+        />
+        {saveStatus === "saving" && (
+          <span className="settings-alert-status settings-alert-saving">
+            Saving…
+          </span>
+        )}
+        {saveStatus === "saved" && (
+          <span className="settings-alert-status settings-alert-saved">
+            ✓ Saved
+          </span>
+        )}
+      </div>
+
+      {validationError && (
+        <div
+          id="alert-threshold-error"
+          className="settings-alert-error"
+          data-testid="alert-threshold-error"
+          role="alert"
+        >
+          {validationError}
+        </div>
+      )}
+    </div>
+  );
+}
 
 const EXTRA_COLORS = [
   "#e879f9",
@@ -407,6 +532,9 @@ export function SettingsPage({
           Save Categories &amp; Budgets
         </button>
       </div>
+
+      {/* Section 5: Alert Preferences */}
+      <AlertPreferencesSection />
     </div>
   );
 }
