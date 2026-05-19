@@ -1,18 +1,18 @@
 import { Resend } from "resend";
 
-function getResendClient(): Resend {
+export function getResendClient(): Resend {
   const apiKey = process.env.RESEND_API_KEY;
   if (!apiKey) throw new Error("RESEND_API_KEY is not set");
   return new Resend(apiKey);
 }
 
-function fromAddress(): string {
+export function fromAddress(): string {
   const from = process.env.RESEND_FROM_EMAIL;
   if (!from) throw new Error("RESEND_FROM_EMAIL is not set");
   return from;
 }
 
-function appUrl(): string {
+export function appUrl(): string {
   return process.env.APP_URL ?? "http://localhost:5173";
 }
 
