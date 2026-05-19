@@ -1,7 +1,12 @@
-import { describe, it, expect } from "vitest";
+import { describe, it, expect, vi } from "vitest";
 import { render } from "@testing-library/react";
 import { DashboardPage } from "./DashboardPage";
 import type { PfaTxn, PfaCategory } from "../types/pfa";
+
+// GoalsSummaryWidget uses <Link> and useGoals — stub it for DashboardPage tests
+vi.mock("../components/goals/GoalsSummaryWidget", () => ({
+  GoalsSummaryWidget: () => null,
+}));
 
 function makeTxn(overrides: Partial<PfaTxn> = {}): PfaTxn {
   return {

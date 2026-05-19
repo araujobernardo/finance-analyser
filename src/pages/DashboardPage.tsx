@@ -9,6 +9,7 @@ import {
 import { WeeklyTrendChart } from "../components/WeeklyTrendChart";
 import { LargestTransactions } from "../components/LargestTransactions";
 import { SpendingTrendsByCategoryChart } from "../components/SpendingTrendsByCategoryChart";
+import { GoalsSummaryWidget } from "../components/goals/GoalsSummaryWidget";
 import type { Transaction } from "../utils/csvParser";
 import "./DashboardPage.css";
 
@@ -266,6 +267,9 @@ export function DashboardPage({
           />
         </div>
       </div>
+
+      {/* Goals Summary Widget */}
+      <GoalsSummaryWidget />
 
       {/* Transfer notice */}
       {transferAmt > 0 && (

@@ -333,98 +333,93 @@ export default function App() {
   const appShell = (
     <ToastProvider>
       <AccountProvider>
-        <div className="app-shell">
-          <Sidebar
-            onUpload={handleUpload}
-            uploadStatus={uploadStatus}
-            txnCount={txns.length}
-            accountList={accountList}
-            onRenameAccount={handleRenameAccount}
-          />
-          <div className="app-content">
-            <Routes>
-              <Route index element={<Navigate to="/dashboard" replace />} />
-              <Route
-                path="/dashboard"
-                element={
-                  <DashboardPage
-                    txns={txns}
-                    months={months}
-                    selectedMonths={currentMonths}
-                    setSelectedMonths={setSelectedMonths}
-                    budgets={budgets}
-                    accountList={accountList}
-                    categories={categories}
-                  />
-                }
-              />
-              <Route
-                path="/transactions"
-                element={
-                  <TransactionsPage
-                    txns={txns}
-                    accountList={accountList}
-                    categories={categories}
-                    onBulkCategoryChange={handleBulkCategoryChange}
-                  />
-                }
-              />
-              <Route
-                path="/chat"
-                element={
-                  <ChatPage
-                    txns={txns}
-                    budgets={budgets}
-                    categories={categories}
-                    messages={chatMessages}
-                    setMessages={setChatMessages}
-                  />
-                }
-              />
-              <Route
-                path="/settings"
-                element={
-                  <SettingsPage
-                    categories={categories}
-                    setCategories={setCategories}
-                    budgets={budgets}
-                    setBudgets={setBudgets}
-                    txns={txns}
-                    setTxns={setTxns}
-                    accountList={accountList}
-                    onRenameAccount={handleRenameAccount}
-                  />
-                }
-              />
-              <Route path="/migrate" element={<MigrationPage />} />
-              <Route
-                path="/net-worth"
-                element={
-                  <NetWorthProvider>
-                    <NetWorthPage />
-                  </NetWorthProvider>
-                }
-              />
-              <Route
-                path="/goals"
-                element={
-                  <GoalsProvider>
-                    <GoalsPage />
-                  </GoalsProvider>
-                }
-              />
-              <Route
-                path="/budget"
-                element={
-                  <BudgetProvider>
-                    <BudgetPage />
-                  </BudgetProvider>
-                }
-              />
-            </Routes>
+        <GoalsProvider>
+          <div className="app-shell">
+            <Sidebar
+              onUpload={handleUpload}
+              uploadStatus={uploadStatus}
+              txnCount={txns.length}
+              accountList={accountList}
+              onRenameAccount={handleRenameAccount}
+            />
+            <div className="app-content">
+              <Routes>
+                <Route index element={<Navigate to="/dashboard" replace />} />
+                <Route
+                  path="/dashboard"
+                  element={
+                    <DashboardPage
+                      txns={txns}
+                      months={months}
+                      selectedMonths={currentMonths}
+                      setSelectedMonths={setSelectedMonths}
+                      budgets={budgets}
+                      accountList={accountList}
+                      categories={categories}
+                    />
+                  }
+                />
+                <Route
+                  path="/transactions"
+                  element={
+                    <TransactionsPage
+                      txns={txns}
+                      accountList={accountList}
+                      categories={categories}
+                      onBulkCategoryChange={handleBulkCategoryChange}
+                    />
+                  }
+                />
+                <Route
+                  path="/chat"
+                  element={
+                    <ChatPage
+                      txns={txns}
+                      budgets={budgets}
+                      categories={categories}
+                      messages={chatMessages}
+                      setMessages={setChatMessages}
+                    />
+                  }
+                />
+                <Route
+                  path="/settings"
+                  element={
+                    <SettingsPage
+                      categories={categories}
+                      setCategories={setCategories}
+                      budgets={budgets}
+                      setBudgets={setBudgets}
+                      txns={txns}
+                      setTxns={setTxns}
+                      accountList={accountList}
+                      onRenameAccount={handleRenameAccount}
+                    />
+                  }
+                />
+                <Route path="/migrate" element={<MigrationPage />} />
+                <Route
+                  path="/net-worth"
+                  element={
+                    <NetWorthProvider>
+                      <NetWorthPage />
+                    </NetWorthProvider>
+                  }
+                />
+                <Route path="/goals" element={<GoalsPage />} />
+                <Route
+                  path="/budget"
+                  element={
+                    <BudgetProvider>
+                      <BudgetPage />
+                    </BudgetProvider>
+                  }
+                />
+              </Routes>
+            </div>
           </div>
-        </div>
-        <Toast />
+          <Toast />
+        </GoalsProvider>
       </AccountProvider>
     </ToastProvider>
   );
