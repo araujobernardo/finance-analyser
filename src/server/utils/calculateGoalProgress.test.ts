@@ -389,15 +389,88 @@ describe("calculateGoalProgress — net_worth_milestone", () => {
   });
 });
 
-describe("calculateGoalProgress — stub types (no-op)", () => {
-  it("does not write to DB for spending_limit goals", async () => {
+describe("calculateGoalProgress — spending_limit", () => {
+  it("writes currentAmount as abs(sum of negative transactions) for partial spend", async () => {
+    // Expenses this month = -300 (negative in DB); currentAmount = 300
+    const capturedSet: Record<string, unknown>[] = [];
+    const db = makeMockDb((args) => capturedSet.push(args), ["-300"]);
+    const goal = makeGoal({
+      type: "spending_limit",
+      targetAmount: "500.00",
+      categoryName: "Groceries",
+      linkedAccountId: null,
+    });
+
+    await calculateGoalProgress(goal, db, USER_ID);
+
+    expect(capturedSet).toHaveLength(1);
+    expect(capturedSet[0].currentAmount).toBe("300");
+    // spending_limit is NEVER auto-achieved
+    expect(capturedSet[0].status).toBeUndefined();
+  });
+
+  it("writes currentAmount > targetAmount when spending exceeds limit (not clamped)", async () => {
+    // Expenses = -600; target = 500 → currentAmount = 600 (>100%, not clamped)
+    const capturedSet: Record<string, unknown>[] = [];
+    const db = makeMockDb((args) => capturedSet.push(args), ["-600"]);
+    const goal = makeGoal({
+      type: "spending_limit",
+      targetAmount: "500.00",
+      categoryName: "Dining",
+      linkedAccountId: null,
+    });
+
+    await calculateGoalProgress(goal, db, USER_ID);
+
+    expect(capturedSet[0].currentAmount).toBe("600");
+    expect(capturedSet[0].status).toBeUndefined();
+  });
+
+  it("writes currentAmount = 0 when no expenses in category this month", async () => {
+    // No matching transactions → COALESCE returns '0' → currentAmount = 0
+    const capturedSet: Record<string, unknown>[] = [];
+    const db = makeMockDb((args) => capturedSet.push(args), ["0"]);
+    const goal = makeGoal({
+      type: "spending_limit",
+      targetAmount: "500.00",
+      categoryName: "Entertainment",
+      linkedAccountId: null,
+    });
+
+    await calculateGoalProgress(goal, db, USER_ID);
+
+    expect(capturedSet[0].currentAmount).toBe("0");
+  });
+
+  it("does not write to DB when categoryName is null (no-op)", async () => {
     const db = makeMockDb();
-    const goal = makeGoal({ type: "spending_limit", linkedAccountId: null });
+    const goal = makeGoal({
+      type: "spending_limit",
+      categoryName: null,
+      linkedAccountId: null,
+    });
 
     await calculateGoalProgress(goal, db, USER_ID);
 
     expect(
       (db as unknown as { update: ReturnType<typeof vi.fn> }).update,
     ).not.toHaveBeenCalled();
+  });
+
+  it("never sets status to 'achieved' regardless of spending amount", async () => {
+    // spending = 500, target = 500 → currentAmount = 500 but status is NOT set to 'achieved'
+    const capturedSet: Record<string, unknown>[] = [];
+    const db = makeMockDb((args) => capturedSet.push(args), ["-500"]);
+    const goal = makeGoal({
+      type: "spending_limit",
+      targetAmount: "500.00",
+      categoryName: "Shopping",
+      linkedAccountId: null,
+    });
+
+    await calculateGoalProgress(goal, db, USER_ID);
+
+    expect(capturedSet[0].status).toBeUndefined();
+    expect(capturedSet[0].currentAmount).toBe("500");
   });
 });

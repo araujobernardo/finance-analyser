@@ -1,9 +1,9 @@
 // FA-GOAL-003 — Goal Progress Auto-Calculation utility
 // Server-side only — do not import from React components or Vite browser code.
 
-import { and, eq, sql } from "drizzle-orm";
+import { and, eq, gte, lt, sql } from "drizzle-orm";
 import type { db as DbInstance } from "../../db/index.ts";
-import { goals, assets, liabilities } from "../../db/schema.ts";
+import { goals, assets, liabilities, transactions } from "../../db/schema.ts";
 import type { Goal } from "../../db/schema.ts";
 import { computeAccountBalance } from "./accountBalance.ts";
 
@@ -138,9 +138,45 @@ export async function calculateGoalProgress(
       break;
     }
 
-    case "spending_limit":
-      // No-op — will be implemented in a later task
+    case "spending_limit": {
+      if (!goal.categoryName) {
+        // Cannot compute spending without a category; leave goal unchanged
+        return;
+      }
+
+      // First day of the current UTC calendar month as YYYY-MM-DD string
+      const now = new Date();
+      const firstOfMonth = `${now.getUTCFullYear()}-${String(now.getUTCMonth() + 1).padStart(2, "0")}-01`;
+
+      // Sum negative transactions (expenses) for this category this month
+      const [spendRow] = await db
+        .select({
+          total: sql<string>`COALESCE(SUM(${transactions.amount}), '0')`,
+        })
+        .from(transactions)
+        .where(
+          and(
+            eq(transactions.userId, userId),
+            eq(transactions.category, goal.categoryName),
+            gte(transactions.date, firstOfMonth),
+            lt(transactions.amount, sql`0`),
+          ),
+        );
+
+      // spending is always positive (abs of negative sum)
+      const currentAmount = Math.abs(parseFloat(spendRow?.total ?? "0"));
+
+      // spending_limit is NEVER auto-achieved — status stays as-is
+      await db
+        .update(goals)
+        .set({
+          currentAmount: String(currentAmount),
+          updatedAt: new Date(),
+        })
+        .where(and(eq(goals.id, goal.id), eq(goals.userId, userId)));
+
       break;
+    }
 
     default:
       // Unknown goal type — leave goal unchanged
