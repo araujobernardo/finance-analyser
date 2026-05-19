@@ -103,19 +103,48 @@ describe("GoalCard — progress bar", () => {
 // ── Null currentAmount ──────────────────────────────────────────────────────
 
 describe("GoalCard — null currentAmount", () => {
-  it("shows auto-note when currentAmount is null", () => {
-    const goal = makeGoal({ currentAmount: null });
+  it("shows 'Link an account' note for savings_target without linked account", () => {
+    // FA-GOAL-003 T018: updated placeholder text
+    const goal = makeGoal({
+      type: "savings_target",
+      currentAmount: null,
+      linkedAccountId: null,
+    });
     render(<GoalCard goal={goal} />);
     expect(
-      screen.getByText(/progress will update automatically/i),
+      screen.getByText(/link an account to track progress/i),
     ).toBeInTheDocument();
+  });
+
+  it("shows 'Link a category' note for spending_limit without categoryName", () => {
+    const goal = makeGoal({
+      type: "spending_limit",
+      currentAmount: null,
+      categoryName: null,
+      linkedAccountId: null,
+    });
+    render(<GoalCard goal={goal} />);
+    expect(
+      screen.getByText(/link a category to track spending/i),
+    ).toBeInTheDocument();
+  });
+
+  it("shows 'Calculating...' when goal has required data but currentAmount is null", () => {
+    // net_worth_milestone always calculates — edge case: currentAmount not yet populated
+    const goal = makeGoal({
+      type: "net_worth_milestone",
+      currentAmount: null,
+      linkedAccountId: null,
+    });
+    render(<GoalCard goal={goal} />);
+    expect(screen.getByText(/calculating\.\.\./i)).toBeInTheDocument();
   });
 
   it("does not show auto-note when currentAmount is set", () => {
     const goal = makeGoal({ currentAmount: "500" });
     render(<GoalCard goal={goal} />);
     expect(
-      screen.queryByText(/progress will update automatically/i),
+      screen.queryByTestId("goal-card-auto-note-g1"),
     ).not.toBeInTheDocument();
   });
 });
