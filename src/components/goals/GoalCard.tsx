@@ -212,7 +212,14 @@ export function GoalCard({
                 className="goal-card__auto-note"
                 data-testid={`goal-card-auto-note-${goal.id}`}
               >
-                Progress will update automatically
+                {/* FA-GOAL-003 T018: actionable placeholder text */}
+                {(goal.type === "savings_target" ||
+                  goal.type === "debt_payoff") &&
+                !goal.linkedAccountId
+                  ? "Link an account to track progress"
+                  : goal.type === "spending_limit" && !goal.categoryName
+                    ? "Link a category to track spending"
+                    : "Calculating..."}
               </span>
               <span
                 className="goal-card__target-amount"
