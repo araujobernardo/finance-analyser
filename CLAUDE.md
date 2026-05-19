@@ -36,6 +36,6 @@ are in [constitution.md](constitution.md).
 
 For project principles, governance, and agent workflow see: constitution.md
 
-**Active feature plan**: [specs/025-goal-progress-auto-calc/plan.md](specs/025-goal-progress-auto-calc/plan.md)
+**Active feature plan**: [specs/026-dashboard-goals-widget/plan.md](specs/026-dashboard-goals-widget/plan.md)
 
 <!-- SPECKIT END -->
