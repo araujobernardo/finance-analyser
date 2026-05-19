@@ -81,3 +81,27 @@ export interface ApiGoal {
   createdAt: string;
   updatedAt: string;
 }
+
+// FA-BUDG-002 — Budget vs Actual Spend Comparison View
+
+export interface ApiBudget {
+  id: string;
+  categoryName: string;
+  year: number;
+  month: number;
+  limitAmount: number; // parsed from numeric string
+  actualSpend: number; // calculated by server
+  remaining: number; // limitAmount - actualSpend (can be negative)
+  percentageUsed: number; // 0–∞, not capped
+}
+
+export interface ApiBudgetDefault {
+  id: string;
+  categoryName: string;
+  limitAmount: number;
+}
+
+export interface ApiUserPreferences {
+  id: string;
+  monthStartDay: number; // 1–28
+}

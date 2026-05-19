@@ -6,6 +6,9 @@ import { assetsRouter } from "./routes/assets.ts";
 import authRouter from "./routes/auth.ts";
 import healthRouter from "./routes/health.ts";
 import { goalsRouter } from "./routes/goals.ts";
+import { budgetsRouter } from "./routes/budgets.ts";
+import { budgetDefaultsRouter } from "./routes/budgetDefaults.ts";
+import { userPreferencesRouter } from "./routes/userPreferences.ts";
 import { liabilitiesRouter } from "./routes/liabilities.ts";
 import { netWorthRouter } from "./routes/netWorth.ts";
 import {
@@ -34,6 +37,9 @@ app.use("/api/transactions", transactionOpsRouter);
 app.use("/api/assets", assetsRouter);
 app.use("/api/liabilities", liabilitiesRouter);
 app.use("/api/goals", goalsRouter);
+app.use("/api/budgets", budgetsRouter);
+app.use("/api/budget-defaults", budgetDefaultsRouter);
+app.use("/api/preferences", userPreferencesRouter);
 app.use("/api/net-worth", netWorthRouter);
 
 app.use((_req, res) => {
