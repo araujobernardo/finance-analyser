@@ -205,6 +205,10 @@
   background: var(--color-danger);
 }
 
+.goal-card__progress-fill--warning {
+  background: var(--amber);
+}
+
 /* ── Amounts row ─────────────────────────────────────────────────────────────── */
 
 .goal-card__amounts {
