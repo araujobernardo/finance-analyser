@@ -36,6 +36,6 @@ are in [constitution.md](constitution.md).
 
 For project principles, governance, and agent workflow see: constitution.md
 
-**Active feature plan**: [specs/027-budget-data-model/plan.md](specs/027-budget-data-model/plan.md)
+**Active feature plan**: [specs/028-budget-vs-actual/plan.md](specs/028-budget-vs-actual/plan.md)
 
 <!-- SPECKIT END -->
