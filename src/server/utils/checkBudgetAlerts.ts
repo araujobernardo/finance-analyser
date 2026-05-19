@@ -1,5 +1,6 @@
 // FA-BUDG-003 T004 — Check which budget categories have exceeded the alert threshold
 // Server-side only — do not import from React components or Vite browser code.
+// T017 verification: tsc --noEmit exits 0, npm run lint exits 0 across all FA-BUDG-003 files.
 
 import { and, eq } from "drizzle-orm";
 import type { db as DbInstance } from "../../db/index.ts";
