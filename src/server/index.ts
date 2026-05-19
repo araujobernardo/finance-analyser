@@ -1,5 +1,8 @@
 import cors from "cors";
 import express from "express";
+import { drizzle } from "drizzle-orm/postgres-js";
+import { migrate } from "drizzle-orm/postgres-js/migrator";
+import postgres from "postgres";
 import { errorHandler } from "./middleware/errorHandler.ts";
 import { accountsRouter } from "./routes/accounts.ts";
 import { assetsRouter } from "./routes/assets.ts";
@@ -52,6 +55,35 @@ app.use(errorHandler);
 
 export default app;
 
-app.listen(PORT, () => {
-  console.log(`Server running on port ${PORT}`);
-});
+// ── Auto-migrate on startup ──────────────────────────────────────────────────
+// Runs all pending Drizzle migrations before the server accepts connections.
+// This is idempotent — already-applied migrations are skipped.
+// Required because the Render server start command does not include a separate
+// migration step, and some migrations (0006, 0007, 0008) were never applied to
+// the production database.
+
+async function startServer() {
+  const dbUrl = process.env.DATABASE_URL;
+  if (!dbUrl) {
+    console.error("[startup] DATABASE_URL is not set — cannot run migrations");
+    process.exit(1);
+  }
+
+  try {
+    const migrationClient = postgres(dbUrl, { max: 1 });
+    const migrationDb = drizzle(migrationClient);
+    console.log("[startup] Applying pending migrations...");
+    await migrate(migrationDb, { migrationsFolder: "./src/db/migrations" });
+    console.log("[startup] Migrations complete.");
+    await migrationClient.end();
+  } catch (err) {
+    console.error("[startup] Migration failed:", err);
+    process.exit(1);
+  }
+
+  app.listen(PORT, () => {
+    console.log(`Server running on port ${PORT}`);
+  });
+}
+
+await startServer();
