@@ -1,0 +1,75 @@
+// FA-GOAL-003 — Goal Progress Auto-Calculation utility
+// Server-side only — do not import from React components or Vite browser code.
+
+import { and, eq } from "drizzle-orm";
+import type { db as DbInstance } from "../../db/index.ts";
+import { goals } from "../../db/schema.ts";
+import type { Goal } from "../../db/schema.ts";
+import { computeAccountBalance } from "./accountBalance.ts";
+
+type Db = typeof DbInstance;
+
+/**
+ * Recomputes the progress of a single goal and writes the result back to the
+ * database.  Goals already in a terminal state ('achieved' or 'abandoned') are
+ * skipped immediately — no DB write is performed.
+ *
+ * Supported types
+ *   savings_target      — derives currentAmount from the linked account balance
+ *   debt_payoff         — stub, no-op until a later task
+ *   net_worth_milestone — stub, no-op until a later task
+ *   spending_limit      — stub, no-op until a later task
+ */
+export async function calculateGoalProgress(
+  goal: Goal,
+  db: Db,
+  userId: string,
+): Promise<void> {
+  // Terminal-status guard — skip without any DB write
+  if (goal.status === "achieved" || goal.status === "abandoned") {
+    return;
+  }
+
+  switch (goal.type) {
+    case "savings_target": {
+      if (!goal.linkedAccountId) {
+        // Cannot compute balance without a linked account; leave goal unchanged
+        return;
+      }
+
+      const rawBalance = await computeAccountBalance(
+        goal.linkedAccountId,
+        userId,
+        db,
+      );
+
+      // Clamp negative balances to 0 (savings can't be negative)
+      const currentAmount = Math.max(0, rawBalance);
+
+      const targetAmount = parseFloat(goal.targetAmount);
+      const newStatus =
+        currentAmount >= targetAmount ? "achieved" : goal.status;
+
+      await db
+        .update(goals)
+        .set({
+          currentAmount: String(currentAmount),
+          status: newStatus,
+          updatedAt: new Date(),
+        })
+        .where(and(eq(goals.id, goal.id), eq(goals.userId, userId)));
+
+      break;
+    }
+
+    case "debt_payoff":
+    case "net_worth_milestone":
+    case "spending_limit":
+      // No-op — these branches will be implemented in later tasks
+      break;
+
+    default:
+      // Unknown goal type — leave goal unchanged
+      break;
+  }
+}
