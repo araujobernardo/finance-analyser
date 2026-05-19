@@ -7,6 +7,7 @@ import {
   authenticateToken,
   type AuthLocals,
 } from "../middleware/authenticateToken.ts";
+import { recalculateUserGoals } from "../utils/recalculateUserGoals.ts";
 
 export const goalsRouter = Router();
 
@@ -78,6 +79,9 @@ const updateGoalSchema = z
 goalsRouter.get("/", authenticateToken, async (_req, res, next) => {
   try {
     const userId = (res.locals as AuthLocals).user.userId;
+    // Recalculate progress for all active goals before returning so the
+    // client always receives up-to-date currentAmount values.
+    await recalculateUserGoals(userId, db);
     const rows = await db
       .select()
       .from(goals)
