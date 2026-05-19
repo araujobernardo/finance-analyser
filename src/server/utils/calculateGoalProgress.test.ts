@@ -162,18 +162,97 @@ describe("calculateGoalProgress — savings_target", () => {
   });
 });
 
-describe("calculateGoalProgress — stub types (no-op)", () => {
-  it("does not write to DB for debt_payoff goals", async () => {
+describe("calculateGoalProgress — debt_payoff", () => {
+  beforeEach(() => {
+    mockComputeAccountBalance.mockReset();
+  });
+
+  it("computes partial payoff progress correctly", async () => {
+    // targetAmount = 5000 (initial debt); balance = -3000 (still owed)
+    // outstanding = 3000; paid = 5000 - 3000 = 2000; 40% paid off
+    mockComputeAccountBalance.mockResolvedValue(-3000);
+
+    const capturedSet: Record<string, unknown>[] = [];
+    const db = makeMockDb((args) => capturedSet.push(args));
+    const goal = makeGoal({ type: "debt_payoff", targetAmount: "5000.00" });
+
+    await calculateGoalProgress(goal, db, USER_ID);
+
+    expect(capturedSet).toHaveLength(1);
+    expect(capturedSet[0].currentAmount).toBe("2000");
+    expect(capturedSet[0].status).toBe("active");
+  });
+
+  it("auto-achieves the goal when outstanding balance is zero", async () => {
+    // Account balance is 0 → fully paid off
+    mockComputeAccountBalance.mockResolvedValue(0);
+
+    const capturedSet: Record<string, unknown>[] = [];
+    const db = makeMockDb((args) => capturedSet.push(args));
+    const goal = makeGoal({ type: "debt_payoff", targetAmount: "5000.00" });
+
+    await calculateGoalProgress(goal, db, USER_ID);
+
+    expect(capturedSet[0].status).toBe("achieved");
+    expect(capturedSet[0].currentAmount).toBe("5000");
+  });
+
+  it("clamps currentAmount to targetAmount even when paid > targetAmount (over-achieved)", async () => {
+    // If balance = 0, paid = 5000 - 0 = 5000; Math.min(5000, 5000) = 5000
+    // This also verifies the upper clamp (Math.min) works correctly.
+    mockComputeAccountBalance.mockResolvedValue(0);
+
+    const capturedSet: Record<string, unknown>[] = [];
+    const db = makeMockDb((args) => capturedSet.push(args));
+    const goal = makeGoal({ type: "debt_payoff", targetAmount: "5000.00" });
+
+    await calculateGoalProgress(goal, db, USER_ID);
+
+    // currentAmount should be exactly targetAmount (clamped at the top)
+    expect(capturedSet[0].currentAmount).toBe("5000");
+  });
+
+  it("clamps currentAmount to 0 when debt has grown beyond targetAmount", async () => {
+    // Debt grew from 5000 to 8000; paid = 5000 - 8000 = -3000 → clamp to 0
+    mockComputeAccountBalance.mockResolvedValue(-8000);
+
+    const capturedSet: Record<string, unknown>[] = [];
+    const db = makeMockDb((args) => capturedSet.push(args));
+    const goal = makeGoal({ type: "debt_payoff", targetAmount: "5000.00" });
+
+    await calculateGoalProgress(goal, db, USER_ID);
+
+    expect(capturedSet[0].currentAmount).toBe("0");
+    expect(capturedSet[0].status).toBe("active");
+  });
+
+  it("treats negative account balance as absolute value (credit card)", async () => {
+    // balance = -2000 → outstanding = 2000; paid = 5000 - 2000 = 3000
+    mockComputeAccountBalance.mockResolvedValue(-2000);
+
+    const capturedSet: Record<string, unknown>[] = [];
+    const db = makeMockDb((args) => capturedSet.push(args));
+    const goal = makeGoal({ type: "debt_payoff", targetAmount: "5000.00" });
+
+    await calculateGoalProgress(goal, db, USER_ID);
+
+    expect(capturedSet[0].currentAmount).toBe("3000");
+  });
+
+  it("does not write to DB when linkedAccountId is null", async () => {
     const db = makeMockDb();
     const goal = makeGoal({ type: "debt_payoff", linkedAccountId: null });
 
     await calculateGoalProgress(goal, db, USER_ID);
 
+    expect(mockComputeAccountBalance).not.toHaveBeenCalled();
     expect(
       (db as unknown as { update: ReturnType<typeof vi.fn> }).update,
     ).not.toHaveBeenCalled();
   });
+});
 
+describe("calculateGoalProgress — stub types (no-op)", () => {
   it("does not write to DB for net_worth_milestone goals", async () => {
     const db = makeMockDb();
     const goal = makeGoal({
