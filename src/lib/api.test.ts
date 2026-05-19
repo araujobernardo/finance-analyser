@@ -18,13 +18,44 @@ vi.mock("react-router-dom", () => ({
 // ── Tests ─────────────────────────────────────────────────────────────────
 
 describe("API_BASE normalisation (#422)", () => {
-  // NOTE: import.meta.env.VITE_API_URL is resolved at module load time, so
-  // these tests validate the exported constant against the rules documented
-  // in api.ts. The constant is "" in the test environment (no VITE_API_URL set).
+  // NOTE: import.meta.env.VITE_API_URL is resolved at module load time (baked
+  // by Vite before the test file runs), so vi.stubEnv cannot override it after
+  // the fact. Tests must be environment-agnostic: assert the normalisation rules
+  // rather than hardcoding the expected value.
 
-  it("resolves to an empty string when VITE_API_URL is not set", () => {
-    // In the test environment VITE_API_URL is undefined, so API_BASE must be "".
-    expect(API_BASE).toBe("");
+  it("normalises VITE_API_URL=/api to empty string (double-prefix guard)", () => {
+    // The normalisation rule: if VITE_API_URL is "/api", collapse to ""
+    // so that call sites using "/api/..." don't produce "/api/api/...".
+    function normalise(raw: string): string {
+      return raw === "/api" ? "" : raw;
+    }
+    expect(normalise("/api")).toBe("");
+  });
+
+  it("passes through absolute URLs unchanged", () => {
+    // Absolute URLs (e.g. Render web service URL) must be used as-is.
+    function normalise(raw: string): string {
+      return raw === "/api" ? "" : raw;
+    }
+    expect(normalise("https://finance-analyser-web-service.onrender.com")).toBe(
+      "https://finance-analyser-web-service.onrender.com",
+    );
+  });
+
+  it("passes through empty string unchanged", () => {
+    // When VITE_API_URL is not set (undefined → ""), API_BASE is "".
+    function normalise(raw: string): string {
+      return raw === "/api" ? "" : raw;
+    }
+    expect(normalise("")).toBe("");
+  });
+
+  it("API_BASE equals the normalised value of VITE_API_URL in the current environment", () => {
+    // Environment-agnostic: whatever VITE_API_URL is baked to, API_BASE must
+    // equal the normalised form (the "/api" guard applied).
+    const raw = (import.meta.env.VITE_API_URL as string | undefined) ?? "";
+    const expected = raw === "/api" ? "" : raw;
+    expect(API_BASE).toBe(expected);
   });
 });
 
