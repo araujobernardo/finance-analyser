@@ -1,9 +1,9 @@
 // FA-GOAL-003 — Goal Progress Auto-Calculation utility
 // Server-side only — do not import from React components or Vite browser code.
 
-import { and, eq } from "drizzle-orm";
+import { and, eq, sql } from "drizzle-orm";
 import type { db as DbInstance } from "../../db/index.ts";
-import { goals } from "../../db/schema.ts";
+import { goals, assets, liabilities } from "../../db/schema.ts";
 import type { Goal } from "../../db/schema.ts";
 import { computeAccountBalance } from "./accountBalance.ts";
 
@@ -101,9 +101,45 @@ export async function calculateGoalProgress(
       break;
     }
 
-    case "net_worth_milestone":
+    case "net_worth_milestone": {
+      // Query total assets and liabilities for the user (no linkedAccountId needed)
+      const [assetsRow] = await db
+        .select({
+          total: sql<string>`COALESCE(SUM(${assets.value}), '0')`,
+        })
+        .from(assets)
+        .where(eq(assets.userId, userId));
+
+      const [liabsRow] = await db
+        .select({
+          total: sql<string>`COALESCE(SUM(${liabilities.value}), '0')`,
+        })
+        .from(liabilities)
+        .where(eq(liabilities.userId, userId));
+
+      const assetsTotal = parseFloat(assetsRow?.total ?? "0");
+      const liabsTotal = parseFloat(liabsRow?.total ?? "0");
+
+      // currentAmount = net worth (can be negative — store as-is, no clamping)
+      const currentAmount = assetsTotal - liabsTotal;
+      const targetAmount = parseFloat(goal.targetAmount);
+      const newStatus =
+        currentAmount >= targetAmount ? "achieved" : goal.status;
+
+      await db
+        .update(goals)
+        .set({
+          currentAmount: String(currentAmount),
+          status: newStatus,
+          updatedAt: new Date(),
+        })
+        .where(and(eq(goals.id, goal.id), eq(goals.userId, userId)));
+
+      break;
+    }
+
     case "spending_limit":
-      // No-op — these branches will be implemented in later tasks
+      // No-op — will be implemented in a later task
       break;
 
     default:

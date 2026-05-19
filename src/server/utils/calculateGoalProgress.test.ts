@@ -1,5 +1,5 @@
 /**
- * FA-GOAL-003 T001 — Unit tests for calculateGoalProgress
+ * FA-GOAL-003 T001 / T009 — Unit tests for calculateGoalProgress
  *
  * All DB interactions are mocked so these tests run without a real database.
  */
@@ -19,17 +19,50 @@ import { computeAccountBalance } from "./accountBalance";
 
 const mockComputeAccountBalance = vi.mocked(computeAccountBalance);
 
-// Minimal Drizzle Db mock — we only care about .update().set().where()
-function makeMockDb(onUpdate?: (args: Record<string, unknown>) => void) {
-  const whereChain = { where: vi.fn().mockResolvedValue(undefined) };
+// ---------------------------------------------------------------------------
+// Mock DB factory
+// Supports both .update().set().where() and .select().from().where()
+// ---------------------------------------------------------------------------
+
+/**
+ * Creates a mock Drizzle db that handles:
+ *   - db.update(t).set(args).where(...) — for goal writes
+ *   - db.select(...).from(t).where(...)  — returns selectResults in sequence
+ *
+ * @param onUpdate   callback invoked with the args passed to .set()
+ * @param selectResults  ordered list of values to return from consecutive
+ *                       db.select() calls (each resolves to [{ total: value }])
+ */
+function makeMockDb(
+  onUpdate?: (args: Record<string, unknown>) => void,
+  selectResults: string[] = [],
+) {
+  // UPDATE chain
+  const whereUpdate = { where: vi.fn().mockResolvedValue(undefined) };
   const setChain = {
     set: vi.fn((args: Record<string, unknown>) => {
       onUpdate?.(args);
-      return whereChain;
+      return whereUpdate;
     }),
   };
-  const updateChain = { update: vi.fn().mockReturnValue(setChain) };
-  return updateChain as unknown as Parameters<typeof calculateGoalProgress>[1];
+  const updateFn = vi.fn().mockReturnValue(setChain);
+
+  // SELECT chain — each call to .select() consumes the next selectResults entry
+  let selectCallCount = 0;
+  const makeSelectChain = () => {
+    const idx = selectCallCount++;
+    const resolvedValue =
+      idx < selectResults.length ? [{ total: selectResults[idx] }] : [{}];
+    const whereSelect = { where: vi.fn().mockResolvedValue(resolvedValue) };
+    const fromChain = { from: vi.fn().mockReturnValue(whereSelect) };
+    return fromChain;
+  };
+  const selectFn = vi.fn().mockImplementation(makeSelectChain);
+
+  return {
+    update: updateFn,
+    select: selectFn,
+  } as unknown as Parameters<typeof calculateGoalProgress>[1];
 }
 
 // ---------------------------------------------------------------------------
@@ -252,21 +285,111 @@ describe("calculateGoalProgress — debt_payoff", () => {
   });
 });
 
-describe("calculateGoalProgress — stub types (no-op)", () => {
-  it("does not write to DB for net_worth_milestone goals", async () => {
-    const db = makeMockDb();
+describe("calculateGoalProgress — net_worth_milestone", () => {
+  it("writes correct currentAmount (assets - liabilities) for partial progress", async () => {
+    // assets = 50000, liabilities = 30000 → net worth = 20000
+    // target = 100000 → still active
+    const capturedSet: Record<string, unknown>[] = [];
+    const db = makeMockDb((args) => capturedSet.push(args), ["50000", "30000"]);
     const goal = makeGoal({
       type: "net_worth_milestone",
+      targetAmount: "100000.00",
       linkedAccountId: null,
     });
 
     await calculateGoalProgress(goal, db, USER_ID);
 
-    expect(
-      (db as unknown as { update: ReturnType<typeof vi.fn> }).update,
-    ).not.toHaveBeenCalled();
+    expect(capturedSet).toHaveLength(1);
+    expect(capturedSet[0].currentAmount).toBe("20000");
+    expect(capturedSet[0].status).toBe("active");
   });
 
+  it("auto-achieves when net worth equals targetAmount", async () => {
+    // assets = 100000, liabilities = 0 → net worth = 100000 = target
+    const capturedSet: Record<string, unknown>[] = [];
+    const db = makeMockDb((args) => capturedSet.push(args), ["100000", "0"]);
+    const goal = makeGoal({
+      type: "net_worth_milestone",
+      targetAmount: "100000.00",
+      linkedAccountId: null,
+    });
+
+    await calculateGoalProgress(goal, db, USER_ID);
+
+    expect(capturedSet[0].status).toBe("achieved");
+    expect(capturedSet[0].currentAmount).toBe("100000");
+  });
+
+  it("auto-achieves when net worth exceeds targetAmount", async () => {
+    // assets = 150000, liabilities = 20000 → net worth = 130000 > target 100000
+    const capturedSet: Record<string, unknown>[] = [];
+    const db = makeMockDb(
+      (args) => capturedSet.push(args),
+      ["150000", "20000"],
+    );
+    const goal = makeGoal({
+      type: "net_worth_milestone",
+      targetAmount: "100000.00",
+      linkedAccountId: null,
+    });
+
+    await calculateGoalProgress(goal, db, USER_ID);
+
+    expect(capturedSet[0].status).toBe("achieved");
+    expect(capturedSet[0].currentAmount).toBe("130000");
+  });
+
+  it("stores negative net worth as-is (no clamping)", async () => {
+    // assets = 5000, liabilities = 20000 → net worth = -15000
+    const capturedSet: Record<string, unknown>[] = [];
+    const db = makeMockDb((args) => capturedSet.push(args), ["5000", "20000"]);
+    const goal = makeGoal({
+      type: "net_worth_milestone",
+      targetAmount: "100000.00",
+      linkedAccountId: null,
+    });
+
+    await calculateGoalProgress(goal, db, USER_ID);
+
+    expect(capturedSet[0].currentAmount).toBe("-15000");
+    expect(capturedSet[0].status).toBe("active");
+  });
+
+  it("works with zero assets and zero liabilities (new user)", async () => {
+    // assets = 0, liabilities = 0 → net worth = 0
+    const capturedSet: Record<string, unknown>[] = [];
+    const db = makeMockDb((args) => capturedSet.push(args), ["0", "0"]);
+    const goal = makeGoal({
+      type: "net_worth_milestone",
+      targetAmount: "50000.00",
+      linkedAccountId: null,
+    });
+
+    await calculateGoalProgress(goal, db, USER_ID);
+
+    expect(capturedSet[0].currentAmount).toBe("0");
+    expect(capturedSet[0].status).toBe("active");
+  });
+
+  it("does not require linkedAccountId — works for any user", async () => {
+    // linkedAccountId is null but the goal still processes
+    const capturedSet: Record<string, unknown>[] = [];
+    const db = makeMockDb((args) => capturedSet.push(args), ["80000", "10000"]);
+    const goal = makeGoal({
+      type: "net_worth_milestone",
+      targetAmount: "100000.00",
+      linkedAccountId: null,
+    });
+
+    await calculateGoalProgress(goal, db, USER_ID);
+
+    // Should write — net_worth_milestone doesn't need linkedAccountId
+    expect(capturedSet).toHaveLength(1);
+    expect(capturedSet[0].currentAmount).toBe("70000");
+  });
+});
+
+describe("calculateGoalProgress — stub types (no-op)", () => {
   it("does not write to DB for spending_limit goals", async () => {
     const db = makeMockDb();
     const goal = makeGoal({ type: "spending_limit", linkedAccountId: null });
