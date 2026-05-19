@@ -104,4 +104,16 @@ export interface ApiBudgetDefault {
 export interface ApiUserPreferences {
   id: string;
   monthStartDay: number; // 1–28
+  // FA-BUDG-003 T003: alert preference fields
+  alertThreshold: number; // 50–100
+  emailAlertsEnabled: boolean;
+  lastAlertEmailSentAt: string | null; // ISO date string e.g. "2026-05-19"
+}
+
+// FA-BUDG-003 T003: in-app and email alert category result
+export interface AlertedCategory {
+  categoryName: string;
+  limitAmount: number;
+  actualSpend: number;
+  percentageUsed: number;
 }

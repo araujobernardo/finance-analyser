@@ -1,0 +1,8 @@
+{
+  "crons": [
+    {
+      "path": "/api/jobs/budget-alerts",
+      "schedule": "0 20 * * *"
+    }
+  ]
+}

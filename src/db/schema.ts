@@ -241,6 +241,10 @@ export const userPreferences = pgTable("user_preferences", {
     .unique()
     .references(() => users.id, { onDelete: "cascade" }),
   monthStartDay: integer("month_start_day").notNull().default(1),
+  // FA-BUDG-003 T002: alert preference columns (migration 0008_budget_alert_preferences.sql)
+  alertThreshold: integer("alert_threshold").notNull().default(80),
+  emailAlertsEnabled: boolean("email_alerts_enabled").notNull().default(true),
+  lastAlertEmailSentAt: date("last_alert_email_sent_at"),
   createdAt: timestamp("created_at", { withTimezone: true })
     .defaultNow()
     .notNull(),

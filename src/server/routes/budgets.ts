@@ -11,7 +11,8 @@ import {
   type AuthLocals,
 } from "../middleware/authenticateToken.ts";
 import { calculateBudgetSpend } from "../utils/calculateBudgetSpend.ts";
-import type { ApiBudget } from "../../types/api.ts";
+import { checkBudgetAlerts } from "../utils/checkBudgetAlerts.ts";
+import type { ApiBudget, AlertedCategory } from "../../types/api.ts";
 
 export const budgetsRouter = Router();
 
@@ -276,6 +277,19 @@ budgetsRouter.patch("/:id", async (req, res, next) => {
       monthStartDay,
     );
     res.json(apiBudget);
+  } catch (err) {
+    next(err);
+  }
+});
+
+// ── GET /alerts ──────────────────────────────────────────────────────────────
+// FA-BUDG-003 T005: return budget categories that exceed the user's alert threshold
+
+budgetsRouter.get("/alerts", async (_req, res, next) => {
+  try {
+    const userId = (res.locals as AuthLocals).user.userId;
+    const alerted: AlertedCategory[] = await checkBudgetAlerts(userId, db);
+    res.json(alerted);
   } catch (err) {
     next(err);
   }

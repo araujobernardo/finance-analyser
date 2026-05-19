@@ -39,6 +39,9 @@ userPreferencesRouter.get("/", async (_req, res, next) => {
     const result: ApiUserPreferences = {
       id: row.id,
       monthStartDay: row.monthStartDay,
+      alertThreshold: row.alertThreshold,
+      emailAlertsEnabled: row.emailAlertsEnabled,
+      lastAlertEmailSentAt: row.lastAlertEmailSentAt,
     };
 
     res.json(result);
@@ -48,9 +51,12 @@ userPreferencesRouter.get("/", async (_req, res, next) => {
 });
 
 // ── PATCH / ──────────────────────────────────────────────────────────────────
+// FA-BUDG-003 T013: extend Zod schema with alertThreshold and emailAlertsEnabled
 
 const updatePreferencesSchema = z.object({
-  monthStartDay: z.number().int().min(1).max(28),
+  monthStartDay: z.number().int().min(1).max(28).optional(),
+  alertThreshold: z.number().int().min(50).max(100).optional(),
+  emailAlertsEnabled: z.boolean().optional(),
 });
 
 userPreferencesRouter.patch("/", async (req, res, next) => {
@@ -59,29 +65,41 @@ userPreferencesRouter.patch("/", async (req, res, next) => {
 
     const parsed = updatePreferencesSchema.safeParse(req.body);
     if (!parsed.success) {
-      res
-        .status(400)
-        .json({
-          error:
-            parsed.error.issues[0]?.message ??
-            "monthStartDay must be an integer between 1 and 28",
-        });
+      res.status(400).json({
+        error: parsed.error.issues[0]?.message ?? "Invalid preferences",
+      });
       return;
     }
-    const { monthStartDay } = parsed.data;
+    const { monthStartDay, alertThreshold, emailAlertsEnabled } = parsed.data;
+
+    const setFields: Record<string, unknown> = { updatedAt: new Date() };
+    if (monthStartDay !== undefined) setFields.monthStartDay = monthStartDay;
+    if (alertThreshold !== undefined) setFields.alertThreshold = alertThreshold;
+    if (emailAlertsEnabled !== undefined)
+      setFields.emailAlertsEnabled = emailAlertsEnabled;
+
+    const insertValues = {
+      userId,
+      monthStartDay: monthStartDay ?? 1,
+      alertThreshold: alertThreshold ?? 80,
+      emailAlertsEnabled: emailAlertsEnabled ?? true,
+    };
 
     const [upserted] = await db
       .insert(userPreferences)
-      .values({ userId, monthStartDay })
+      .values(insertValues)
       .onConflictDoUpdate({
         target: [userPreferences.userId],
-        set: { monthStartDay, updatedAt: new Date() },
+        set: setFields,
       })
       .returning();
 
     const result: ApiUserPreferences = {
       id: upserted.id,
       monthStartDay: upserted.monthStartDay,
+      alertThreshold: upserted.alertThreshold,
+      emailAlertsEnabled: upserted.emailAlertsEnabled,
+      lastAlertEmailSentAt: upserted.lastAlertEmailSentAt,
     };
 
     res.json(result);
