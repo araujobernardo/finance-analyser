@@ -1,8 +1,14 @@
 import { useState } from "react";
-import { Navigate, Route, Routes, useNavigate } from "react-router-dom";
+import {
+  Navigate,
+  Route,
+  Routes,
+  useNavigate,
+  useLocation,
+} from "react-router-dom";
 import { AuthProvider } from "./context/AuthContext";
 import { ToastProvider } from "./context/ToastContext";
-import { AccountProvider } from "./context/AccountContext";
+import { AccountProvider, useAccount } from "./context/AccountContext";
 import { NetWorthProvider } from "./context/NetWorthContext";
 import { GoalsProvider } from "./context/GoalsContext";
 import { BudgetProvider } from "./context/BudgetContext";
@@ -10,6 +16,7 @@ import { ProtectedRoute } from "./components/ProtectedRoute";
 import { PublicOnlyRoute } from "./components/PublicOnlyRoute";
 import { Sidebar } from "./components/Sidebar";
 import { Toast } from "./components/Toast";
+import { AlertBanner } from "./components/AlertBanner";
 import { DashboardPage } from "./pages/DashboardPage";
 import { TransactionsPage } from "./pages/TransactionsPage";
 import { ChatPage } from "./pages/ChatPage";
@@ -104,6 +111,21 @@ function detectTransfers(allTxns: PfaTxn[]): PfaTxn[] {
   return allTxns.map((t) =>
     ids.has(t.id) ? { ...t, category: "Savings", isTransfer: true } : t,
   );
+}
+
+// ── Migration Guard ──────────────────────────────────────────────────────────
+// Redirects to /migrate when the user has localStorage accounts (old system)
+// but no API accounts (new system) and hasn't completed the migration yet.
+// Must be rendered inside AccountProvider so it can read the context.
+function MigrationGuard({ children }: { children: React.ReactNode }) {
+  const { needsMigration, isLoading } = useAccount();
+  const location = useLocation();
+
+  // Don't redirect while accounts are loading or if already on /migrate
+  if (!isLoading && needsMigration && location.pathname !== "/migrate") {
+    return <Navigate to="/migrate" replace />;
+  }
+  return <>{children}</>;
 }
 
 // ── Root App ────────────────────────────────────────────────────────────────
@@ -333,93 +355,96 @@ export default function App() {
   const appShell = (
     <ToastProvider>
       <AccountProvider>
-        <GoalsProvider>
-          <div className="app-shell">
-            <Sidebar
-              onUpload={handleUpload}
-              uploadStatus={uploadStatus}
-              txnCount={txns.length}
-              accountList={accountList}
-              onRenameAccount={handleRenameAccount}
-            />
-            <div className="app-content">
-              <Routes>
-                <Route index element={<Navigate to="/dashboard" replace />} />
-                <Route
-                  path="/dashboard"
-                  element={
-                    <DashboardPage
-                      txns={txns}
-                      months={months}
-                      selectedMonths={currentMonths}
-                      setSelectedMonths={setSelectedMonths}
-                      budgets={budgets}
-                      accountList={accountList}
-                      categories={categories}
-                    />
-                  }
-                />
-                <Route
-                  path="/transactions"
-                  element={
-                    <TransactionsPage
-                      txns={txns}
-                      accountList={accountList}
-                      categories={categories}
-                      onBulkCategoryChange={handleBulkCategoryChange}
-                    />
-                  }
-                />
-                <Route
-                  path="/chat"
-                  element={
-                    <ChatPage
-                      txns={txns}
-                      budgets={budgets}
-                      categories={categories}
-                      messages={chatMessages}
-                      setMessages={setChatMessages}
-                    />
-                  }
-                />
-                <Route
-                  path="/settings"
-                  element={
-                    <SettingsPage
-                      categories={categories}
-                      setCategories={setCategories}
-                      budgets={budgets}
-                      setBudgets={setBudgets}
-                      txns={txns}
-                      setTxns={setTxns}
-                      accountList={accountList}
-                      onRenameAccount={handleRenameAccount}
-                    />
-                  }
-                />
-                <Route path="/migrate" element={<MigrationPage />} />
-                <Route
-                  path="/net-worth"
-                  element={
-                    <NetWorthProvider>
-                      <NetWorthPage />
-                    </NetWorthProvider>
-                  }
-                />
-                <Route path="/goals" element={<GoalsPage />} />
-                <Route
-                  path="/budget"
-                  element={
-                    <BudgetProvider>
-                      <BudgetPage />
-                    </BudgetProvider>
-                  }
-                />
-              </Routes>
+        <MigrationGuard>
+          <GoalsProvider>
+            <div className="app-shell">
+              <Sidebar
+                onUpload={handleUpload}
+                uploadStatus={uploadStatus}
+                txnCount={txns.length}
+                accountList={accountList}
+                onRenameAccount={handleRenameAccount}
+              />
+              <div className="app-content">
+                <AlertBanner />
+                <Routes>
+                  <Route index element={<Navigate to="/dashboard" replace />} />
+                  <Route
+                    path="/dashboard"
+                    element={
+                      <DashboardPage
+                        txns={txns}
+                        months={months}
+                        selectedMonths={currentMonths}
+                        setSelectedMonths={setSelectedMonths}
+                        budgets={budgets}
+                        accountList={accountList}
+                        categories={categories}
+                      />
+                    }
+                  />
+                  <Route
+                    path="/transactions"
+                    element={
+                      <TransactionsPage
+                        txns={txns}
+                        accountList={accountList}
+                        categories={categories}
+                        onBulkCategoryChange={handleBulkCategoryChange}
+                      />
+                    }
+                  />
+                  <Route
+                    path="/chat"
+                    element={
+                      <ChatPage
+                        txns={txns}
+                        budgets={budgets}
+                        categories={categories}
+                        messages={chatMessages}
+                        setMessages={setChatMessages}
+                      />
+                    }
+                  />
+                  <Route
+                    path="/settings"
+                    element={
+                      <SettingsPage
+                        categories={categories}
+                        setCategories={setCategories}
+                        budgets={budgets}
+                        setBudgets={setBudgets}
+                        txns={txns}
+                        setTxns={setTxns}
+                        accountList={accountList}
+                        onRenameAccount={handleRenameAccount}
+                      />
+                    }
+                  />
+                  <Route path="/migrate" element={<MigrationPage />} />
+                  <Route
+                    path="/net-worth"
+                    element={
+                      <NetWorthProvider>
+                        <NetWorthPage />
+                      </NetWorthProvider>
+                    }
+                  />
+                  <Route path="/goals" element={<GoalsPage />} />
+                  <Route
+                    path="/budget"
+                    element={
+                      <BudgetProvider>
+                        <BudgetPage />
+                      </BudgetProvider>
+                    }
+                  />
+                </Routes>
+              </div>
             </div>
-          </div>
-          <Toast />
-        </GoalsProvider>
+            <Toast />
+          </GoalsProvider>
+        </MigrationGuard>
       </AccountProvider>
     </ToastProvider>
   );
