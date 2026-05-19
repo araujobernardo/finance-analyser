@@ -68,7 +68,7 @@ describe("calculateGoalProgress — terminal status guard", () => {
     await calculateGoalProgress(goal, db, USER_ID);
 
     expect(
-      (db as { update: ReturnType<typeof vi.fn> }).update,
+      (db as unknown as { update: ReturnType<typeof vi.fn> }).update,
     ).not.toHaveBeenCalled();
     expect(mockComputeAccountBalance).not.toHaveBeenCalled();
   });
@@ -80,7 +80,7 @@ describe("calculateGoalProgress — terminal status guard", () => {
     await calculateGoalProgress(goal, db, USER_ID);
 
     expect(
-      (db as { update: ReturnType<typeof vi.fn> }).update,
+      (db as unknown as { update: ReturnType<typeof vi.fn> }).update,
     ).not.toHaveBeenCalled();
     expect(mockComputeAccountBalance).not.toHaveBeenCalled();
   });
@@ -157,7 +157,7 @@ describe("calculateGoalProgress — savings_target", () => {
 
     expect(mockComputeAccountBalance).not.toHaveBeenCalled();
     expect(
-      (db as { update: ReturnType<typeof vi.fn> }).update,
+      (db as unknown as { update: ReturnType<typeof vi.fn> }).update,
     ).not.toHaveBeenCalled();
   });
 });
@@ -170,7 +170,7 @@ describe("calculateGoalProgress — stub types (no-op)", () => {
     await calculateGoalProgress(goal, db, USER_ID);
 
     expect(
-      (db as { update: ReturnType<typeof vi.fn> }).update,
+      (db as unknown as { update: ReturnType<typeof vi.fn> }).update,
     ).not.toHaveBeenCalled();
   });
 
@@ -184,7 +184,7 @@ describe("calculateGoalProgress — stub types (no-op)", () => {
     await calculateGoalProgress(goal, db, USER_ID);
 
     expect(
-      (db as { update: ReturnType<typeof vi.fn> }).update,
+      (db as unknown as { update: ReturnType<typeof vi.fn> }).update,
     ).not.toHaveBeenCalled();
   });
 
@@ -195,7 +195,7 @@ describe("calculateGoalProgress — stub types (no-op)", () => {
     await calculateGoalProgress(goal, db, USER_ID);
 
     expect(
-      (db as { update: ReturnType<typeof vi.fn> }).update,
+      (db as unknown as { update: ReturnType<typeof vi.fn> }).update,
     ).not.toHaveBeenCalled();
   });
 });
