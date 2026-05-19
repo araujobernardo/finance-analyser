@@ -370,3 +370,60 @@ describe("GoalCard — delete button", () => {
     ).toBeInTheDocument();
   });
 });
+
+// ── FA-GOAL-003 T017: spending_limit warning and over states ────────────────
+
+describe("GoalCard — spending_limit warning and over states", () => {
+  it("applies warning class when spending_limit goal is at 85%", () => {
+    // currentAmount = 255, targetAmount = 300 → 85% → warning
+    const goal = makeGoal({
+      type: "spending_limit",
+      currentAmount: "255",
+      targetAmount: "300",
+    });
+    render(<GoalCard goal={goal} />);
+    const fill = screen.getByTestId("goal-card-progress-fill-g1");
+    expect(fill.className).toContain("goal-card__progress-fill--warning");
+    expect(fill.className).not.toContain("goal-card__progress-fill--over");
+  });
+
+  it("applies over class (not warning) when spending_limit goal is at 105%", () => {
+    // currentAmount = 315, targetAmount = 300 → 105% → over
+    const goal = makeGoal({
+      type: "spending_limit",
+      currentAmount: "315",
+      targetAmount: "300",
+    });
+    render(<GoalCard goal={goal} />);
+    const fill = screen.getByTestId("goal-card-progress-fill-g1");
+    expect(fill.className).toContain("goal-card__progress-fill--over");
+    expect(fill.className).not.toContain("goal-card__progress-fill--warning");
+    expect(screen.getByText("Over target")).toBeInTheDocument();
+  });
+
+  it("applies neither warning nor over class to savings_target at 85%", () => {
+    // savings_target at 85% — isWarning only applies to spending_limit type
+    const goal = makeGoal({
+      type: "savings_target",
+      currentAmount: "850",
+      targetAmount: "1000",
+    });
+    render(<GoalCard goal={goal} />);
+    const fill = screen.getByTestId("goal-card-progress-fill-g1");
+    expect(fill.className).not.toContain("goal-card__progress-fill--warning");
+    expect(fill.className).not.toContain("goal-card__progress-fill--over");
+  });
+
+  it("applies neither warning nor over class to spending_limit at 50%", () => {
+    // spending_limit at 50% — not yet in warning zone (>80%)
+    const goal = makeGoal({
+      type: "spending_limit",
+      currentAmount: "150",
+      targetAmount: "300",
+    });
+    render(<GoalCard goal={goal} />);
+    const fill = screen.getByTestId("goal-card-progress-fill-g1");
+    expect(fill.className).not.toContain("goal-card__progress-fill--warning");
+    expect(fill.className).not.toContain("goal-card__progress-fill--over");
+  });
+});
