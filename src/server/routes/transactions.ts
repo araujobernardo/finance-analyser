@@ -228,6 +228,8 @@ transactionsRouter.post(
         await db.insert(transactions).values(validRows);
         // FA-NW-004 US3: sync any assets/liabilities linked to this account
         await syncLinkedAssets(accountId, userId, db);
+        // FA-GOAL-003 T006: recalculate savings_target goal progress after bulk import
+        await recalculateUserGoals(userId, db);
       }
 
       res.json({ imported: validRows.length, skipped });
@@ -286,6 +288,8 @@ transactionOpsRouter.patch(
 
       // FA-NW-004 US3: sync any assets/liabilities linked to this transaction's account
       await syncLinkedAssets(updated.accountId, userId, db);
+      // FA-GOAL-003 T006: recalculate savings_target goal progress after transaction edit
+      await recalculateUserGoals(userId, db);
 
       res.json(serializeTransaction(updated));
     } catch (err) {
@@ -314,6 +318,8 @@ transactionOpsRouter.delete(
 
       // FA-NW-004 US3: sync any assets/liabilities linked to this transaction's account
       await syncLinkedAssets(deleted.accountId, userId, db);
+      // FA-GOAL-003 T006: recalculate savings_target goal progress after transaction delete
+      await recalculateUserGoals(userId, db);
 
       res.status(204).send();
     } catch (err) {
