@@ -108,6 +108,7 @@ export function AssetModal({ asset, onClose }: AssetModalProps) {
       role="dialog"
       aria-modal="true"
       aria-labelledby="asset-modal-title"
+      data-testid="asset-modal-backdrop"
       onClick={(e) => {
         if (e.target === e.currentTarget) onClose();
       }}
