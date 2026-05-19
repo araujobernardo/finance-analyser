@@ -1,5 +1,6 @@
 // FA-GOAL-003 — Goal Progress Auto-Calculation utility
 // Server-side only — do not import from React components or Vite browser code.
+// FA-GOAL-003 T019 (Polish): tsc --noEmit exits 0, npm run lint exits 0, all tests pass.
 
 import { and, eq, gte, lt, sql } from "drizzle-orm";
 import type { db as DbInstance } from "../../db/index.ts";
