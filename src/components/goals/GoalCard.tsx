@@ -80,6 +80,9 @@ export function GoalCard({
 }: GoalCardProps) {
   const percent = goalPercent(goal);
   const overTarget = isOverTarget(goal);
+  // FA-GOAL-003 T014: amber warning for spending_limit goals approaching their limit
+  const isWarning =
+    goal.type === "spending_limit" && percent > 80 && !overTarget;
   const formattedDate = formatDate(goal.targetDate);
   const isCompleted = goal.status !== "active";
 
@@ -171,7 +174,7 @@ export function GoalCard({
           aria-valuemax={100}
         >
           <div
-            className={`goal-card__progress-fill${overTarget ? " goal-card__progress-fill--over" : ""}`}
+            className={`goal-card__progress-fill${overTarget ? " goal-card__progress-fill--over" : isWarning ? " goal-card__progress-fill--warning" : ""}`}
             data-testid={`goal-card-progress-fill-${goal.id}`}
             style={{ width: `${percent}%` }}
           />
