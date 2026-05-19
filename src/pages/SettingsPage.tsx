@@ -10,6 +10,8 @@ import "./SettingsPage.css";
 
 export function AlertPreferencesSection() {
   const { apiFetch } = useApi();
+
+  // ── Alert threshold state (T014) ─────────────────────────────────────────
   const [threshold, setThreshold] = useState<number | null>(null);
   const [inputValue, setInputValue] = useState("");
   const [validationError, setValidationError] = useState("");
@@ -17,16 +19,25 @@ export function AlertPreferencesSection() {
     "idle",
   );
 
+  // ── Email alerts toggle state (T016) ─────────────────────────────────────
+  const [emailAlertsEnabled, setEmailAlertsEnabled] = useState(true);
+  const [emailToggleSaving, setEmailToggleSaving] = useState(false);
+
   useEffect(() => {
     apiFetch("/api/preferences")
       .then((data: unknown) => {
-        const prefs = data as { alertThreshold?: number | null };
+        const prefs = data as {
+          alertThreshold?: number | null;
+          emailAlertsEnabled?: boolean | null;
+        };
         const val = prefs.alertThreshold ?? 80;
         setThreshold(val);
         setInputValue(String(val));
+        // Default true if not explicitly disabled
+        setEmailAlertsEnabled(prefs.emailAlertsEnabled !== false);
       })
       .catch(() => {
-        // Leave inputs empty on fetch error; user can still type a value
+        // Leave inputs at defaults on fetch error; user can still interact
       });
     // apiFetch identity is stable per render — exhaustive-deps would cause an
     // infinite loop if apiFetch were inadvertently recreated on every render.
@@ -69,6 +80,23 @@ export function AlertPreferencesSection() {
     } catch {
       setSaveStatus("idle");
       setValidationError("Failed to save — please try again");
+    }
+  };
+
+  const handleEmailToggle = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const newVal = e.target.checked;
+    setEmailAlertsEnabled(newVal); // optimistic update
+    setEmailToggleSaving(true);
+    try {
+      await apiFetch("/api/preferences", {
+        method: "PATCH",
+        body: JSON.stringify({ emailAlertsEnabled: newVal }),
+      });
+    } catch {
+      // Roll back optimistic update on error
+      setEmailAlertsEnabled(!newVal);
+    } finally {
+      setEmailToggleSaving(false);
     }
   };
 
@@ -124,6 +152,29 @@ export function AlertPreferencesSection() {
           {validationError}
         </div>
       )}
+
+      <div className="settings-alert-toggle-row">
+        <label
+          htmlFor="email-alerts-toggle"
+          className="settings-alert-toggle-label"
+        >
+          <input
+            id="email-alerts-toggle"
+            type="checkbox"
+            className="settings-alert-checkbox"
+            checked={emailAlertsEnabled}
+            onChange={handleEmailToggle}
+            disabled={emailToggleSaving}
+            data-testid="email-alerts-toggle"
+          />
+          <span>Send email alerts when a budget is exceeded</span>
+        </label>
+        {emailToggleSaving && (
+          <span className="settings-alert-status settings-alert-saving">
+            Saving…
+          </span>
+        )}
+      </div>
     </div>
   );
 }
