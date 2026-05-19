@@ -73,6 +73,33 @@ Each option must include:
 2. **Description** — 2–3 sentences describing layout, interaction model, key
    component choices
 3. **Tradeoff** — one sentence on what this option sacrifices
+4. **Clickable HTML mockup** — a standalone `.html` file the user can open in a
+   browser to visualise the option before choosing
+
+#### HTML Mockup Requirements
+
+For each option, write a self-contained file at:
+`specs/[feature-directory]/mockups/option-[a|b|c].html`
+
+Rules for every mockup file:
+
+- Single file, no external dependencies — inline all CSS and JS.
+- Use the app's actual CSS custom properties (copy from `src/index.css` or
+  `src/App.css`) inside a `<style>` block so colours and fonts match the live app.
+- Show realistic placeholder data, not "Lorem ipsum" — use values plausible for
+  the feature (e.g. "Emergency Fund", "$5,000 target").
+- Interactive states must work: hover, focus, basic click interactions (open/close
+  toggles, conditional field reveal, etc.) — use vanilla JS inline `<script>`.
+- Must be responsive: test the layout at 480 px width in addition to desktop.
+- Include a small banner at the top: `Option [A/B/C] — [Name]` in the app's
+  primary colour so the user can orient themselves.
+
+After writing all three files, present the text summary AND add a line beneath
+each option:
+
+```
+📄 [Open mockup](specs/[feature-directory]/mockups/option-[a|b|c].html)
+```
 
 Format:
 
@@ -82,14 +109,17 @@ Format:
 **Option A — [Name]**
 [Description]
 Tradeoff: [one sentence]
+📄 [Open mockup](specs/[feature-directory]/mockups/option-a.html)
 
 **Option B — [Name]**
 [Description]
 Tradeoff: [one sentence]
+📄 [Open mockup](specs/[feature-directory]/mockups/option-b.html)
 
 **Option C — [Name]**
 [Description]
 Tradeoff: [one sentence]
+📄 [Open mockup](specs/[feature-directory]/mockups/option-c.html)
 
 Which option do you prefer? (A / B / C, or describe a variation)
 ```

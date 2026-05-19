@@ -1,0 +1,825 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>GoalModal — Option C: Type-First Adaptive Form</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=Sora:wght@300;400;500;600&display=swap" rel="stylesheet" />
+  <style>
+    /* ── App design tokens ── */
+    :root {
+      --bg: #060d1a;
+      --surface: #0c1526;
+      --card: #111e33;
+      --border: #1a2d4a;
+      --accent: #10b981;
+      --accent-dim: #065f46;
+      --text: #e2e8f0;
+      --muted: #64748b;
+      --subtle: #94a3b8;
+      --red: #f87171;
+      --amber: #fbbf24;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: "Sora", sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      -webkit-font-smoothing: antialiased;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+
+    /* ── Option banner ── */
+    .option-banner {
+      width: 100%;
+      background: var(--accent);
+      color: #fff;
+      text-align: center;
+      padding: 12px 16px;
+      font-size: 0.85rem;
+      font-weight: 600;
+      letter-spacing: 0.04em;
+    }
+
+    /* ── Page chrome ── */
+    .page-chrome {
+      width: 100%;
+      max-width: 960px;
+      padding: 40px 16px 80px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 32px;
+    }
+
+    .section-label {
+      font-size: 0.75rem;
+      font-weight: 600;
+      color: var(--muted);
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      align-self: flex-start;
+    }
+
+    /* ── Modal overlay ── */
+    .modal-overlay {
+      width: 100%;
+      max-width: 540px;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      overflow: hidden;
+      box-shadow: 0 24px 64px rgba(0, 0, 0, 0.5);
+    }
+
+    /* ── Modal header ── */
+    .modal-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 20px 24px 18px;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .modal-title {
+      font-size: 1rem;
+      font-weight: 600;
+      color: var(--text);
+    }
+
+    .modal-close {
+      width: 32px;
+      height: 32px;
+      border-radius: 8px;
+      border: 1px solid var(--border);
+      background: transparent;
+      color: var(--muted);
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.1rem;
+      transition: background 0.15s, color 0.15s, border-color 0.15s;
+    }
+
+    .modal-close:hover {
+      background: var(--card);
+      color: var(--text);
+      border-color: var(--subtle);
+    }
+
+    /* ── Modal body ── */
+    .modal-body {
+      padding: 24px;
+      display: flex;
+      flex-direction: column;
+      gap: 20px;
+    }
+
+    /* ── Step 1: Name + Type tiles ── */
+    .step-name-field {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+
+    label {
+      font-size: 0.75rem;
+      font-weight: 600;
+      color: var(--subtle);
+      letter-spacing: 0.04em;
+      text-transform: uppercase;
+    }
+
+    input, select {
+      width: 100%;
+      padding: 10px 14px;
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      color: var(--text);
+      font-family: "Sora", sans-serif;
+      font-size: 0.9rem;
+      transition: border-color 0.15s, box-shadow 0.15s;
+      outline: none;
+      appearance: none;
+      -webkit-appearance: none;
+    }
+
+    input:focus, select:focus {
+      border-color: var(--accent);
+      box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.15);
+    }
+
+    input:hover:not(:focus), select:hover:not(:focus) {
+      border-color: var(--subtle);
+    }
+
+    input::placeholder { color: var(--muted); }
+    select option { background: var(--card); color: var(--text); }
+
+    /* ── Type tile selector ── */
+    .type-label {
+      font-size: 0.75rem;
+      font-weight: 600;
+      color: var(--subtle);
+      letter-spacing: 0.04em;
+      text-transform: uppercase;
+      margin-bottom: -4px;
+    }
+
+    .type-tiles {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+    }
+
+    .type-tile {
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+      padding: 12px 14px;
+      background: var(--card);
+      border: 2px solid var(--border);
+      border-radius: 10px;
+      cursor: pointer;
+      transition: border-color 0.15s, background 0.15s, transform 0.1s;
+      text-align: left;
+    }
+
+    .type-tile:hover {
+      border-color: var(--subtle);
+      background: #152234;
+    }
+
+    .type-tile:active { transform: scale(0.97); }
+
+    .type-tile.selected {
+      border-color: var(--accent);
+      background: rgba(16, 185, 129, 0.08);
+    }
+
+    .type-tile-icon {
+      font-size: 1.1rem;
+      line-height: 1;
+      margin-bottom: 2px;
+    }
+
+    .type-tile-name {
+      font-size: 0.82rem;
+      font-weight: 600;
+      color: var(--text);
+      line-height: 1.2;
+    }
+
+    .type-tile-desc {
+      font-size: 0.7rem;
+      color: var(--muted);
+      line-height: 1.35;
+    }
+
+    .type-tile.selected .type-tile-name { color: var(--accent); }
+
+    /* ── Step 2: Animated fields container ── */
+    .adaptive-fields {
+      overflow: hidden;
+      max-height: 0;
+      opacity: 0;
+      transition: max-height 0.35s ease, opacity 0.3s ease;
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+    }
+
+    .adaptive-fields.visible {
+      max-height: 600px;
+      opacity: 1;
+    }
+
+    /* ── Field ── */
+    .field {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+
+    .optional-badge {
+      font-size: 0.68rem;
+      font-weight: 400;
+      color: var(--muted);
+      text-transform: none;
+      letter-spacing: 0;
+      margin-left: 5px;
+    }
+
+    /* ── Input prefix ── */
+    .input-prefix-wrap { position: relative; }
+    .input-prefix-wrap input { padding-left: 44px; }
+    .input-prefix {
+      position: absolute;
+      left: 0;
+      top: 0;
+      bottom: 0;
+      width: 38px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 0.8rem;
+      font-weight: 600;
+      color: var(--muted);
+      border-right: 1px solid var(--border);
+      pointer-events: none;
+    }
+
+    /* ── Select wrap ── */
+    .select-wrap { position: relative; }
+    .select-wrap::after {
+      content: "▾";
+      position: absolute;
+      right: 14px;
+      top: 50%;
+      transform: translateY(-50%);
+      color: var(--muted);
+      pointer-events: none;
+      font-size: 0.85rem;
+    }
+    .select-wrap select { padding-right: 36px; cursor: pointer; }
+
+    /* ── Category conditional inside adaptive ── */
+    .category-field {
+      display: none;
+      flex-direction: column;
+      gap: 6px;
+    }
+
+    .category-field.visible { display: flex; }
+
+    /* ── Field hint / error ── */
+    .field-hint { font-size: 0.72rem; color: var(--muted); line-height: 1.4; }
+    .field-error { font-size: 0.75rem; color: var(--red); }
+
+    /* ── Type context hint (adapts per type) ── */
+    .type-context-hint {
+      display: none;
+      background: rgba(16, 185, 129, 0.07);
+      border: 1px solid rgba(16, 185, 129, 0.2);
+      border-radius: 8px;
+      padding: 10px 14px;
+      font-size: 0.75rem;
+      color: var(--subtle);
+      line-height: 1.5;
+    }
+
+    .type-context-hint.visible { display: block; }
+
+    /* ── Footer ── */
+    .modal-footer {
+      display: flex;
+      justify-content: flex-end;
+      gap: 10px;
+      padding: 16px 24px 20px;
+      border-top: 1px solid var(--border);
+    }
+
+    .btn {
+      padding: 10px 20px;
+      border-radius: 8px;
+      font-family: "Sora", sans-serif;
+      font-size: 0.88rem;
+      font-weight: 600;
+      cursor: pointer;
+      border: none;
+      transition: opacity 0.15s, background 0.15s, transform 0.1s;
+    }
+
+    .btn:active { transform: scale(0.97); }
+
+    .btn-ghost {
+      background: transparent;
+      border: 1px solid var(--border);
+      color: var(--subtle);
+    }
+
+    .btn-ghost:hover {
+      background: var(--card);
+      border-color: var(--subtle);
+      color: var(--text);
+    }
+
+    .btn-primary { background: var(--accent); color: #fff; }
+    .btn-primary:hover { opacity: 0.88; }
+    .btn-primary:disabled { opacity: 0.35; cursor: not-allowed; }
+
+    /* ── Step indicator ── */
+    .step-indicator {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 0.72rem;
+      color: var(--muted);
+    }
+
+    .step-dot {
+      width: 7px;
+      height: 7px;
+      border-radius: 50%;
+      background: var(--border);
+      transition: background 0.2s;
+    }
+
+    .step-dot.active { background: var(--accent); }
+    .step-dot.complete { background: var(--accent-dim); }
+
+    /* ── Annotation ── */
+    .annotation {
+      font-size: 0.71rem;
+      color: var(--accent);
+      font-weight: 500;
+      display: flex;
+      align-items: center;
+      gap: 5px;
+    }
+    .annotation::before { content: "▶"; font-size: 0.58rem; }
+
+    @media (max-width: 480px) {
+      .type-tiles { grid-template-columns: 1fr 1fr; }
+      .modal-body { padding: 16px; }
+      .modal-header { padding: 14px 16px; }
+      .modal-footer { padding: 12px 16px 16px; }
+    }
+  </style>
+</head>
+<body>
+
+  <div class="option-banner">Option C — Type-First Adaptive Form</div>
+
+  <div class="page-chrome">
+
+    <div class="section-label">Step 1 — Name and type selection (initial state)</div>
+
+    <!-- ─── Modal: Step 1 - no type chosen yet ─── -->
+    <div class="modal-overlay">
+      <div class="modal-header">
+        <span class="modal-title">Add Goal</span>
+        <button class="modal-close">&#x2715;</button>
+      </div>
+      <div class="modal-body" style="gap:20px;">
+
+        <div class="step-indicator">
+          <div class="step-dot active"></div>
+          <div class="step-dot"></div>
+          <span>Step 1 of 2 — What kind of goal?</span>
+        </div>
+
+        <div class="step-name-field">
+          <label for="c-name-s1">Goal Name</label>
+          <input id="c-name-s1" type="text" placeholder="e.g. Emergency Fund" />
+        </div>
+
+        <div style="display:flex;flex-direction:column;gap:10px;">
+          <span class="type-label">Goal Type</span>
+          <div class="type-tiles">
+            <button class="type-tile" disabled style="opacity:0.45;cursor:default;">
+              <div class="type-tile-icon">&#128176;</div>
+              <div class="type-tile-name">Savings Target</div>
+              <div class="type-tile-desc">Build up a sum by a date</div>
+            </button>
+            <button class="type-tile" disabled style="opacity:0.45;cursor:default;">
+              <div class="type-tile-icon">&#128203;</div>
+              <div class="type-tile-name">Debt Payoff</div>
+              <div class="type-tile-desc">Pay down what you owe</div>
+            </button>
+            <button class="type-tile" disabled style="opacity:0.45;cursor:default;">
+              <div class="type-tile-icon">&#128200;</div>
+              <div class="type-tile-name">Net Worth Milestone</div>
+              <div class="type-tile-desc">Reach a total net worth</div>
+            </button>
+            <button class="type-tile" disabled style="opacity:0.45;cursor:default;">
+              <div class="type-tile-icon">&#128683;</div>
+              <div class="type-tile-name">Spending Limit</div>
+              <div class="type-tile-desc">Cap spending in a category</div>
+            </button>
+          </div>
+          <span class="annotation">Tiles become active once you type a name</span>
+        </div>
+
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-ghost">Cancel</button>
+        <button class="btn btn-primary" disabled>Continue</button>
+      </div>
+    </div>
+
+    <div class="section-label">Step 1 — Name entered, type tiles interactive (click one)</div>
+
+    <!-- ─── Main interactive modal ─── -->
+    <div class="modal-overlay" id="mainModal">
+      <div class="modal-header">
+        <span class="modal-title">Add Goal</span>
+        <button class="modal-close" onclick="this.closest('.modal-overlay').style.opacity='0.35';this.closest('.modal-overlay').style.pointerEvents='none'">&#x2715;</button>
+      </div>
+      <div class="modal-body">
+
+        <div class="step-indicator" id="c-stepIndicator">
+          <div class="step-dot active" id="c-dot1"></div>
+          <div class="step-dot" id="c-dot2"></div>
+          <span id="c-stepText">Step 1 of 2 — What kind of goal?</span>
+        </div>
+
+        <div class="step-name-field">
+          <label for="c-name">Goal Name</label>
+          <input id="c-name" type="text" placeholder="e.g. Emergency Fund" value="Emergency Fund" />
+        </div>
+
+        <div style="display:flex;flex-direction:column;gap:10px;">
+          <span class="type-label">Goal Type</span>
+          <div class="type-tiles" id="c-tiles">
+
+            <button class="type-tile" data-type="savings_target" onclick="selectType(this)">
+              <div class="type-tile-icon">&#128176;</div>
+              <div class="type-tile-name">Savings Target</div>
+              <div class="type-tile-desc">Build up a sum by a date</div>
+            </button>
+
+            <button class="type-tile" data-type="debt_payoff" onclick="selectType(this)">
+              <div class="type-tile-icon">&#128203;</div>
+              <div class="type-tile-name">Debt Payoff</div>
+              <div class="type-tile-desc">Pay down what you owe</div>
+            </button>
+
+            <button class="type-tile" data-type="net_worth_milestone" onclick="selectType(this)">
+              <div class="type-tile-icon">&#128200;</div>
+              <div class="type-tile-name">Net Worth Milestone</div>
+              <div class="type-tile-desc">Reach a total net worth</div>
+            </button>
+
+            <button class="type-tile" data-type="spending_limit" onclick="selectType(this)">
+              <div class="type-tile-icon">&#128683;</div>
+              <div class="type-tile-name">Spending Limit</div>
+              <div class="type-tile-desc">Cap spending in a category</div>
+            </button>
+
+          </div>
+        </div>
+
+        <!-- ── Adaptive fields (animate in after type chosen) ── -->
+        <div class="adaptive-fields" id="c-adaptiveFields">
+
+          <div class="type-context-hint" id="c-contextHint"></div>
+
+          <!-- Amount -->
+          <div class="field">
+            <label id="c-amountLabel">Target Amount</label>
+            <div class="input-prefix-wrap">
+              <span class="input-prefix">NZD</span>
+              <input id="c-amount" type="number" min="0.01" step="0.01" placeholder="5,000" />
+            </div>
+          </div>
+
+          <!-- Category (spending_limit only) -->
+          <div class="category-field" id="c-categoryField">
+            <label for="c-category">Spending Category</label>
+            <input id="c-category" type="text" placeholder="e.g. Dining, Subscriptions" />
+            <span class="field-hint">Matches the category label on your transactions.</span>
+          </div>
+
+          <!-- Target Date -->
+          <div class="field">
+            <label for="c-date">Target Date <span class="optional-badge">optional</span></label>
+            <input id="c-date" type="date" />
+          </div>
+
+          <!-- Linked account -->
+          <div class="field">
+            <label for="c-account">Linked Account <span class="optional-badge">optional</span></label>
+            <div class="select-wrap">
+              <select id="c-account">
+                <option value="">None</option>
+                <option value="acc1">ASB — Savings (**4821)</option>
+                <option value="acc2">Kiwibank — Everyday (**7734)</option>
+                <option value="acc3">ANZ — Term Deposit (**0092)</option>
+              </select>
+            </div>
+          </div>
+
+        </div>
+
+      </div><!-- /modal-body -->
+
+      <div class="modal-footer">
+        <button class="btn btn-ghost">Cancel</button>
+        <button class="btn btn-primary" id="c-saveBtn" onclick="handleCSave(this)">Save Goal</button>
+      </div>
+    </div>
+
+    <!-- ─── Spending Limit — fully expanded state ─── -->
+    <div class="section-label">Spending Limit selected — category field revealed</div>
+
+    <div class="modal-overlay">
+      <div class="modal-header">
+        <span class="modal-title">Add Goal</span>
+        <button class="modal-close">&#x2715;</button>
+      </div>
+      <div class="modal-body">
+
+        <div class="step-indicator">
+          <div class="step-dot complete"></div>
+          <div class="step-dot active"></div>
+          <span>Step 2 of 2 — Fill in the details</span>
+        </div>
+
+        <div class="step-name-field">
+          <label>Goal Name</label>
+          <input type="text" value="Dining Budget" />
+        </div>
+
+        <div style="display:flex;flex-direction:column;gap:10px;">
+          <span class="type-label">Goal Type</span>
+          <div class="type-tiles">
+            <button class="type-tile">
+              <div class="type-tile-icon">&#128176;</div>
+              <div class="type-tile-name">Savings Target</div>
+              <div class="type-tile-desc">Build up a sum by a date</div>
+            </button>
+            <button class="type-tile">
+              <div class="type-tile-icon">&#128203;</div>
+              <div class="type-tile-name">Debt Payoff</div>
+              <div class="type-tile-desc">Pay down what you owe</div>
+            </button>
+            <button class="type-tile">
+              <div class="type-tile-icon">&#128200;</div>
+              <div class="type-tile-name">Net Worth Milestone</div>
+              <div class="type-tile-desc">Reach a total net worth</div>
+            </button>
+            <button class="type-tile selected">
+              <div class="type-tile-icon">&#128683;</div>
+              <div class="type-tile-name">Spending Limit</div>
+              <div class="type-tile-desc">Cap spending in a category</div>
+            </button>
+          </div>
+        </div>
+
+        <!-- Adaptive fields expanded -->
+        <div style="display:flex;flex-direction:column;gap:16px;">
+
+          <div style="background:rgba(16,185,129,0.07);border:1px solid rgba(16,185,129,0.2);border-radius:8px;padding:10px 14px;font-size:0.75rem;color:var(--subtle);line-height:1.5;">
+            Set a monthly cap on spending in a specific transaction category. Your spending will be tracked against this limit.
+          </div>
+
+          <div class="field">
+            <label>Monthly Limit</label>
+            <div class="input-prefix-wrap">
+              <span class="input-prefix">NZD</span>
+              <input type="number" value="400" />
+            </div>
+          </div>
+
+          <div class="field" style="display:flex;flex-direction:column;gap:6px;">
+            <label>Spending Category</label>
+            <input type="text" value="Dining" style="border-color:var(--accent);" />
+            <span class="field-hint">Matches the category label on your transactions.</span>
+          </div>
+
+          <div class="field">
+            <label>End Date <span class="optional-badge">optional</span></label>
+            <input type="date" />
+          </div>
+
+          <div class="field">
+            <label>Linked Account <span class="optional-badge">optional</span></label>
+            <div class="select-wrap">
+              <select>
+                <option value="">None</option>
+                <option value="acc2" selected>Kiwibank — Everyday (**7734)</option>
+              </select>
+            </div>
+          </div>
+
+        </div>
+
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-ghost">Cancel</button>
+        <button class="btn btn-primary">Save Goal</button>
+      </div>
+    </div>
+
+    <!-- ─── Savings Target — fully expanded state ─── -->
+    <div class="section-label">Savings Target selected — clean field set</div>
+
+    <div class="modal-overlay">
+      <div class="modal-header">
+        <span class="modal-title">Add Goal</span>
+        <button class="modal-close">&#x2715;</button>
+      </div>
+      <div class="modal-body">
+
+        <div class="step-indicator">
+          <div class="step-dot complete"></div>
+          <div class="step-dot active"></div>
+          <span>Step 2 of 2 — Fill in the details</span>
+        </div>
+
+        <div class="step-name-field">
+          <label>Goal Name</label>
+          <input type="text" value="House Deposit" />
+        </div>
+
+        <div style="display:flex;flex-direction:column;gap:10px;">
+          <span class="type-label">Goal Type</span>
+          <div class="type-tiles">
+            <button class="type-tile selected">
+              <div class="type-tile-icon">&#128176;</div>
+              <div class="type-tile-name">Savings Target</div>
+              <div class="type-tile-desc">Build up a sum by a date</div>
+            </button>
+            <button class="type-tile">
+              <div class="type-tile-icon">&#128203;</div>
+              <div class="type-tile-name">Debt Payoff</div>
+              <div class="type-tile-desc">Pay down what you owe</div>
+            </button>
+            <button class="type-tile">
+              <div class="type-tile-icon">&#128200;</div>
+              <div class="type-tile-name">Net Worth Milestone</div>
+              <div class="type-tile-desc">Reach a total net worth</div>
+            </button>
+            <button class="type-tile">
+              <div class="type-tile-icon">&#128683;</div>
+              <div class="type-tile-name">Spending Limit</div>
+              <div class="type-tile-desc">Cap spending in a category</div>
+            </button>
+          </div>
+        </div>
+
+        <div style="display:flex;flex-direction:column;gap:16px;">
+
+          <div style="background:rgba(16,185,129,0.07);border:1px solid rgba(16,185,129,0.2);border-radius:8px;padding:10px 14px;font-size:0.75rem;color:var(--subtle);line-height:1.5;">
+            Track progress towards a specific savings amount. Link an account and progress updates automatically.
+          </div>
+
+          <div class="field">
+            <label>Target Amount</label>
+            <div class="input-prefix-wrap">
+              <span class="input-prefix">NZD</span>
+              <input type="number" value="120000" />
+            </div>
+          </div>
+
+          <div class="field">
+            <label>Target Date <span class="optional-badge">optional</span></label>
+            <input type="date" value="2028-06-30" />
+          </div>
+
+          <div class="field">
+            <label>Linked Account <span class="optional-badge">optional</span></label>
+            <div class="select-wrap">
+              <select>
+                <option value="">None</option>
+                <option value="acc1" selected>ASB — Savings (**4821)</option>
+              </select>
+            </div>
+            <span class="field-hint">Progress will reflect this account's balance.</span>
+          </div>
+
+        </div>
+
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-ghost">Cancel</button>
+        <button class="btn btn-primary">Save Goal</button>
+      </div>
+    </div>
+
+  </div><!-- /page-chrome -->
+
+  <script>
+    const typeHints = {
+      savings_target: "Track progress towards a specific savings amount. Link an account and your balance will update automatically.",
+      debt_payoff: "Track a debt you're paying down. Enter the total owed as the target and update your progress manually.",
+      net_worth_milestone: "Set a total net worth milestone. Progress is calculated from your accounts automatically.",
+      spending_limit: "Set a monthly cap on spending in a specific transaction category. Your spending will be tracked against this limit.",
+    };
+
+    const amountLabels = {
+      savings_target: "Target Amount",
+      debt_payoff: "Total Debt Amount",
+      net_worth_milestone: "Target Net Worth",
+      spending_limit: "Monthly Limit",
+    };
+
+    let selectedType = null;
+
+    function selectType(tile) {
+      // Update tile selection
+      document.querySelectorAll('#mainModal .type-tile').forEach(t => t.classList.remove('selected'));
+      tile.classList.add('selected');
+      selectedType = tile.dataset.type;
+
+      // Update step indicator
+      document.getElementById('c-dot1').className = 'step-dot complete';
+      document.getElementById('c-dot2').className = 'step-dot active';
+      document.getElementById('c-stepText').textContent = 'Step 2 of 2 — Fill in the details';
+
+      // Update context hint
+      const hint = document.getElementById('c-contextHint');
+      hint.textContent = typeHints[selectedType] || '';
+      hint.classList.add('visible');
+
+      // Update amount label
+      document.getElementById('c-amountLabel').textContent = amountLabels[selectedType] || 'Target Amount';
+
+      // Show/hide category
+      const catField = document.getElementById('c-categoryField');
+      if (selectedType === 'spending_limit') {
+        catField.classList.add('visible');
+      } else {
+        catField.classList.remove('visible');
+        document.getElementById('c-category').value = '';
+      }
+
+      // Animate fields in
+      const fields = document.getElementById('c-adaptiveFields');
+      fields.classList.add('visible');
+
+      // Scroll fields into view smoothly
+      setTimeout(() => {
+        fields.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+      }, 50);
+    }
+
+    function handleCSave(btn) {
+      const name = document.getElementById('c-name').value.trim();
+      const amount = document.getElementById('c-amount').value;
+      if (!selectedType) { alert('Demo: select a goal type first.'); return; }
+      if (!name || !amount) { alert('Demo: fill in Name and Target Amount.'); return; }
+      btn.textContent = 'Saving…';
+      btn.disabled = true;
+      setTimeout(() => {
+        btn.textContent = 'Saved!';
+        btn.style.background = '#065f46';
+        setTimeout(() => {
+          btn.textContent = 'Save Goal';
+          btn.disabled = false;
+          btn.style.background = '';
+          // reset
+          document.getElementById('c-name').value = '';
+          document.getElementById('c-amount').value = '';
+          document.querySelectorAll('#mainModal .type-tile').forEach(t => t.classList.remove('selected'));
+          document.getElementById('c-adaptiveFields').classList.remove('visible');
+          document.getElementById('c-dot1').className = 'step-dot active';
+          document.getElementById('c-dot2').className = 'step-dot';
+          document.getElementById('c-stepText').textContent = 'Step 1 of 2 — What kind of goal?';
+          selectedType = null;
+        }, 1200);
+      }, 900);
+    }
+  </script>
+
+</body>
+</html>

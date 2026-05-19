@@ -26,7 +26,9 @@
       "Skill(speckit-tasks)",
       "Skill(speckit-tasks:*)",
       "Bash(printf '#!/usr/bin/env sh\\\\nnpx lint-staged\\\\n' > \"c:/Users/barbo/Projects/finance-analyser/.husky/pre-commit\")",
-      "Bash(mkdir -p \"c:\\\\Users\\\\barbo\\\\Projects\\\\finance-analyser\\\\.claude\\\\skills\\\\delivery-implement\")"
+      "Bash(mkdir -p \"c:\\\\Users\\\\barbo\\\\Projects\\\\finance-analyser\\\\.claude\\\\skills\\\\delivery-implement\")",
+      "Skill(delivery-implement)",
+      "Skill(delivery-implement:*)"
     ],
     "deny": [],
     "additionalDirectories": [

@@ -1,0 +1,573 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>GoalModal — Option A: Flat Single-Column Form</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=Sora:wght@300;400;500;600&display=swap" rel="stylesheet" />
+  <style>
+    /* ── App design tokens ── */
+    :root {
+      --bg: #060d1a;
+      --surface: #0c1526;
+      --card: #111e33;
+      --border: #1a2d4a;
+      --accent: #10b981;
+      --accent-dim: #065f46;
+      --text: #e2e8f0;
+      --muted: #64748b;
+      --subtle: #94a3b8;
+      --red: #f87171;
+      --amber: #fbbf24;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: "Sora", sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      -webkit-font-smoothing: antialiased;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+
+    /* ── Option banner ── */
+    .option-banner {
+      width: 100%;
+      background: var(--accent);
+      color: #fff;
+      text-align: center;
+      padding: 12px 16px;
+      font-size: 0.85rem;
+      font-weight: 600;
+      letter-spacing: 0.04em;
+    }
+
+    /* ── Page chrome ── */
+    .page-chrome {
+      width: 100%;
+      max-width: 960px;
+      padding: 40px 16px 80px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 32px;
+    }
+
+    .section-label {
+      font-size: 0.75rem;
+      font-weight: 600;
+      color: var(--muted);
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      align-self: flex-start;
+    }
+
+    /* ── Modal overlay ── */
+    .modal-overlay {
+      position: relative;
+      width: 100%;
+      max-width: 520px;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      overflow: hidden;
+      box-shadow: 0 24px 64px rgba(0, 0, 0, 0.5);
+    }
+
+    /* ── Modal header ── */
+    .modal-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 20px 24px 18px;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .modal-title {
+      font-size: 1rem;
+      font-weight: 600;
+      color: var(--text);
+    }
+
+    .modal-close {
+      width: 32px;
+      height: 32px;
+      border-radius: 8px;
+      border: 1px solid var(--border);
+      background: transparent;
+      color: var(--muted);
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.1rem;
+      line-height: 1;
+      transition: background 0.15s, color 0.15s, border-color 0.15s;
+    }
+
+    .modal-close:hover {
+      background: var(--card);
+      color: var(--text);
+      border-color: var(--subtle);
+    }
+
+    /* ── Modal body ── */
+    .modal-body {
+      padding: 24px;
+      display: flex;
+      flex-direction: column;
+      gap: 18px;
+    }
+
+    /* ── Field group ── */
+    .field {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+
+    label {
+      font-size: 0.78rem;
+      font-weight: 600;
+      color: var(--subtle);
+      letter-spacing: 0.04em;
+      text-transform: uppercase;
+    }
+
+    .optional-badge {
+      font-size: 0.7rem;
+      font-weight: 400;
+      color: var(--muted);
+      text-transform: none;
+      letter-spacing: 0;
+      margin-left: 6px;
+    }
+
+    input, select, textarea {
+      width: 100%;
+      padding: 10px 14px;
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      color: var(--text);
+      font-family: "Sora", sans-serif;
+      font-size: 0.9rem;
+      transition: border-color 0.15s, box-shadow 0.15s;
+      outline: none;
+      appearance: none;
+      -webkit-appearance: none;
+    }
+
+    input:focus, select:focus {
+      border-color: var(--accent);
+      box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.15);
+    }
+
+    input:hover:not(:focus), select:hover:not(:focus) {
+      border-color: var(--subtle);
+    }
+
+    input::placeholder {
+      color: var(--muted);
+    }
+
+    select option {
+      background: var(--card);
+      color: var(--text);
+    }
+
+    /* select arrow */
+    .select-wrap {
+      position: relative;
+    }
+
+    .select-wrap::after {
+      content: "▾";
+      position: absolute;
+      right: 14px;
+      top: 50%;
+      transform: translateY(-50%);
+      color: var(--muted);
+      pointer-events: none;
+      font-size: 0.85rem;
+    }
+
+    .select-wrap select {
+      padding-right: 36px;
+      cursor: pointer;
+    }
+
+    /* ── Field error ── */
+    .field-error {
+      font-size: 0.75rem;
+      color: var(--red);
+      margin-top: 2px;
+    }
+
+    /* ── Conditional field ── */
+    .conditional-field {
+      display: none;
+      flex-direction: column;
+      gap: 6px;
+    }
+
+    .conditional-field.visible {
+      display: flex;
+    }
+
+    /* ── Hint text ── */
+    .field-hint {
+      font-size: 0.73rem;
+      color: var(--muted);
+      line-height: 1.4;
+    }
+
+    /* ── Modal footer ── */
+    .modal-footer {
+      display: flex;
+      justify-content: flex-end;
+      gap: 10px;
+      padding: 16px 24px 20px;
+      border-top: 1px solid var(--border);
+    }
+
+    .btn {
+      padding: 10px 20px;
+      border-radius: 8px;
+      font-family: "Sora", sans-serif;
+      font-size: 0.88rem;
+      font-weight: 600;
+      cursor: pointer;
+      border: none;
+      transition: opacity 0.15s, background 0.15s, transform 0.1s;
+    }
+
+    .btn:active { transform: scale(0.97); }
+
+    .btn-ghost {
+      background: transparent;
+      border: 1px solid var(--border);
+      color: var(--subtle);
+    }
+
+    .btn-ghost:hover {
+      background: var(--card);
+      border-color: var(--subtle);
+      color: var(--text);
+    }
+
+    .btn-primary {
+      background: var(--accent);
+      color: #fff;
+    }
+
+    .btn-primary:hover { opacity: 0.88; }
+
+    .btn-primary:disabled {
+      opacity: 0.45;
+      cursor: not-allowed;
+    }
+
+    /* ── Annotated callouts ── */
+    .annotation {
+      font-size: 0.73rem;
+      color: var(--accent);
+      font-weight: 500;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      margin-top: 4px;
+    }
+
+    .annotation::before {
+      content: "▶";
+      font-size: 0.6rem;
+    }
+
+    /* ── States demo section ── */
+    .states-grid {
+      width: 100%;
+      max-width: 520px;
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+    }
+
+    @media (max-width: 480px) {
+      .states-grid { grid-template-columns: 1fr; }
+      .modal-body { padding: 16px; }
+      .modal-header { padding: 16px; }
+      .modal-footer { padding: 12px 16px 16px; }
+    }
+
+    .state-card {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 12px;
+    }
+
+    .state-card-label {
+      font-size: 0.7rem;
+      font-weight: 600;
+      color: var(--muted);
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+      margin-bottom: 8px;
+    }
+
+    .demo-input {
+      padding: 8px 12px;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      color: var(--text);
+      font-family: "Sora", sans-serif;
+      font-size: 0.85rem;
+      width: 100%;
+      outline: none;
+    }
+
+    .demo-input.focused {
+      border-color: var(--accent);
+      box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.15);
+    }
+
+    .demo-input.error-state {
+      border-color: var(--red);
+      box-shadow: 0 0 0 3px rgba(248, 113, 113, 0.12);
+    }
+  </style>
+</head>
+<body>
+
+  <div class="option-banner">Option A — Flat Single-Column Form</div>
+
+  <div class="page-chrome">
+
+    <div class="section-label">Live mockup — click to interact</div>
+
+    <!-- ─── Main modal ─── -->
+    <div class="modal-overlay" id="mainModal">
+
+      <div class="modal-header">
+        <span class="modal-title">Add Goal</span>
+        <button class="modal-close" onclick="this.closest('.modal-overlay').style.opacity='0.4';this.closest('.modal-overlay').style.pointerEvents='none'" title="Close">&#x2715;</button>
+      </div>
+
+      <div class="modal-body">
+
+        <!-- Name -->
+        <div class="field">
+          <label for="name">Goal Name</label>
+          <input id="name" type="text" placeholder="e.g. Emergency Fund" value="" />
+        </div>
+
+        <!-- Type -->
+        <div class="field">
+          <label for="type">Goal Type</label>
+          <div class="select-wrap">
+            <select id="type" onchange="handleTypeChange(this.value)">
+              <option value="">Select a type…</option>
+              <option value="savings_target">Savings Target</option>
+              <option value="debt_payoff">Debt Payoff</option>
+              <option value="net_worth_milestone">Net Worth Milestone</option>
+              <option value="spending_limit">Spending Limit</option>
+            </select>
+          </div>
+        </div>
+
+        <!-- Category — conditional, visible only for spending_limit -->
+        <div class="conditional-field" id="categoryField">
+          <label for="category">Spending Category</label>
+          <input id="category" type="text" placeholder="e.g. Dining, Subscriptions" />
+          <span class="field-hint">Enter the transaction category this limit applies to.</span>
+          <span class="annotation">Shown only when type = Spending Limit</span>
+        </div>
+
+        <!-- Target Amount -->
+        <div class="field">
+          <label for="amount">Target Amount (NZD)</label>
+          <input id="amount" type="number" min="0.01" step="0.01" placeholder="5000" />
+        </div>
+
+        <!-- Target Date -->
+        <div class="field">
+          <label for="date">Target Date <span class="optional-badge">optional</span></label>
+          <input id="date" type="date" />
+        </div>
+
+        <!-- Linked Account -->
+        <div class="field">
+          <label for="account">Linked Account <span class="optional-badge">optional</span></label>
+          <div class="select-wrap">
+            <select id="account">
+              <option value="">None</option>
+              <option value="acc1">ASB — Savings (**4821)</option>
+              <option value="acc2">Kiwibank — Everyday (**7734)</option>
+              <option value="acc3">ANZ — Term Deposit (**0092)</option>
+            </select>
+          </div>
+          <span class="field-hint">Progress will be tracked against this account's balance.</span>
+        </div>
+
+      </div><!-- /modal-body -->
+
+      <div class="modal-footer">
+        <button class="btn btn-ghost">Cancel</button>
+        <button class="btn btn-primary" id="saveBtn" onclick="handleSave(this)">Save Goal</button>
+      </div>
+
+    </div><!-- /modal-overlay -->
+
+    <!-- ─── Validation error state demo ─── -->
+    <div class="section-label">Validation errors</div>
+
+    <div class="modal-overlay">
+      <div class="modal-header">
+        <span class="modal-title">Add Goal</span>
+        <button class="modal-close">&#x2715;</button>
+      </div>
+      <div class="modal-body">
+
+        <div class="field">
+          <label>Goal Name</label>
+          <input type="text" class="error-state" value="" placeholder="e.g. Emergency Fund" style="border-color: var(--red); box-shadow: 0 0 0 3px rgba(248,113,113,0.12);" />
+          <span class="field-error">Goal name is required.</span>
+        </div>
+
+        <div class="field">
+          <label>Goal Type</label>
+          <div class="select-wrap">
+            <select>
+              <option value="">Select a type…</option>
+              <option value="spending_limit" selected>Spending Limit</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="field" style="display:flex;flex-direction:column;gap:6px;">
+          <label>Spending Category</label>
+          <input type="text" value="" placeholder="e.g. Dining, Subscriptions" style="border-color: var(--red); box-shadow: 0 0 0 3px rgba(248,113,113,0.12);" />
+          <span class="field-error">Category is required for spending limit goals.</span>
+        </div>
+
+        <div class="field">
+          <label>Target Amount (NZD)</label>
+          <input type="number" value="-100" style="border-color: var(--red); box-shadow: 0 0 0 3px rgba(248,113,113,0.12);" />
+          <span class="field-error">Amount must be greater than zero.</span>
+        </div>
+
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-ghost">Cancel</button>
+        <button class="btn btn-primary" disabled>Save Goal</button>
+      </div>
+    </div>
+
+    <!-- ─── Submitting state demo ─── -->
+    <div class="section-label">Saving in progress</div>
+    <div class="modal-overlay">
+      <div class="modal-header">
+        <span class="modal-title">Add Goal</span>
+        <button class="modal-close">&#x2715;</button>
+      </div>
+      <div class="modal-body" style="opacity:0.6;pointer-events:none;">
+        <div class="field">
+          <label>Goal Name</label>
+          <input type="text" value="Emergency Fund" />
+        </div>
+        <div class="field">
+          <label>Goal Type</label>
+          <div class="select-wrap"><select><option>Savings Target</option></select></div>
+        </div>
+        <div class="field">
+          <label>Target Amount (NZD)</label>
+          <input type="number" value="5000" />
+        </div>
+        <div class="field">
+          <label>Target Date <span class="optional-badge">optional</span></label>
+          <input type="date" value="2027-06-30" />
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-ghost" disabled>Cancel</button>
+        <button class="btn btn-primary" disabled style="opacity:0.6;">Saving…</button>
+      </div>
+    </div>
+
+    <!-- ─── Input states reference ─── -->
+    <div class="section-label">Input states</div>
+    <div class="states-grid">
+      <div class="state-card">
+        <div class="state-card-label">Default</div>
+        <input class="demo-input" type="text" placeholder="Emergency Fund" value="" readonly />
+      </div>
+      <div class="state-card">
+        <div class="state-card-label">Focused</div>
+        <input class="demo-input focused" type="text" value="Emergency Fund" readonly />
+      </div>
+      <div class="state-card">
+        <div class="state-card-label">Filled</div>
+        <input class="demo-input" type="text" value="House Deposit" readonly />
+      </div>
+      <div class="state-card">
+        <div class="state-card-label">Error</div>
+        <input class="demo-input error-state" type="text" value="" placeholder="Required" readonly />
+        <div class="field-error" style="margin-top:6px;">This field is required.</div>
+      </div>
+    </div>
+
+  </div><!-- /page-chrome -->
+
+  <script>
+    function handleTypeChange(value) {
+      const categoryField = document.getElementById('categoryField');
+      if (value === 'spending_limit') {
+        categoryField.classList.add('visible');
+        categoryField.style.animation = 'none';
+        // trigger reflow for smooth reveal
+        void categoryField.offsetWidth;
+      } else {
+        categoryField.classList.remove('visible');
+        document.getElementById('category').value = '';
+      }
+    }
+
+    function handleSave(btn) {
+      const name = document.getElementById('name').value.trim();
+      const type = document.getElementById('type').value;
+      const amount = document.getElementById('amount').value;
+
+      // basic demo validation
+      if (!name || !type || !amount) {
+        btn.textContent = 'Save Goal';
+        alert('Demo: fill in Name, Type, and Target Amount to see the saving state.');
+        return;
+      }
+
+      btn.textContent = 'Saving…';
+      btn.disabled = true;
+      setTimeout(() => {
+        btn.textContent = 'Saved!';
+        btn.style.background = '#065f46';
+        setTimeout(() => {
+          btn.textContent = 'Save Goal';
+          btn.disabled = false;
+          btn.style.background = '';
+          document.getElementById('name').value = '';
+          document.getElementById('type').value = '';
+          document.getElementById('amount').value = '';
+          handleTypeChange('');
+        }, 1200);
+      }, 1000);
+    }
+  </script>
+
+</body>
+</html>
