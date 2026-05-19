@@ -146,6 +146,89 @@ describe("AlertPreferencesSection — validation (#636)", () => {
   });
 });
 
+describe("AlertPreferencesSection — email alerts toggle (#638)", () => {
+  beforeEach(() => {
+    mockApiFetch.mockReset();
+    mockApiFetch.mockImplementation((_url: string, opts?: RequestInit) => {
+      if (opts?.method === "PATCH") {
+        return Promise.resolve({ emailAlertsEnabled: true });
+      }
+      return Promise.resolve({ alertThreshold: 80, emailAlertsEnabled: true });
+    });
+  });
+
+  it("renders the email alerts checkbox with the fetched value (true)", async () => {
+    renderSection();
+    const checkbox = (await screen.findByTestId(
+      "email-alerts-toggle",
+    )) as HTMLInputElement;
+    expect(checkbox).toBeInTheDocument();
+    expect(checkbox.checked).toBe(true);
+  });
+
+  it("renders the checkbox unchecked when emailAlertsEnabled is false", async () => {
+    mockApiFetch.mockImplementation((_url: string, opts?: RequestInit) => {
+      if (opts?.method === "PATCH") return Promise.resolve({});
+      return Promise.resolve({
+        alertThreshold: 80,
+        emailAlertsEnabled: false,
+      });
+    });
+    renderSection();
+    const checkbox = (await screen.findByTestId(
+      "email-alerts-toggle",
+    )) as HTMLInputElement;
+    expect(checkbox.checked).toBe(false);
+  });
+
+  it("calls PATCH /api/preferences with emailAlertsEnabled=false when checkbox is unchecked", async () => {
+    const user = userEvent.setup();
+    renderSection();
+    const checkbox = await screen.findByTestId("email-alerts-toggle");
+
+    await user.click(checkbox);
+
+    await waitFor(() => {
+      expect(mockApiFetch).toHaveBeenCalledWith(
+        "/api/preferences",
+        expect.objectContaining({
+          method: "PATCH",
+          body: JSON.stringify({ emailAlertsEnabled: false }),
+        }),
+      );
+    });
+  });
+
+  it("optimistically unchecks immediately on click before PATCH resolves", async () => {
+    // Delay the PATCH response so we can observe the intermediate state
+    let resolvePatch!: (v: unknown) => void;
+    const patchPromise = new Promise((r) => {
+      resolvePatch = r;
+    });
+
+    mockApiFetch.mockImplementation((_url: string, opts?: RequestInit) => {
+      if (opts?.method === "PATCH") return patchPromise;
+      return Promise.resolve({ alertThreshold: 80, emailAlertsEnabled: true });
+    });
+
+    const user = userEvent.setup();
+    renderSection();
+    const checkbox = (await screen.findByTestId(
+      "email-alerts-toggle",
+    )) as HTMLInputElement;
+
+    // Initially checked
+    expect(checkbox.checked).toBe(true);
+
+    // Click to uncheck — should be immediately unchecked (optimistic)
+    await user.click(checkbox);
+    expect(checkbox.checked).toBe(false);
+
+    // Resolve the PATCH
+    resolvePatch({ emailAlertsEnabled: false });
+  });
+});
+
 describe("AlertPreferencesSection — PATCH on valid blur (#636)", () => {
   beforeEach(() => {
     mockApiFetch.mockReset();
