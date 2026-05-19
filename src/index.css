@@ -11,6 +11,21 @@
   --red: #f87171;
   --amber: #fbbf24;
   --colour-savings: #10b981;
+
+  /* Modal tokens */
+  --modal-overlay: rgba(0, 0, 0, 0.6);
+  --modal-bg: #111e33;
+  --modal-border: #1a2d4a;
+  --modal-title: #e2e8f0;
+  --modal-body: #94a3b8;
+  --modal-cancel-bg: #0c1526;
+  --modal-cancel-border: #1a2d4a;
+  --modal-cancel-text: #94a3b8;
+  --modal-replace-bg: #10b981;
+  --modal-replace-border: #065f46;
+  --modal-replace-text: #ffffff;
+  --surface-hover: #152234;
+  --color-danger: #f87171;
 }
 
 * {

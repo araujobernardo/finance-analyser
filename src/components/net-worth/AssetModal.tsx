@@ -108,6 +108,10 @@ export function AssetModal({ asset, onClose }: AssetModalProps) {
       role="dialog"
       aria-modal="true"
       aria-labelledby="asset-modal-title"
+      data-testid="asset-modal-backdrop"
+      onClick={(e) => {
+        if (e.target === e.currentTarget) onClose();
+      }}
     >
       <div className="nw-modal__panel">
         <h2 className="nw-modal__title" id="asset-modal-title">
