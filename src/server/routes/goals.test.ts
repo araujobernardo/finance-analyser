@@ -59,7 +59,9 @@ beforeEach(async () => {
   const orderByChain = { orderBy: vi.fn().mockResolvedValue([]) };
   const whereChain = { where: vi.fn().mockReturnValue(orderByChain) };
   const fromChain = { from: vi.fn().mockReturnValue(whereChain) };
-  (db as Record<string, unknown>).select = vi.fn().mockReturnValue(fromChain);
+  (db as unknown as Record<string, unknown>).select = vi
+    .fn()
+    .mockReturnValue(fromChain);
 
   const { goalsRouter } = await import("./goals.ts");
   app = express();
