@@ -5,6 +5,7 @@ import { ToastProvider } from "./context/ToastContext";
 import { AccountProvider } from "./context/AccountContext";
 import { NetWorthProvider } from "./context/NetWorthContext";
 import { GoalsProvider } from "./context/GoalsContext";
+import { BudgetProvider } from "./context/BudgetContext";
 import { ProtectedRoute } from "./components/ProtectedRoute";
 import { PublicOnlyRoute } from "./components/PublicOnlyRoute";
 import { Sidebar } from "./components/Sidebar";
@@ -16,6 +17,7 @@ import { MigrationPage } from "./pages/MigrationPage";
 import { SettingsPage } from "./pages/SettingsPage";
 import NetWorthPage from "./pages/NetWorthPage";
 import { GoalsPage } from "./pages/GoalsPage";
+import BudgetPage from "./pages/BudgetPage";
 import { SignUpPage } from "./pages/SignUpPage";
 import { VerifyEmailPage } from "./pages/VerifyEmailPage";
 import { LoginPage } from "./pages/LoginPage";
@@ -409,6 +411,14 @@ export default function App() {
                   <GoalsProvider>
                     <GoalsPage />
                   </GoalsProvider>
+                }
+              />
+              <Route
+                path="/budget"
+                element={
+                  <BudgetProvider>
+                    <BudgetPage />
+                  </BudgetProvider>
                 }
               />
             </Routes>

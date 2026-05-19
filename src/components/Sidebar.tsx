@@ -30,6 +30,7 @@ const NAV = [
   { path: "/chat", icon: "◎", label: "AI Chat" },
   { path: "/net-worth", icon: "◈", label: "Net Worth" },
   { path: "/goals", icon: "◉", label: "Goals" },
+  { path: "/budget", icon: "◧", label: "Budget" },
   { path: "/settings", icon: "⚙", label: "Settings" },
 ];
 
