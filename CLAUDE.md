@@ -36,6 +36,6 @@ are in [constitution.md](constitution.md).
 
 For project principles, governance, and agent workflow see: constitution.md
 
-**Active feature plan**: [specs/024-goals-management/plan.md](specs/024-goals-management/plan.md)
+**Active feature plan**: [specs/029-budget-alerts/plan.md](specs/029-budget-alerts/plan.md)
 
 <!-- SPECKIT END -->
