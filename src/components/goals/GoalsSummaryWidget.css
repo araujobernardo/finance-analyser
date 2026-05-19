@@ -1,0 +1,162 @@
+/* FA-GOAL-004 T005 — GoalsSummaryWidget styles */
+
+.gsw-card {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.gsw-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+/* Empty state (T008) */
+.gsw-empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 1.5rem 0;
+}
+
+.gsw-empty-text {
+  margin: 0;
+  color: var(--muted);
+  font-size: 0.875rem;
+}
+
+.gsw-empty-link {
+  font-size: 0.875rem;
+  color: var(--accent);
+  text-decoration: none;
+}
+
+.gsw-empty-link:hover {
+  text-decoration: underline;
+}
+
+/* Goal list */
+.gsw-list {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.gsw-item {
+  display: flex;
+  flex-direction: column;
+  gap: 0.375rem;
+}
+
+.gsw-item-header {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 0.5rem;
+}
+
+.gsw-goal-name {
+  font-size: 0.9rem;
+  font-weight: 500;
+  color: var(--text);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.gsw-type-badge {
+  font-size: 0.7rem;
+  font-weight: 500;
+  color: var(--muted);
+  background: var(--surface, rgba(255, 255, 255, 0.06));
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  padding: 0.125rem 0.5rem;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+/* Progress bar */
+.gsw-progress-track {
+  height: 6px;
+  background: var(--border);
+  border-radius: 999px;
+  overflow: hidden;
+}
+
+.gsw-progress-fill {
+  height: 100%;
+  background: var(--colour-success, #22c55e);
+  border-radius: 999px;
+  transition: width 0.3s ease;
+  min-width: 0;
+  max-width: 100%;
+}
+
+/* Footer row */
+.gsw-item-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.gsw-percent {
+  font-size: 0.75rem;
+  color: var(--muted);
+  font-variant-numeric: tabular-nums;
+}
+
+/* Status labels */
+.gsw-status {
+  font-size: 0.7rem;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  border-radius: 999px;
+  padding: 0.1rem 0.5rem;
+}
+
+.gsw-status--on-track {
+  color: var(--colour-success, #22c55e);
+  background: color-mix(
+    in srgb,
+    var(--colour-success, #22c55e) 15%,
+    transparent
+  );
+}
+
+.gsw-status--at-risk {
+  color: var(--colour-warning, #f59e0b);
+  background: color-mix(
+    in srgb,
+    var(--colour-warning, #f59e0b) 15%,
+    transparent
+  );
+}
+
+.gsw-status--behind {
+  color: var(--colour-danger, #ef4444);
+  background: color-mix(
+    in srgb,
+    var(--colour-danger, #ef4444) 15%,
+    transparent
+  );
+}
+
+/* Footer "See all goals" link (T010) */
+.gsw-footer {
+  border-top: 1px solid var(--border);
+  padding-top: 0.5rem;
+  text-align: center;
+}
+
+.gsw-see-all {
+  font-size: 0.8rem;
+  color: var(--accent);
+  text-decoration: none;
+}
+
+.gsw-see-all:hover {
+  text-decoration: underline;
+}
