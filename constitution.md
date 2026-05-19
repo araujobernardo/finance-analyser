@@ -1,6 +1,19 @@
 <!--
 Sync Impact Report
 ==================
+Version change: 2.6.0 → 2.6.1 (PATCH — orphaned in-progress issue recovery added to session start)
+Modified sections:
+  - Automation Rules: added orphan recovery as a fully automated session-start action
+Agent files updated:
+  - .claude/agents/delivery-lead.md: Session Start step 6 — audit in-progress issues,
+    reset any with no open PR back to status:backlog with a comment
+Motivation: rate-limit interruptions leave issues stuck as status:in-progress with no
+  PR and no recovery path, causing the delivery loop to skip them on the next session.
+-->
+
+<!--
+Sync Impact Report
+==================
 Version change: 2.5.0 → 2.6.0 (MINOR — one-story-per-PR rule hardened across all agents)
 Modified sections:
   - Golden Rules: added GR-7 — one story per branch and per PR, no bulk implementations
@@ -215,6 +228,7 @@ report that to the user. Do not start work on a story that is already claimed.
 - Designer: writing `specs/[dir]/ux-brief.md`
 - Designer: posting handoff comment on GitHub issue
 - **Session-start branch cleanup**: `git fetch --prune`, delete merged and `worktree-agent-*` local branches, pull latest `main` — Delivery Lead runs this before every story search
+- **Session-start orphan recovery**: Delivery Lead audits every `status:in-progress` issue at session start; any issue with no open PR is an orphaned claim — reset it to `status:backlog` with a comment before searching for the next story
 - **CI gate check**: `gh pr checks <number> --watch` — QA runs this before every merge; a failing check is treated as a test failure (counts toward the 3-attempt loop)
 - **E2E automation evaluation**: QA evaluates every acceptance criterion and manual test step for Playwright automation on every PR — writing tests and adding `data-testid` attributes as needed, with no user confirmation required
 
@@ -284,4 +298,4 @@ Versions follow Semantic Versioning (`MAJOR.MINOR.PATCH`):
 - Any agent that cannot comply with a rule MUST stop and surface the conflict
   to the user rather than proceeding.
 
-**Version**: 2.6.0 | **Ratified**: 2026-04-19 | **Last Amended**: 2026-05-20
+**Version**: 2.6.1 | **Ratified**: 2026-04-19 | **Last Amended**: 2026-05-20

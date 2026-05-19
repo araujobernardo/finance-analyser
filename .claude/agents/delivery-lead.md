@@ -19,7 +19,7 @@ Before starting any work, read:
 - [docs/definition-of-ready.md](../../docs/definition-of-ready.md) — check before starting a story
 - [docs/definition-of-done.md](../../docs/definition-of-done.md) — check before considering a story complete
 
-## Session Start — Sync and Clean Branches
+## Session Start — Sync, Clean Branches, and Recover Orphans
 
 Run this **every time** before finding the next story:
 
@@ -40,6 +40,26 @@ Run this **every time** before finding the next story:
    git checkout main && git pull origin main
    ```
 5. Log any branches deleted in steps 2–3 as a short note in your response.
+6. **Recover orphaned in-progress issues** — a previous session may have claimed
+   issues without opening a PR. For every open issue labelled `status:in-progress`,
+   check whether an open PR references it:
+   ```bash
+   gh issue list --label "status:in-progress" --state open --json number,title
+   ```
+   For each result, check for an open PR:
+   ```bash
+   gh pr list --state open --search "Closes #<number>" --json number,title
+   ```
+
+   - **If an open PR exists**: the issue is genuinely in-progress — leave it and
+     check if QA still needs to run (resume the cycle from Step 3 for that PR).
+   - **If no open PR exists**: the claim is orphaned — reset the issue:
+     ```bash
+     gh issue edit <number> --remove-label "status:in-progress" --add-label "status:backlog"
+     gh issue comment <number> --body "Resetting to backlog — previous session claimed this issue but no PR was opened. Ready to be picked up again."
+     ```
+     Log every issue reset as a note in your response. Only proceed to Finding the
+     Next Story once all orphans are resolved.
 
 ---
 
