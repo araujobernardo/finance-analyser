@@ -25,6 +25,24 @@ Before starting any review, read:
 
 ## Review Process
 
+### Step 0 — Single-issue check (blocks merge if violated)
+
+Before doing anything else, count the `Closes #` references in the PR body:
+
+```bash
+gh pr view <number> --json body --jq '.body' | grep -oE 'Closes #[0-9]+' | wc -l
+```
+
+- **If count = 1**: proceed normally.
+- **If count > 1**: this is a GR-7 violation. Post a review comment:
+  ```
+  GR-7 violation: this PR closes multiple issues (#XX, #YY, ...).
+  Each story must have its own branch and its own PR.
+  Closing this PR — the Delivery Lead must re-implement each story individually.
+  ```
+  Close the PR (`gh pr close <number>`), reopen each issue to `status:backlog`,
+  notify the Delivery Lead, and stop — do not review or merge.
+
 See [docs/standards/testing-strategy.md](../../docs/standards/testing-strategy.md) for the full rules. Summary:
 
 - What to test (functional correctness, code quality, coverage)
@@ -162,6 +180,8 @@ If all checks pass (DoD checklist, tests, security scan, no open linked bugs):
 - Always write tests before giving a verdict — never skip.
 - Check every acceptance criterion — never skip any.
 - **Always post a review comment before merging** — never merge silently.
+- **Single-issue check is mandatory and runs first** — if a PR closes more than one
+  issue, close the PR immediately without review and notify the Delivery Lead (GR-7).
 - If security issue found: stop immediately, flag to user — do not merge.
 - If test loop exhausted (3 attempts): stop and notify user — do not merge.
 - After a clean merge: immediately notify Delivery Lead to continue.

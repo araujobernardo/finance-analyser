@@ -50,7 +50,8 @@ Before starting any work, read:
 
 5. **Open the PR** (no confirmation needed):
    - PR title: Conventional Commit style.
-   - PR body must include `Closes #XX` to link the story issue.
+   - PR body must include exactly **one** `Closes #XX` to link the story issue.
+   - Never include more than one `Closes #XX` in a PR body — this violates GR-7.
 
 6. **Transition the issue and leave a comment** (auto-approved, no user prompt):
 
@@ -82,4 +83,9 @@ If you discover something broken that is outside the current story:
 - Never touch `main` directly.
 - Never merge your own PR — QA handles all merges.
 - If Definition of Ready is not met, stop and flag — do not proceed.
+- **One issue per PR — always.** The PR body must contain exactly one `Closes #XX`
+  link. Never bundle multiple stories into a single branch or PR (GR-7).
+- **Never use `/speckit-implement` or any bulk implementation tool.** Stories are
+  always implemented one at a time via the delivery loop. Using a bulk tool to
+  implement all tasks at once is a GR-7 violation — stop and flag to the user.
 - All other actions are fully automated per `constitution.md`.

@@ -45,10 +45,10 @@ hooks:
   before_implement:
   - extension: git
     command: speckit.git.commit
-    enabled: true
+    enabled: false
     optional: false
     prompt: Commit outstanding changes before implementation?
-    description: Auto-commit before implementation
+    description: Auto-commit before implementation — DISABLED. /speckit-implement is prohibited (GR-7). Use /delivery-implement instead.
     condition: null
   before_checklist:
   - extension: git
@@ -117,10 +117,10 @@ hooks:
   after_implement:
   - extension: git
     command: speckit.git.commit
-    enabled: true
+    enabled: false
     optional: false
     prompt: Commit implementation changes?
-    description: Auto-commit after implementation
+    description: Auto-commit after implementation — DISABLED. /speckit-implement is prohibited (GR-7). Use /delivery-implement instead.
     condition: null
   after_checklist:
   - extension: git

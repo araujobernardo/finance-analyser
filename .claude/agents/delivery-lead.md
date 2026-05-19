@@ -97,6 +97,21 @@ For UI stories, also pass the path to the UX brief: `specs/[dir]/ux-brief.md`.
 Wait for the Developer agent to return (it will open the PR and label the issue
 `status:in-review`).
 
+### Step 2c — Verify PR closes exactly one issue (GR-7 check)
+
+Before spawning QA, run:
+
+```bash
+gh pr view <number> --json body --jq '.body' | grep -oE 'Closes #[0-9]+' | wc -l
+```
+
+- **If count = 1**: proceed to Step 3.
+- **If count > 1**: stop immediately. This is a GR-7 violation — the Developer
+  bundled multiple stories into one PR. Do not spawn QA. Notify the user with:
+  - The PR number and which issues it closes
+  - That the PR must be closed and each story re-implemented individually
+    Wait for user instruction before continuing.
+
 ### Step 3 — Spawn QA agent
 
 Use the Agent tool. Pass it: issue number, title, PR number, acceptance criteria,

@@ -1,6 +1,21 @@
 <!--
 Sync Impact Report
 ==================
+Version change: 2.5.0 → 2.6.0 (MINOR — one-story-per-PR rule hardened across all agents)
+Modified sections:
+  - Golden Rules: added GR-7 — one story per branch and per PR, no bulk implementations
+  - Automation Rules / Stop and Ask: added multi-issue PR detection as a stop condition
+Agent files updated:
+  - .claude/agents/developer.md: added one-issue-per-PR and no-bulk-implementation rules
+  - .claude/agents/qa.md: added single-issue check as first review step (blocks merge)
+  - .claude/agents/delivery-lead.md: added PR single-issue verification before spawning QA
+Motivation: PR #657 bundled all 26 FA-BUDG-002 tasks into one PR, bypassing the delivery
+  loop entirely. This amendment closes that gap at every layer of the agent stack.
+-->
+
+<!--
+Sync Impact Report
+==================
 Version change: 2.4.0 → 2.5.0 (MINOR — E2E automation evaluation added to QA workflow)
 Modified sections:
   - Automation Rules: new auto-approved action — E2E automation evaluation on every PR
@@ -74,6 +89,11 @@ These apply to ALL agents and AI tools without exception:
 4. Never skip the Definition of Ready check before implementation.
 5. Never skip the Definition of Done check before merging.
 6. When in doubt about a product decision, do less and ask more.
+7. **One story per branch and per PR — always.** A PR body may reference exactly
+   one `Closes #XX` issue. Bulk implementations that close multiple issues in a
+   single PR are never acceptable, regardless of how related the stories are.
+   Never use `/speckit-implement` or any other tool to implement all tasks at once
+   — stories are always delivered one at a time through the delivery loop.
 
 ---
 
@@ -205,6 +225,7 @@ report that to the user. Do not start work on a story that is already claimed.
 - Test failures persist after 3 fix attempts
 - Fundamental conflict with constitution detected
 - Behaviour that would affect user data or localStorage schema
+- A PR body contains more than one `Closes #XX` reference (GR-7 violation)
 
 ---
 
@@ -263,4 +284,4 @@ Versions follow Semantic Versioning (`MAJOR.MINOR.PATCH`):
 - Any agent that cannot comply with a rule MUST stop and surface the conflict
   to the user rather than proceeding.
 
-**Version**: 2.5.0 | **Ratified**: 2026-04-19 | **Last Amended**: 2026-05-12
+**Version**: 2.6.0 | **Ratified**: 2026-04-19 | **Last Amended**: 2026-05-20
