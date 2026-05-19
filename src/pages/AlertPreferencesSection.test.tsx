@@ -124,7 +124,7 @@ describe("AlertPreferencesSection — validation (#636)", () => {
     const user = userEvent.setup();
     mockApiFetch.mockResolvedValue({ alertThreshold: 80 });
     // PATCH also resolves successfully
-    mockApiFetch.mockImplementation((url: string, opts?: RequestInit) => {
+    mockApiFetch.mockImplementation((_url: string, opts?: RequestInit) => {
       if (opts?.method === "PATCH") {
         return Promise.resolve({ alertThreshold: 75 });
       }
@@ -153,7 +153,7 @@ describe("AlertPreferencesSection — PATCH on valid blur (#636)", () => {
 
   it("calls PATCH /api/preferences with alertThreshold when a valid value is blurred", async () => {
     const user = userEvent.setup();
-    mockApiFetch.mockImplementation((url: string, opts?: RequestInit) => {
+    mockApiFetch.mockImplementation((_url: string, opts?: RequestInit) => {
       if (opts?.method === "PATCH") {
         return Promise.resolve({ alertThreshold: 70 });
       }
@@ -191,10 +191,9 @@ describe("AlertPreferencesSection — PATCH on valid blur (#636)", () => {
 
     await waitFor(() => {
       // Only the initial GET should have been called
-      const patchCalls = mockApiFetch.mock.calls.filter(
-        ([, opts]: [string, RequestInit | undefined]) =>
-          opts?.method === "PATCH",
-      );
+      const patchCalls = (
+        mockApiFetch.mock.calls as [string, RequestInit | undefined][]
+      ).filter(([, opts]) => opts?.method === "PATCH");
       expect(patchCalls).toHaveLength(0);
     });
   });
