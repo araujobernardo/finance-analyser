@@ -62,7 +62,45 @@ export async function calculateGoalProgress(
       break;
     }
 
-    case "debt_payoff":
+    case "debt_payoff": {
+      if (!goal.linkedAccountId) {
+        // Cannot compute outstanding balance without a linked account; leave goal unchanged
+        return;
+      }
+
+      const rawBalance = await computeAccountBalance(
+        goal.linkedAccountId,
+        userId,
+        db,
+      );
+
+      // Credit card balances are negative in the system; take the absolute value
+      // to get the outstanding debt amount.
+      const outstanding = Math.abs(rawBalance);
+      const targetAmount = parseFloat(goal.targetAmount);
+
+      // Auto-achieve when the debt is fully paid off
+      const newStatus = outstanding <= 0 ? "achieved" : goal.status;
+
+      // currentAmount represents how much has been paid off.
+      // paid = targetAmount - outstanding (how much debt has been cleared).
+      // Clamp to [0, targetAmount]: if the debt has grown beyond the initial
+      // target, paid is negative — clamp to 0.
+      const paid = targetAmount - outstanding;
+      const currentAmount = Math.min(Math.max(0, paid), targetAmount);
+
+      await db
+        .update(goals)
+        .set({
+          currentAmount: String(currentAmount),
+          status: newStatus,
+          updatedAt: new Date(),
+        })
+        .where(and(eq(goals.id, goal.id), eq(goals.userId, userId)));
+
+      break;
+    }
+
     case "net_worth_milestone":
     case "spending_limit":
       // No-op — these branches will be implemented in later tasks
