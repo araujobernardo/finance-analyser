@@ -8,6 +8,7 @@ import {
   type AuthLocals,
 } from "../middleware/authenticateToken.ts";
 import { syncLinkedAssets } from "../utils/syncLinkedAssets.ts";
+import { recalculateUserGoals } from "../utils/recalculateUserGoals.ts";
 
 export const liabilitiesRouter = Router();
 
@@ -152,10 +153,14 @@ liabilitiesRouter.patch("/:id", authenticateToken, async (req, res, next) => {
         .select()
         .from(liabilities)
         .where(and(eq(liabilities.id, id), eq(liabilities.userId, userId)));
+      // FA-GOAL-003 T011: recalculate net_worth_milestone goals after liability edit
+      await recalculateUserGoals(userId, db);
       res.json(synced ?? updated);
       return;
     }
 
+    // FA-GOAL-003 T011: recalculate net_worth_milestone goals after liability edit
+    await recalculateUserGoals(userId, db);
     res.json(updated);
   } catch (err) {
     next(err);
