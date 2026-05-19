@@ -107,7 +107,21 @@ Wait for the QA agent to return.
 ### Step 4 — After QA returns
 
 - **If QA merged successfully**:
-  1. Append one line to `CHANGELOG.md` at the repo root:
+  1. Clean up the feature branch immediately — both remote and local:
+
+     ```bash
+     # Delete remote branch (safe even if GitHub already auto-deleted it)
+     git push origin --delete <branch-name> 2>/dev/null || true
+     # Switch to main, pull, then delete local branch
+     git checkout main && git pull origin main
+     git branch -D <branch-name> 2>/dev/null || true
+     # Prune any other stale remote-tracking refs while here
+     git fetch origin --prune
+     ```
+
+     Log which branch was deleted. The workspace must have only `main` checked out before the next story starts.
+
+  2. Append one line to `CHANGELOG.md` at the repo root:
 
      ```
      - **YYYY-MM-DD** | #<issue> | <story title> | <one sentence summary of what shipped>
@@ -121,7 +135,7 @@ Wait for the QA agent to return.
      _Automatically maintained by the Delivery Lead agent._
      ```
 
-  2. Append one row to the Session Log table in `docs/dev-mentor-progress.md`.
+  3. Append one row to the Session Log table in `docs/dev-mentor-progress.md`.
      Find the line `| Date | Topic Covered | Notes |` and insert a new row after
      the last existing entry in that table, following this format exactly:
 
@@ -133,8 +147,8 @@ Wait for the QA agent to return.
      or concept did this story exercise? (e.g. "Sidebar layout with React Router;
      practised CSS grid and component decomposition.")
 
-  3. Commit both files together: `chore: update CHANGELOG and dev-mentor log for #<issue>`
-  4. Report "#XX is Done. [X] complete, [Y] remaining in backlog." Then
+  4. Commit both files together: `chore: update CHANGELOG and dev-mentor log for #<issue>`
+  5. Report "#XX is Done. [X] complete, [Y] remaining in backlog." Then
      immediately pick up the next unblocked story — no user prompt needed.
 
 - **If QA stopped** (test loop exhausted or security issue): report findings to
