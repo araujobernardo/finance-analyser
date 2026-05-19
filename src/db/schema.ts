@@ -2,6 +2,7 @@ import {
   boolean,
   date,
   index,
+  integer,
   numeric,
   pgTable,
   text,
@@ -179,6 +180,75 @@ export const netWorthSnapshots = pgTable(
   }),
 );
 
+// FA-BUDG-001 — Monthly budget data model (migration 0007_budget_data_model.sql)
+
+export const budgets = pgTable(
+  "budgets",
+  {
+    id: uuid("id").defaultRandom().primaryKey(),
+    userId: uuid("user_id")
+      .notNull()
+      .references(() => users.id, { onDelete: "cascade" }),
+    categoryName: varchar("category_name", { length: 100 }).notNull(),
+    year: integer("year").notNull(),
+    month: integer("month").notNull(),
+    limitAmount: numeric("limit_amount", { precision: 15, scale: 2 }).notNull(),
+    createdAt: timestamp("created_at", { withTimezone: true })
+      .defaultNow()
+      .notNull(),
+    updatedAt: timestamp("updated_at", { withTimezone: true })
+      .defaultNow()
+      .notNull(),
+  },
+  (table) => ({
+    userCategoryMonthUniq: uniqueIndex("budgets_user_category_month_uniq").on(
+      table.userId,
+      table.categoryName,
+      table.year,
+      table.month,
+    ),
+  }),
+);
+
+export const budgetDefaults = pgTable(
+  "budget_defaults",
+  {
+    id: uuid("id").defaultRandom().primaryKey(),
+    userId: uuid("user_id")
+      .notNull()
+      .references(() => users.id, { onDelete: "cascade" }),
+    categoryName: varchar("category_name", { length: 100 }).notNull(),
+    limitAmount: numeric("limit_amount", { precision: 15, scale: 2 }).notNull(),
+    createdAt: timestamp("created_at", { withTimezone: true })
+      .defaultNow()
+      .notNull(),
+    updatedAt: timestamp("updated_at", { withTimezone: true })
+      .defaultNow()
+      .notNull(),
+  },
+  (table) => ({
+    userCategoryUniq: uniqueIndex("budget_defaults_user_category_uniq").on(
+      table.userId,
+      table.categoryName,
+    ),
+  }),
+);
+
+export const userPreferences = pgTable("user_preferences", {
+  id: uuid("id").defaultRandom().primaryKey(),
+  userId: uuid("user_id")
+    .notNull()
+    .unique()
+    .references(() => users.id, { onDelete: "cascade" }),
+  monthStartDay: integer("month_start_day").notNull().default(1),
+  createdAt: timestamp("created_at", { withTimezone: true })
+    .defaultNow()
+    .notNull(),
+  updatedAt: timestamp("updated_at", { withTimezone: true })
+    .defaultNow()
+    .notNull(),
+});
+
 // Inferred types — tsc -b verified 0 errors (FA-GOAL-001 T008, 2026-05-17)
 // Goal includes: categoryName: string | null, currentAmount: string | null, updatedAt: Date
 export type User = typeof users.$inferSelect;
@@ -188,6 +258,12 @@ export type Category = typeof categories.$inferSelect;
 export type Asset = typeof assets.$inferSelect;
 export type Liability = typeof liabilities.$inferSelect;
 export type Goal = typeof goals.$inferSelect;
+export type Budget = typeof budgets.$inferSelect;
+export type NewBudget = typeof budgets.$inferInsert;
+export type BudgetDefault = typeof budgetDefaults.$inferSelect;
+export type NewBudgetDefault = typeof budgetDefaults.$inferInsert;
+export type UserPreferences = typeof userPreferences.$inferSelect;
+export type NewUserPreferences = typeof userPreferences.$inferInsert;
 
 export type NewUser = typeof users.$inferInsert;
 export type NewAccount = typeof accounts.$inferInsert;
