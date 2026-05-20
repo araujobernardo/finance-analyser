@@ -190,25 +190,25 @@ const EXTRA_COLORS = [
 ];
 
 interface Props {
-  categories: PfaCategory[];
-  setCategories: (v: PfaCategory[]) => void;
-  budgets: PfaBudgets;
-  setBudgets: (v: PfaBudgets) => void;
-  txns: PfaTxn[];
-  setTxns: (v: PfaTxn[]) => void;
-  accountList: { short: string; display: string }[];
-  onRenameAccount: (short: string, name: string) => void;
+  categories?: PfaCategory[];
+  setCategories?: (v: PfaCategory[]) => void;
+  budgets?: PfaBudgets;
+  setBudgets?: (v: PfaBudgets) => void;
+  txns?: PfaTxn[];
+  setTxns?: (v: PfaTxn[]) => void;
+  accountList?: { short: string; display: string }[];
+  onRenameAccount?: (short: string, name: string) => void;
 }
 
 export function SettingsPage({
-  categories,
-  setCategories,
-  budgets,
-  setBudgets,
-  txns,
-  setTxns,
-  accountList,
-  onRenameAccount,
+  categories = [],
+  setCategories = () => {},
+  budgets = {},
+  setBudgets = () => {},
+  txns = [],
+  setTxns = () => {},
+  accountList = [],
+  onRenameAccount = () => {},
 }: Props) {
   const months = [...new Set(txns.map((t) => t.month))].sort();
 
