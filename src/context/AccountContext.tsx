@@ -9,11 +9,7 @@ import {
   type SetStateAction,
   type ReactNode,
 } from "react";
-import {
-  DEFAULT_ACCOUNT_ID,
-  ACCOUNT_COLOURS,
-  getAccounts as getLegacyAccounts,
-} from "../services/storage";
+import { DEFAULT_ACCOUNT_ID, ACCOUNT_COLOURS } from "../services/storage";
 import { ACTIVE_ACCOUNT_KEY } from "./accountKeys";
 import { useApi } from "../lib/api";
 import { useToast } from "../hooks/useToast";
@@ -35,8 +31,6 @@ export interface AccountContextValue {
   activeAccountId: string | typeof ALL_ACCOUNTS_ID;
   isLoading: boolean;
   error: string | null;
-  /** True when localStorage has unmigrated accounts but the API has none. */
-  needsMigration: boolean;
   setActiveAccountId: (id: string | typeof ALL_ACCOUNTS_ID) => void;
   addAccount: (
     nickname: string,
@@ -55,7 +49,6 @@ const AccountContext = createContext<AccountContextValue>({
   activeAccountId: DEFAULT_ACCOUNT_ID,
   isLoading: false,
   error: null,
-  needsMigration: false,
   setActiveAccountId: () => {},
   addAccount: async () => false,
   removeAccount: async () => false,
@@ -82,7 +75,6 @@ export function AccountProvider({ children }: { children: ReactNode }) {
   const [accounts, setAccounts] = useState<AccountWithColour[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [needsMigration, setNeedsMigration] = useState(false);
   const [activeAccountId, setActiveAccountIdState] = useState<
     string | typeof ALL_ACCOUNTS_ID
   >(DEFAULT_ACCOUNT_ID);
@@ -111,15 +103,6 @@ export function AccountProvider({ children }: { children: ReactNode }) {
         // Try to restore from localStorage
         return resolveInitialAccountId(withColour);
       });
-      // Detect unmigrated state: API has no accounts, localStorage has accounts,
-      // and the user has not yet completed the migration wizard.
-      if (
-        withColour.length === 0 &&
-        getLegacyAccounts().length > 0 &&
-        localStorage.getItem("fa-migration-complete") === null
-      ) {
-        setNeedsMigration(true);
-      }
     } catch {
       setError("Failed to load accounts");
     } finally {
@@ -350,7 +333,6 @@ export function AccountProvider({ children }: { children: ReactNode }) {
         activeAccountId,
         isLoading,
         error,
-        needsMigration,
         setActiveAccountId,
         addAccount,
         removeAccount,

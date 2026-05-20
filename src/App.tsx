@@ -1,14 +1,8 @@
 import { useState } from "react";
-import {
-  Navigate,
-  Route,
-  Routes,
-  useNavigate,
-  useLocation,
-} from "react-router-dom";
+import { Navigate, Route, Routes, useNavigate } from "react-router-dom";
 import { AuthProvider, useAuth } from "./context/AuthContext";
 import { ToastProvider } from "./context/ToastContext";
-import { AccountProvider, useAccount } from "./context/AccountContext";
+import { AccountProvider } from "./context/AccountContext";
 import { NetWorthProvider } from "./context/NetWorthContext";
 import { GoalsProvider } from "./context/GoalsContext";
 import { BudgetProvider } from "./context/BudgetContext";
@@ -114,17 +108,9 @@ function detectTransfers(allTxns: PfaTxn[]): PfaTxn[] {
 }
 
 // ── Migration Guard ──────────────────────────────────────────────────────────
-// Redirects to /migrate when the user has localStorage accounts (old system)
-// but no API accounts (new system) and hasn't completed the migration yet.
-// Must be rendered inside AccountProvider so it can read the context.
+// Placeholder — migration detection removed in T002. Route and component
+// cleanup handled in T009 and T010.
 function MigrationGuard({ children }: { children: React.ReactNode }) {
-  const { needsMigration, isLoading } = useAccount();
-  const location = useLocation();
-
-  // Don't redirect while accounts are loading or if already on /migrate
-  if (!isLoading && needsMigration && location.pathname !== "/migrate") {
-    return <Navigate to="/migrate" replace />;
-  }
   return <>{children}</>;
 }
 
