@@ -337,8 +337,8 @@ CHANGELOG updated → Next story
 
 ### Technical Stats
 
-- **Test count:** 400+ tests across 25+ test files
-- **PRs merged:** 75+
+- **Test count:** 870+ tests across 25+ test files
+- **PRs merged:** 80+
 - **Agents:** Developer, QA, Delivery Lead, Designer
 - **Constitution version:** v2.2.0
 
