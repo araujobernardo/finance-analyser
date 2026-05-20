@@ -395,6 +395,17 @@ export function useActiveMonths(): string[] {
 }
 
 /**
+ * Returns ALL raw transactions for the current active account selection,
+ * across all months. Useful for pages that need to aggregate over all
+ * available history (e.g. DashboardPage month picker).
+ */
+// eslint-disable-next-line react-refresh/only-export-components
+export function useAllTransactions(): ApiTransaction[] {
+  const { rawTransactions } = useRawTransactions();
+  return rawTransactions;
+}
+
+/**
  * Returns merged transactions for the given monthKey under the active account
  * selection. When `activeAccountId === 'all'`, merges from all accounts and
  * attaches `accountColour` to each transaction row.
