@@ -1,59 +1,82 @@
 import { describe, it, expect, vi } from "vitest";
 import { render } from "@testing-library/react";
+import { MemoryRouter } from "react-router-dom";
 import { DashboardPage } from "./DashboardPage";
-import type { PfaTxn, PfaCategory } from "../types/pfa";
+import type { ApiTransaction } from "../types/api";
 
 // GoalsSummaryWidget uses <Link> and useGoals — stub it for DashboardPage tests
 vi.mock("../components/goals/GoalsSummaryWidget", () => ({
   GoalsSummaryWidget: () => null,
 }));
 
-function makeTxn(overrides: Partial<PfaTxn> = {}): PfaTxn {
+// ── Mock AccountContext ───────────────────────────────────────────────────────
+
+const mockAccounts = [{ id: "acc-1", nickname: "Main", colour: "#6C8EBF" }];
+let mockRawTransactions: ApiTransaction[] = [];
+let mockIsLoading = false;
+
+vi.mock("../context/AccountContext", () => ({
+  useAccount: () => ({
+    accounts: mockAccounts,
+    isLoading: mockIsLoading,
+    error: null,
+    activeAccountId: "acc-1",
+    refetch: vi.fn(),
+    setActiveAccountId: vi.fn(),
+    addAccount: vi.fn(),
+    removeAccount: vi.fn(),
+    updateAccount: vi.fn(),
+  }),
+  useAllTransactions: () => mockRawTransactions,
+  ALL_ACCOUNTS_ID: "all",
+}));
+
+// ── Mock useApi (needed transitively by AccountProvider in some imports) ──────
+vi.mock("../lib/api", () => ({
+  useApi: () => ({ apiFetch: vi.fn() }),
+  API_BASE: "",
+}));
+
+// ── Helpers ───────────────────────────────────────────────────────────────────
+
+function makeApiTxn(overrides: Partial<ApiTransaction> = {}): ApiTransaction {
   return {
     id: "txn-1",
+    userId: "user-1",
+    accountId: "acc-1",
     date: "2026-03-15",
-    month: "2026-03",
-    type: "",
-    payee: "Supermarket",
-    memo: "",
     amount: -100,
-    isCredit: false,
-    account: "Main",
-    accountShort: "Main",
+    description: "Supermarket",
     category: "Groceries",
     isTransfer: false,
+    isManualTransfer: false,
+    createdAt: new Date().toISOString(),
     ...overrides,
   };
 }
 
-const CATEGORIES: PfaCategory[] = [
-  { name: "Groceries", color: "#34d399" },
-  { name: "Dining & Takeaways", color: "#fbbf24" },
-];
-
-function renderDashboard(txns: PfaTxn[]) {
-  const months = [...new Set(txns.map((t) => t.month))].sort();
+function renderDashboard() {
   return render(
-    <DashboardPage
-      txns={txns}
-      months={months}
-      selectedMonths={months}
-      setSelectedMonths={() => {}}
-      budgets={{}}
-      accountList={[{ short: "Main", display: "Main" }]}
-      categories={CATEGORIES}
-    />,
+    <MemoryRouter>
+      <DashboardPage />
+    </MemoryRouter>,
   );
 }
 
+// ── Tests ─────────────────────────────────────────────────────────────────────
+
 describe("DashboardPage — Spending by Category layout (spec 007 FR-004)", () => {
   it("renders .dash-cat-body container when there is category spend data", () => {
-    const { container } = renderDashboard([makeTxn()]);
+    mockRawTransactions = [makeApiTxn()];
+    mockIsLoading = false;
+    const { container } = renderDashboard();
     expect(container.querySelector(".dash-cat-body")).toBeInTheDocument();
   });
 
   it("legend column appears before the chart column in DOM order", () => {
-    const { container } = renderDashboard([makeTxn()]);
+    mockRawTransactions = [makeApiTxn()];
+    mockIsLoading = false;
+    const { container } = renderDashboard();
     const legendCol = container.querySelector(
       ".dash-cat-legend-col",
     ) as HTMLElement;
@@ -70,7 +93,9 @@ describe("DashboardPage — Spending by Category layout (spec 007 FR-004)", () =
   });
 
   it("legend items are inside the legend column, not outside it", () => {
-    const { container } = renderDashboard([makeTxn()]);
+    mockRawTransactions = [makeApiTxn()];
+    mockIsLoading = false;
+    const { container } = renderDashboard();
     const legendCol = container.querySelector(".dash-cat-legend-col");
     expect(legendCol).not.toBeNull();
     const legendItem = legendCol!.querySelector(".dash-cat-legend-item");
@@ -78,7 +103,9 @@ describe("DashboardPage — Spending by Category layout (spec 007 FR-004)", () =
   });
 
   it("chart column is present and contains the Recharts wrapper div", () => {
-    const { container } = renderDashboard([makeTxn()]);
+    mockRawTransactions = [makeApiTxn()];
+    mockIsLoading = false;
+    const { container } = renderDashboard();
     const chartCol = container.querySelector(".dash-cat-chart-col");
     expect(chartCol).toBeInTheDocument();
     // Recharts ResponsiveContainer renders a div child in jsdom (no SVG without real dimensions)
@@ -86,10 +113,33 @@ describe("DashboardPage — Spending by Category layout (spec 007 FR-004)", () =
   });
 
   it("does not render .dash-cat-body when there is no category spend", () => {
-    // No expense txns → catData is empty → shows empty state instead
-    const { container } = renderDashboard([
-      makeTxn({ isCredit: true, amount: 500 }),
-    ]);
+    // Credit txn → not an expense → catData is empty → shows empty chart state
+    mockRawTransactions = [makeApiTxn({ amount: 500 })];
+    mockIsLoading = false;
+    const { container } = renderDashboard();
     expect(container.querySelector(".dash-cat-body")).not.toBeInTheDocument();
+  });
+});
+
+describe("DashboardPage — loading and empty states", () => {
+  it("shows loading state when isLoading and no transactions", () => {
+    mockRawTransactions = [];
+    mockIsLoading = true;
+    const { getByTestId } = renderDashboard();
+    expect(getByTestId("dashboard-loading")).toBeInTheDocument();
+  });
+
+  it("shows empty state when not loading and no transactions", () => {
+    mockRawTransactions = [];
+    mockIsLoading = false;
+    const { getByText } = renderDashboard();
+    expect(getByText("No data yet")).toBeInTheDocument();
+  });
+
+  it("shows summary stats when transactions are present", () => {
+    mockRawTransactions = [makeApiTxn()];
+    mockIsLoading = false;
+    const { getByTestId } = renderDashboard();
+    expect(getByTestId("summary-stats")).toBeInTheDocument();
   });
 });
