@@ -337,8 +337,8 @@ CHANGELOG updated → Next story
 
 ### Technical Stats
 
-- **Test count:** 871+ tests across 62+ test files
-- **PRs merged:** 85+
+- **Test count:** 798+ tests across 61+ test files (73 localStorage-only tests removed with storage.ts; 22 claudeChat storage-mock tests replaced by 3 simplified tests)
+- **PRs merged:** 90+ (FA-CORE-001 complete: T001–T016)
 - **Agents:** Developer, QA, Delivery Lead, Designer
 - **Constitution version:** v2.2.0
 
