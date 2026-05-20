@@ -1,22 +1,22 @@
 import { useState } from "react";
 import { parseCsv } from "../utils/csvParser";
 import type { ParseError, Transaction } from "../utils/csvParser";
-import {
-  getAccountMonths,
-  monthKeyFromDate,
-  DEFAULT_ACCOUNT_ID,
-} from "../services/storage";
 import { categoriseTransactions } from "../services/categorisation";
 import { useApi } from "../lib/api";
+
+/** Default account ID used as a fallback when no accountId option is supplied. */
+const DEFAULT_ACCOUNT_ID = "default";
+
+/** Derives a stable month key (e.g. "2024-03") from a transaction Date. */
+function monthKeyFromDate(date: Date): string {
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, "0");
+  return `${year}-${month}`;
+}
 
 interface MonthGroup {
   monthKey: string;
   transactions: Transaction[];
-}
-
-interface PendingUpload {
-  groups: MonthGroup[];
-  duplicateMonthKeys: string[];
 }
 
 export interface UseFileUploadResult {
@@ -43,13 +43,6 @@ export interface UseFileUploadOptions {
    * to the account that just received new transactions.
    */
   onImportComplete?: () => void;
-}
-
-/** Formats a "YYYY-MM" key into a human-readable month name, e.g. "March 2024". */
-function formatMonthKey(monthKey: string): string {
-  const [year, month] = monthKey.split("-").map(Number);
-  const date = new Date(year, month - 1, 1);
-  return date.toLocaleString("en", { month: "long", year: "numeric" });
 }
 
 /** Groups an array of transactions into per-month buckets, sorted by month key. */
@@ -82,7 +75,6 @@ export function useFileUpload(
 
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [parseErrors, setParseErrors] = useState<ParseError[]>([]);
-  const [pending, setPending] = useState<PendingUpload | null>(null);
   const [isCategorising, setIsCategorising] = useState(false);
   const [savedMonthKey, setSavedMonthKey] = useState<string | null>(null);
   const [savedMonthCount, setSavedMonthCount] = useState(0);
@@ -159,46 +151,28 @@ export function useFileUpload(
       if (transactions.length === 0) return;
 
       const groups = groupByMonth(transactions);
-      // Duplicate detection is scoped to the current account only.
-      // getAccountMonths reads the legacy localStorage index; for API-backed
-      // accounts this will return [] (no false positives). FA-MIGR-002 will
-      // replace this with an API-based check.
-      const storedMonths = getAccountMonths(accountId);
-      const duplicateMonthKeys = groups
-        .map((g) => g.monthKey)
-        .filter((key) => storedMonths.includes(key));
-
-      if (duplicateMonthKeys.length > 0) {
-        setPending({ groups, duplicateMonthKeys });
-      } else {
-        void saveAllGroups(groups);
-        setPending(null);
-      }
+      // Duplicate detection via localStorage has been removed (storage.ts deleted).
+      // API-based duplicate detection will be implemented in FA-MIGR-002.
+      // For now all uploads proceed immediately (API server handles deduplication).
+      void saveAllGroups(groups);
     };
     reader.readAsText(file);
   }
 
-  function confirmReplace(): void {
-    if (pending) {
-      void saveAllGroups(pending.groups);
-      setPending(null);
-    }
-  }
+  // confirmReplace and cancelReplace are no-ops now that localStorage-based
+  // duplicate detection has been removed. Kept in the public interface for
+  // backward compatibility with callers (e.g. DuplicateWarningModal).
+  function confirmReplace(): void {}
 
   function cancelReplace(): void {
-    setPending(null);
     setSelectedFile(null);
   }
-
-  const duplicateMonth = pending
-    ? pending.duplicateMonthKeys.map(formatMonthKey).join(", ")
-    : null;
 
   return {
     selectedFile,
     parseErrors,
-    isDuplicate: pending !== null,
-    duplicateMonth,
+    isDuplicate: false,
+    duplicateMonth: null,
     isCategorising,
     savedMonthKey,
     savedMonthCount,

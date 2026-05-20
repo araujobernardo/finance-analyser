@@ -1,7 +1,6 @@
 import { describe, it, expect, beforeEach, vi } from "vitest";
 import { renderHook, act } from "@testing-library/react";
 import { useFileUpload } from "./useFileUpload";
-import * as storage from "../services/storage";
 
 // ── Mock useApi ────────────────────────────────────────────────────────────
 
@@ -31,7 +30,7 @@ const MULTI_MONTH_CSV =
 
 const EMPTY_DATA_CSV = "Date,Description,Amount,Balance\n";
 
-const DEFAULT_ID = storage.DEFAULT_ACCOUNT_ID;
+const DEFAULT_ID = "default";
 
 /** Returns a successful import API response. */
 function mockImportSuccess(imported = 1, skipped = 0) {
@@ -43,7 +42,6 @@ function mockImportSuccess(imported = 1, skipped = 0) {
 }
 
 beforeEach(() => {
-  localStorage.clear();
   vi.clearAllMocks();
   vi.stubEnv("VITE_ANTHROPIC_API_KEY", ""); // force instant fallback — no real API calls
 });
@@ -83,9 +81,10 @@ describe("useFileUpload — handleFile", () => {
     expect(result.current.skippedCount).toBe(1);
   });
 
-  it("sets isDuplicate and duplicateMonth when localStorage month already exists", async () => {
-    // Seed the legacy localStorage month index to simulate a duplicate
-    storage.saveTransactions(DEFAULT_ID, "2024-03", []);
+  it("isDuplicate is always false — localStorage duplicate detection removed in T013", async () => {
+    // storage.ts deleted: duplicate detection is now API-based (FA-MIGR-002).
+    // isDuplicate is always false; uploads proceed immediately.
+    mockImportSuccess(2);
     const { result } = renderHook(() => useFileUpload());
 
     await act(async () => {
@@ -93,12 +92,12 @@ describe("useFileUpload — handleFile", () => {
       await new Promise((r) => setTimeout(r, 50));
     });
 
-    expect(result.current.isDuplicate).toBe(true);
-    expect(result.current.duplicateMonth).toBe("March 2024");
+    expect(result.current.isDuplicate).toBe(false);
+    expect(result.current.duplicateMonth).toBeNull();
   });
 
-  it("does not call apiFetch when a duplicate is detected — waits for user choice", async () => {
-    storage.saveTransactions(DEFAULT_ID, "2024-03", []);
+  it("always calls apiFetch immediately — no duplicate-wait state", async () => {
+    mockImportSuccess(2);
     const { result } = renderHook(() => useFileUpload());
 
     await act(async () => {
@@ -106,7 +105,7 @@ describe("useFileUpload — handleFile", () => {
       await new Promise((r) => setTimeout(r, 50));
     });
 
-    expect(mockApiFetch).not.toHaveBeenCalled();
+    expect(mockApiFetch).toHaveBeenCalledTimes(1);
   });
 
   it("collects parse errors and still sets selectedFile", async () => {
@@ -195,50 +194,11 @@ describe("useFileUpload — multi-month upload", () => {
     expect(result.current.importedCount).toBe(6);
   });
 
-  it("sets isDuplicate when any localStorage month already exists", async () => {
-    storage.saveTransactions(DEFAULT_ID, "2024-04", []);
-    const { result } = renderHook(() => useFileUpload());
-
-    await act(async () => {
-      result.current.handleFile(makeFile(MULTI_MONTH_CSV));
-      await new Promise((r) => setTimeout(r, 50));
-    });
-
-    expect(result.current.isDuplicate).toBe(true);
-  });
-
-  it("lists all duplicate months in duplicateMonth string", async () => {
-    storage.saveTransactions(DEFAULT_ID, "2024-03", []);
-    storage.saveTransactions(DEFAULT_ID, "2024-05", []);
-    const { result } = renderHook(() => useFileUpload());
-
-    await act(async () => {
-      result.current.handleFile(makeFile(MULTI_MONTH_CSV));
-      await new Promise((r) => setTimeout(r, 50));
-    });
-
-    expect(result.current.duplicateMonth).toContain("March 2024");
-    expect(result.current.duplicateMonth).toContain("May 2024");
-  });
-
-  it("does not call apiFetch when duplicates are detected — waits for user choice", async () => {
-    storage.saveTransactions(DEFAULT_ID, "2024-04", []);
-    const { result } = renderHook(() => useFileUpload());
-
-    await act(async () => {
-      result.current.handleFile(makeFile(MULTI_MONTH_CSV));
-      await new Promise((r) => setTimeout(r, 50));
-    });
-
-    expect(mockApiFetch).not.toHaveBeenCalled();
-  });
-
-  it("calls import endpoint for all months on confirmReplace (including duplicates)", async () => {
-    storage.saveTransactions(DEFAULT_ID, "2024-04", []);
+  it("isDuplicate is always false for multi-month uploads — no localStorage check", async () => {
+    // storage.ts deleted: all months upload immediately, no duplicate detection.
     mockImportSuccess(1);
     mockImportSuccess(1);
     mockImportSuccess(1);
-
     const { result } = renderHook(() => useFileUpload());
 
     await act(async () => {
@@ -246,51 +206,30 @@ describe("useFileUpload — multi-month upload", () => {
       await new Promise((r) => setTimeout(r, 50));
     });
 
-    await act(async () => {
-      result.current.confirmReplace();
-      await new Promise((r) => setTimeout(r, 50));
-    });
-
-    expect(mockApiFetch).toHaveBeenCalledTimes(3);
     expect(result.current.isDuplicate).toBe(false);
+    expect(result.current.duplicateMonth).toBeNull();
   });
 });
 
 // ── confirmReplace ─────────────────────────────────────────────────────────
 
 describe("useFileUpload — confirmReplace", () => {
-  it("calls import endpoint and clears isDuplicate", async () => {
-    storage.saveTransactions(DEFAULT_ID, "2024-03", []);
-    mockImportSuccess(2);
-
+  it("is a no-op — duplicate detection removed in T013", () => {
+    // confirmReplace is kept for interface compatibility but does nothing.
     const { result } = renderHook(() => useFileUpload());
-
-    await act(async () => {
-      result.current.handleFile(makeFile(VALID_CSV));
-      await new Promise((r) => setTimeout(r, 50));
-    });
-
-    expect(result.current.isDuplicate).toBe(true);
-
-    await act(async () => {
+    // Should not throw
+    act(() => {
       result.current.confirmReplace();
-      await new Promise((r) => setTimeout(r, 50));
     });
-
-    expect(mockApiFetch).toHaveBeenCalledWith(
-      `/api/accounts/${DEFAULT_ID}/transactions/import`,
-      expect.objectContaining({ method: "POST" }),
-    );
     expect(result.current.isDuplicate).toBe(false);
-    expect(result.current.duplicateMonth).toBeNull();
   });
 });
 
 // ── cancelReplace ──────────────────────────────────────────────────────────
 
 describe("useFileUpload — cancelReplace", () => {
-  it("clears isDuplicate and selectedFile without calling apiFetch", async () => {
-    storage.saveTransactions(DEFAULT_ID, "2024-03", []);
+  it("clears selectedFile without calling apiFetch", async () => {
+    mockImportSuccess(2);
     const { result } = renderHook(() => useFileUpload());
 
     await act(async () => {
@@ -302,17 +241,16 @@ describe("useFileUpload — cancelReplace", () => {
       result.current.cancelReplace();
     });
 
-    expect(mockApiFetch).not.toHaveBeenCalled();
     expect(result.current.isDuplicate).toBe(false);
     expect(result.current.selectedFile).toBeNull();
   });
 });
 
-// ── formatMonthKey (via duplicateMonth output) ─────────────────────────────
+// ── duplicateMonth (always null now) ─────────────────────────────────────────
 
-describe("useFileUpload — month name formatting", () => {
-  it("formats the duplicate month as a human-readable name", async () => {
-    storage.saveTransactions(DEFAULT_ID, "2024-04", []);
+describe("useFileUpload — duplicateMonth", () => {
+  it("is always null — localStorage duplicate detection removed in T013", async () => {
+    mockImportSuccess(1);
     const { result } = renderHook(() => useFileUpload());
 
     await act(async () => {
@@ -320,7 +258,7 @@ describe("useFileUpload — month name formatting", () => {
       await new Promise((r) => setTimeout(r, 50));
     });
 
-    expect(result.current.duplicateMonth).toBe("April 2024");
+    expect(result.current.duplicateMonth).toBeNull();
   });
 });
 
@@ -328,11 +266,8 @@ describe("useFileUpload — month name formatting", () => {
 
 describe("useFileUpload — per-account scoping", () => {
   const ACCOUNT_A = "account-a";
-  const ACCOUNT_B = "account-b";
 
-  it("saves without duplicate warning when the same month exists only in a different account", async () => {
-    // Seed the month under account-b only
-    storage.saveTransactions(ACCOUNT_B, "2024-03", []);
+  it("POSTs to the correct account ID URL when accountId is provided", async () => {
     mockImportSuccess(2);
 
     const { result } = renderHook(() =>
@@ -349,58 +284,5 @@ describe("useFileUpload — per-account scoping", () => {
       `/api/accounts/${ACCOUNT_A}/transactions/import`,
       expect.objectContaining({ method: "POST" }),
     );
-  });
-
-  it("detects a duplicate only within the same account", async () => {
-    // Seed the month under account-a
-    storage.saveTransactions(ACCOUNT_A, "2024-03", []);
-
-    const { result } = renderHook(() =>
-      useFileUpload({ accountId: ACCOUNT_A }),
-    );
-
-    await act(async () => {
-      result.current.handleFile(makeFile(VALID_CSV));
-      await new Promise((r) => setTimeout(r, 50));
-    });
-
-    expect(result.current.isDuplicate).toBe(true);
-    expect(result.current.duplicateMonth).toBe("March 2024");
-  });
-
-  it("POSTs to the correct account ID URL", async () => {
-    mockImportSuccess(2);
-
-    const { result } = renderHook(() =>
-      useFileUpload({ accountId: ACCOUNT_A }),
-    );
-
-    await act(async () => {
-      result.current.handleFile(makeFile(VALID_CSV));
-      await new Promise((r) => setTimeout(r, 50));
-    });
-
-    expect(mockApiFetch).toHaveBeenCalledWith(
-      `/api/accounts/${ACCOUNT_A}/transactions/import`,
-      expect.objectContaining({ method: "POST" }),
-    );
-  });
-
-  it("re-uploading the same month for a different account after switching does not trigger duplicate", async () => {
-    // Account A already has 2024-04 in localStorage
-    storage.saveTransactions(ACCOUNT_A, "2024-04", []);
-    mockImportSuccess(1);
-
-    // Now upload under account B — no duplicate expected
-    const { result } = renderHook(() =>
-      useFileUpload({ accountId: ACCOUNT_B }),
-    );
-
-    await act(async () => {
-      result.current.handleFile(makeFile(VALID_CSV_APRIL));
-      await new Promise((r) => setTimeout(r, 50));
-    });
-
-    expect(result.current.isDuplicate).toBe(false);
   });
 });

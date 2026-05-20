@@ -9,13 +9,16 @@ import {
   type SetStateAction,
   type ReactNode,
 } from "react";
-import { DEFAULT_ACCOUNT_ID, ACCOUNT_COLOURS } from "../services/storage";
-import { ACTIVE_ACCOUNT_KEY } from "./accountKeys";
+import {
+  ACTIVE_ACCOUNT_KEY,
+  DEFAULT_ACCOUNT_ID,
+  ACCOUNT_COLOURS,
+} from "./accountKeys";
 import { useApi } from "../lib/api";
 import { useToast } from "../hooks/useToast";
 import type { ApiAccount, ApiTransaction } from "../types/api";
 
-export { ACCOUNT_COLOURS };
+export { DEFAULT_ACCOUNT_ID, ACCOUNT_COLOURS };
 
 export const ALL_ACCOUNTS_ID = "all" as const;
 
