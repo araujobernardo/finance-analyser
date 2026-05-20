@@ -1,6 +1,5 @@
 import { describe, it, expect } from "vitest";
 import { parseAccountName } from "./accountParser";
-import type { PfaAccountAliases } from "../types/pfa";
 
 // ── Helpers ────────────────────────────────────────────────────────────────
 
@@ -12,7 +11,7 @@ function makeAsbHeader(accountLine: string): string {
   return `ASB Bank Export\n${accountLine}\nDate,Unique Id,Amount`;
 }
 
-const NO_ALIASES: PfaAccountAliases = {};
+const NO_ALIASES: Record<string, string> = {};
 
 // ── Happy path ─────────────────────────────────────────────────────────────
 
@@ -26,7 +25,9 @@ describe("parseAccountName — happy path", () => {
 
   it("applies an alias override for the short name when alias exists", () => {
     const text = makeAsbHeader("Account 123456789012 Branch 001 (Savings)");
-    const aliases: PfaAccountAliases = { "123456789012": "My Savings Account" };
+    const aliases: Record<string, string> = {
+      "123456789012": "My Savings Account",
+    };
     const result = parseAccountName(text, aliases);
     expect(result.short).toBe("123456789012");
     expect(result.display).toBe("My Savings Account");
@@ -44,7 +45,7 @@ describe("parseAccountName — edge cases", () => {
 
   it("uses alias for 'Main' when text has no matching account/branch line", () => {
     const text = "Header Line\nSome unrelated line\nDate,Amount";
-    const aliases: PfaAccountAliases = { Main: "Primary Account" };
+    const aliases: Record<string, string> = { Main: "Primary Account" };
     const result = parseAccountName(text, aliases);
     expect(result).toEqual({ short: "Main", display: "Primary Account" });
   });

@@ -1,6 +1,5 @@
 import { describe, it, expect } from "vitest";
 import { fmt, fmtMonth, getCatColor } from "./transactionFormatters";
-import type { PfaCategory } from "../types/pfa";
 
 describe("fmt", () => {
   it("formats a positive number with $ prefix and two decimal places", () => {
@@ -44,7 +43,7 @@ describe("fmtMonth", () => {
 });
 
 describe("getCatColor", () => {
-  const cats: PfaCategory[] = [
+  const cats = [
     { name: "Food", color: "#ff0000" },
     { name: "Transport", color: "#00ff00" },
   ];

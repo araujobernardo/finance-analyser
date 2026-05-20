@@ -1,4 +1,15 @@
-import type { PfaTxn } from "../types/pfa";
+// Minimal transaction shape required by transfer-flagging utilities.
+// Structurally compatible with the AdaptedTxn used in TransactionsPage.
+interface TxnForFlagging {
+  id: string;
+  date: string;
+  amount: number;
+  category: string | null;
+  isTransfer: boolean;
+  preFlagCategory?: string | null;
+  // allow any extra fields (spread-safe)
+  [key: string]: unknown;
+}
 
 /**
  * Derive candidate transactions for transfer pairing.
@@ -8,7 +19,10 @@ import type { PfaTxn } from "../types/pfa";
  *  - are not already flagged as transfers
  *  - are not the initiating transaction itself
  */
-export function getCandidates(txns: PfaTxn[], initiatingId: string): PfaTxn[] {
+export function getCandidates(
+  txns: TxnForFlagging[],
+  initiatingId: string,
+): TxnForFlagging[] {
   const initiating = txns.find((t) => t.id === initiatingId);
   if (!initiating) return [];
   return txns.filter(
@@ -26,10 +40,10 @@ export function getCandidates(txns: PfaTxn[], initiatingId: string): PfaTxn[] {
  * and stores the prior category in preFlagCategory.
  */
 export function applyFlag(
-  txns: PfaTxn[],
+  txns: TxnForFlagging[],
   initiatingId: string,
   candidateId: string,
-): PfaTxn[] {
+): TxnForFlagging[] {
   return txns.map((t) => {
     if (t.id === initiatingId || t.id === candidateId) {
       return {
@@ -48,7 +62,10 @@ export function applyFlag(
  * Restores category from preFlagCategory (or null for auto-detected).
  * Clears preFlagCategory.
  */
-export function applyUnflag(txns: PfaTxn[], txnId: string): PfaTxn[] {
+export function applyUnflag(
+  txns: TxnForFlagging[],
+  txnId: string,
+): TxnForFlagging[] {
   const target = txns.find((t) => t.id === txnId);
   if (!target) return txns;
 

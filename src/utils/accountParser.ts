@@ -1,4 +1,5 @@
-import type { PfaAccountAliases } from "../types/pfa";
+// Map of account short-name → display alias override.
+type AccountAliases = Record<string, string>;
 
 // ── ASB account name extraction ──────────────────────────────────────────────
 
@@ -16,7 +17,7 @@ import type { PfaAccountAliases } from "../types/pfa";
  */
 export function parseAccountName(
   text: string,
-  aliases: PfaAccountAliases,
+  aliases: AccountAliases,
 ): { short: string; display: string } {
   const lines = text.split(/\r?\n/);
   const line = (lines[1] ?? "").replace(/,+$/, "").trim();
