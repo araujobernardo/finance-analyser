@@ -1,27 +1,69 @@
 import { useState, useEffect, useCallback } from "react";
 import { ACCOUNT_COLORS } from "../constants/colors";
-import type { PfaTxn, PfaCategory } from "../types/pfa";
-import {
-  getCandidates,
-  applyFlag,
-  applyUnflag,
-} from "../utils/transferFlagging";
+import type { ApiTransaction } from "../types/api";
+import { getCandidates } from "../utils/transferFlagging";
 import { fmt, fmtMonth, getCatColor } from "../utils/transactionFormatters";
+import { useAccount, useAllTransactions } from "../context/AccountContext";
 import "./TransactionsPage.css";
 
-interface Props {
-  txns?: PfaTxn[];
-  accountList?: { short: string; display: string }[];
-  categories?: PfaCategory[];
-  onBulkCategoryChange?: (updated: PfaTxn[]) => void;
+// ── Local adapter type ────────────────────────────────────────────────────────
+// Minimal shape used by transferFlagging utilities and the render layer.
+// Structurally compatible with PfaTxn but derived from ApiTransaction.
+
+interface AdaptedTxn {
+  id: string;
+  date: string;
+  month: string;
+  type: string;
+  payee: string;
+  memo: string;
+  amount: number;
+  isCredit: boolean;
+  account: string;
+  accountShort: string;
+  category: string | null;
+  isTransfer: boolean;
 }
 
-export function TransactionsPage({
-  txns = [],
-  accountList = [],
-  categories = [],
-  onBulkCategoryChange = () => {},
-}: Props) {
+function adaptTxn(t: ApiTransaction, nickname: string): AdaptedTxn {
+  return {
+    id: t.id,
+    date: t.date,
+    month: t.date.slice(0, 7),
+    type: "",
+    payee: t.description,
+    memo: "",
+    amount: t.amount,
+    isCredit: t.amount > 0,
+    account: nickname,
+    accountShort: t.accountId,
+    category: t.category,
+    isTransfer: t.isTransfer,
+  };
+}
+
+// ── Placeholder category PATCH handler ────────────────────────────────────────
+// Actual DB persistence is wired in T007. This stub keeps the UI working.
+function placeholderCategoryUpdate(
+  _txnId: string,
+  _category: string,
+): Promise<void> {
+  return Promise.resolve();
+}
+
+// ── Component ─────────────────────────────────────────────────────────────────
+
+export function TransactionsPage() {
+  const { accounts } = useAccount();
+  const rawTransactions = useAllTransactions();
+
+  // ── Adapt API transactions to local display shape ──────────────────────────
+  const nicknameById = new Map(accounts.map((a) => [a.id, a.nickname]));
+  const adapted = rawTransactions.map((t) =>
+    adaptTxn(t, nicknameById.get(t.accountId) ?? t.accountId),
+  );
+
+  // ── Filter state ──────────────────────────────────────────────────────────
   const [search, setSearch] = useState("");
   const [filterCat, setFilterCat] = useState("all");
   const [filterMonth, setFilterMonth] = useState("all");
@@ -29,15 +71,50 @@ export function TransactionsPage({
   const [showTransfers, setShowTransfers] = useState(false);
   const [toast, setToast] = useState<string | null>(null);
 
-  // Transfer flagging state
+  // ── Transfer flagging local state ─────────────────────────────────────────
+  // preFlagMap: txnId → category that was set before manual transfer flagging
+  const [preFlagMap, setPreFlagMap] = useState<Map<string, string | null>>(
+    new Map(),
+  );
+  // Local overrides: txnId → { isTransfer, category } applied on top of API data
+  const [localIsTransfer, setLocalIsTransfer] = useState<Map<string, boolean>>(
+    new Map(),
+  );
+  const [localCategory, setLocalCategory] = useState<
+    Map<string, string | null>
+  >(new Map());
+
+  // ── Apply local overrides ─────────────────────────────────────────────────
+  const txns: AdaptedTxn[] = adapted.map((t) => ({
+    ...t,
+    isTransfer: localIsTransfer.has(t.id)
+      ? (localIsTransfer.get(t.id) as boolean)
+      : t.isTransfer,
+    category: localCategory.has(t.id)
+      ? (localCategory.get(t.id) as string | null)
+      : t.category,
+  }));
+
+  // ── Derived filter values ──────────────────────────────────────────────────
+  const months = [...new Set(txns.map((t) => t.month))].sort().reverse();
+  const uniqueAccounts = [...new Set(accounts.map((a) => a.nickname))];
+
+  // Unique categories derived from expense transactions
+  const uniqueCategories = [
+    ...new Set(
+      txns
+        .filter((t) => !t.isTransfer && !t.isCredit && t.category)
+        .map((t) => t.category as string),
+    ),
+  ].sort();
+
+  // ── Transfer flagging interaction state ────────────────────────────────────
   const [flagMode, setFlagMode] = useState<{ initiatingId: string } | null>(
     null,
   );
   const [unflagTarget, setUnflagTarget] = useState<{ txnId: string } | null>(
     null,
   );
-
-  const months = [...new Set(txns.map((t) => t.month))].sort().reverse();
 
   // Candidates for current flag mode
   const candidates = flagMode ? getCandidates(txns, flagMode.initiatingId) : [];
@@ -59,16 +136,17 @@ export function TransactionsPage({
     return () => document.removeEventListener("keydown", handleEscape);
   }, [handleEscape]);
 
+  // ── Filtered and sorted transaction list ───────────────────────────────────
   const filtered = txns
     .filter((t) => {
       if (!showTransfers && t.isTransfer) return false;
       if (filterMonth !== "all" && t.month !== filterMonth) return false;
       if (filterAccount !== "all" && t.account !== filterAccount) return false;
       if (filterCat === "__uncategorised__") {
-        if (t.isTransfer) return false; // transfers never appear in uncategorised view
-        if (t.category) return false; // has a category → exclude
+        if (t.isTransfer) return false;
+        if (t.category) return false;
       } else if (filterCat !== "all" && t.category !== filterCat) {
-        return false; // named category selected but doesn't match → exclude
+        return false;
       }
       const q = search.toLowerCase();
       if (
@@ -81,21 +159,27 @@ export function TransactionsPage({
     })
     .sort((a, b) => b.date.localeCompare(a.date));
 
+  // ── Category change handler (placeholder — DB persistence is T007) ─────────
   const handleCategoryChange = (id: string, cat: string) => {
     const source = txns.find((t) => t.id === id);
     if (!source) return;
     const payee = source.payee.toLowerCase();
-    const updated = txns.map((t) => {
-      if (t.isTransfer) return t;
+
+    // Apply to all matching payees (bulk rule) using local override state
+    const newLocalCategory = new Map(localCategory);
+    let changedCount = 0;
+    txns.forEach((t) => {
+      if (t.isTransfer) return;
       const tp = t.payee.toLowerCase();
-      if (tp.includes(payee) || payee.includes(tp))
-        return { ...t, category: cat };
-      return t;
+      if (tp.includes(payee) || payee.includes(tp)) {
+        newLocalCategory.set(t.id, cat);
+        // Persist each matched txn to DB (T007 placeholder)
+        void placeholderCategoryUpdate(t.id, cat);
+        changedCount++;
+      }
     });
-    const changedCount = updated.filter(
-      (t, i) => t.category !== txns[i].category,
-    ).length;
-    onBulkCategoryChange(updated);
+    setLocalCategory(newLocalCategory);
+
     if (changedCount > 1) {
       setToast(
         `Updated ${changedCount} transactions matching "${source.payee}"`,
@@ -104,31 +188,47 @@ export function TransactionsPage({
     }
   };
 
-  // Handle clicking a non-transfer row
+  // ── Transfer flagging handlers ─────────────────────────────────────────────
+
   const handleNonTransferRowClick = (txnId: string) => {
-    if (unflagTarget) return; // ignore row clicks when unflag panel is open
+    if (unflagTarget) return;
 
     if (!flagMode) {
-      // Enter flagging mode
       setFlagMode({ initiatingId: txnId });
       return;
     }
 
-    // Already in flagging mode — check if this is a candidate
     if (candidateIds.has(txnId)) {
-      const updated = applyFlag(txns, flagMode.initiatingId, txnId);
-      onBulkCategoryChange(updated);
+      // Flag the pair: set isTransfer=true, category="Savings", store preFlagCategory
+      const initiatingTxn = txns.find((t) => t.id === flagMode.initiatingId);
+      const candidateTxn = txns.find((t) => t.id === txnId);
+
+      const newIsTransfer = new Map(localIsTransfer);
+      const newCategory = new Map(localCategory);
+      const newPreFlagMap = new Map(preFlagMap);
+
+      if (initiatingTxn) {
+        newPreFlagMap.set(initiatingTxn.id, initiatingTxn.category);
+        newIsTransfer.set(initiatingTxn.id, true);
+        newCategory.set(initiatingTxn.id, "Savings");
+      }
+      if (candidateTxn) {
+        newPreFlagMap.set(candidateTxn.id, candidateTxn.category);
+        newIsTransfer.set(candidateTxn.id, true);
+        newCategory.set(candidateTxn.id, "Savings");
+      }
+
+      setPreFlagMap(newPreFlagMap);
+      setLocalIsTransfer(newIsTransfer);
+      setLocalCategory(newCategory);
       setFlagMode(null);
       setToast("Transfer pair flagged.");
       setTimeout(() => setToast(null), 4000);
-    }
-    // Clicking the initiating row again or any other row → cancel flagging
-    else {
+    } else {
       setFlagMode(null);
     }
   };
 
-  // Handle clicking a transfer row
   const handleTransferRowClick = (txnId: string) => {
     if (flagMode) {
       setFlagMode(null);
@@ -137,11 +237,42 @@ export function TransactionsPage({
     setUnflagTarget({ txnId });
   };
 
-  // Confirm un-flagging
   const handleUnflagConfirm = () => {
     if (!unflagTarget) return;
-    const updated = applyUnflag(txns, unflagTarget.txnId);
-    onBulkCategoryChange(updated);
+    const target = txns.find((t) => t.id === unflagTarget.txnId);
+    if (!target) {
+      setUnflagTarget(null);
+      return;
+    }
+
+    // Find the partner: another isTransfer txn with same date and absolute amount
+    const partner = txns.find(
+      (t) =>
+        t.id !== unflagTarget.txnId &&
+        t.isTransfer &&
+        t.date === target.date &&
+        Math.abs(t.amount) === Math.abs(target.amount),
+    );
+
+    const idsToUnflag = new Set([
+      unflagTarget.txnId,
+      ...(partner ? [partner.id] : []),
+    ]);
+
+    const newIsTransfer = new Map(localIsTransfer);
+    const newCategory = new Map(localCategory);
+    const newPreFlagMap = new Map(preFlagMap);
+
+    idsToUnflag.forEach((id) => {
+      newIsTransfer.set(id, false);
+      // Restore pre-flag category (or null for auto-detected transfers)
+      newCategory.set(id, newPreFlagMap.get(id) ?? null);
+      newPreFlagMap.delete(id);
+    });
+
+    setPreFlagMap(newPreFlagMap);
+    setLocalIsTransfer(newIsTransfer);
+    setLocalCategory(newCategory);
     setUnflagTarget(null);
     setToast("Transfer pair un-flagged.");
     setTimeout(() => setToast(null), 4000);
@@ -150,6 +281,20 @@ export function TransactionsPage({
   const initiatingTxn = flagMode
     ? txns.find((t) => t.id === flagMode.initiatingId)
     : null;
+
+  // ── Empty state ────────────────────────────────────────────────────────────
+  if (txns.length === 0) {
+    return (
+      <div className="txn-page">
+        <div className="txn-header">
+          <h1 className="txn-title">Transactions</h1>
+        </div>
+        <div className="txn-empty" data-testid="txn-empty-state">
+          No transactions yet. Upload your bank CSV exports using the sidebar.
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="txn-page">
@@ -174,16 +319,16 @@ export function TransactionsPage({
               </option>
             ))}
           </select>
-          {accountList.length > 1 && (
+          {uniqueAccounts.length > 1 && (
             <select
               className="txn-select"
               value={filterAccount}
               onChange={(e) => setFilterAccount(e.target.value)}
             >
               <option value="all">All accounts</option>
-              {accountList.map((a) => (
-                <option key={a.short} value={a.display}>
-                  {a.display}
+              {uniqueAccounts.map((name) => (
+                <option key={name} value={name}>
+                  {name}
                 </option>
               ))}
             </select>
@@ -195,9 +340,9 @@ export function TransactionsPage({
           >
             <option value="all">All categories</option>
             <option value="__uncategorised__">Uncategorised</option>
-            {categories.map((c) => (
-              <option key={c.name} value={c.name}>
-                {c.name}
+            {uniqueCategories.map((name) => (
+              <option key={name} value={name}>
+                {name}
               </option>
             ))}
           </select>
@@ -287,7 +432,7 @@ export function TransactionsPage({
             <tr>
               {[
                 "Date",
-                accountList.length > 1 ? "Account" : "",
+                uniqueAccounts.length > 1 ? "Account" : "",
                 "Payee / Memo",
                 "Amount",
                 "Category",
@@ -302,12 +447,18 @@ export function TransactionsPage({
           </thead>
           <tbody>
             {filtered.map((t) => {
-              const idx = accountList.findIndex(
-                (a) => a.short === t.accountShort,
+              const acctIdx = accounts.findIndex(
+                (a) => a.id === t.accountShort,
               );
               const ac =
-                ACCOUNT_COLORS[Math.max(0, idx) % ACCOUNT_COLORS.length];
-              const cc = getCatColor(t.category, categories);
+                ACCOUNT_COLORS[Math.max(0, acctIdx) % ACCOUNT_COLORS.length];
+
+              // Category colour using a minimal PfaCategory-compatible array
+              const catArr = uniqueCategories.map((name, i) => ({
+                name,
+                color: ACCOUNT_COLORS[i % ACCOUNT_COLORS.length],
+              }));
+              const cc = getCatColor(t.category, catArr);
 
               // Determine row visual class for flagging mode
               let flagClass = "";
@@ -348,7 +499,7 @@ export function TransactionsPage({
                   }}
                 >
                   <td className="txn-td txn-date">{t.date}</td>
-                  {accountList.length > 1 && (
+                  {uniqueAccounts.length > 1 && (
                     <td className="txn-td">
                       <span
                         className="txn-acct-badge"
@@ -416,9 +567,9 @@ export function TransactionsPage({
                         }
                       >
                         <option value="">Uncategorised</option>
-                        {categories.map((c) => (
-                          <option key={c.name} value={c.name}>
-                            {c.name}
+                        {uniqueCategories.map((name) => (
+                          <option key={name} value={name}>
+                            {name}
                           </option>
                         ))}
                       </select>
