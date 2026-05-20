@@ -18,13 +18,15 @@ const mockAccounts = [
 ];
 let mockRawTransactions: ApiTransaction[] = [];
 
+const mockRefetch = vi.fn().mockResolvedValue(undefined);
+
 vi.mock("../context/AccountContext", () => ({
   useAccount: () => ({
     accounts: mockAccounts,
     isLoading: false,
     error: null,
     activeAccountId: "acc-1",
-    refetch: vi.fn(),
+    refetch: mockRefetch,
     setActiveAccountId: vi.fn(),
     addAccount: vi.fn(),
     removeAccount: vi.fn(),
@@ -32,6 +34,15 @@ vi.mock("../context/AccountContext", () => ({
   }),
   useAllTransactions: () => mockRawTransactions,
   ALL_ACCOUNTS_ID: "all",
+}));
+
+// ── Mock useApi ───────────────────────────────────────────────────────────────
+
+const mockApiFetch = vi.fn().mockResolvedValue({ ok: true } as Response);
+
+vi.mock("../lib/api", () => ({
+  useApi: () => ({ apiFetch: mockApiFetch }),
+  API_BASE: "",
 }));
 
 // ── Fixtures ─────────────────────────────────────────────────────────────────
@@ -578,6 +589,91 @@ describe("TransactionsPage — Savings green treatment", () => {
     );
     expect(allSelects).toHaveLength(3);
     expect(savingsBadgeSelects).toHaveLength(1);
+  });
+});
+
+// ── T007: Category PATCH persistence ─────────────────────────────────────────
+
+describe("TransactionsPage — T007: category PATCH persistence", () => {
+  afterEach(() => {
+    cleanup();
+    mockApiFetch.mockReset();
+    mockRefetch.mockReset();
+    mockApiFetch.mockResolvedValue({ ok: true } as Response);
+    mockRefetch.mockResolvedValue(undefined);
+  });
+
+  it("T007-1: changing category calls PATCH /api/transactions/:id", async () => {
+    const user = userEvent.setup();
+    // Two transactions: t2 has Groceries category (populates the option), t1 is Dining
+    mockRawTransactions = [
+      makeApiTxn({ id: "t1", description: "Countdown", category: "Dining" }),
+      makeApiTxn({
+        id: "t2",
+        description: "Burger King",
+        category: "Groceries",
+      }),
+    ];
+    renderPage();
+
+    // Select the first txn-cat-select (t1 = Dining, switching to Groceries)
+    const catSelects = screen
+      .getAllByRole("combobox")
+      .filter((el) => el.classList.contains("txn-cat-select"));
+    await user.selectOptions(catSelects[0], "Groceries");
+    // wait for async patch
+    await vi.waitFor(() => expect(mockApiFetch).toHaveBeenCalled());
+    expect(mockApiFetch).toHaveBeenCalledWith(
+      "/api/transactions/t1",
+      expect.objectContaining({
+        method: "PATCH",
+        body: JSON.stringify({ category: "Groceries" }),
+      }),
+    );
+  });
+
+  it("T007-2: successful PATCH calls refetch to sync server state", async () => {
+    const user = userEvent.setup();
+    mockRawTransactions = [
+      makeApiTxn({ id: "t1", description: "Countdown", category: "Dining" }),
+      makeApiTxn({
+        id: "t2",
+        description: "Burger King",
+        category: "Groceries",
+      }),
+    ];
+    renderPage();
+
+    const catSelects = screen
+      .getAllByRole("combobox")
+      .filter((el) => el.classList.contains("txn-cat-select"));
+    await user.selectOptions(catSelects[0], "Groceries");
+    await vi.waitFor(() => expect(mockRefetch).toHaveBeenCalled());
+  });
+
+  it("T007-3: failed PATCH shows error toast", async () => {
+    const user = userEvent.setup();
+    mockApiFetch.mockResolvedValue({ ok: false, status: 500 } as Response);
+    mockRawTransactions = [
+      makeApiTxn({ id: "t1", description: "Countdown", category: "Dining" }),
+      makeApiTxn({
+        id: "t2",
+        description: "Burger King",
+        category: "Groceries",
+      }),
+    ];
+    const { container } = renderPage();
+
+    const catSelects = screen
+      .getAllByRole("combobox")
+      .filter((el) => el.classList.contains("txn-cat-select"));
+    await user.selectOptions(catSelects[0], "Groceries");
+    await vi.waitFor(() =>
+      expect(container.querySelector(".txn-toast")).not.toBeNull(),
+    );
+    expect(container.querySelector(".txn-toast")!.textContent).toContain(
+      "Failed to save category",
+    );
   });
 });
 
