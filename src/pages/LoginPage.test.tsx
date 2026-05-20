@@ -155,10 +155,7 @@ describe("LoginPage — post-login navigation (T009)", () => {
     expect(mockNavigate).not.toHaveBeenCalledWith("/migrate");
   });
 
-  it("never navigates to /migrate regardless of localStorage state", async () => {
-    // Seed localStorage with pfa-v3-* data to simulate an old user
-    localStorage.setItem("pfa-v3-accounts", JSON.stringify([{ id: "acc1" }]));
-
+  it("never navigates to /migrate (the /migrate route no longer exists)", async () => {
     fetchSpy.mockResolvedValueOnce(
       new Response(JSON.stringify({ token: "jwt-token", user: { id: 1 } }), {
         status: 200,
