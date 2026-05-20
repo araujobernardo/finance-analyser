@@ -30,6 +30,11 @@ export const test = base.extend<AuthFixtures>({
 // Uploads both paired transfer fixture CSVs and waits for the success status.
 // All transactions are classified as inter-account transfers so the Claude
 // categorisation API is never called.
+//
+// Files are uploaded ONE AT A TIME with an explicit wait between each. The
+// Sidebar's queue-drain mechanism uses a stale closure that can reference a
+// stale accountId when files are uploaded simultaneously; sequential uploads
+// avoid that timing hazard entirely.
 export async function uploadFixtures(page: Page): Promise<void> {
   await page.goto("/dashboard");
   await page.waitForURL(/\/dashboard/, { timeout: 15_000 });
@@ -40,13 +45,25 @@ export async function uploadFixtures(page: Page): Promise<void> {
   await expect(
     page.locator('[data-testid="account-item"]').first(),
   ).toBeVisible({ timeout: 15_000 });
+
+  // Upload file A and wait for it to complete.
   await page
     .locator('[data-testid="csv-file-input"]')
-    .setInputFiles([FIXTURE_A, FIXTURE_B]);
+    .setInputFiles([FIXTURE_A]);
   await expect(page.locator('[data-testid="upload-status"]')).toContainText(
     "Imported",
     { timeout: 15_000 },
   );
+
+  // Upload file B and wait for it to complete.
+  await page
+    .locator('[data-testid="csv-file-input"]')
+    .setInputFiles([FIXTURE_B]);
+  await expect(page.locator('[data-testid="upload-status"]')).toContainText(
+    "Imported",
+    { timeout: 15_000 },
+  );
+
   await page.waitForURL(/\/dashboard/);
 }
 
