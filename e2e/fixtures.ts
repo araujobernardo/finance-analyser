@@ -144,6 +144,14 @@ export async function uploadFixtures(page: Page): Promise<void> {
     });
   }
 
+  // Set the active-account key to "all" so AccountContext shows transactions
+  // from both accounts combined. This prevents tests from showing only one
+  // account's data when a previous test's account UUID is stored in localStorage
+  // and no longer exists after the account reset above.
+  await page.evaluate(() => {
+    localStorage.setItem("finance_analyser_active_account", "all");
+  });
+
   // Fetch the freshly created account list to get real UUIDs.
   const accountsRes = await page.request.get(`${apiBase}/api/accounts`, {
     headers: { Authorization: `Bearer ${token}` },
