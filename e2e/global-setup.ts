@@ -15,6 +15,19 @@ async function globalSetup(config: FullConfig) {
   const browser = await chromium.launch();
   const page = await browser.newPage();
 
+  // Intercept the login API request to discover the actual API base URL.
+  // The app's VITE_API_URL is baked into the Vite bundle at build time and is
+  // not available as a Node.js env var at runtime. Listening to the network
+  // request made by the app during login reliably gives us the API origin
+  // regardless of the deployment topology (monolith vs. split services).
+  let apiBase = baseURL;
+  page.on("request", (req) => {
+    const url = req.url();
+    if (url.includes("/api/auth/login")) {
+      apiBase = url.replace(/\/api\/auth\/login.*$/, "");
+    }
+  });
+
   await page.goto(`${baseURL}/login`);
   await page.getByLabel(/email/i).fill(email);
   await page.getByLabel(/password/i).fill(password);
@@ -41,16 +54,11 @@ async function globalSetup(config: FullConfig) {
   // Deleting an account cascades to its transactions (onDelete: "cascade").
   // All e2e tests that need data call uploadFixtures() to re-import it, so
   // clearing accounts is always safe here.
-  //
-  // API base resolution:
-  //   - Locally: VITE_API_URL is set to http://localhost:3001 (loaded by dotenv
-  //     in playwright.config.ts); use it when present and not "/api".
-  //   - In CI: frontend and API share the same Render domain — use baseURL.
-  const rawApiUrl = process.env.VITE_API_URL ?? "";
-  const apiBase = rawApiUrl && rawApiUrl !== "/api" ? rawApiUrl : baseURL;
   const token = await page.evaluate(
     () => localStorage.getItem("fa-auth-token") ?? "",
   );
+
+  console.log(`[global-setup] Using API base: ${apiBase}`);
 
   if (token) {
     const accountsRes = await page.request.get(`${apiBase}/api/accounts`, {
