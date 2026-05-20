@@ -398,6 +398,9 @@ This pipeline is now proven on Finance Analyser. Next step: apply it to a new pr
 - Custom hooks keep components clean — logic lives in `useChatHistory`, not in `ChatPanel`
 - `import.meta.env` is how Vite exposes environment variables — must be prefixed with `VITE_`
 - `useRef` + `FileReader` is the correct pattern for reading file contents in React
+- `string | undefined` and `string | null` are NOT interchangeable in TypeScript — `undefined` comes from optional fields (`?:`), `null` is an explicit absence value; matching the exact union type matters when passing data between types
+- When rewriting a component to read from context instead of props, all hooks must appear before any conditional early returns (React hooks/rules-of-hooks)
+- A local adapter type (e.g. `AdaptedTxn`) can shadow an imported type when you need structural compatibility without a direct import dependency — ensures the new data model (API) doesn't bleed into legacy utilities
 
 **Testing**
 
