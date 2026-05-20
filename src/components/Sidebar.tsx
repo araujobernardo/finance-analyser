@@ -110,7 +110,7 @@ export function Sidebar({
     uploadStatusColor = "var(--red)";
   } else if (importedCount > 0 || skippedCount > 0) {
     const parts: string[] = [];
-    if (importedCount > 0) parts.push(`${importedCount} imported`);
+    if (importedCount > 0) parts.push(`${importedCount} Imported`);
     if (skippedCount > 0) parts.push(`${skippedCount} duplicates skipped`);
     uploadStatusMsg = parts.join(", ");
     uploadStatusColor = "var(--accent)";
