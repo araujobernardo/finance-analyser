@@ -1,20 +1,70 @@
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useMemo } from "react";
 import Anthropic from "@anthropic-ai/sdk";
-import type { PfaTxn, PfaCategory, PfaBudgets } from "../types/pfa";
+import { useAccount, useAllTransactions } from "../context/AccountContext";
+import type { ApiTransaction } from "../types/api";
 import "./ChatPage.css";
+
+// ── Types ────────────────────────────────────────────────────────────────────
 
 interface ChatMsg {
   role: "user" | "assistant";
   content: string;
 }
 
-interface Props {
-  txns?: PfaTxn[];
-  budgets?: PfaBudgets;
-  categories?: PfaCategory[];
-  messages?: ChatMsg[];
-  setMessages?: (m: ChatMsg[]) => void;
+// ── Context builder ──────────────────────────────────────────────────────────
+
+/**
+ * Builds a plain-text summary of the user's transactions for the AI system
+ * prompt. Uses ApiTransaction[] directly (no PfaTxn adapter needed).
+ */
+function buildContext(
+  rawTxns: ApiTransaction[],
+  nicknameById: Map<string, string>,
+): string {
+  // Exclude transfers from context summary
+  const txns = rawTxns.filter((t) => !t.isTransfer);
+
+  const acctIds = [...new Set(txns.map((t) => t.accountId))];
+  const acctNames = acctIds.map((id) => nicknameById.get(id) ?? id);
+  const months = [...new Set(txns.map((t) => t.date.slice(0, 7)))].sort();
+
+  let summary = `Accounts: ${acctNames.join(", ")}\nMonths: ${months.join(", ")}\n\n`;
+
+  months.forEach((mo) => {
+    summary += `=== ${mo} ===\n`;
+    acctIds.forEach((accId) => {
+      const accName = nicknameById.get(accId) ?? accId;
+      const at = txns.filter(
+        (t) => t.date.startsWith(mo) && t.accountId === accId,
+      );
+      if (!at.length) return;
+      const inc = at
+        .filter((t) => t.amount > 0)
+        .reduce((s, t) => s + t.amount, 0);
+      const sp = at
+        .filter((t) => t.amount < 0)
+        .reduce((s, t) => s + Math.abs(t.amount), 0);
+      summary += `  ${accName}: Income $${inc.toFixed(2)}, Spend $${sp.toFixed(2)}\n`;
+
+      // Category breakdown (expenses only)
+      const cats = [
+        ...new Set(at.filter((t) => t.category).map((t) => t.category!)),
+      ];
+      cats
+        .filter((cat) => cat !== "Income")
+        .forEach((cat) => {
+          const v = at
+            .filter((t) => t.category === cat && t.amount < 0)
+            .reduce((s, t) => s + Math.abs(t.amount), 0);
+          if (v > 0) summary += `    ${cat}: $${v.toFixed(2)}\n`;
+        });
+    });
+  });
+
+  return summary;
 }
+
+// ── Constants ────────────────────────────────────────────────────────────────
 
 const SUGGESTIONS = [
   "How much did I spend last month across all accounts?",
@@ -22,49 +72,6 @@ const SUGGESTIONS = [
   "What is my biggest spending category?",
   "Where can I save $200/month?",
 ];
-
-function buildContext(
-  txns: PfaTxn[],
-  budgets: PfaBudgets,
-  categories: PfaCategory[],
-): string {
-  const accts = [...new Set(txns.map((t) => t.account))];
-  const months = [...new Set(txns.map((t) => t.month))].sort();
-  let summary = `Accounts: ${accts.join(", ")}\nMonths: ${months.join(", ")}\n\n`;
-
-  months.forEach((mo) => {
-    summary += `=== ${mo} ===\n`;
-    accts.forEach((acc) => {
-      const at = txns.filter(
-        (t) => t.month === mo && t.account === acc && !t.isTransfer,
-      );
-      if (!at.length) return;
-      const inc = at
-        .filter((t) => t.isCredit)
-        .reduce((s, t) => s + t.amount, 0);
-      const sp = at
-        .filter((t) => !t.isCredit)
-        .reduce((s, t) => s + Math.abs(t.amount), 0);
-      summary += `  ${acc}: Income $${inc.toFixed(2)}, Spend $${sp.toFixed(2)}\n`;
-      categories
-        .filter((c) => c.name !== "Income")
-        .forEach((cat) => {
-          const v = at
-            .filter((t) => t.category === cat.name && !t.isCredit)
-            .reduce((s, t) => s + Math.abs(t.amount), 0);
-          if (v > 0) summary += `    ${cat.name}: $${v.toFixed(2)}\n`;
-        });
-    });
-  });
-
-  if (Object.keys(budgets).length) {
-    summary += "\nMonthly Budgets:\n";
-    Object.entries(budgets).forEach(([k, v]) => {
-      summary += `  ${k}: $${v}\n`;
-    });
-  }
-  return summary;
-}
 
 const DEFAULT_MESSAGES: ChatMsg[] = [
   {
@@ -74,13 +81,22 @@ const DEFAULT_MESSAGES: ChatMsg[] = [
   },
 ];
 
-export function ChatPage({
-  txns = [],
-  budgets = {},
-  categories = [],
-  messages = DEFAULT_MESSAGES,
-  setMessages = () => {},
-}: Props) {
+// ── ChatPage ─────────────────────────────────────────────────────────────────
+//
+// Zero-prop component — reads transactions from AccountContext directly.
+// Replaces the old prop-based pattern (txns/budgets/categories passed from
+// App.tsx) which stopped working after the T005 context migration.
+
+export function ChatPage() {
+  const { accounts } = useAccount();
+  const rawTransactions = useAllTransactions();
+
+  const nicknameById = useMemo(
+    () => new Map(accounts.map((a) => [a.id, a.nickname])),
+    [accounts],
+  );
+
+  const [messages, setMessages] = useState<ChatMsg[]>(DEFAULT_MESSAGES);
   const [input, setInput] = useState("");
   const [loading, setLoading] = useState(false);
   const bottomRef = useRef<HTMLDivElement>(null);
@@ -105,11 +121,11 @@ export function ChatPage({
       const history = newMsgs
         .slice(1)
         .map((m) => ({ role: m.role, content: m.content }));
-      const systemCtx = buildContext(txns, budgets, categories);
+      const systemCtx = buildContext(rawTransactions, nicknameById);
       const res = await client.messages.create({
         model: "claude-haiku-4-5-20251001",
         max_tokens: 1200,
-        system: `You are a personal finance assistant for a New Zealand user. Their financial data:\n\n${systemCtx}\n\nAnswer concisely in NZD. Note which account when relevant. Inter-account transfers (isTransfer:true) are excluded from all spending totals.`,
+        system: `You are a personal finance assistant for a New Zealand user. Their financial data:\n\n${systemCtx}\n\nAnswer concisely in NZD. Note which account when relevant. Inter-account transfers are excluded from all spending totals.`,
         messages: history,
       });
       const reply = res.content
@@ -128,7 +144,8 @@ export function ChatPage({
     setLoading(false);
   };
 
-  if (!txns.length) {
+  // Empty state — shown when the user has no transactions in the API
+  if (!rawTransactions.length) {
     return (
       <div className="chat-empty">
         <div className="chat-empty-icon">◎</div>
@@ -202,7 +219,7 @@ export function ChatPage({
             onKeyDown={(e) => {
               if (e.key === "Enter" && !e.shiftKey) {
                 e.preventDefault();
-                send();
+                void send();
               }
             }}
             placeholder="Ask about your spending..."
@@ -211,7 +228,7 @@ export function ChatPage({
             className="chat-send"
             data-testid="chat-send"
             disabled={!input.trim() || loading}
-            onClick={() => send()}
+            onClick={() => void send()}
             style={{
               background:
                 input.trim() && !loading ? "var(--accent)" : "var(--border)",
