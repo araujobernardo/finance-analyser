@@ -1,7 +1,8 @@
 import { PieChart, Pie, Cell, Tooltip, ResponsiveContainer } from "recharts";
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { ACCOUNT_COLORS } from "../constants/colors";
-import type { PfaTxn, PfaCategory, PfaBudgets } from "../types/pfa";
+import type { ApiTransaction } from "../types/api";
+import { useAccount, useAllTransactions } from "../context/AccountContext";
 import {
   buildWeeklyTotals,
   buildWeeklyCategoryTotals,
@@ -13,18 +14,51 @@ import { GoalsSummaryWidget } from "../components/goals/GoalsSummaryWidget";
 import type { Transaction } from "../utils/csvParser";
 import "./DashboardPage.css";
 
-interface Props {
-  txns?: PfaTxn[];
-  months?: string[];
-  selectedMonths?: string[];
-  setSelectedMonths?: (m: string[]) => void;
-  budgets?: PfaBudgets;
-  accountList?: { short: string; display: string }[];
-  categories?: PfaCategory[];
+// ── Local adapter type ────────────────────────────────────────────────────────
+// Minimal shape required by weeklyAggregation.ts utilities (which still use
+// the PfaTxn-compatible interface internally). DashboardPage uses this local
+// type rather than importing PfaTxn directly, keeping this file free of the
+// old localStorage data model.
+
+interface AdaptedTxn {
+  id: string;
+  date: string;
+  month: string;
+  type: string;
+  payee: string;
+  memo: string;
+  amount: number;
+  isCredit: boolean;
+  account: string;
+  accountShort: string;
+  category: string | null;
+  isTransfer: boolean;
 }
 
+function adaptTxn(t: ApiTransaction, nickname: string): AdaptedTxn {
+  return {
+    id: t.id,
+    date: t.date,
+    month: t.date.slice(0, 7),
+    type: "",
+    payee: t.description,
+    memo: "",
+    amount: t.amount,
+    isCredit: t.amount > 0,
+    account: nickname,
+    accountShort: t.accountId,
+    category: t.category,
+    isTransfer: t.isTransfer,
+  };
+}
+
+// ── Formatting helpers ───────────────────────────────────────────────────────
+
 const fmt = (n: number) =>
-  `$${Math.abs(n).toLocaleString("en-NZ", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+  `$${Math.abs(n).toLocaleString("en-NZ", {
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2,
+  })}`;
 
 const fmtMonth = (m: string) => {
   if (!m) return "";
@@ -45,19 +79,65 @@ const fmtMonthSh = (m: string) => {
   );
 };
 
-export function DashboardPage({
-  txns = [],
-  months = [],
-  selectedMonths = [],
-  setSelectedMonths = () => {},
-  budgets = {},
-  accountList = [],
-  categories = [],
-}: Props) {
+// Stable category colours derived from position in the sorted category list.
+const CAT_COLORS = [
+  "#6C8EBF",
+  "#82B366",
+  "#D79B00",
+  "#AE4132",
+  "#9673A6",
+  "#006EAF",
+  "#23850B",
+  "#BD7000",
+  "#6E0023",
+  "#603E8A",
+  "#0E7A8A",
+];
+
+// ── DashboardPage ────────────────────────────────────────────────────────────
+
+export function DashboardPage() {
+  const { accounts, isLoading } = useAccount();
+  const rawTransactions = useAllTransactions();
+
+  // Adapt ApiTransaction rows for chart utilities.
+  const adapted = useMemo(() => {
+    const nicknameById = new Map(accounts.map((a) => [a.id, a.nickname]));
+    return rawTransactions.map((t) => {
+      const nickname = nicknameById.get(t.accountId) ?? t.accountId;
+      return adaptTxn(t, nickname);
+    });
+  }, [rawTransactions, accounts]);
+
+  // Derive sorted month list from transactions (newest first).
+  const months = useMemo(() => {
+    const set = new Set(adapted.map((t) => t.month));
+    return Array.from(set).sort().reverse();
+  }, [adapted]);
+
+  // Derive categories from transaction data (unique expense category values).
+  const uniqueCategories = useMemo(() => {
+    const catSet = new Set<string>();
+    for (const t of adapted) {
+      if (t.category && !t.isCredit && !t.isTransfer) {
+        catSet.add(t.category);
+      }
+    }
+    return Array.from(catSet).sort();
+  }, [adapted]);
+
+  // Month selection state — controlled; reset to most-recent when months change.
+  const [selectedMonthsRaw, setSelectedMonths] = useState<string[]>([]);
   const [acctFilter, setAcctFilter] = useState("all");
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
 
-  // Reset category selection whenever the account filter changes
+  // Effective selected months: filter out stale values, default to most-recent.
+  const selectedMonths = useMemo(() => {
+    if (months.length === 0) return [];
+    const valid = selectedMonthsRaw.filter((m) => months.includes(m));
+    return valid.length > 0 ? valid : [months[0]];
+  }, [selectedMonthsRaw, months]);
+
   const handleAcctFilterChange = (next: string) => {
     setAcctFilter(next);
     setSelectedCategory(null);
@@ -75,84 +155,127 @@ export function DashboardPage({
   const multiMonth = selectedMonths.length > 1;
   const n = selectedMonths.length;
 
-  const selTxns = txns.filter(
-    (t) =>
-      selectedMonths.includes(t.month) &&
-      (acctFilter === "all" || t.account === acctFilter),
+  const selAdapted = useMemo(
+    () =>
+      adapted.filter(
+        (t) =>
+          selectedMonths.includes(t.month) &&
+          (acctFilter === "all" || t.account === acctFilter),
+      ),
+    [adapted, selectedMonths, acctFilter],
   );
-  const real = selTxns.filter((t) => !t.isTransfer);
-  const spend = real
-    .filter((t) => !t.isCredit)
-    .reduce((s, t) => s + Math.abs(t.amount), 0);
-  const income = real
-    .filter((t) => t.isCredit)
-    .reduce((s, t) => s + t.amount, 0);
-  const net = income - spend;
-  const transferAmt = selTxns
-    .filter((t) => t.isTransfer && !t.isCredit)
-    .reduce((s, t) => s + Math.abs(t.amount), 0);
 
-  const catData = categories
-    .filter((c) => c.name !== "Income")
-    .map((c) => ({
-      name: c.name,
-      color: c.color,
-      value: real
-        .filter((t) => t.category === c.name && !t.isCredit)
-        .reduce((s, t) => s + Math.abs(t.amount), 0),
-    }))
-    .filter((d) => d.value > 0)
-    .sort((a, b) => b.value - a.value);
-  const catTotal = catData.reduce((s, d) => s + d.value, 0);
+  const real = useMemo(
+    () => selAdapted.filter((t) => !t.isTransfer),
+    [selAdapted],
+  );
 
-  const acctBreakdown = accountList.map((acct, i) => {
-    const at = txns.filter(
-      (t) =>
-        selectedMonths.includes(t.month) &&
-        t.accountShort === acct.short &&
-        !t.isTransfer,
-    );
-    return {
-      ...acct,
-      color: ACCOUNT_COLORS[i % ACCOUNT_COLORS.length],
-      income: at.filter((t) => t.isCredit).reduce((s, t) => s + t.amount, 0),
-      spend: at
+  const spend = useMemo(
+    () =>
+      real
         .filter((t) => !t.isCredit)
         .reduce((s, t) => s + Math.abs(t.amount), 0),
-    };
-  });
-
-  const weeklyBuckets = buildWeeklyTotals(txns, acctFilter);
-  const weeklyCategoryBuckets = buildWeeklyCategoryTotals(txns, acctFilter);
-
-  const budgetData = Object.entries(budgets)
-    .map(([cat, budget]) => ({
-      cat,
-      budget: +budget,
-      actual: real
-        .filter((t) => t.category === cat && !t.isCredit)
+    [real],
+  );
+  const income = useMemo(
+    () => real.filter((t) => t.isCredit).reduce((s, t) => s + t.amount, 0),
+    [real],
+  );
+  const net = income - spend;
+  const transferAmt = useMemo(
+    () =>
+      selAdapted
+        .filter((t) => t.isTransfer && !t.isCredit)
         .reduce((s, t) => s + Math.abs(t.amount), 0),
-    }))
-    .filter((d) => d.budget > 0);
+    [selAdapted],
+  );
 
-  // Map PfaTxns to Transaction shape for LargestTransactions component
-  const txnsForLargest: Transaction[] = real
-    .filter((t) => !t.isCredit)
-    .map((t) => ({
-      date: new Date(`${t.date}T00:00:00`),
-      description: t.payee || t.memo || "Unknown",
-      amount: -Math.abs(t.amount), // negative = debit in Transaction convention
-      category: t.category ?? undefined,
-    }));
+  const catData = useMemo(
+    () =>
+      uniqueCategories
+        .map((name, i) => ({
+          name,
+          color: CAT_COLORS[i % CAT_COLORS.length],
+          value: real
+            .filter((t) => t.category === name && !t.isCredit)
+            .reduce((s, t) => s + Math.abs(t.amount), 0),
+        }))
+        .filter((d) => d.value > 0)
+        .sort((a, b) => b.value - a.value),
+    [uniqueCategories, real],
+  );
+  const catTotal = useMemo(
+    () => catData.reduce((s, d) => s + d.value, 0),
+    [catData],
+  );
 
-  if (!txns.length) {
+  // Per-account breakdown.
+  const acctBreakdown = useMemo(
+    () =>
+      accounts.map((acct, i) => {
+        const at = adapted.filter(
+          (t) =>
+            selectedMonths.includes(t.month) &&
+            t.accountShort === acct.id &&
+            !t.isTransfer,
+        );
+        return {
+          short: acct.id,
+          display: acct.nickname,
+          color: ACCOUNT_COLORS[i % ACCOUNT_COLORS.length],
+          income: at
+            .filter((t) => t.isCredit)
+            .reduce((s, t) => s + t.amount, 0),
+          spend: at
+            .filter((t) => !t.isCredit)
+            .reduce((s, t) => s + Math.abs(t.amount), 0),
+        };
+      }),
+    [accounts, adapted, selectedMonths],
+  );
+
+  const weeklyBuckets = useMemo(
+    () => buildWeeklyTotals(adapted, acctFilter),
+    [adapted, acctFilter],
+  );
+  const weeklyCategoryBuckets = useMemo(
+    () => buildWeeklyCategoryTotals(adapted, acctFilter),
+    [adapted, acctFilter],
+  );
+
+  // Map to Transaction shape for LargestTransactions component.
+  const txnsForLargest: Transaction[] = useMemo(
+    () =>
+      real
+        .filter((t) => !t.isCredit)
+        .map((t) => ({
+          date: new Date(`${t.date}T00:00:00`),
+          description: t.payee || "Unknown",
+          amount: -Math.abs(t.amount),
+          category: t.category ?? undefined,
+        })),
+    [real],
+  );
+
+  // Loading state — shown only while initial fetch is running with no data yet.
+  if (isLoading && adapted.length === 0) {
+    return (
+      <div className="dash-empty" data-testid="dashboard-loading">
+        <div className="dash-empty-icon">⬡</div>
+        <div className="dash-empty-title">Loading…</div>
+      </div>
+    );
+  }
+
+  // Empty state — shown once loading completes but there are no transactions.
+  if (!isLoading && adapted.length === 0) {
     return (
       <div className="dash-empty">
         <div className="dash-empty-icon">⬡</div>
         <div className="dash-empty-title">No data yet</div>
         <div className="dash-empty-sub">
-          Upload your bank CSV exports. Select multiple files at once to import
-          all accounts together.
+          Upload your bank CSV exports using the sidebar. Select multiple files
+          at once to import all accounts together.
         </div>
       </div>
     );
@@ -196,7 +319,7 @@ export function DashboardPage({
       </div>
 
       {/* Account filter pills */}
-      {accountList.length > 1 && (
+      {accounts.length > 1 && (
         <div className="dash-acct-pills">
           <button
             className={`pill${acctFilter === "all" ? " pill-active" : ""}`}
@@ -204,12 +327,12 @@ export function DashboardPage({
           >
             All Accounts
           </button>
-          {accountList.map((a, i) => {
+          {accounts.map((a, i) => {
             const col = ACCOUNT_COLORS[i % ACCOUNT_COLORS.length];
-            const isActive = acctFilter === a.display;
+            const isActive = acctFilter === a.nickname;
             return (
               <button
-                key={a.short}
+                key={a.id}
                 className={`pill${isActive ? " pill-active" : ""}`}
                 style={
                   isActive
@@ -218,11 +341,11 @@ export function DashboardPage({
                 }
                 onClick={() =>
                   handleAcctFilterChange(
-                    acctFilter === a.display ? "all" : a.display,
+                    acctFilter === a.nickname ? "all" : a.nickname,
                   )
                 }
               >
-                {a.display}
+                {a.nickname}
               </button>
             );
           })}
@@ -262,7 +385,7 @@ export function DashboardPage({
         <div className="card">
           <Stat
             label="Transactions"
-            value={String(selTxns.length)}
+            value={String(selAdapted.length)}
             color="var(--text)"
           />
         </div>
@@ -280,7 +403,7 @@ export function DashboardPage({
       )}
 
       {/* Per-account breakdown */}
-      {acctFilter === "all" && accountList.length > 1 && (
+      {acctFilter === "all" && accounts.length > 1 && (
         <div className="dash-acct-grid">
           {acctBreakdown.map(
             ({ short, display, color, income: ai, spend: as_ }) => (
@@ -432,48 +555,6 @@ export function DashboardPage({
         <div className="card-title">Weekly Trends</div>
         <WeeklyTrendChart data={weeklyBuckets} />
       </div>
-
-      {/* Budget vs Actual */}
-      {budgetData.length > 0 && (
-        <div className="card" data-testid="budget-section">
-          <div className="card-title">
-            Budget vs Actual{multiMonth ? ` (${n}-month total)` : ""}
-          </div>
-          <div className="dash-budget-list">
-            {budgetData.map((d) => {
-              const limit = multiMonth ? d.budget * n : d.budget;
-              const pct = Math.min((d.actual / limit) * 100, 100);
-              const over = d.actual > limit;
-              return (
-                <div key={d.cat}>
-                  <div className="dash-budget-row">
-                    <span className="dash-budget-cat">{d.cat}</span>
-                    <span
-                      className="mono"
-                      style={{ color: over ? "var(--red)" : "var(--muted)" }}
-                    >
-                      {fmt(d.actual)}
-                      <span style={{ color: "var(--muted)" }}>
-                        {" "}
-                        / {fmt(limit)}
-                      </span>
-                    </span>
-                  </div>
-                  <div className="dash-budget-track">
-                    <div
-                      className="dash-budget-fill"
-                      style={{
-                        width: `${pct}%`,
-                        background: over ? "var(--red)" : "var(--accent)",
-                      }}
-                    />
-                  </div>
-                </div>
-              );
-            })}
-          </div>
-        </div>
-      )}
     </div>
   );
 }

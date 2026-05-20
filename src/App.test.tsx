@@ -1,5 +1,5 @@
 import { afterEach, beforeEach, describe, it, expect } from "vitest";
-import { render, screen, cleanup } from "@testing-library/react";
+import { render, screen, cleanup, waitFor } from "@testing-library/react";
 import { MemoryRouter } from "react-router-dom";
 import App from "./App";
 
@@ -37,8 +37,13 @@ describe("App shell", () => {
     expect(screen.getByText("Analyser")).toBeInTheDocument();
   });
 
-  it("renders the Dashboard empty state by default", () => {
+  it("renders the Dashboard empty state by default", async () => {
     renderApp();
-    expect(screen.getByText("No data yet")).toBeInTheDocument();
+    // AccountContext starts a fetch on mount (isLoading=true), then resolves/fails.
+    // Wait for the empty state to appear once loading settles.
+    await waitFor(
+      () => expect(screen.getByText("No data yet")).toBeInTheDocument(),
+      { timeout: 5000 },
+    );
   });
 });
