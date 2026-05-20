@@ -10,17 +10,17 @@ import { fmt, fmtMonth, getCatColor } from "../utils/transactionFormatters";
 import "./TransactionsPage.css";
 
 interface Props {
-  txns: PfaTxn[];
-  accountList: { short: string; display: string }[];
-  categories: PfaCategory[];
-  onBulkCategoryChange: (updated: PfaTxn[]) => void;
+  txns?: PfaTxn[];
+  accountList?: { short: string; display: string }[];
+  categories?: PfaCategory[];
+  onBulkCategoryChange?: (updated: PfaTxn[]) => void;
 }
 
 export function TransactionsPage({
-  txns,
-  accountList,
-  categories,
-  onBulkCategoryChange,
+  txns = [],
+  accountList = [],
+  categories = [],
+  onBulkCategoryChange = () => {},
 }: Props) {
   const [search, setSearch] = useState("");
   const [filterCat, setFilterCat] = useState("all");

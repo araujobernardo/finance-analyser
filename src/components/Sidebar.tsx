@@ -17,11 +17,11 @@ interface AccountEntry {
 }
 
 interface SidebarProps {
-  onUpload: (files: File[]) => void;
-  uploadStatus: UploadStatus | null;
-  txnCount: number;
-  accountList: AccountEntry[];
-  onRenameAccount: (short: string, name: string) => void;
+  onUpload?: (files: File[]) => void;
+  uploadStatus?: UploadStatus | null;
+  txnCount?: number;
+  accountList?: AccountEntry[];
+  onRenameAccount?: (short: string, name: string) => void;
 }
 
 const NAV = [
@@ -35,11 +35,11 @@ const NAV = [
 ];
 
 export function Sidebar({
-  onUpload,
-  uploadStatus,
-  txnCount,
-  accountList,
-  onRenameAccount,
+  onUpload = () => {},
+  uploadStatus = null,
+  txnCount = 0,
+  accountList = [],
+  onRenameAccount = () => {},
 }: SidebarProps) {
   const { logout } = useAuth();
   const {

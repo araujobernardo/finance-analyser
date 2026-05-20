@@ -9,11 +9,11 @@ interface ChatMsg {
 }
 
 interface Props {
-  txns: PfaTxn[];
-  budgets: PfaBudgets;
-  categories: PfaCategory[];
-  messages: ChatMsg[];
-  setMessages: (m: ChatMsg[]) => void;
+  txns?: PfaTxn[];
+  budgets?: PfaBudgets;
+  categories?: PfaCategory[];
+  messages?: ChatMsg[];
+  setMessages?: (m: ChatMsg[]) => void;
 }
 
 const SUGGESTIONS = [
@@ -66,12 +66,20 @@ function buildContext(
   return summary;
 }
 
+const DEFAULT_MESSAGES: ChatMsg[] = [
+  {
+    role: "assistant",
+    content:
+      "Hi! I have full visibility across all your accounts. Ask me anything — spending by account, trends, where to cut back. Inter-account transfers are excluded from all totals.",
+  },
+];
+
 export function ChatPage({
-  txns,
-  budgets,
-  categories,
-  messages,
-  setMessages,
+  txns = [],
+  budgets = {},
+  categories = [],
+  messages = DEFAULT_MESSAGES,
+  setMessages = () => {},
 }: Props) {
   const [input, setInput] = useState("");
   const [loading, setLoading] = useState(false);
