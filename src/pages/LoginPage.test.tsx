@@ -14,12 +14,6 @@ vi.mock("react-router-dom", async (importOriginal) => {
   return { ...actual, useNavigate: () => mockNavigate };
 });
 
-// Mock storage so we control what "localStorage accounts" look like in tests.
-const mockGetAccounts = vi.fn();
-vi.mock("../services/storage", () => ({
-  getAccounts: () => mockGetAccounts(),
-}));
-
 function renderLoginPage() {
   return render(
     <MemoryRouter>
@@ -30,49 +24,11 @@ function renderLoginPage() {
   );
 }
 
-/** Simulate a successful auth login response then submit the form. */
-async function loginSuccessfully(
-  fetchSpy: ReturnType<typeof vi.spyOn>,
-  {
-    cloudAccounts = [],
-    localStorageFlag = false,
-  }: { cloudAccounts?: unknown[]; localStorageFlag?: boolean } = {},
-) {
-  if (localStorageFlag) {
-    localStorage.setItem("fa-migration-complete", "true");
-  } else {
-    localStorage.removeItem("fa-migration-complete");
-  }
-
-  // First fetch: POST /api/auth/login → returns token
-  // Second fetch: GET /api/accounts → returns cloud accounts
-  fetchSpy
-    .mockResolvedValueOnce(
-      new Response(JSON.stringify({ token: "jwt-token", user: { id: 1 } }), {
-        status: 200,
-        headers: { "Content-Type": "application/json" },
-      }),
-    )
-    .mockResolvedValueOnce(
-      new Response(JSON.stringify({ accounts: cloudAccounts }), {
-        status: 200,
-        headers: { "Content-Type": "application/json" },
-      }),
-    );
-
-  const user = userEvent.setup();
-  renderLoginPage();
-  await user.type(screen.getByLabelText(/email/i), "user@example.com");
-  await user.type(screen.getByLabelText(/password/i), "pass");
-  await user.click(screen.getByRole("button", { name: /sign in/i }));
-}
-
 describe("LoginPage — API_BASE integration (#272)", () => {
   let fetchSpy: ReturnType<typeof vi.spyOn>;
 
   beforeEach(() => {
     mockNavigate.mockReset();
-    mockGetAccounts.mockReset();
     fetchSpy = vi.spyOn(globalThis, "fetch");
     localStorage.clear();
   });
@@ -99,20 +55,12 @@ describe("LoginPage — API_BASE integration (#272)", () => {
     // hardcoded alternative (e.g. "http://localhost:3000/api/auth/login") would fail.
     const expectedUrl = `${API_BASE}/api/auth/login`;
 
-    mockGetAccounts.mockReturnValue([]);
-    fetchSpy
-      .mockResolvedValueOnce(
-        new Response(JSON.stringify({ token: "tok" }), {
-          status: 200,
-          headers: { "Content-Type": "application/json" },
-        }),
-      )
-      .mockResolvedValueOnce(
-        new Response(JSON.stringify({ accounts: [] }), {
-          status: 200,
-          headers: { "Content-Type": "application/json" },
-        }),
-      );
+    fetchSpy.mockResolvedValueOnce(
+      new Response(JSON.stringify({ token: "tok" }), {
+        status: 200,
+        headers: { "Content-Type": "application/json" },
+      }),
+    );
 
     const user = userEvent.setup();
     renderLoginPage();
@@ -172,12 +120,11 @@ describe("LoginPage — API_BASE integration (#272)", () => {
   });
 });
 
-describe("LoginPage — migration trigger logic (#680)", () => {
+describe("LoginPage — post-login navigation (T009)", () => {
   let fetchSpy: ReturnType<typeof vi.spyOn>;
 
   beforeEach(() => {
     mockNavigate.mockReset();
-    mockGetAccounts.mockReset();
     fetchSpy = vi.spyOn(globalThis, "fetch");
     localStorage.clear();
   });
@@ -188,41 +135,65 @@ describe("LoginPage — migration trigger logic (#680)", () => {
     localStorage.clear();
   });
 
-  it("(a) navigates to /dashboard when cloud already has accounts", async () => {
-    mockGetAccounts.mockReturnValue([{ id: "acc1", name: "Savings" }]);
-    await loginSuccessfully(fetchSpy, {
-      cloudAccounts: [{ id: "cloud-acc1" }],
-    });
+  it("navigates to /dashboard immediately after successful login (no migration check)", async () => {
+    fetchSpy.mockResolvedValueOnce(
+      new Response(JSON.stringify({ token: "jwt-token", user: { id: 1 } }), {
+        status: 200,
+        headers: { "Content-Type": "application/json" },
+      }),
+    );
+
+    const user = userEvent.setup();
+    renderLoginPage();
+    await user.type(screen.getByLabelText(/email/i), "user@example.com");
+    await user.type(screen.getByLabelText(/password/i), "pass");
+    await user.click(screen.getByRole("button", { name: /sign in/i }));
+
     await waitFor(() =>
       expect(mockNavigate).toHaveBeenCalledWith("/dashboard"),
     );
     expect(mockNavigate).not.toHaveBeenCalledWith("/migrate");
   });
 
-  it("(b) navigates to /dashboard when localStorage has no accounts (new user)", async () => {
-    mockGetAccounts.mockReturnValue([]);
-    await loginSuccessfully(fetchSpy, { cloudAccounts: [] });
+  it("never navigates to /migrate regardless of localStorage state", async () => {
+    // Seed localStorage with pfa-v3-* data to simulate an old user
+    localStorage.setItem("pfa-v3-accounts", JSON.stringify([{ id: "acc1" }]));
+
+    fetchSpy.mockResolvedValueOnce(
+      new Response(JSON.stringify({ token: "jwt-token", user: { id: 1 } }), {
+        status: 200,
+        headers: { "Content-Type": "application/json" },
+      }),
+    );
+
+    const user = userEvent.setup();
+    renderLoginPage();
+    await user.type(screen.getByLabelText(/email/i), "user@example.com");
+    await user.type(screen.getByLabelText(/password/i), "pass");
+    await user.click(screen.getByRole("button", { name: /sign in/i }));
+
     await waitFor(() =>
       expect(mockNavigate).toHaveBeenCalledWith("/dashboard"),
     );
     expect(mockNavigate).not.toHaveBeenCalledWith("/migrate");
   });
 
-  it("(c) redirects to /migrate when localStorage has accounts and cloud is empty", async () => {
-    mockGetAccounts.mockReturnValue([{ id: "acc1", name: "Checking" }]);
-    await loginSuccessfully(fetchSpy, { cloudAccounts: [] });
-    await waitFor(() => expect(mockNavigate).toHaveBeenCalledWith("/migrate"));
-    expect(mockNavigate).not.toHaveBeenCalledWith("/dashboard");
-  });
+  it("only makes one fetch call (no /api/accounts check after login)", async () => {
+    fetchSpy.mockResolvedValueOnce(
+      new Response(JSON.stringify({ token: "jwt-token", user: { id: 1 } }), {
+        status: 200,
+        headers: { "Content-Type": "application/json" },
+      }),
+    );
 
-  it("(d) redirects to /migrate even when fa-migration-complete flag is set but cloud is empty", async () => {
-    // This is the core bug fix: the flag alone must NOT skip migration when cloud is empty
-    mockGetAccounts.mockReturnValue([{ id: "acc1", name: "Checking" }]);
-    await loginSuccessfully(fetchSpy, {
-      cloudAccounts: [],
-      localStorageFlag: true,
-    });
-    await waitFor(() => expect(mockNavigate).toHaveBeenCalledWith("/migrate"));
-    expect(mockNavigate).not.toHaveBeenCalledWith("/dashboard");
+    const user = userEvent.setup();
+    renderLoginPage();
+    await user.type(screen.getByLabelText(/email/i), "user@example.com");
+    await user.type(screen.getByLabelText(/password/i), "pass");
+    await user.click(screen.getByRole("button", { name: /sign in/i }));
+
+    await waitFor(() => expect(mockNavigate).toHaveBeenCalled());
+    // Only the POST /api/auth/login call — no extra GET /api/accounts
+    expect(fetchSpy).toHaveBeenCalledTimes(1);
   });
 });
