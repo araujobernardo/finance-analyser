@@ -1,17 +1,68 @@
-import { afterEach, describe, it, expect } from "vitest";
+import { afterEach, describe, it, expect, vi } from "vitest";
 import { render, screen, cleanup } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
+import { MemoryRouter } from "react-router-dom";
 import { TransactionsPage } from "./TransactionsPage";
-import type { PfaTxn, PfaCategory } from "../types/pfa";
+import type { PfaTxn } from "../types/pfa";
+import type { ApiTransaction } from "../types/api";
 import {
   getCandidates,
   applyFlag,
   applyUnflag,
 } from "../utils/transferFlagging";
 
+// ── Mock AccountContext ────────────────────────────────────────────────────────
+
+const mockAccounts = [
+  { id: "acc-1", nickname: "Main Account", colour: "#6C8EBF" },
+];
+let mockRawTransactions: ApiTransaction[] = [];
+
+vi.mock("../context/AccountContext", () => ({
+  useAccount: () => ({
+    accounts: mockAccounts,
+    isLoading: false,
+    error: null,
+    activeAccountId: "acc-1",
+    refetch: vi.fn(),
+    setActiveAccountId: vi.fn(),
+    addAccount: vi.fn(),
+    removeAccount: vi.fn(),
+    updateAccount: vi.fn(),
+  }),
+  useAllTransactions: () => mockRawTransactions,
+  ALL_ACCOUNTS_ID: "all",
+}));
+
 // ── Fixtures ─────────────────────────────────────────────────────────────────
 
-function makeTxn(overrides: Partial<PfaTxn>): PfaTxn {
+function makeApiTxn(overrides: Partial<ApiTransaction> = {}): ApiTransaction {
+  return {
+    id: "txn-1",
+    userId: "user-1",
+    accountId: "acc-1",
+    date: "2026-03-15",
+    amount: -100,
+    description: "Test Payee",
+    category: "Groceries",
+    isTransfer: false,
+    isManualTransfer: false,
+    createdAt: new Date().toISOString(),
+    ...overrides,
+  };
+}
+
+function renderPage() {
+  return render(
+    <MemoryRouter>
+      <TransactionsPage />
+    </MemoryRouter>,
+  );
+}
+
+// ── PfaTxn fixtures used by the transferFlagging utility tests ──────────────
+
+function makePfaTxn(overrides: Partial<PfaTxn>): PfaTxn {
   return {
     id: "txn-1",
     date: "2026-03-15",
@@ -29,25 +80,25 @@ function makeTxn(overrides: Partial<PfaTxn>): PfaTxn {
   };
 }
 
-const txnA = makeTxn({ id: "txn-a", amount: -100, category: "Groceries" });
-const txnB = makeTxn({
+const txnA = makePfaTxn({ id: "txn-a", amount: -100, category: "Groceries" });
+const txnB = makePfaTxn({
   id: "txn-b",
   amount: 100,
   isCredit: true,
   category: "Income",
 });
-const txnC = makeTxn({
+const txnC = makePfaTxn({
   id: "txn-c",
   amount: -100,
   category: "Transport",
   date: "2026-03-16", // different date
 });
-const txnD = makeTxn({
+const txnD = makePfaTxn({
   id: "txn-d",
   amount: -50, // different amount
   category: "Dining & Takeaways",
 });
-const txnE = makeTxn({
+const txnE = makePfaTxn({
   id: "txn-e",
   amount: -100,
   category: "Utilities & Bills",
@@ -60,10 +111,6 @@ describe("getCandidates", () => {
   it("returns same-day same-amount non-transfer transactions excluding the initiating transaction", () => {
     const txns = [txnA, txnB, txnC, txnD, txnE];
     const result = getCandidates(txns, txnA.id);
-    // txnB: same date, |100| === |100| ✓, not transfer ✓, different id ✓
-    // txnC: different date ✗
-    // txnD: different amount ✗
-    // txnE: already a transfer ✗
     expect(result).toHaveLength(1);
     expect(result[0].id).toBe("txn-b");
   });
@@ -132,7 +179,7 @@ describe("applyFlag", () => {
 
 describe("applyUnflag", () => {
   it("sets isTransfer: false and restores category from preFlagCategory for manually-flagged pairs", () => {
-    const flaggedA = makeTxn({
+    const flaggedA = makePfaTxn({
       id: "txn-a",
       amount: -100,
       date: "2026-03-15",
@@ -140,7 +187,7 @@ describe("applyUnflag", () => {
       category: "Savings",
       preFlagCategory: "Groceries",
     });
-    const flaggedB = makeTxn({
+    const flaggedB = makePfaTxn({
       id: "txn-b",
       amount: 100,
       isCredit: true,
@@ -163,22 +210,20 @@ describe("applyUnflag", () => {
   });
 
   it("sets category to null for auto-detected transfers (no preFlagCategory)", () => {
-    const autoA = makeTxn({
+    const autoA = makePfaTxn({
       id: "txn-a",
       amount: -100,
       date: "2026-03-15",
       isTransfer: true,
       category: "Savings",
-      // preFlagCategory not set
     });
-    const autoB = makeTxn({
+    const autoB = makePfaTxn({
       id: "txn-b",
       amount: 100,
       isCredit: true,
       date: "2026-03-15",
       isTransfer: true,
       category: "Savings",
-      // preFlagCategory not set
     });
     const txns = [autoA, autoB];
     const result = applyUnflag(txns, autoA.id);
@@ -192,7 +237,7 @@ describe("applyUnflag", () => {
   });
 
   it("only un-flags the pair, leaving other transactions unchanged", () => {
-    const flaggedA = makeTxn({
+    const flaggedA = makePfaTxn({
       id: "txn-a",
       amount: -100,
       date: "2026-03-15",
@@ -200,7 +245,7 @@ describe("applyUnflag", () => {
       category: "Savings",
       preFlagCategory: "Groceries",
     });
-    const flaggedB = makeTxn({
+    const flaggedB = makePfaTxn({
       id: "txn-b",
       amount: 100,
       isCredit: true,
@@ -209,7 +254,7 @@ describe("applyUnflag", () => {
       category: "Savings",
       preFlagCategory: "Income",
     });
-    const unrelated = makeTxn({
+    const unrelated = makePfaTxn({
       id: "txn-c",
       amount: -50,
       date: "2026-03-15",
@@ -231,136 +276,136 @@ describe("applyUnflag", () => {
   });
 });
 
-// ── TransactionsPage — Uncategorised filter (T004–T009) ───────────────────────
+// ── TransactionsPage — AccountContext integration ─────────────────────────────
 
-function makePageTxn(overrides: Partial<PfaTxn>): PfaTxn {
-  return {
-    id: "page-txn-1",
-    date: "2026-03-15",
-    month: "2026-03",
-    type: "",
-    payee: "Page Payee",
-    memo: "",
-    amount: -100,
-    isCredit: false,
-    account: "Main Account",
-    accountShort: "Main",
-    category: null,
-    isTransfer: false,
-    ...overrides,
-  };
-}
+describe("TransactionsPage — empty state", () => {
+  afterEach(cleanup);
 
-const defaultCategories: PfaCategory[] = [
-  { name: "Groceries", color: "#ff0000" },
-  { name: "Transport", color: "#00ff00" },
-];
+  it("shows empty state when there are no transactions", () => {
+    mockRawTransactions = [];
+    renderPage();
+    expect(screen.getByTestId("txn-empty-state")).toBeInTheDocument();
+  });
 
-const defaultAccountList = [{ short: "Main", display: "Main Account" }];
+  it("does not show the table when there are no transactions", () => {
+    mockRawTransactions = [];
+    renderPage();
+    expect(screen.queryByTestId("txn-table")).not.toBeInTheDocument();
+  });
+});
 
-function renderPage(txns: PfaTxn[]) {
-  return render(
-    <TransactionsPage
-      txns={txns}
-      accountList={defaultAccountList}
-      categories={defaultCategories}
-      onBulkCategoryChange={() => {}}
-    />,
-  );
-}
+describe("TransactionsPage — transaction display", () => {
+  afterEach(cleanup);
 
-// T004 — selecting "__uncategorised__" shows only uncategorised transactions
+  it("renders the transaction table when transactions are present", () => {
+    mockRawTransactions = [makeApiTxn()];
+    renderPage();
+    expect(screen.getByTestId("txn-table")).toBeInTheDocument();
+  });
+
+  it("displays the transaction payee (description)", () => {
+    mockRawTransactions = [
+      makeApiTxn({ description: "Countdown Supermarket" }),
+    ];
+    renderPage();
+    expect(screen.getByText("Countdown Supermarket")).toBeInTheDocument();
+  });
+
+  it("shows row count in txn-row-count span", () => {
+    mockRawTransactions = [
+      makeApiTxn({ id: "t1" }),
+      makeApiTxn({ id: "t2", description: "Another" }),
+    ];
+    renderPage();
+    expect(screen.getByTestId("txn-row-count")).toHaveTextContent("2 rows");
+  });
+});
+
+// ── TransactionsPage — Uncategorised filter ───────────────────────────────────
+
 describe("TransactionsPage — Uncategorised filter", () => {
   afterEach(cleanup);
 
-  it("T004: shows only transactions with null/undefined/empty category when Uncategorised is selected", async () => {
+  it("T004: shows only transactions with null/empty category when Uncategorised is selected", async () => {
     const user = userEvent.setup();
-    const txns = [
-      makePageTxn({ id: "t1", payee: "No Cat", category: null }),
-      makePageTxn({ id: "t2", payee: "Empty Cat", category: "" }),
-      makePageTxn({ id: "t3", payee: "Has Cat", category: "Groceries" }),
+    mockRawTransactions = [
+      makeApiTxn({ id: "t1", description: "No Cat", category: null }),
+      makeApiTxn({ id: "t2", description: "Has Cat", category: "Groceries" }),
     ];
-    renderPage(txns);
+    renderPage();
 
     const catSelect = screen.getByDisplayValue("All categories");
     await user.selectOptions(catSelect, "__uncategorised__");
 
     expect(screen.getByText("No Cat")).toBeInTheDocument();
-    expect(screen.getByText("Empty Cat")).toBeInTheDocument();
     expect(screen.queryByText("Has Cat")).not.toBeInTheDocument();
   });
 
-  // T005 — transactions with a non-empty category are excluded
-  it("T005: transactions with a named category are not rendered when Uncategorised is selected", async () => {
+  it("T005: named-category transactions are excluded when Uncategorised is selected", async () => {
     const user = userEvent.setup();
-    const txns = [
-      makePageTxn({ id: "t1", payee: "Uncategorised One", category: null }),
-      makePageTxn({ id: "t2", payee: "Groceries Txn", category: "Groceries" }),
-      makePageTxn({ id: "t3", payee: "Transport Txn", category: "Transport" }),
+    mockRawTransactions = [
+      makeApiTxn({ id: "t1", description: "Uncat One", category: null }),
+      makeApiTxn({
+        id: "t2",
+        description: "Groceries Txn",
+        category: "Groceries",
+      }),
     ];
-    renderPage(txns);
+    renderPage();
 
     const catSelect = screen.getByDisplayValue("All categories");
     await user.selectOptions(catSelect, "__uncategorised__");
 
-    expect(screen.getByText("Uncategorised One")).toBeInTheDocument();
+    expect(screen.getByText("Uncat One")).toBeInTheDocument();
     expect(screen.queryByText("Groceries Txn")).not.toBeInTheDocument();
-    expect(screen.queryByText("Transport Txn")).not.toBeInTheDocument();
   });
 
-  // T006 — transfer transactions are absent even when showTransfers is enabled
   it("T006: transfer transactions do not appear when Uncategorised is selected, even with Show transfers checked", async () => {
     const user = userEvent.setup();
-    const txns = [
-      makePageTxn({ id: "t1", payee: "Normal Uncategorised", category: null }),
-      makePageTxn({
+    mockRawTransactions = [
+      makeApiTxn({ id: "t1", description: "Normal Uncat", category: null }),
+      makeApiTxn({
         id: "t2",
-        payee: "Transfer Txn",
+        description: "Transfer Txn",
         category: null,
         isTransfer: true,
       }),
     ];
-    renderPage(txns);
+    renderPage();
 
-    // Enable Show transfers first
     const showTransfersCheckbox = screen.getByRole("checkbox");
     await user.click(showTransfersCheckbox);
 
-    // Now select Uncategorised
     const catSelect = screen.getByDisplayValue("All categories");
     await user.selectOptions(catSelect, "__uncategorised__");
 
-    expect(screen.getByText("Normal Uncategorised")).toBeInTheDocument();
+    expect(screen.getByText("Normal Uncat")).toBeInTheDocument();
     expect(screen.queryByText("Transfer Txn")).not.toBeInTheDocument();
   });
 
-  // T007 — Uncategorised AND month filter: AND composition
   it("T007: only uncategorised transactions in the selected month appear when both filters are applied", async () => {
     const user = userEvent.setup();
-    const txns = [
-      makePageTxn({
+    mockRawTransactions = [
+      makeApiTxn({
         id: "t1",
-        payee: "March Uncat",
+        description: "March Uncat",
         category: null,
-        month: "2026-03",
         date: "2026-03-15",
       }),
-      makePageTxn({
+      makeApiTxn({
         id: "t2",
-        payee: "April Uncat",
+        description: "April Uncat",
         category: null,
-        month: "2026-04",
         date: "2026-04-10",
       }),
-      makePageTxn({
+      makeApiTxn({
         id: "t3",
-        payee: "March Cat",
+        description: "March Cat",
         category: "Groceries",
-        month: "2026-03",
         date: "2026-03-15",
       }),
     ];
-    renderPage(txns);
+    renderPage();
 
     const monthSelect = screen.getByDisplayValue("All months");
     await user.selectOptions(monthSelect, "2026-03");
@@ -373,15 +418,14 @@ describe("TransactionsPage — Uncategorised filter", () => {
     expect(screen.queryByText("March Cat")).not.toBeInTheDocument();
   });
 
-  // T008 — Uncategorised AND search: further narrows correctly
   it("T008: search term further narrows the Uncategorised filter results", async () => {
     const user = userEvent.setup();
-    const txns = [
-      makePageTxn({ id: "t1", payee: "Amazon", category: null }),
-      makePageTxn({ id: "t2", payee: "Netflix", category: null }),
-      makePageTxn({ id: "t3", payee: "Amazon Prime", category: null }),
+    mockRawTransactions = [
+      makeApiTxn({ id: "t1", description: "Amazon", category: null }),
+      makeApiTxn({ id: "t2", description: "Netflix", category: null }),
+      makeApiTxn({ id: "t3", description: "Amazon Prime", category: null }),
     ];
-    renderPage(txns);
+    renderPage();
 
     const catSelect = screen.getByDisplayValue("All categories");
     await user.selectOptions(catSelect, "__uncategorised__");
@@ -394,18 +438,21 @@ describe("TransactionsPage — Uncategorised filter", () => {
     expect(screen.queryByText("Netflix")).not.toBeInTheDocument();
   });
 
-  // T009 — switching back to "all" restores full list
   it("T009: switching back to All categories restores the full non-transfer list", async () => {
     const user = userEvent.setup();
-    const txns = [
-      makePageTxn({ id: "t1", payee: "Uncategorised Txn", category: null }),
-      makePageTxn({
+    mockRawTransactions = [
+      makeApiTxn({
+        id: "t1",
+        description: "Uncategorised Txn",
+        category: null,
+      }),
+      makeApiTxn({
         id: "t2",
-        payee: "Categorised Txn",
+        description: "Categorised Txn",
         category: "Groceries",
       }),
     ];
-    renderPage(txns);
+    renderPage();
 
     const catSelect = screen.getByDisplayValue("All categories");
     await user.selectOptions(catSelect, "__uncategorised__");
@@ -417,37 +464,20 @@ describe("TransactionsPage — Uncategorised filter", () => {
   });
 });
 
-// ── Savings green treatment (Issue #113) ─────────────────────────────────────
-
-const savingsCategories: PfaCategory[] = [
-  { name: "Groceries", color: "#ff0000" },
-  { name: "Transport", color: "#0000ff" },
-  { name: "Savings", color: "#10b981" },
-];
-
-function renderPageWithCategories(
-  txns: PfaTxn[],
-  categories: PfaCategory[] = savingsCategories,
-) {
-  return render(
-    <TransactionsPage
-      txns={txns}
-      accountList={defaultAccountList}
-      categories={categories}
-      onBulkCategoryChange={() => {}}
-    />,
-  );
-}
+// ── TransactionsPage — Savings green treatment ────────────────────────────────
 
 describe("TransactionsPage — Savings green treatment", () => {
   afterEach(cleanup);
 
   it("T-SAV-01: Savings category select has category-badge--savings class", () => {
-    const txns = [
-      makePageTxn({ id: "t1", payee: "ISA Contribution", category: "Savings" }),
+    mockRawTransactions = [
+      makeApiTxn({
+        id: "t1",
+        description: "ISA Contribution",
+        category: "Savings",
+      }),
     ];
-    const { container } = renderPageWithCategories(txns);
-    // className is applied based on t.category === "Savings", not on select's value
+    const { container } = renderPage();
     const savingsSelect = container.querySelector(
       "select.txn-cat-select.category-badge--savings",
     );
@@ -455,52 +485,52 @@ describe("TransactionsPage — Savings green treatment", () => {
   });
 
   it("T-SAV-02: Non-Savings category select does NOT have category-badge--savings class", () => {
-    const txns = [
-      makePageTxn({ id: "t1", payee: "Supermarket", category: "Groceries" }),
+    mockRawTransactions = [
+      makeApiTxn({
+        id: "t1",
+        description: "Supermarket",
+        category: "Groceries",
+      }),
     ];
-    const { container } = renderPageWithCategories(txns);
+    const { container } = renderPage();
     const savingsBadgeSelects = container.querySelectorAll(
       "select.txn-cat-select.category-badge--savings",
     );
     expect(savingsBadgeSelects).toHaveLength(0);
-    // Regular category select exists but without the savings class
     const allSelects = container.querySelectorAll("select.txn-cat-select");
     expect(allSelects).toHaveLength(1);
   });
 
-  it("T-SAV-03: Savings select borderColor inline style does not use a hardcoded hex — uses token reference", () => {
-    const txns = [
-      makePageTxn({ id: "t1", payee: "Pension Transfer", category: "Savings" }),
+  it("T-SAV-03: Savings select borderColor inline style uses token reference", () => {
+    mockRawTransactions = [
+      makeApiTxn({
+        id: "t1",
+        description: "Pension Transfer",
+        category: "Savings",
+      }),
     ];
-    const { container } = renderPageWithCategories(txns);
+    const { container } = renderPage();
     const savingsSelect = container.querySelector(
       "select.txn-cat-select.category-badge--savings",
     ) as HTMLSelectElement | null;
     expect(savingsSelect).not.toBeNull();
-    // The inline style borderColor must NOT be a hardcoded hex value like #10b981 or rgb(16,185,129)
-    // jsdom resolves CSS variables but the value should correspond to the savings token colour
-    // not the expense colour (red: #f87171 = rgb(248,113,113)) or orange
     const border = savingsSelect!.style.borderColor;
-    expect(border).not.toMatch(/#f87171|rgb\(248,\s*113,\s*113\)/); // not red
-    expect(border).not.toMatch(/#f97316|rgb\(249,\s*115,\s*22\)/); // not orange
-    // jsdom may resolve var() to the actual colour — either form confirms no hardcoded expense colour
-    // The border should resolve to the savings green value (#10b981)
-    // We verify the attribute directly (the React prop sets it as a CSS variable string)
+    expect(border).not.toMatch(/#f87171|rgb\(248,\s*113,\s*113\)/);
+    expect(border).not.toMatch(/#f97316|rgb\(249,\s*115,\s*22\)/);
     const styleAttr = savingsSelect!.getAttribute("style") ?? "";
     expect(styleAttr).toContain("var(--colour-savings)");
   });
 
-  it("T-SAV-04: Transfer rows do not have category-badge--savings class (no colour bleed)", () => {
-    const txns = [
-      makePageTxn({
+  it("T-SAV-04: Transfer rows do not have category-badge--savings class", () => {
+    mockRawTransactions = [
+      makeApiTxn({
         id: "t1",
-        payee: "Bank Transfer",
+        description: "Bank Transfer",
         category: "Savings",
         isTransfer: true,
       }),
     ];
-    const { container } = renderPageWithCategories(txns);
-    // Transfer rows render a <span class="tag"> not a <select> — no savings badge
+    const { container } = renderPage();
     const savingsBadgeSelects = container.querySelectorAll(
       "select.category-badge--savings",
     );
@@ -508,8 +538,10 @@ describe("TransactionsPage — Savings green treatment", () => {
   });
 
   it("T-SAV-05: Uncategorised transaction select does NOT have category-badge--savings class", () => {
-    const txns = [makePageTxn({ id: "t1", payee: "Unknown", category: null })];
-    const { container } = renderPageWithCategories(txns);
+    mockRawTransactions = [
+      makeApiTxn({ id: "t1", description: "Unknown", category: null }),
+    ];
+    const { container } = renderPage();
     const allSelects = container.querySelectorAll("select.txn-cat-select");
     expect(allSelects).toHaveLength(1);
     expect(allSelects[0].classList.contains("category-badge--savings")).toBe(
@@ -517,13 +549,13 @@ describe("TransactionsPage — Savings green treatment", () => {
     );
   });
 
-  it("T-SAV-06: multiple transactions — only Savings rows carry the savings badge class", () => {
-    const txns = [
-      makePageTxn({ id: "t1", payee: "ISA", category: "Savings" }),
-      makePageTxn({ id: "t2", payee: "Tesco", category: "Groceries" }),
-      makePageTxn({ id: "t3", payee: "Bus Pass", category: "Transport" }),
+  it("T-SAV-06: only Savings rows carry the savings badge class", () => {
+    mockRawTransactions = [
+      makeApiTxn({ id: "t1", description: "ISA", category: "Savings" }),
+      makeApiTxn({ id: "t2", description: "Tesco", category: "Groceries" }),
+      makeApiTxn({ id: "t3", description: "Bus Pass", category: "Transport" }),
     ];
-    const { container } = renderPageWithCategories(txns);
+    const { container } = renderPage();
     const allSelects = container.querySelectorAll("select.txn-cat-select");
     const savingsBadgeSelects = container.querySelectorAll(
       "select.txn-cat-select.category-badge--savings",
@@ -533,24 +565,24 @@ describe("TransactionsPage — Savings green treatment", () => {
   });
 });
 
-// -- T013: No occurrence of "Savings & Transfers" in rendered output --
+// ── T013: 'Savings & Transfers' never appears in rendered output ──────────────
 
 describe("TransactionsPage -- T013: 'Savings & Transfers' never appears in rendered output", () => {
   afterEach(cleanup);
 
-  it("T013: no occurrence of the literal string 'Savings & Transfers' appears in any rendered output", () => {
-    const txns = [
-      makePageTxn({
+  it("T013: no occurrence of 'Savings & Transfers' appears in any rendered output", () => {
+    mockRawTransactions = [
+      makeApiTxn({
         id: "t1",
-        payee: "ISA Contribution",
+        description: "ISA Contribution",
         category: "Savings",
         isTransfer: true,
       }),
-      makePageTxn({ id: "t2", payee: "Tesco", category: "Groceries" }),
-      makePageTxn({ id: "t3", payee: "Bus Pass", category: "Transport" }),
-      makePageTxn({ id: "t4", payee: "Unknown", category: null }),
+      makeApiTxn({ id: "t2", description: "Tesco", category: "Groceries" }),
+      makeApiTxn({ id: "t3", description: "Bus Pass", category: "Transport" }),
+      makeApiTxn({ id: "t4", description: "Unknown", category: null }),
     ];
-    renderPageWithCategories(txns);
+    renderPage();
     expect(screen.queryByText("Savings & Transfers")).not.toBeInTheDocument();
   });
 });
