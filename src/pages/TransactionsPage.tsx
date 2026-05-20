@@ -24,6 +24,9 @@ interface AdaptedTxn {
   accountShort: string;
   category: string | null;
   isTransfer: boolean;
+  preFlagCategory?: string | null;
+  // index signature required for structural compatibility with TxnForFlagging
+  [key: string]: unknown;
 }
 
 function adaptTxn(t: ApiTransaction, nickname: string): AdaptedTxn {
