@@ -6,7 +6,7 @@ import {
   useNavigate,
   useLocation,
 } from "react-router-dom";
-import { AuthProvider } from "./context/AuthContext";
+import { AuthProvider, useAuth } from "./context/AuthContext";
 import { ToastProvider } from "./context/ToastContext";
 import { AccountProvider, useAccount } from "./context/AccountContext";
 import { NetWorthProvider } from "./context/NetWorthContext";
@@ -128,10 +128,15 @@ function MigrationGuard({ children }: { children: React.ReactNode }) {
   return <>{children}</>;
 }
 
-// ── Root App ────────────────────────────────────────────────────────────────
+// ── App Shell ────────────────────────────────────────────────────────────────
+// Rendered inside AuthProvider and ProtectedRoute.
+// Keyed on user?.id so ALL data-context state is wiped and re-fetched fresh
+// whenever the authenticated user changes (login / logout / switch account).
 
-export default function App() {
+function AppShell() {
+  const { user } = useAuth();
   const navigate = useNavigate();
+
   const [txns, setTxnsState] = useState<PfaTxn[]>(() => {
     const t = lsGet<PfaTxn[]>(SK.txns);
     if (!t || !Array.isArray(t)) return [];
@@ -352,8 +357,15 @@ export default function App() {
     setMm(newMm);
   };
 
-  const appShell = (
-    <ToastProvider>
+  // Key the entire data-provider subtree on the authenticated user's id.
+  // When the user changes (login / logout), React unmounts every provider and
+  // re-mounts a fresh instance — guaranteeing all context state is reset and
+  // re-fetched with the new user's JWT. This is the primary fix for the
+  // cross-user data-isolation bug (#677).
+  const userKey = user?.id ?? "unauthenticated";
+
+  return (
+    <ToastProvider key={userKey}>
       <AccountProvider>
         <MigrationGuard>
           <GoalsProvider>
@@ -448,7 +460,11 @@ export default function App() {
       </AccountProvider>
     </ToastProvider>
   );
+}
 
+// ── Root App ────────────────────────────────────────────────────────────────
+
+export default function App() {
   return (
     <AuthProvider>
       <Routes>
@@ -488,7 +504,14 @@ export default function App() {
           }
         />
         {/* Protected app shell — all other routes */}
-        <Route path="*" element={<ProtectedRoute>{appShell}</ProtectedRoute>} />
+        <Route
+          path="*"
+          element={
+            <ProtectedRoute>
+              <AppShell />
+            </ProtectedRoute>
+          }
+        />
       </Routes>
     </AuthProvider>
   );

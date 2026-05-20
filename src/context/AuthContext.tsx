@@ -1,5 +1,6 @@
 import { createContext, useContext, useState } from "react";
 import type { ReactNode } from "react";
+import { ACTIVE_ACCOUNT_KEY } from "./accountKeys";
 
 const STORAGE_KEY = "fa-auth-token";
 const USER_KEY = "fa-auth-user";
@@ -45,6 +46,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const logout = () => {
     localStorage.removeItem(STORAGE_KEY);
     localStorage.removeItem(USER_KEY);
+    // Clear the active account key so it cannot leak to the next user session.
+    localStorage.removeItem(ACTIVE_ACCOUNT_KEY);
     setAccessToken(null);
     setUser(null);
   };
