@@ -53,10 +53,11 @@ async function globalSetup(config: FullConfig) {
     appKeys.forEach((k) => localStorage.removeItem(k));
   });
 
-  // Ensure at least one Checking account exists in the DB so the upload hook
-  // has a valid account UUID to post transactions to. If accounts already exist
-  // they are left untouched. A second account "B" is also created if absent so
-  // the transactions-page account-filter test can find both "A" and "B".
+  // Delete all existing accounts so every CI run starts from a clean slate.
+  // Account deletion cascades to transactions (onDelete: "cascade" in schema),
+  // removing stale fixture data that would otherwise cause imports to be skipped
+  // as duplicates on subsequent runs. After deletion, accounts A and B are
+  // recreated fresh so fixture seeding in uploadFixtures() always succeeds.
   console.log(`[global-setup] Using API base: ${apiBase}`);
 
   const token = await page.evaluate(
@@ -73,14 +74,30 @@ async function globalSetup(config: FullConfig) {
         accounts: { id: string; nickname: string }[];
       };
 
-      const existingNicknames = new Set(body.accounts.map((a) => a.nickname));
+      // Delete every existing account — cascade removes all their transactions.
+      for (const account of body.accounts) {
+        const deleteRes = await page.request.delete(
+          `${apiBase}/api/accounts/${account.id}`,
+          { headers: { Authorization: `Bearer ${token}` } },
+        );
+        if (!deleteRes.ok() && deleteRes.status() !== 404) {
+          console.warn(
+            `[global-setup] Could not delete account ${account.id} (status ${deleteRes.status()}).`,
+          );
+        }
+      }
 
-      const accountsToCreate = [
+      if (body.accounts.length > 0) {
+        console.log(
+          `[global-setup] Deleted ${body.accounts.length} existing account(s) — clean slate.`,
+        );
+      }
+
+      // Create accounts A and B fresh.
+      for (const account of [
         { nickname: "A", accountType: "Checking" },
         { nickname: "B", accountType: "Checking" },
-      ].filter((a) => !existingNicknames.has(a.nickname));
-
-      for (const account of accountsToCreate) {
+      ]) {
         await page.request.post(`${apiBase}/api/accounts`, {
           headers: {
             Authorization: `Bearer ${token}`,
@@ -90,15 +107,7 @@ async function globalSetup(config: FullConfig) {
         });
       }
 
-      if (accountsToCreate.length > 0) {
-        console.log(
-          `[global-setup] Created ${accountsToCreate.length} missing account(s): ${accountsToCreate.map((a) => a.nickname).join(", ")}`,
-        );
-      } else {
-        console.log(
-          `[global-setup] Accounts already exist (${body.accounts.length} found) — no accounts created.`,
-        );
-      }
+      console.log("[global-setup] Created accounts A and B.");
     } else {
       console.warn(
         `[global-setup] Could not fetch accounts for setup (status ${accountsRes.status()}).`,
