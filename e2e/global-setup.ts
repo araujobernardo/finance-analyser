@@ -38,6 +38,9 @@ async function globalSetup(config: FullConfig) {
 
   // Clear any pre-existing app data so every test starts from a clean slate.
   // Auth tokens (fa-auth-token, fa-auth-user) are intentionally kept.
+  // finance_analyser_active_account must also be cleared — if it holds "all"
+  // from a previous session, the upload hook falls back to DEFAULT_ACCOUNT_ID
+  // ("default") which does not exist in the DB, causing all imports to fail.
   await page.evaluate(() => {
     const appKeys = [
       "pfa-v3-transactions",
@@ -45,20 +48,20 @@ async function globalSetup(config: FullConfig) {
       "pfa-v3-budgets",
       "pfa-v3-accounts",
       "pfa-v3-categories",
+      "finance_analyser_active_account",
     ];
     appKeys.forEach((k) => localStorage.removeItem(k));
   });
 
-  // Delete all accounts from the DB for this test user so that fixture data
-  // from a previous CI run does not accumulate across runs.
-  // Deleting an account cascades to its transactions (onDelete: "cascade").
-  // All e2e tests that need data call uploadFixtures() to re-import it, so
-  // clearing accounts is always safe here.
+  // Ensure at least one Checking account exists in the DB so the upload hook
+  // has a valid account UUID to post transactions to. If accounts already exist
+  // they are left untouched. A second account "B" is also created if absent so
+  // the transactions-page account-filter test can find both "A" and "B".
+  console.log(`[global-setup] Using API base: ${apiBase}`);
+
   const token = await page.evaluate(
     () => localStorage.getItem("fa-auth-token") ?? "",
   );
-
-  console.log(`[global-setup] Using API base: ${apiBase}`);
 
   if (token) {
     const accountsRes = await page.request.get(`${apiBase}/api/accounts`, {
@@ -67,23 +70,44 @@ async function globalSetup(config: FullConfig) {
 
     if (accountsRes.ok()) {
       const body = (await accountsRes.json()) as {
-        accounts: { id: string }[];
+        accounts: { id: string; nickname: string }[];
       };
-      for (const account of body.accounts) {
-        await page.request.delete(`${apiBase}/api/accounts/${account.id}`, {
-          headers: { Authorization: `Bearer ${token}` },
+
+      const existingNicknames = new Set(body.accounts.map((a) => a.nickname));
+
+      const accountsToCreate = [
+        { nickname: "A", accountType: "Checking" },
+        { nickname: "B", accountType: "Checking" },
+      ].filter((a) => !existingNicknames.has(a.nickname));
+
+      for (const account of accountsToCreate) {
+        await page.request.post(`${apiBase}/api/accounts`, {
+          headers: {
+            Authorization: `Bearer ${token}`,
+            "Content-Type": "application/json",
+          },
+          data: account,
         });
       }
-      console.log(
-        `[global-setup] Deleted ${body.accounts.length} account(s) from DB.`,
-      );
+
+      if (accountsToCreate.length > 0) {
+        console.log(
+          `[global-setup] Created ${accountsToCreate.length} missing account(s): ${accountsToCreate.map((a) => a.nickname).join(", ")}`,
+        );
+      } else {
+        console.log(
+          `[global-setup] Accounts already exist (${body.accounts.length} found) — no accounts created.`,
+        );
+      }
     } else {
       console.warn(
-        `[global-setup] Could not fetch accounts for cleanup (status ${accountsRes.status()}).`,
+        `[global-setup] Could not fetch accounts for setup (status ${accountsRes.status()}).`,
       );
     }
   } else {
-    console.warn("[global-setup] No auth token found — skipping DB cleanup.");
+    console.warn(
+      "[global-setup] No auth token found — skipping account setup.",
+    );
   }
 
   fs.mkdirSync(".playwright", { recursive: true });
