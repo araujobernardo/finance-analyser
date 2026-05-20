@@ -6,6 +6,10 @@ test("CSV upload imports transactions and navigates to dashboard", async ({
   await page.goto("/dashboard");
   await page.waitForURL(/\/dashboard/, { timeout: 15_000 });
   await expect(page.locator('[data-testid="csv-file-input"]')).toBeAttached();
+  // Wait for AccountContext to finish loading so activeAccountId is a real UUID.
+  await expect(
+    page.locator('[data-testid="account-item"]').first(),
+  ).toBeVisible({ timeout: 15_000 });
 
   await page
     .locator('[data-testid="csv-file-input"]')
@@ -25,6 +29,10 @@ test("CSV upload rejects a duplicate import", async ({
   await page.goto("/dashboard");
   await page.waitForURL(/\/dashboard/, { timeout: 15_000 });
   await expect(page.locator('[data-testid="csv-file-input"]')).toBeAttached();
+  // Wait for AccountContext to finish loading so activeAccountId is a real UUID.
+  await expect(
+    page.locator('[data-testid="account-item"]').first(),
+  ).toBeVisible({ timeout: 15_000 });
 
   await page
     .locator('[data-testid="csv-file-input"]')

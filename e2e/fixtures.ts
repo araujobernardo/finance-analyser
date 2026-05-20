@@ -34,6 +34,12 @@ export async function uploadFixtures(page: Page): Promise<void> {
   await page.goto("/dashboard");
   await page.waitForURL(/\/dashboard/, { timeout: 15_000 });
   await expect(page.locator('[data-testid="csv-file-input"]')).toBeAttached();
+  // Wait for AccountContext to finish loading so activeAccountId is a real DB
+  // UUID before the upload starts. Without this, the upload hook may use the
+  // "default" fallback which does not exist in the DB and returns 404.
+  await expect(
+    page.locator('[data-testid="account-item"]').first(),
+  ).toBeVisible({ timeout: 15_000 });
   await page
     .locator('[data-testid="csv-file-input"]')
     .setInputFiles([FIXTURE_A, FIXTURE_B]);
