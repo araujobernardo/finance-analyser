@@ -4,6 +4,7 @@ import type { ApiTransaction } from "../types/api";
 import { getCandidates } from "../utils/transferFlagging";
 import { fmt, fmtMonth, getCatColor } from "../utils/transactionFormatters";
 import { useAccount, useAllTransactions } from "../context/AccountContext";
+import { useApi } from "../lib/api";
 import "./TransactionsPage.css";
 
 // ── Local adapter type ────────────────────────────────────────────────────────
@@ -42,19 +43,11 @@ function adaptTxn(t: ApiTransaction, nickname: string): AdaptedTxn {
   };
 }
 
-// ── Placeholder category PATCH handler ────────────────────────────────────────
-// Actual DB persistence is wired in T007. This stub keeps the UI working.
-function placeholderCategoryUpdate(
-  _txnId: string,
-  _category: string,
-): Promise<void> {
-  return Promise.resolve();
-}
-
 // ── Component ─────────────────────────────────────────────────────────────────
 
 export function TransactionsPage() {
-  const { accounts } = useAccount();
+  const { accounts, refetch } = useAccount();
+  const { apiFetch } = useApi();
   const rawTransactions = useAllTransactions();
 
   // ── Adapt API transactions to local display shape ──────────────────────────
@@ -159,33 +152,60 @@ export function TransactionsPage() {
     })
     .sort((a, b) => b.date.localeCompare(a.date));
 
-  // ── Category change handler (placeholder — DB persistence is T007) ─────────
+  // ── Category change handler — persists to DB via PATCH /api/transactions/:id ──
   const handleCategoryChange = (id: string, cat: string) => {
     const source = txns.find((t) => t.id === id);
     if (!source) return;
     const payee = source.payee.toLowerCase();
 
-    // Apply to all matching payees (bulk rule) using local override state
-    const newLocalCategory = new Map(localCategory);
-    let changedCount = 0;
+    // Collect all transactions matching this payee (bulk rule).
+    const matchedIds: string[] = [];
     txns.forEach((t) => {
       if (t.isTransfer) return;
       const tp = t.payee.toLowerCase();
       if (tp.includes(payee) || payee.includes(tp)) {
-        newLocalCategory.set(t.id, cat);
-        // Persist each matched txn to DB (T007 placeholder)
-        void placeholderCategoryUpdate(t.id, cat);
-        changedCount++;
+        matchedIds.push(t.id);
       }
     });
+
+    // Optimistic update — apply immediately before API calls complete.
+    const previousCategory = new Map(localCategory);
+    const newLocalCategory = new Map(localCategory);
+    matchedIds.forEach((tid) => newLocalCategory.set(tid, cat));
     setLocalCategory(newLocalCategory);
 
-    if (changedCount > 1) {
+    if (matchedIds.length > 1) {
       setToast(
-        `Updated ${changedCount} transactions matching "${source.payee}"`,
+        `Updated ${matchedIds.length} transactions matching "${source.payee}"`,
       );
       setTimeout(() => setToast(null), 4000);
     }
+
+    // Persist each matched transaction to the DB.
+    void (async () => {
+      try {
+        const results = await Promise.all(
+          matchedIds.map((tid) =>
+            apiFetch(`/api/transactions/${tid}`, {
+              method: "PATCH",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({ category: cat }),
+            }),
+          ),
+        );
+        const anyFailed = results.some((r) => !r.ok);
+        if (anyFailed) {
+          throw new Error("One or more PATCH requests failed");
+        }
+        // Sync server state so the category survives a full page refresh.
+        await refetch();
+      } catch {
+        // Revert optimistic update on any error.
+        setLocalCategory(previousCategory);
+        setToast("Failed to save category — please try again.");
+        setTimeout(() => setToast(null), 4000);
+      }
+    })();
   };
 
   // ── Transfer flagging handlers ─────────────────────────────────────────────
