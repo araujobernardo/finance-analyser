@@ -15,6 +15,19 @@ async function globalSetup(config: FullConfig) {
   const browser = await chromium.launch();
   const page = await browser.newPage();
 
+  // Intercept the login API request to discover the actual API base URL.
+  // The app's VITE_API_URL is baked into the Vite bundle at build time and is
+  // not available as a Node.js env var at runtime. Listening to the network
+  // request made by the app during login reliably gives us the API origin
+  // regardless of the deployment topology (monolith vs. split services).
+  let apiBase = baseURL;
+  page.on("request", (req) => {
+    const url = req.url();
+    if (url.includes("/api/auth/login")) {
+      apiBase = url.replace(/\/api\/auth\/login.*$/, "");
+    }
+  });
+
   await page.goto(`${baseURL}/login`);
   await page.getByLabel(/email/i).fill(email);
   await page.getByLabel(/password/i).fill(password);
@@ -25,6 +38,9 @@ async function globalSetup(config: FullConfig) {
 
   // Clear any pre-existing app data so every test starts from a clean slate.
   // Auth tokens (fa-auth-token, fa-auth-user) are intentionally kept.
+  // finance_analyser_active_account must also be cleared — if it holds "all"
+  // from a previous session, the upload hook falls back to DEFAULT_ACCOUNT_ID
+  // ("default") which does not exist in the DB, causing all imports to fail.
   await page.evaluate(() => {
     const appKeys = [
       "pfa-v3-transactions",
@@ -32,9 +48,76 @@ async function globalSetup(config: FullConfig) {
       "pfa-v3-budgets",
       "pfa-v3-accounts",
       "pfa-v3-categories",
+      "finance_analyser_active_account",
     ];
     appKeys.forEach((k) => localStorage.removeItem(k));
   });
+
+  // Delete all existing accounts so every CI run starts from a clean slate.
+  // Account deletion cascades to transactions (onDelete: "cascade" in schema),
+  // removing stale fixture data that would otherwise cause imports to be skipped
+  // as duplicates on subsequent runs. After deletion, accounts A and B are
+  // recreated fresh so fixture seeding in uploadFixtures() always succeeds.
+  console.log(`[global-setup] Using API base: ${apiBase}`);
+
+  const token = await page.evaluate(
+    () => localStorage.getItem("fa-auth-token") ?? "",
+  );
+
+  if (token) {
+    const accountsRes = await page.request.get(`${apiBase}/api/accounts`, {
+      headers: { Authorization: `Bearer ${token}` },
+    });
+
+    if (accountsRes.ok()) {
+      const body = (await accountsRes.json()) as {
+        accounts: { id: string; nickname: string }[];
+      };
+
+      // Delete every existing account — cascade removes all their transactions.
+      for (const account of body.accounts) {
+        const deleteRes = await page.request.delete(
+          `${apiBase}/api/accounts/${account.id}`,
+          { headers: { Authorization: `Bearer ${token}` } },
+        );
+        if (!deleteRes.ok() && deleteRes.status() !== 404) {
+          console.warn(
+            `[global-setup] Could not delete account ${account.id} (status ${deleteRes.status()}).`,
+          );
+        }
+      }
+
+      if (body.accounts.length > 0) {
+        console.log(
+          `[global-setup] Deleted ${body.accounts.length} existing account(s) — clean slate.`,
+        );
+      }
+
+      // Create accounts A and B fresh.
+      for (const account of [
+        { nickname: "A", accountType: "Checking" },
+        { nickname: "B", accountType: "Checking" },
+      ]) {
+        await page.request.post(`${apiBase}/api/accounts`, {
+          headers: {
+            Authorization: `Bearer ${token}`,
+            "Content-Type": "application/json",
+          },
+          data: account,
+        });
+      }
+
+      console.log("[global-setup] Created accounts A and B.");
+    } else {
+      console.warn(
+        `[global-setup] Could not fetch accounts for setup (status ${accountsRes.status()}).`,
+      );
+    }
+  } else {
+    console.warn(
+      "[global-setup] No auth token found — skipping account setup.",
+    );
+  }
 
   fs.mkdirSync(".playwright", { recursive: true });
   await page.context().storageState({ path: ".playwright/auth.json" });
