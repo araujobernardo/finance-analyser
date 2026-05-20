@@ -5,9 +5,24 @@ import {
   buildWeeklyTotals,
   buildWeeklyCategoryTotals,
 } from "./weeklyAggregation";
-import type { PfaTxn } from "../types/pfa";
 
-function makeTxn(overrides: Partial<PfaTxn> = {}): PfaTxn {
+interface TestTxn {
+  id: string;
+  date: string;
+  month: string;
+  type: string;
+  payee: string;
+  memo: string;
+  amount: number;
+  isCredit: boolean;
+  account: string;
+  accountShort: string;
+  category: string | null;
+  isTransfer: boolean;
+  [key: string]: unknown;
+}
+
+function makeTxn(overrides: Partial<TestTxn> = {}): TestTxn {
   return {
     id: "t1",
     date: "2026-01-27",

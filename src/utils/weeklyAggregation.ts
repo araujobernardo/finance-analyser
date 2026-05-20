@@ -1,5 +1,14 @@
-import type { PfaTxn } from "../types/pfa";
 import type { WeekBucket, WeeklyCategoryBucket } from "../types/weeklyData";
+
+// Minimal transaction shape required by weekly aggregation utilities.
+interface TxnForAggregation {
+  date: string;
+  amount: number;
+  isCredit: boolean;
+  isTransfer: boolean;
+  account: string;
+  category: string | null;
+}
 
 /**
  * Returns a new Date set to the Monday of the ISO week containing `date`,
@@ -31,7 +40,7 @@ export function formatWeekLabel(weekStart: Date): string {
  * ordered oldest → newest.
  */
 export function buildWeeklyTotals(
-  transactions: PfaTxn[],
+  transactions: TxnForAggregation[],
   activeAccountId: string,
 ): WeekBucket[] {
   const expenses = transactions.filter(
@@ -80,7 +89,7 @@ export function buildWeeklyTotals(
  * (no gaps — all categories seen in any week are present in every bucket).
  */
 export function buildWeeklyCategoryTotals(
-  transactions: PfaTxn[],
+  transactions: TxnForAggregation[],
   activeAccountId: string,
 ): WeeklyCategoryBucket[] {
   const expenses = transactions.filter(

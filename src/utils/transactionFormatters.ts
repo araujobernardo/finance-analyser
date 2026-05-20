@@ -1,5 +1,3 @@
-import type { PfaCategory } from "../types/pfa";
-
 export const fmt = (n: number) =>
   `$${Math.abs(n).toLocaleString("en-NZ", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
 
@@ -12,5 +10,10 @@ export const fmtMonth = (m: string) => {
   });
 };
 
-export const getCatColor = (name: string | null, cats: PfaCategory[]) =>
+interface CategoryEntry {
+  name: string;
+  color: string;
+}
+
+export const getCatColor = (name: string | null, cats: CategoryEntry[]) =>
   cats.find((c) => c.name === name)?.color ?? "#64748b";
