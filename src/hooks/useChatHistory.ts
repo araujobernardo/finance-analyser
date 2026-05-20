@@ -4,7 +4,12 @@ import {
   saveChatHistory,
   type PersistedMessage,
 } from "../services/chatStorage";
-import type { ChatMessage } from "../services/claudeChat";
+
+/** Minimal Anthropic API message shape. */
+export interface ChatMessage {
+  role: "user" | "assistant";
+  content: string;
+}
 
 export interface DisplayMessage {
   role: "user" | "bot";

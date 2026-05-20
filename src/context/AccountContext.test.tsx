@@ -6,9 +6,10 @@ import {
   useActiveMonths,
   useActiveTransactions,
   ALL_ACCOUNTS_ID,
+  ACCOUNT_COLOURS,
+  DEFAULT_ACCOUNT_ID,
 } from "./AccountContext";
 import { ACTIVE_ACCOUNT_KEY } from "./accountKeys";
-import { ACCOUNT_COLOURS, DEFAULT_ACCOUNT_ID } from "../services/storage";
 import type { ApiAccount, ApiTransaction } from "../types/api";
 
 // ── Mock useApi ────────────────────────────────────────────────────────────

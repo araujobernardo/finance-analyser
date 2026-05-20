@@ -1,6 +1,5 @@
 import { useState } from "react";
 import { useAccount } from "../context/AccountContext";
-import { getAccountMonths } from "../services/storage";
 import "./AccountModal.css";
 
 interface DeleteAccountModalProps {
@@ -15,7 +14,9 @@ export function DeleteAccountModal({
   const { accounts, removeAccount } = useAccount();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const account = accounts.find((a) => a.id === accountId);
-  const monthCount = getAccountMonths(accountId).length;
+  // Transactions are API-backed; localStorage month count is always 0.
+  // Transaction counts are handled server-side on DELETE /api/accounts/:id.
+  const monthCount = 0;
   const isLastAccount = accounts.length <= 1;
 
   if (!account) return null;
