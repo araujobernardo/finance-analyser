@@ -14,13 +14,13 @@ import type { Transaction } from "../utils/csvParser";
 import "./DashboardPage.css";
 
 interface Props {
-  txns: PfaTxn[];
-  months: string[];
-  selectedMonths: string[];
-  setSelectedMonths: (m: string[]) => void;
-  budgets: PfaBudgets;
-  accountList: { short: string; display: string }[];
-  categories: PfaCategory[];
+  txns?: PfaTxn[];
+  months?: string[];
+  selectedMonths?: string[];
+  setSelectedMonths?: (m: string[]) => void;
+  budgets?: PfaBudgets;
+  accountList?: { short: string; display: string }[];
+  categories?: PfaCategory[];
 }
 
 const fmt = (n: number) =>
@@ -46,13 +46,13 @@ const fmtMonthSh = (m: string) => {
 };
 
 export function DashboardPage({
-  txns,
-  months,
-  selectedMonths,
-  setSelectedMonths,
-  budgets,
-  accountList,
-  categories,
+  txns = [],
+  months = [],
+  selectedMonths = [],
+  setSelectedMonths = () => {},
+  budgets = {},
+  accountList = [],
+  categories = [],
 }: Props) {
   const [acctFilter, setAcctFilter] = useState("all");
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
