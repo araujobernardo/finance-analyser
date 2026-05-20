@@ -31,7 +31,7 @@ interface AdaptedTxn {
   isCredit: boolean;
   account: string;
   accountShort: string;
-  category?: string;
+  category: string | null;
   isTransfer: boolean;
 }
 
@@ -47,7 +47,7 @@ function adaptTxn(t: ApiTransaction, nickname: string): AdaptedTxn {
     isCredit: t.amount > 0,
     account: nickname,
     accountShort: t.accountId,
-    category: t.category ?? undefined,
+    category: t.category,
     isTransfer: t.isTransfer,
   };
 }
