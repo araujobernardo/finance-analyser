@@ -226,10 +226,28 @@ transactionsRouter.post(
 
       if (validRows.length > 0) {
         await db.insert(transactions).values(validRows);
-        // FA-NW-004 US3: sync any assets/liabilities linked to this account
-        await syncLinkedAssets(accountId, userId, db);
-        // FA-GOAL-003 T006: recalculate savings_target goal progress after bulk import
-        await recalculateUserGoals(userId, db);
+        // FA-NW-004 US3: sync any assets/liabilities linked to this account.
+        // Wrapped in try-catch: sync failures are secondary effects and must
+        // never roll back a successful import.
+        try {
+          await syncLinkedAssets(accountId, userId, db);
+        } catch (syncErr) {
+          console.error(
+            "[import] syncLinkedAssets failed (non-fatal):",
+            syncErr,
+          );
+        }
+        // FA-GOAL-003 T006: recalculate savings_target goal progress after bulk import.
+        // Wrapped in try-catch: recalculation failures are secondary effects and must
+        // never roll back a successful import.
+        try {
+          await recalculateUserGoals(userId, db);
+        } catch (goalErr) {
+          console.error(
+            "[import] recalculateUserGoals failed (non-fatal):",
+            goalErr,
+          );
+        }
       }
 
       res.json({ imported: validRows.length, skipped });
