@@ -36,6 +36,48 @@ async function globalSetup(config: FullConfig) {
     appKeys.forEach((k) => localStorage.removeItem(k));
   });
 
+  // Delete all accounts from the DB for this test user so that fixture data
+  // from a previous CI run does not accumulate across runs.
+  // Deleting an account cascades to its transactions (onDelete: "cascade").
+  // All e2e tests that need data call uploadFixtures() to re-import it, so
+  // clearing accounts is always safe here.
+  //
+  // API base resolution:
+  //   - Locally: VITE_API_URL is set to http://localhost:3001 (loaded by dotenv
+  //     in playwright.config.ts); use it when present and not "/api".
+  //   - In CI: frontend and API share the same Render domain — use baseURL.
+  const rawApiUrl = process.env.VITE_API_URL ?? "";
+  const apiBase = rawApiUrl && rawApiUrl !== "/api" ? rawApiUrl : baseURL;
+  const token = await page.evaluate(
+    () => localStorage.getItem("fa-auth-token") ?? "",
+  );
+
+  if (token) {
+    const accountsRes = await page.request.get(`${apiBase}/api/accounts`, {
+      headers: { Authorization: `Bearer ${token}` },
+    });
+
+    if (accountsRes.ok()) {
+      const body = (await accountsRes.json()) as {
+        accounts: { id: string }[];
+      };
+      for (const account of body.accounts) {
+        await page.request.delete(`${apiBase}/api/accounts/${account.id}`, {
+          headers: { Authorization: `Bearer ${token}` },
+        });
+      }
+      console.log(
+        `[global-setup] Deleted ${body.accounts.length} account(s) from DB.`,
+      );
+    } else {
+      console.warn(
+        `[global-setup] Could not fetch accounts for cleanup (status ${accountsRes.status()}).`,
+      );
+    }
+  } else {
+    console.warn("[global-setup] No auth token found — skipping DB cleanup.");
+  }
+
   fs.mkdirSync(".playwright", { recursive: true });
   await page.context().storageState({ path: ".playwright/auth.json" });
   await browser.close();
