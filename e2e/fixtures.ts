@@ -112,7 +112,39 @@ export async function uploadFixtures(page: Page): Promise<void> {
   );
   if (!token) throw new Error("[uploadFixtures] No auth token in localStorage");
 
-  // Fetch the account list from the API to get real UUIDs.
+  // ── Reset: delete all existing accounts (cascades to transactions) ─────────
+  // Each test that calls uploadFixtures gets a completely clean slate.
+  // This prevents data bleeding from parallel or sequential test runs where
+  // other specs (e.g. csv-import) leave non-transfer transactions in the DB.
+  const existingRes = await page.request.get(`${apiBase}/api/accounts`, {
+    headers: { Authorization: `Bearer ${token}` },
+  });
+  if (existingRes.ok()) {
+    const { accounts: existing } = (await existingRes.json()) as {
+      accounts: { id: string }[];
+    };
+    for (const acc of existing) {
+      await page.request.delete(`${apiBase}/api/accounts/${acc.id}`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+    }
+  }
+
+  // Recreate accounts A and B fresh (empty, no transactions).
+  for (const acct of [
+    { nickname: "A", accountType: "Checking" },
+    { nickname: "B", accountType: "Checking" },
+  ]) {
+    await page.request.post(`${apiBase}/api/accounts`, {
+      headers: {
+        Authorization: `Bearer ${token}`,
+        "Content-Type": "application/json",
+      },
+      data: acct,
+    });
+  }
+
+  // Fetch the freshly created account list to get real UUIDs.
   const accountsRes = await page.request.get(`${apiBase}/api/accounts`, {
     headers: { Authorization: `Bearer ${token}` },
   });
