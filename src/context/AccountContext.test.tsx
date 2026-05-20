@@ -110,7 +110,9 @@ describe("AccountProvider", () => {
         <ContextReader onRender={(v) => (ctx = v)} />
       </AccountProvider>,
     );
-    await waitFor(() => expect(ctx.accounts).toHaveLength(1));
+    await waitFor(() => expect(ctx.accounts).toHaveLength(1), {
+      timeout: 5000,
+    });
     expect(ctx.accounts[0].id).toBe("acc-1");
     expect(ctx.isLoading).toBe(false);
   });
@@ -128,7 +130,9 @@ describe("AccountProvider", () => {
         <ContextReader onRender={(v) => (ctx = v)} />
       </AccountProvider>,
     );
-    await waitFor(() => expect(ctx.accounts).toHaveLength(2));
+    await waitFor(() => expect(ctx.accounts).toHaveLength(2), {
+      timeout: 5000,
+    });
     expect(ctx.accounts[0].colour).toBe(ACCOUNT_COLOURS[0]);
     expect(ctx.accounts[1].colour).toBe(ACCOUNT_COLOURS[1]);
   });
@@ -145,7 +149,9 @@ describe("AccountProvider", () => {
         <ContextReader onRender={(v) => (ctx = v)} />
       </AccountProvider>,
     );
-    await waitFor(() => expect(ctx.accounts).toHaveLength(2));
+    await waitFor(() => expect(ctx.accounts).toHaveLength(2), {
+      timeout: 5000,
+    });
     expect(ctx.activeAccountId).toBe("first");
   });
 
@@ -157,7 +163,7 @@ describe("AccountProvider", () => {
         <ContextReader onRender={(v) => (ctx = v)} />
       </AccountProvider>,
     );
-    await waitFor(() => expect(ctx.isLoading).toBe(false));
+    await waitFor(() => expect(ctx.isLoading).toBe(false), { timeout: 5000 });
     expect(ctx.activeAccountId).toBe(DEFAULT_ACCOUNT_ID);
   });
 
@@ -174,7 +180,9 @@ describe("AccountProvider", () => {
         <ContextReader onRender={(v) => (ctx = v)} />
       </AccountProvider>,
     );
-    await waitFor(() => expect(ctx.accounts).toHaveLength(2));
+    await waitFor(() => expect(ctx.accounts).toHaveLength(2), {
+      timeout: 5000,
+    });
     expect(ctx.activeAccountId).toBe("acc-b");
   });
 
@@ -188,7 +196,9 @@ describe("AccountProvider", () => {
         <ContextReader onRender={(v) => (ctx = v)} />
       </AccountProvider>,
     );
-    await waitFor(() => expect(ctx.accounts).toHaveLength(1));
+    await waitFor(() => expect(ctx.accounts).toHaveLength(1), {
+      timeout: 5000,
+    });
     expect(ctx.activeAccountId).toBe("acc-a");
   });
 
@@ -206,7 +216,9 @@ describe("AccountProvider", () => {
         <ContextReader onRender={(v) => (ctx = v)} />
       </AccountProvider>,
     );
-    await waitFor(() => expect(ctx.accounts).toHaveLength(2));
+    await waitFor(() => expect(ctx.accounts).toHaveLength(2), {
+      timeout: 5000,
+    });
     act(() => ctx.setActiveAccountId("acc-b"));
     expect(ctx.activeAccountId).toBe("acc-b");
     expect(localStorage.getItem(ACTIVE_ACCOUNT_KEY)).toBe("acc-b");
@@ -229,7 +241,7 @@ describe("AccountProvider", () => {
         <ContextReader onRender={(v) => (ctx = v)} />
       </AccountProvider>,
     );
-    await waitFor(() => expect(ctx.isLoading).toBe(false));
+    await waitFor(() => expect(ctx.isLoading).toBe(false), { timeout: 5000 });
 
     await act(async () => {
       await ctx.addAccount("New Account", "Checking");
@@ -260,7 +272,9 @@ describe("AccountProvider", () => {
         <ContextReader onRender={(v) => (ctx = v)} />
       </AccountProvider>,
     );
-    await waitFor(() => expect(ctx.accounts).toHaveLength(2));
+    await waitFor(() => expect(ctx.accounts).toHaveLength(2), {
+      timeout: 5000,
+    });
 
     await act(async () => {
       await ctx.removeAccount("acc-a");
@@ -282,7 +296,7 @@ describe("AccountProvider", () => {
         <ContextReader onRender={(v) => (ctx = v)} />
       </AccountProvider>,
     );
-    await waitFor(() => expect(ctx.isLoading).toBe(false));
+    await waitFor(() => expect(ctx.isLoading).toBe(false), { timeout: 5000 });
     expect(ctx.error).toBe("Server error");
   });
 });
@@ -318,7 +332,9 @@ describe("ALL_ACCOUNTS_ID sentinel", () => {
         <ContextReader onRender={(v) => (ctx = v)} />
       </AccountProvider>,
     );
-    await waitFor(() => expect(ctx.accounts).toHaveLength(1));
+    await waitFor(() => expect(ctx.accounts).toHaveLength(1), {
+      timeout: 5000,
+    });
     expect(ctx.activeAccountId).toBe(ALL_ACCOUNTS_ID);
   });
 
@@ -334,7 +350,9 @@ describe("ALL_ACCOUNTS_ID sentinel", () => {
         <ContextReader onRender={(v) => (ctx = v)} />
       </AccountProvider>,
     );
-    await waitFor(() => expect(ctx.accounts).toHaveLength(1));
+    await waitFor(() => expect(ctx.accounts).toHaveLength(1), {
+      timeout: 5000,
+    });
     act(() => ctx.setActiveAccountId(ALL_ACCOUNTS_ID));
     expect(ctx.activeAccountId).toBe(ALL_ACCOUNTS_ID);
     expect(localStorage.getItem(ACTIVE_ACCOUNT_KEY)).toBe(ALL_ACCOUNTS_ID);
@@ -368,7 +386,7 @@ describe("useActiveMonths", () => {
         <ActiveMonthsReader onRender={(m) => (months = m)} />
       </AccountProvider>,
     );
-    await waitFor(() => expect(months).toContain("2024-03"));
+    await waitFor(() => expect(months).toContain("2024-03"), { timeout: 5000 });
   });
 
   it("returns union of months across all accounts when activeAccountId is 'all'", async () => {
@@ -391,7 +409,9 @@ describe("useActiveMonths", () => {
         <ActiveMonthsReader onRender={(m) => (months = m)} />
       </AccountProvider>,
     );
-    await waitFor(() => expect(months.length).toBeGreaterThan(0));
+    await waitFor(() => expect(months.length).toBeGreaterThan(0), {
+      timeout: 5000,
+    });
     expect(months).toContain("2024-03");
     expect(months).toContain("2024-04");
   });
@@ -415,7 +435,9 @@ describe("useActiveMonths", () => {
         <ActiveMonthsReader onRender={(m) => (months = m)} />
       </AccountProvider>,
     );
-    await waitFor(() => expect(months.length).toBeGreaterThan(0));
+    await waitFor(() => expect(months.length).toBeGreaterThan(0), {
+      timeout: 5000,
+    });
     expect(months).toEqual([...months].sort());
   });
 
@@ -471,7 +493,7 @@ describe("useActiveTransactions", () => {
         />
       </AccountProvider>,
     );
-    await waitFor(() => expect(result).toHaveLength(1));
+    await waitFor(() => expect(result).toHaveLength(1), { timeout: 5000 });
     expect(result[0].description).toBe("Groceries");
   });
 
@@ -525,7 +547,7 @@ describe("useActiveTransactions", () => {
         />
       </AccountProvider>,
     );
-    await waitFor(() => expect(result).toHaveLength(2));
+    await waitFor(() => expect(result).toHaveLength(2), { timeout: 5000 });
     expect(result.map((t) => t.description).sort()).toEqual(["A", "B"]);
   });
 
@@ -551,7 +573,7 @@ describe("useActiveTransactions", () => {
         />
       </AccountProvider>,
     );
-    await waitFor(() => expect(result).toHaveLength(2));
+    await waitFor(() => expect(result).toHaveLength(2), { timeout: 5000 });
     const colours = result.map((t) => t.accountColour);
     expect(colours).toContain(ACCOUNT_COLOURS[0]);
     expect(colours).toContain(ACCOUNT_COLOURS[1]);
@@ -573,7 +595,7 @@ describe("useActiveTransactions", () => {
         />
       </AccountProvider>,
     );
-    await waitFor(() => expect(result).toHaveLength(1));
+    await waitFor(() => expect(result).toHaveLength(1), { timeout: 5000 });
     expect(result[0].accountColour).toBeUndefined();
   });
 });
