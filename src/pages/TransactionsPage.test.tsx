@@ -3,13 +3,31 @@ import { render, screen, cleanup } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { MemoryRouter } from "react-router-dom";
 import { TransactionsPage } from "./TransactionsPage";
-import type { PfaTxn } from "../types/pfa";
 import type { ApiTransaction } from "../types/api";
 import {
   getCandidates,
   applyFlag,
   applyUnflag,
 } from "../utils/transferFlagging";
+
+// ── Local test type (replaces PfaTxn import from deleted types/pfa.ts) ────────
+// Matches the minimal shape required by transferFlagging utilities.
+interface TestTxn {
+  id: string;
+  date: string;
+  month: string;
+  type: string;
+  payee: string;
+  memo: string;
+  amount: number;
+  isCredit: boolean;
+  account: string;
+  accountShort: string;
+  category: string | null;
+  isTransfer: boolean;
+  preFlagCategory?: string | null;
+  [key: string]: unknown;
+}
 
 // ── Mock AccountContext ────────────────────────────────────────────────────────
 
@@ -71,9 +89,9 @@ function renderPage() {
   );
 }
 
-// ── PfaTxn fixtures used by the transferFlagging utility tests ──────────────
+// ── Test fixtures for transferFlagging utility tests ─────────────────────────
 
-function makePfaTxn(overrides: Partial<PfaTxn>): PfaTxn {
+function makePfaTxn(overrides: Partial<TestTxn>): TestTxn {
   return {
     id: "txn-1",
     date: "2026-03-15",
