@@ -55,31 +55,31 @@ export function LoginPage() {
       }
       login(data.token!, data.user!);
 
-      // Migration detection: decide whether to route to /migrate or /dashboard
+      // Migration detection: decide whether to route to /migrate or /dashboard.
+      // Cloud account presence is the source of truth — the fa-migration-complete
+      // flag alone is not trusted, because it may have been set without the data
+      // actually being transferred (bug #680).
       try {
-        // 1. Guard: already migrated
-        if (localStorage.getItem("fa-migration-complete") === "true") {
-          void navigate("/dashboard");
-          return;
-        }
-        // 2. No local data: nothing to migrate
-        const localAccounts = getAccounts();
-        if (localAccounts.length === 0) {
-          void navigate("/dashboard");
-          return;
-        }
-        // 3. Cloud accounts already exist: skip migration
         const cloudRes = await fetch(`${API_BASE}/api/accounts`, {
           headers: { Authorization: `Bearer ${data.token!}` },
         });
         if (cloudRes.ok) {
           const json = (await cloudRes.json()) as { accounts: unknown[] };
           if (json.accounts.length > 0) {
+            // Cloud has data — genuinely migrated, go to dashboard
             void navigate("/dashboard");
             return;
           }
         }
-        // All checks passed — user has local data and no cloud accounts yet
+        // Cloud is empty: check whether there is anything in localStorage to migrate
+        const localAccounts = getAccounts();
+        if (localAccounts.length === 0) {
+          // No local data either — new user, go to dashboard
+          void navigate("/dashboard");
+          return;
+        }
+        // Local data exists but cloud is empty — migration is required,
+        // regardless of whether fa-migration-complete was previously set
         void navigate("/migrate");
       } catch {
         void navigate("/dashboard");
