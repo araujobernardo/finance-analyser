@@ -426,6 +426,14 @@ export function TransactionsPage() {
         </div>
       )}
 
+      {!filtered.length && (
+        <div className="txn-empty" data-testid="txn-empty">
+          {!showTransfers && txns.some((t) => t.isTransfer)
+            ? "All transactions are transfers — enable Show transfers to see them."
+            : "No transactions found."}
+        </div>
+      )}
+
       <div className="txn-table-wrap">
         <table className="txn-table" data-testid="txn-table">
           <thead>
@@ -580,9 +588,6 @@ export function TransactionsPage() {
             })}
           </tbody>
         </table>
-        {!filtered.length && (
-          <div className="txn-empty">No transactions found.</div>
-        )}
       </div>
     </div>
   );

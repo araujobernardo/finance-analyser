@@ -292,6 +292,22 @@ describe("TransactionsPage — empty state", () => {
     renderPage();
     expect(screen.queryByTestId("txn-table")).not.toBeInTheDocument();
   });
+
+  it("shows txn-empty element when all transactions are transfers and Show transfers is off", () => {
+    mockRawTransactions = [
+      makeApiTxn({ id: "t1", isTransfer: true }),
+      makeApiTxn({ id: "t2", isTransfer: true }),
+    ];
+    const { container } = renderPage();
+    // Show transfers is OFF by default — all rows filtered out
+    expect(container.querySelector(".txn-empty")).toBeInTheDocument();
+  });
+
+  it("shows txn-row-count of 0 rows when all transactions are transfers and Show transfers is off", () => {
+    mockRawTransactions = [makeApiTxn({ id: "t1", isTransfer: true })];
+    renderPage();
+    expect(screen.getByTestId("txn-row-count")).toHaveTextContent("0 rows");
+  });
 });
 
 describe("TransactionsPage — transaction display", () => {
