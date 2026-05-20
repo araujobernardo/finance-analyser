@@ -13,7 +13,6 @@ import { AlertBanner } from "./components/AlertBanner";
 import { DashboardPage } from "./pages/DashboardPage";
 import { TransactionsPage } from "./pages/TransactionsPage";
 import { ChatPage } from "./pages/ChatPage";
-import { MigrationPage } from "./pages/MigrationPage";
 import { SettingsPage } from "./pages/SettingsPage";
 import NetWorthPage from "./pages/NetWorthPage";
 import { GoalsPage } from "./pages/GoalsPage";
@@ -53,7 +52,6 @@ function AppShell() {
                 <Route path="/transactions" element={<TransactionsPage />} />
                 <Route path="/chat" element={<ChatPage />} />
                 <Route path="/settings" element={<SettingsPage />} />
-                <Route path="/migrate" element={<MigrationPage />} />
                 <Route
                   path="/net-worth"
                   element={
