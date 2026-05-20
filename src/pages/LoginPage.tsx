@@ -3,7 +3,6 @@ import { Link, useNavigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
 import type { AuthUser } from "../context/AuthContext";
 import { API_BASE } from "../lib/api";
-import { getAccounts } from "../services/storage";
 import "./auth.css";
 
 export function LoginPage() {
@@ -54,37 +53,7 @@ export function LoginPage() {
         return;
       }
       login(data.token!, data.user!);
-
-      // Migration detection: decide whether to route to /migrate or /dashboard.
-      // Cloud account presence is the source of truth — the fa-migration-complete
-      // flag alone is not trusted, because it may have been set without the data
-      // actually being transferred (bug #680).
-      try {
-        const cloudRes = await fetch(`${API_BASE}/api/accounts`, {
-          headers: { Authorization: `Bearer ${data.token!}` },
-        });
-        if (cloudRes.ok) {
-          const json = (await cloudRes.json()) as { accounts: unknown[] };
-          if (json.accounts.length > 0) {
-            // Cloud has data — genuinely migrated, go to dashboard
-            void navigate("/dashboard");
-            return;
-          }
-        }
-        // Cloud is empty: check whether there is anything in localStorage to migrate
-        const localAccounts = getAccounts();
-        if (localAccounts.length === 0) {
-          // No local data either — new user, go to dashboard
-          void navigate("/dashboard");
-          return;
-        }
-        // Local data exists but cloud is empty — migration is required,
-        // regardless of whether fa-migration-complete was previously set
-        void navigate("/migrate");
-      } catch {
-        void navigate("/dashboard");
-      }
-      return;
+      void navigate("/dashboard");
     } catch {
       setBanner({ type: "error", msg: "Network error. Please try again." });
     } finally {
