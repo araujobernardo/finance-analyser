@@ -11,6 +11,7 @@ import { WeeklyTrendChart } from "../components/WeeklyTrendChart";
 import { LargestTransactions } from "../components/LargestTransactions";
 import { SpendingTrendsByCategoryChart } from "../components/SpendingTrendsByCategoryChart";
 import { GoalsSummaryWidget } from "../components/goals/GoalsSummaryWidget";
+import { BudgetSummaryWidget } from "../components/budgets/BudgetSummaryWidget";
 import type { Transaction } from "../utils/csvParser";
 import "./DashboardPage.css";
 
@@ -393,6 +394,9 @@ export function DashboardPage() {
 
       {/* Goals Summary Widget */}
       <GoalsSummaryWidget />
+
+      {/* Budget Summary Widget */}
+      <BudgetSummaryWidget />
 
       {/* Transfer notice */}
       {transferAmt > 0 && (
