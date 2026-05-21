@@ -1,0 +1,74 @@
+/* Fix #734 — BudgetSummaryWidget styles */
+
+.budget-summary-widget {
+  padding: 1rem 1.25rem;
+}
+
+.budget-summary-widget__title {
+  font-size: 1rem;
+  font-weight: 600;
+  color: var(--text);
+  margin: 0 0 0.75rem;
+}
+
+.budget-summary-widget__list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.budget-summary-widget__item {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.budget-summary-widget__item-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+}
+
+.budget-summary-widget__category {
+  font-size: 0.875rem;
+  color: var(--text);
+}
+
+.budget-summary-widget__pct {
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: var(--muted);
+}
+
+.budget-summary-widget__pct--warning {
+  color: #f59e0b;
+}
+
+.budget-summary-widget__pct--over {
+  color: #ef4444;
+}
+
+.budget-summary-widget__bar-track {
+  height: 6px;
+  background: var(--surface-alt, rgba(255, 255, 255, 0.08));
+  border-radius: 9999px;
+  overflow: hidden;
+}
+
+.budget-summary-widget__bar-fill {
+  height: 100%;
+  background: var(--accent, #22c55e);
+  border-radius: 9999px;
+  transition: width 0.3s ease;
+}
+
+.budget-summary-widget__bar-fill--warning {
+  background: #f59e0b;
+}
+
+.budget-summary-widget__bar-fill--over {
+  background: #ef4444;
+}
