@@ -42,37 +42,32 @@ function AppShell() {
     <ToastProvider key={userKey}>
       <AccountProvider>
         <GoalsProvider>
-          <div className="app-shell">
-            <Sidebar />
-            <div className="app-content">
-              <AlertBanner />
-              <Routes>
-                <Route index element={<Navigate to="/dashboard" replace />} />
-                <Route path="/dashboard" element={<DashboardPage />} />
-                <Route path="/transactions" element={<TransactionsPage />} />
-                <Route path="/chat" element={<ChatPage />} />
-                <Route path="/settings" element={<SettingsPage />} />
-                <Route
-                  path="/net-worth"
-                  element={
-                    <NetWorthProvider>
-                      <NetWorthPage />
-                    </NetWorthProvider>
-                  }
-                />
-                <Route path="/goals" element={<GoalsPage />} />
-                <Route
-                  path="/budget"
-                  element={
-                    <BudgetProvider>
-                      <BudgetPage />
-                    </BudgetProvider>
-                  }
-                />
-              </Routes>
+          <BudgetProvider>
+            <div className="app-shell">
+              <Sidebar />
+              <div className="app-content">
+                <AlertBanner />
+                <Routes>
+                  <Route index element={<Navigate to="/dashboard" replace />} />
+                  <Route path="/dashboard" element={<DashboardPage />} />
+                  <Route path="/transactions" element={<TransactionsPage />} />
+                  <Route path="/chat" element={<ChatPage />} />
+                  <Route path="/settings" element={<SettingsPage />} />
+                  <Route
+                    path="/net-worth"
+                    element={
+                      <NetWorthProvider>
+                        <NetWorthPage />
+                      </NetWorthProvider>
+                    }
+                  />
+                  <Route path="/goals" element={<GoalsPage />} />
+                  <Route path="/budget" element={<BudgetPage />} />
+                </Routes>
+              </div>
             </div>
-          </div>
-          <Toast />
+            <Toast />
+          </BudgetProvider>
         </GoalsProvider>
       </AccountProvider>
     </ToastProvider>

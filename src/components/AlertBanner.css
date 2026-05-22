@@ -1,64 +1,72 @@
-/* FA-BUDG-003 T006 — AlertBanner styles */
+/* Fix #734 / FA-BUDG-003 T006 — AlertBanner styles (Option A) */
 
 .alert-banner {
   display: flex;
+  flex-direction: row;
   align-items: center;
+  flex-wrap: wrap;
   gap: 0.5rem;
   padding: 0.5rem 1rem;
-  background: color-mix(
-    in srgb,
-    var(--colour-warning, #f59e0b) 15%,
-    transparent
-  );
-  border-bottom: 1px solid var(--colour-warning, #f59e0b);
+  background: #1e1a0e;
+  border-bottom: 1px solid #78350f;
   font-size: 0.875rem;
-  flex-wrap: wrap;
 }
 
+/* Left zone — icon */
 .alert-banner__icon {
-  color: var(--colour-warning, #f59e0b);
+  color: #fbbf24;
   font-size: 1rem;
   flex-shrink: 0;
 }
 
+/* Left zone — label */
 .alert-banner__label {
   font-weight: 600;
-  color: var(--colour-warning, #f59e0b);
+  color: #fbbf24;
   flex-shrink: 0;
 }
 
-.alert-banner__categories {
-  color: var(--text);
+/* Middle zone — chips row */
+.alert-banner__chips {
+  display: flex;
+  flex-direction: row;
+  flex-wrap: wrap;
+  gap: 0.5rem;
   flex: 1;
   min-width: 0;
+}
+
+/* Normal chip (threshold met but ≤ 100%) */
+.alert-banner__chip {
+  display: inline-block;
+  background: #78350f;
+  color: #fde68a;
+  border-radius: 9999px;
+  padding: 0.125rem 0.5rem;
+  font-size: 0.75rem;
   white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
 }
 
-.alert-banner__cta {
-  color: var(--accent);
-  text-decoration: none;
-  font-weight: 500;
-  flex-shrink: 0;
-  white-space: nowrap;
+/* Critical chip (over 100%) */
+.alert-banner__chip--critical {
+  background: #7f1d1d;
+  color: #fca5a5;
 }
 
-.alert-banner__cta:hover {
-  text-decoration: underline;
-}
-
+/* Right zone — dismiss button */
 .alert-banner__dismiss {
-  background: none;
-  border: none;
+  background: transparent;
+  border: 1px solid #78350f;
+  color: #f59e0b;
+  padding: 0.25rem 0.75rem;
+  border-radius: 0.25rem;
   cursor: pointer;
-  color: var(--muted);
-  font-size: 1.25rem;
-  line-height: 1;
-  padding: 0 0.25rem;
+  font-size: 0.875rem;
   flex-shrink: 0;
+  white-space: nowrap;
+  transition: opacity 0.15s ease;
 }
 
 .alert-banner__dismiss:hover {
-  color: var(--text);
+  opacity: 0.8;
 }
