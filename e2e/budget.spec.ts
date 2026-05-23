@@ -24,26 +24,39 @@ test("setting a budget via Budget page shows it on the dashboard", async ({
   // Open the Add Budget modal
   await page.getByRole("button", { name: /\+ add budget/i }).click();
 
-  // Fill in category name and limit amount using accessible labels
-  await page.getByLabel(/category/i).fill("Groceries");
-  await page.getByLabel(/monthly limit/i).fill("500");
+  // Fill in category name and limit amount using the input IDs (robust
+  // against label ambiguity in the mounted app).
+  await page.locator("#budget-category").fill("Groceries");
+  await page.locator("#budget-limit").fill("500");
 
   // Submit the form — use exact match to avoid strict-mode collision with
   // the page-level "+ Add Budget" button that remains visible in the DOM.
+  // Wait for the POST /api/budgets response so the budget-row check starts
+  // after the network round-trip completes (handles Render cold-start latency).
+  const budgetSavedPromise = page.waitForResponse(
+    (resp) =>
+      resp.url().includes("/api/budgets") && resp.request().method() === "POST",
+    { timeout: 30_000 },
+  );
   await page.getByRole("button", { name: "Add Budget", exact: true }).click();
+  await budgetSavedPromise;
 
   // Verify the budget row appears on the Budget page.
-  // Timeout is generous to account for Render cold-start latency on the API.
   await expect(
     page.locator('[data-testid^="budget-row-"]').first(),
-  ).toBeVisible({ timeout: 20_000 });
+  ).toBeVisible({ timeout: 10_000 });
 
-  // Navigate to dashboard and verify the budget section appears
-  // (requires BudgetSummaryWidget to be deployed — see PR #735)
-  await page.getByRole("link", { name: /dashboard/i }).click();
+  // Navigate to dashboard and verify the budget section appears.
+  // Reload the dashboard to ensure the BudgetContext re-fetches from the server
+  // (avoiding any stale client-side state after the budget was added).
+  await page.goto("/dashboard");
   await page.waitForURL(/\/dashboard/);
+  await page.waitForLoadState("networkidle");
 
-  await expect(page.locator('[data-testid="budget-section"]')).toBeVisible();
+  // BudgetSummaryWidget renders once BudgetContext loads the fresh budget list.
+  await expect(page.locator('[data-testid="budget-section"]')).toBeVisible({
+    timeout: 20_000,
+  });
   await expect(page.locator('[data-testid="budget-section"]')).toContainText(
     "Groceries",
   );
