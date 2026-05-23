@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { createPortal } from "react-dom";
 import { useAccount } from "../context/AccountContext";
 import "./AccountModal.css";
 
@@ -31,7 +32,7 @@ export function DeleteAccountModal({
     }
   }
 
-  return (
+  return createPortal(
     <div
       className="account-modal__backdrop"
       role="dialog"
@@ -84,6 +85,7 @@ export function DeleteAccountModal({
           </span>
         </div>
       </div>
-    </div>
+    </div>,
+    document.body,
   );
 }

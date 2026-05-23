@@ -1,3 +1,4 @@
+import { createPortal } from "react-dom";
 import "./DuplicateWarningModal.css";
 
 interface DuplicateWarningModalProps {
@@ -11,7 +12,7 @@ export function DuplicateWarningModal({
   onReplace,
   onCancel,
 }: DuplicateWarningModalProps) {
-  return (
+  return createPortal(
     <div
       className="dup-modal__backdrop"
       role="dialog"
@@ -42,6 +43,7 @@ export function DuplicateWarningModal({
           </button>
         </div>
       </div>
-    </div>
+    </div>,
+    document.body,
   );
 }

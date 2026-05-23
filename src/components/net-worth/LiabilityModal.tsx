@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { createPortal } from "react-dom";
 import { useNetWorth } from "../../context/NetWorthContext";
 import { useAccount } from "../../context/AccountContext";
 import type { ApiLiability } from "../../types/api";
@@ -104,7 +105,7 @@ export function LiabilityModal({ liability, onClose }: LiabilityModalProps) {
     }
   }
 
-  return (
+  return createPortal(
     <div
       className="nw-modal__backdrop"
       role="dialog"
@@ -273,6 +274,7 @@ export function LiabilityModal({ liability, onClose }: LiabilityModalProps) {
           </button>
         </div>
       </div>
-    </div>
+    </div>,
+    document.body,
   );
 }
