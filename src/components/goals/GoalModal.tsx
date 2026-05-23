@@ -1,4 +1,5 @@
 import { useRef, useState } from "react";
+import { createPortal } from "react-dom";
 import { useGoals } from "../../context/GoalsContext";
 import { useAccount } from "../../context/AccountContext";
 import type { ApiGoal } from "../../types/api";
@@ -181,7 +182,7 @@ export function GoalModal({ onClose, goal }: GoalModalProps) {
     ? "Step 2 of 2 — Fill in the details"
     : "Step 1 of 2 — What kind of goal?";
 
-  return (
+  return createPortal(
     <div
       className="goal-modal__backdrop"
       role="dialog"
@@ -453,6 +454,7 @@ export function GoalModal({ onClose, goal }: GoalModalProps) {
           </button>
         </div>
       </div>
-    </div>
+    </div>,
+    document.body,
   );
 }

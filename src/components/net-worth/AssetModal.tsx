@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { createPortal } from "react-dom";
 import { useNetWorth } from "../../context/NetWorthContext";
 import { useAccount } from "../../context/AccountContext";
 import type { ApiAsset } from "../../types/api";
@@ -102,7 +103,7 @@ export function AssetModal({ asset, onClose }: AssetModalProps) {
     }
   }
 
-  return (
+  return createPortal(
     <div
       className="nw-modal__backdrop"
       role="dialog"
@@ -269,6 +270,7 @@ export function AssetModal({ asset, onClose }: AssetModalProps) {
           </button>
         </div>
       </div>
-    </div>
+    </div>,
+    document.body,
   );
 }

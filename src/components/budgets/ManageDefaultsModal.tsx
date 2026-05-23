@@ -1,6 +1,7 @@
 // FA-BUDG-002 T020 / T025 — Manage Budget Defaults Modal (includes monthStartDay preference)
 
 import { useState } from "react";
+import { createPortal } from "react-dom";
 import { useBudgets } from "../../context/BudgetContext";
 
 const nzd = new Intl.NumberFormat("en-NZ", {
@@ -60,7 +61,7 @@ export function ManageDefaultsModal({
     await updatePreferences(parsed);
   };
 
-  return (
+  return createPortal(
     <div
       className="goal-modal__backdrop"
       role="dialog"
@@ -176,7 +177,8 @@ export function ManageDefaultsModal({
           </div>
         </div>
       </div>
-    </div>
+    </div>,
+    document.body,
   );
 }
 

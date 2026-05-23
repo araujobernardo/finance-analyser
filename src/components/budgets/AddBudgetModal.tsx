@@ -1,6 +1,7 @@
 // FA-BUDG-002 T013 — Add Budget Modal
 
 import { useState } from "react";
+import { createPortal } from "react-dom";
 import { useBudgets } from "../../context/BudgetContext";
 
 interface AddBudgetModalProps {
@@ -45,7 +46,7 @@ export function AddBudgetModal({ isOpen, onClose }: AddBudgetModalProps) {
     onClose();
   };
 
-  return (
+  return createPortal(
     <div
       className="goal-modal__backdrop"
       role="dialog"
@@ -135,6 +136,7 @@ export function AddBudgetModal({ isOpen, onClose }: AddBudgetModalProps) {
           </div>
         </form>
       </div>
-    </div>
+    </div>,
+    document.body,
   );
 }

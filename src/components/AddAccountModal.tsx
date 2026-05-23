@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { createPortal } from "react-dom";
 import { useAccount } from "../context/AccountContext";
 import type { ApiAccount } from "../types/api";
 import "./AccountModal.css";
@@ -57,7 +58,7 @@ export function AddAccountModal({ onClose }: AddAccountModalProps) {
     if (nicknameError) setNicknameError(validate(value));
   }
 
-  return (
+  return createPortal(
     <div
       className="account-modal__backdrop"
       role="dialog"
@@ -133,6 +134,7 @@ export function AddAccountModal({ onClose }: AddAccountModalProps) {
           </button>
         </div>
       </div>
-    </div>
+    </div>,
+    document.body,
   );
 }
