@@ -90,6 +90,23 @@
   align-items: center;
   gap: 7px;
   margin-bottom: 6px;
+  padding: 4px 6px;
+  border-radius: 6px;
+  margin-left: -6px;
+  cursor: pointer;
+  border-left: 2px solid transparent;
+  transition:
+    background 0.15s,
+    border-color 0.15s;
+}
+
+.sidebar-account-row:hover {
+  background: color-mix(in srgb, var(--accent) 6%, transparent);
+}
+
+.sidebar-account-row--active {
+  background: color-mix(in srgb, var(--accent) 12%, transparent);
+  border-left-color: var(--accent);
 }
 
 .sidebar-account-dot {
@@ -106,6 +123,11 @@
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
+}
+
+.sidebar-account-row--active .sidebar-account-name {
+  font-weight: 700;
+  color: var(--text);
 }
 
 .sidebar-account-input {
@@ -137,6 +159,27 @@
 
 .sidebar-upload {
   padding: 12px 14px;
+}
+
+.sidebar-upload-to {
+  font-size: 10px;
+  margin-bottom: 6px;
+  line-height: 1.4;
+}
+
+.sidebar-upload-to-prefix {
+  color: var(--muted);
+}
+
+.sidebar-upload-to-account {
+  color: var(--accent);
+  font-weight: 600;
+}
+
+.sidebar-upload-to--none .sidebar-upload-to-account {
+  color: var(--muted);
+  font-weight: 400;
+  font-style: italic;
 }
 
 .sidebar-upload-btn {

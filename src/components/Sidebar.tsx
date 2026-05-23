@@ -38,6 +38,7 @@ export function Sidebar({
   const {
     accounts,
     activeAccountId,
+    setActiveAccountId,
     isLoading: accountsLoading,
     error: accountsError,
     refetch,
@@ -163,48 +164,82 @@ export function Sidebar({
             <button onClick={() => void refetch()}>Try again</button>
           </div>
         ) : (
-          displayAccounts.map((acct, i) => (
-            <div
-              key={acct.short}
-              className="sidebar-account-row"
-              data-testid="account-item"
-            >
+          displayAccounts.map((acct, i) => {
+            const isActive = acct.short === activeAccountId;
+            return (
               <div
-                className="sidebar-account-dot"
-                style={{
-                  background: ACCOUNT_COLORS[i % ACCOUNT_COLORS.length],
+                key={acct.short}
+                className={`sidebar-account-row${isActive ? " sidebar-account-row--active" : ""}`}
+                data-testid="account-item"
+                data-active={isActive ? "true" : undefined}
+                role="button"
+                tabIndex={0}
+                aria-pressed={isActive}
+                onClick={() => setActiveAccountId(acct.short)}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter" || e.key === " ") {
+                    e.preventDefault();
+                    setActiveAccountId(acct.short);
+                  }
                 }}
-              />
-              {editingShort === acct.short ? (
-                <input
-                  className="sidebar-account-input"
-                  value={editVal}
-                  autoFocus
-                  onChange={(e) => setEditVal(e.target.value.slice(0, 20))}
-                  onBlur={() => commitEdit(acct.short)}
-                  onKeyDown={(e) => {
-                    if (e.key === "Enter") commitEdit(acct.short);
-                    if (e.key === "Escape") setEditingShort(null);
+              >
+                <div
+                  className="sidebar-account-dot"
+                  style={{
+                    background: ACCOUNT_COLORS[i % ACCOUNT_COLORS.length],
                   }}
                 />
-              ) : (
-                <span className="sidebar-account-name">{acct.display}</span>
-              )}
-              {editingShort !== acct.short && (
-                <button
-                  className="sidebar-account-edit"
-                  title="Rename account"
-                  onClick={() => startEdit(acct.short, acct.display)}
-                >
-                  ✎
-                </button>
-              )}
-            </div>
-          ))
+                {editingShort === acct.short ? (
+                  <input
+                    className="sidebar-account-input"
+                    value={editVal}
+                    autoFocus
+                    onChange={(e) => setEditVal(e.target.value.slice(0, 20))}
+                    onBlur={() => commitEdit(acct.short)}
+                    onKeyDown={(e) => {
+                      if (e.key === "Enter") commitEdit(acct.short);
+                      if (e.key === "Escape") setEditingShort(null);
+                    }}
+                    onClick={(e) => e.stopPropagation()}
+                  />
+                ) : (
+                  <span className="sidebar-account-name">{acct.display}</span>
+                )}
+                {editingShort !== acct.short && (
+                  <button
+                    className="sidebar-account-edit"
+                    title="Rename account"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      startEdit(acct.short, acct.display);
+                    }}
+                  >
+                    ✎
+                  </button>
+                )}
+              </div>
+            );
+          })
         )}
       </div>
 
       <div className="sidebar-upload">
+        {(() => {
+          const activeAccount = displayAccounts.find(
+            (a) => a.short === activeAccountId,
+          );
+          return (
+            <div
+              className={`sidebar-upload-to${!activeAccount ? " sidebar-upload-to--none" : ""}`}
+              data-testid="upload-to-label"
+            >
+              <span className="sidebar-upload-to-prefix">Upload to: </span>
+              <span className="sidebar-upload-to-account">
+                {activeAccount ? activeAccount.display : "(select an account)"}
+              </span>
+            </div>
+          );
+        })()}
         <button
           className="sidebar-upload-btn"
           disabled={isCategorising}
