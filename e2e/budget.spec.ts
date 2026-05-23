@@ -32,10 +32,11 @@ test("setting a budget via Budget page shows it on the dashboard", async ({
   // the page-level "+ Add Budget" button that remains visible in the DOM.
   await page.getByRole("button", { name: "Add Budget", exact: true }).click();
 
-  // Verify the budget row appears on the Budget page
+  // Verify the budget row appears on the Budget page.
+  // Timeout is generous to account for Render cold-start latency on the API.
   await expect(
     page.locator('[data-testid^="budget-row-"]').first(),
-  ).toBeVisible({ timeout: 10_000 });
+  ).toBeVisible({ timeout: 20_000 });
 
   // Navigate to dashboard and verify the budget section appears
   // (requires BudgetSummaryWidget to be deployed — see PR #735)
