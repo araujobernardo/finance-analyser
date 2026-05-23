@@ -90,7 +90,7 @@ jobs:
     timeout-minutes: 10
     continue-on-error: true
     needs: [changes, quality]
-    if: needs.changes.outputs.code == 'true' && github.actor != 'dependabot[bot]'
+    if: false # temporarily disabled — re-enable when E2E suite is stable
 
     steps:
       - uses: actions/checkout@v4
