@@ -52,6 +52,23 @@ test("cancelling AddAccountModal closes it without creating an account", async (
   await expect(page.getByText("Add Account")).not.toBeVisible();
 });
 
+test("AddAccountModal renders as a direct child of <body> (portal check)", async ({
+  authenticatedPage: page,
+}) => {
+  await page.goto("/dashboard");
+  await page.waitForURL(/\/dashboard/, { timeout: 15_000 });
+
+  await page.getByTestId("add-account-btn").click();
+  await expect(page.getByText("Add Account")).toBeVisible({ timeout: 5_000 });
+
+  // The backdrop must be a direct child of <body>, not nested inside sidebar DOM
+  const isDirectBodyChild = await page.evaluate(() => {
+    const backdrop = document.querySelector(".account-modal__backdrop");
+    return backdrop?.parentElement?.tagName === "BODY";
+  });
+  expect(isDirectBodyChild).toBe(true);
+});
+
 test("creating a new account via modal adds it to the sidebar list", async ({
   authenticatedPage: page,
 }) => {
