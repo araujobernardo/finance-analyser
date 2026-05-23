@@ -113,6 +113,30 @@ async function globalSetup(config: FullConfig) {
         `[global-setup] Could not fetch accounts for setup (status ${accountsRes.status()}).`,
       );
     }
+
+    // Delete all existing budgets so budget E2E tests start from a clean slate.
+    // Without this a prior run's "Groceries" budget causes a 409 on the next run
+    // and the budget-row never appears, failing the budget spec.
+    const now = new Date();
+    const year = now.getFullYear();
+    const month = now.getMonth() + 1;
+    const budgetsRes = await page.request.get(
+      `${apiBase}/api/budgets?year=${year}&month=${month}`,
+      { headers: { Authorization: `Bearer ${token}` } },
+    );
+    if (budgetsRes.ok()) {
+      const budgets = (await budgetsRes.json()) as { id: string }[];
+      for (const budget of budgets) {
+        await page.request.delete(`${apiBase}/api/budgets/${budget.id}`, {
+          headers: { Authorization: `Bearer ${token}` },
+        });
+      }
+      if (budgets.length > 0) {
+        console.log(
+          `[global-setup] Deleted ${budgets.length} existing budget(s) for ${year}-${month} — clean slate.`,
+        );
+      }
+    }
   } else {
     console.warn(
       "[global-setup] No auth token found — skipping account setup.",
