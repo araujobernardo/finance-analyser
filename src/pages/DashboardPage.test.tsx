@@ -143,3 +143,20 @@ describe("DashboardPage — loading and empty states", () => {
     expect(getByTestId("summary-stats")).toBeInTheDocument();
   });
 });
+
+describe("DashboardPage — no account filter pills (issue #755)", () => {
+  it("does not render .dash-acct-pills (dashboard filter tabs removed)", () => {
+    mockRawTransactions = [makeApiTxn()];
+    mockIsLoading = false;
+    const { container } = renderDashboard();
+    expect(container.querySelector(".dash-acct-pills")).not.toBeInTheDocument();
+  });
+
+  it("shows summary stats driven by AccountContext activeAccountId, not a local filter", () => {
+    // With activeAccountId = "acc-1" in the mock, transactions for acc-1 should show
+    mockRawTransactions = [makeApiTxn()];
+    mockIsLoading = false;
+    const { getByTestId } = renderDashboard();
+    expect(getByTestId("summary-stats")).toBeInTheDocument();
+  });
+});

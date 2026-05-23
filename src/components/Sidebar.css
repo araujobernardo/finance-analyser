@@ -42,19 +42,58 @@
   border-bottom: 1px solid var(--border);
 }
 
-.sidebar-section-header {
+/* ── Option C: "All Accounts" clickable section header ─────────────────── */
+
+.sidebar-all-accounts-row {
   display: flex;
   align-items: center;
-  justify-content: space-between;
-  margin-bottom: 8px;
+  gap: 7px;
+  padding: 5px 6px;
+  margin-left: -6px;
+  margin-bottom: 6px;
+  border-radius: 6px;
+  cursor: pointer;
+  border-left: 2px solid transparent;
+  transition:
+    background 0.15s,
+    border-color 0.15s;
 }
 
-.sidebar-section-label {
+.sidebar-all-accounts-row:hover {
+  background: color-mix(in srgb, var(--accent) 6%, transparent);
+}
+
+.sidebar-all-accounts-row--active {
+  background: color-mix(in srgb, var(--accent) 12%, transparent);
+  border-left-color: var(--accent);
+}
+
+/* Conic-gradient dot representing "all accounts combined" */
+.sidebar-all-accounts-dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  flex-shrink: 0;
+  background: conic-gradient(
+    #6c8ebf 0deg 120deg,
+    #82b366 120deg 240deg,
+    #d79b00 240deg 360deg
+  );
+  border: 1px solid var(--border);
+}
+
+.sidebar-all-accounts-label {
+  flex: 1;
   font-size: 10px;
   color: var(--muted);
   text-transform: uppercase;
   letter-spacing: 0.1em;
-  font-weight: 600;
+  font-weight: 700;
+  transition: color 0.15s;
+}
+
+.sidebar-all-accounts-row--active .sidebar-all-accounts-label {
+  color: var(--accent);
 }
 
 .sidebar-add-account-btn {
@@ -107,6 +146,11 @@
 .sidebar-account-row--active {
   background: color-mix(in srgb, var(--accent) 12%, transparent);
   border-left-color: var(--accent);
+}
+
+/* Indent individual account rows to show they are subordinate to "All Accounts" */
+.sidebar-account-row--indented {
+  padding-left: 22px;
 }
 
 .sidebar-account-dot {

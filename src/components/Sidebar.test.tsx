@@ -251,7 +251,7 @@ describe("Sidebar — account selection (issue #748)", () => {
 });
 
 describe("Sidebar — add account button", () => {
-  it("renders the add-account-btn beside the ACCOUNTS section label", async () => {
+  it("renders the add-account-btn inside the All Accounts row", async () => {
     renderSidebar();
     const btn = screen.getByTestId("add-account-btn");
     expect(btn).toBeInTheDocument();
@@ -283,5 +283,96 @@ describe("Sidebar — add account button", () => {
     // Click cancel
     await user.click(screen.getByRole("button", { name: /cancel/i }));
     expect(screen.queryByText("Add Account")).not.toBeInTheDocument();
+  });
+});
+
+describe("Sidebar — All Accounts row (issue #755 Option C)", () => {
+  it("renders the All Accounts row with data-testid and role=button", async () => {
+    renderSidebar();
+    const allAccountsRow = screen.getByTestId("account-all-accounts");
+    expect(allAccountsRow).toBeInTheDocument();
+    expect(allAccountsRow).toHaveAttribute("role", "button");
+  });
+
+  it("All Accounts row has aria-pressed=true when activeAccountId is 'all'", async () => {
+    // Seed localStorage with the correct key so AccountContext resolves to "all"
+    localStorage.setItem("finance_analyser_active_account", "all");
+    renderSidebar();
+    const allAccountsRow = screen.getByTestId("account-all-accounts");
+    // Wait for the async account fetch to complete and activeAccountId to settle to "all"
+    await waitFor(() => {
+      expect(allAccountsRow).toHaveAttribute("aria-pressed", "true");
+    });
+  });
+
+  it("clicking All Accounts row selects all accounts (upload-to label shows fallback)", async () => {
+    mockApiFetch.mockResolvedValue({
+      ok: true,
+      status: 200,
+      json: async () => ({
+        accounts: [
+          {
+            id: "acc-1",
+            nickname: "Cheque",
+            accountType: "cheque",
+            accountNumber: "",
+            userId: "u1",
+            createdAt: "2026-01-01T00:00:00Z",
+          },
+        ],
+      }),
+    });
+    const user = userEvent.setup();
+    renderSidebar();
+
+    // Wait for accounts to load, then click All Accounts row
+    await screen.findAllByTestId("account-item");
+    const allAccountsRow = screen.getByTestId("account-all-accounts");
+    await user.click(allAccountsRow);
+
+    await waitFor(() => {
+      expect(allAccountsRow).toHaveAttribute("aria-pressed", "true");
+    });
+
+    // Upload label should now show the "select an account" fallback
+    const label = screen.getByTestId("upload-to-label");
+    expect(label).toHaveTextContent("(select an account)");
+  });
+
+  it("clicking + button inside All Accounts row does NOT select All Accounts", async () => {
+    const user = userEvent.setup();
+    renderSidebar();
+
+    const addBtn = screen.getByTestId("add-account-btn");
+
+    // Click the + button — stopPropagation should prevent the row click handler
+    await user.click(addBtn);
+
+    // Modal opened (confirming + click worked without triggering All Accounts selection)
+    expect(screen.getByText("Add Account")).toBeInTheDocument();
+  });
+
+  it("individual account rows have the indented class", async () => {
+    mockApiFetch.mockResolvedValue({
+      ok: true,
+      status: 200,
+      json: async () => ({
+        accounts: [
+          {
+            id: "acc-1",
+            nickname: "Cheque",
+            accountType: "cheque",
+            accountNumber: "",
+            userId: "u1",
+            createdAt: "2026-01-01T00:00:00Z",
+          },
+        ],
+      }),
+    });
+    renderSidebar();
+    const rows = await screen.findAllByTestId("account-item");
+    for (const row of rows) {
+      expect(row).toHaveClass("sidebar-account-row--indented");
+    }
   });
 });

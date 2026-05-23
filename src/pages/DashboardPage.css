@@ -118,12 +118,6 @@
   flex-wrap: wrap;
 }
 
-.dash-acct-pills {
-  display: flex;
-  gap: 6px;
-  flex-wrap: wrap;
-}
-
 .dash-stats-grid {
   display: grid;
   grid-template-columns: repeat(4, 1fr);
