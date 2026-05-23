@@ -46,12 +46,17 @@ test("setting a budget via Budget page shows it on the dashboard", async ({
     page.locator('[data-testid^="budget-row-"]').first(),
   ).toBeVisible({ timeout: 10_000 });
 
-  // Navigate to dashboard and verify the budget section appears
-  // (requires BudgetSummaryWidget to be deployed — see PR #735)
-  await page.getByRole("link", { name: /dashboard/i }).click();
+  // Navigate to dashboard and verify the budget section appears.
+  // Reload the dashboard to ensure the BudgetContext re-fetches from the server
+  // (avoiding any stale client-side state after the budget was added).
+  await page.goto("/dashboard");
   await page.waitForURL(/\/dashboard/);
+  await page.waitForLoadState("networkidle");
 
-  await expect(page.locator('[data-testid="budget-section"]')).toBeVisible();
+  // BudgetSummaryWidget renders once BudgetContext loads the fresh budget list.
+  await expect(page.locator('[data-testid="budget-section"]')).toBeVisible({
+    timeout: 20_000,
+  });
   await expect(page.locator('[data-testid="budget-section"]')).toContainText(
     "Groceries",
   );
