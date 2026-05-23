@@ -132,6 +132,124 @@ describe("Sidebar — upload status display", () => {
   });
 });
 
+describe("Sidebar — account selection (issue #748)", () => {
+  it("renders account rows with role=button", async () => {
+    mockApiFetch.mockResolvedValue({
+      ok: true,
+      status: 200,
+      json: async () => ({
+        accounts: [
+          {
+            id: "acc-1",
+            nickname: "Cheque",
+            accountType: "cheque",
+            accountNumber: "",
+            userId: "u1",
+            createdAt: "2026-01-01T00:00:00Z",
+          },
+          {
+            id: "acc-2",
+            nickname: "Credit",
+            accountType: "credit",
+            accountNumber: "",
+            userId: "u1",
+            createdAt: "2026-01-01T00:00:00Z",
+          },
+        ],
+      }),
+    });
+    renderSidebar();
+    const rows = await screen.findAllByTestId("account-item");
+    expect(rows.length).toBe(2);
+    for (const row of rows) {
+      expect(row).toHaveAttribute("role", "button");
+    }
+  });
+
+  it("marks first account as active by default and renders Upload to label", async () => {
+    mockApiFetch.mockResolvedValue({
+      ok: true,
+      status: 200,
+      json: async () => ({
+        accounts: [
+          {
+            id: "acc-1",
+            nickname: "Cheque",
+            accountType: "cheque",
+            accountNumber: "",
+            userId: "u1",
+            createdAt: "2026-01-01T00:00:00Z",
+          },
+          {
+            id: "acc-2",
+            nickname: "Credit",
+            accountType: "credit",
+            accountNumber: "",
+            userId: "u1",
+            createdAt: "2026-01-01T00:00:00Z",
+          },
+        ],
+      }),
+    });
+    renderSidebar();
+    const label = await screen.findByTestId("upload-to-label");
+    expect(label).toBeInTheDocument();
+    // Active account is the first one loaded
+    expect(label).toHaveTextContent("Upload to:");
+    expect(label).toHaveTextContent("Cheque");
+  });
+
+  it("clicking an account row selects it and updates Upload to label", async () => {
+    mockApiFetch.mockResolvedValue({
+      ok: true,
+      status: 200,
+      json: async () => ({
+        accounts: [
+          {
+            id: "acc-1",
+            nickname: "Cheque",
+            accountType: "cheque",
+            accountNumber: "",
+            userId: "u1",
+            createdAt: "2026-01-01T00:00:00Z",
+          },
+          {
+            id: "acc-2",
+            nickname: "Credit",
+            accountType: "credit",
+            accountNumber: "",
+            userId: "u1",
+            createdAt: "2026-01-01T00:00:00Z",
+          },
+        ],
+      }),
+    });
+    const user = userEvent.setup();
+    renderSidebar();
+
+    const rows = await screen.findAllByTestId("account-item");
+    // Click second row (Credit)
+    await user.click(rows[1]);
+
+    await waitFor(() => {
+      const label = screen.getByTestId("upload-to-label");
+      expect(label).toHaveTextContent("Credit");
+    });
+
+    // Second row should now have the active class
+    expect(rows[1]).toHaveClass("sidebar-account-row--active");
+    expect(rows[0]).not.toHaveClass("sidebar-account-row--active");
+  });
+
+  it("shows fallback label when no accounts exist", async () => {
+    renderSidebar();
+    const label = await screen.findByTestId("upload-to-label");
+    expect(label).toHaveTextContent("Upload to:");
+    // No accounts loaded — shows the fallback
+    expect(label).toHaveTextContent("(select an account)");
+  });
+});
+
 describe("Sidebar — add account button", () => {
   it("renders the add-account-btn beside the ACCOUNTS section label", async () => {
     renderSidebar();
