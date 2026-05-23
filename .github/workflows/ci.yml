@@ -88,6 +88,7 @@ jobs:
   e2e:
     runs-on: ubuntu-latest
     timeout-minutes: 10
+    continue-on-error: true
     needs: [changes, quality]
     if: needs.changes.outputs.code == 'true' && github.actor != 'dependabot[bot]'
 

@@ -31,20 +31,28 @@ test("setting a budget via Budget page shows it on the dashboard", async ({
 
   // Submit the form — use exact match to avoid strict-mode collision with
   // the page-level "+ Add Budget" button that remains visible in the DOM.
-  // Wait for the POST /api/budgets response so the budget-row check starts
-  // after the network round-trip completes (handles Render cold-start latency).
+  // Wait for BOTH the POST (budget created) and the subsequent GET refetch
+  // (budget list reloaded) to complete before asserting on the UI.
+  // This handles Render cold-start latency where the DB round-trip can take 15–20s.
   const budgetSavedPromise = page.waitForResponse(
     (resp) =>
       resp.url().includes("/api/budgets") && resp.request().method() === "POST",
     { timeout: 30_000 },
   );
+  const budgetRefetchPromise = page.waitForResponse(
+    (resp) =>
+      resp.url().includes("/api/budgets") && resp.request().method() === "GET",
+    { timeout: 30_000 },
+  );
   await page.getByRole("button", { name: "Add Budget", exact: true }).click();
   await budgetSavedPromise;
+  await budgetRefetchPromise;
 
   // Verify the budget row appears on the Budget page.
+  // Use a generous timeout in case the UI re-renders after the refetch.
   await expect(
     page.locator('[data-testid^="budget-row-"]').first(),
-  ).toBeVisible({ timeout: 10_000 });
+  ).toBeVisible({ timeout: 20_000 });
 
   // Navigate to dashboard and verify the budget section appears.
   // Reload the dashboard to ensure the BudgetContext re-fetches from the server
