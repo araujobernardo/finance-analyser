@@ -4,6 +4,7 @@ import { useAuth } from "../context/AuthContext";
 import { useAccount } from "../context/AccountContext";
 import { useFileUpload } from "../hooks/useFileUpload";
 import { Skeleton } from "./Skeleton";
+import { AddAccountModal } from "./AddAccountModal";
 import { ACCOUNT_COLORS } from "../constants/colors";
 import "./Sidebar.css";
 
@@ -45,6 +46,7 @@ export function Sidebar({
   const fileRef = useRef<HTMLInputElement>(null);
   const [editingShort, setEditingShort] = useState<string | null>(null);
   const [editVal, setEditVal] = useState("");
+  const [showAddAccountModal, setShowAddAccountModal] = useState(false);
 
   // Ref-based queue for sequential multi-file uploads (no re-renders needed).
   const fileQueueRef = useRef<File[]>([]);
@@ -130,8 +132,23 @@ export function Sidebar({
         <div className="sidebar-brand-count">{txnCount} transactions</div>
       </div>
 
+      {showAddAccountModal && (
+        <AddAccountModal onClose={() => setShowAddAccountModal(false)} />
+      )}
+
       <div className="sidebar-accounts">
-        <div className="sidebar-section-label">Accounts</div>
+        <div className="sidebar-section-header">
+          <div className="sidebar-section-label">Accounts</div>
+          <button
+            className="sidebar-add-account-btn"
+            title="Add account"
+            aria-label="Add account"
+            data-testid="add-account-btn"
+            onClick={() => setShowAddAccountModal(true)}
+          >
+            +
+          </button>
+        </div>
         {accountsLoading ? (
           <Skeleton count={3} height="2.5rem" />
         ) : accountsError ? (
