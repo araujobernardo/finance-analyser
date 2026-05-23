@@ -30,7 +30,7 @@ const MULTI_MONTH_CSV =
 
 const EMPTY_DATA_CSV = "Date,Description,Amount,Balance\n";
 
-const DEFAULT_ID = "default";
+const DEFAULT_ID = "test-account-id";
 
 /** Returns a successful import API response. */
 function mockImportSuccess(imported = 1, skipped = 0) {
@@ -51,7 +51,9 @@ beforeEach(() => {
 describe("useFileUpload — handleFile", () => {
   it("POSTs to import endpoint and sets savedMonthKey when no duplicate exists", async () => {
     mockImportSuccess(2);
-    const { result } = renderHook(() => useFileUpload());
+    const { result } = renderHook(() =>
+      useFileUpload({ accountId: DEFAULT_ID }),
+    );
 
     await act(async () => {
       result.current.handleFile(makeFile(VALID_CSV));
@@ -70,7 +72,9 @@ describe("useFileUpload — handleFile", () => {
 
   it("exposes importedCount and skippedCount from API response", async () => {
     mockImportSuccess(5, 1);
-    const { result } = renderHook(() => useFileUpload());
+    const { result } = renderHook(() =>
+      useFileUpload({ accountId: DEFAULT_ID }),
+    );
 
     await act(async () => {
       result.current.handleFile(makeFile(VALID_CSV));
@@ -85,7 +89,9 @@ describe("useFileUpload — handleFile", () => {
     // storage.ts deleted: duplicate detection is now API-based (FA-MIGR-002).
     // isDuplicate is always false; uploads proceed immediately.
     mockImportSuccess(2);
-    const { result } = renderHook(() => useFileUpload());
+    const { result } = renderHook(() =>
+      useFileUpload({ accountId: DEFAULT_ID }),
+    );
 
     await act(async () => {
       result.current.handleFile(makeFile(VALID_CSV));
@@ -98,7 +104,9 @@ describe("useFileUpload — handleFile", () => {
 
   it("always calls apiFetch immediately — no duplicate-wait state", async () => {
     mockImportSuccess(2);
-    const { result } = renderHook(() => useFileUpload());
+    const { result } = renderHook(() =>
+      useFileUpload({ accountId: DEFAULT_ID }),
+    );
 
     await act(async () => {
       result.current.handleFile(makeFile(VALID_CSV));
@@ -111,7 +119,9 @@ describe("useFileUpload — handleFile", () => {
   it("collects parse errors and still sets selectedFile", async () => {
     const badCsv =
       "Date,Description,Amount,Balance\nbad-date,Test,-50.00,950.00";
-    const { result } = renderHook(() => useFileUpload());
+    const { result } = renderHook(() =>
+      useFileUpload({ accountId: DEFAULT_ID }),
+    );
 
     await act(async () => {
       result.current.handleFile(makeFile(badCsv));
@@ -123,7 +133,9 @@ describe("useFileUpload — handleFile", () => {
   });
 
   it("does not call apiFetch when CSV has no valid transactions", async () => {
-    const { result } = renderHook(() => useFileUpload());
+    const { result } = renderHook(() =>
+      useFileUpload({ accountId: DEFAULT_ID }),
+    );
 
     await act(async () => {
       result.current.handleFile(makeFile(EMPTY_DATA_CSV));
@@ -142,7 +154,9 @@ describe("useFileUpload — multi-month upload", () => {
     mockImportSuccess(1);
     mockImportSuccess(1);
     mockImportSuccess(1);
-    const { result } = renderHook(() => useFileUpload());
+    const { result } = renderHook(() =>
+      useFileUpload({ accountId: DEFAULT_ID }),
+    );
 
     await act(async () => {
       result.current.handleFile(makeFile(MULTI_MONTH_CSV));
@@ -156,7 +170,9 @@ describe("useFileUpload — multi-month upload", () => {
     mockImportSuccess(1);
     mockImportSuccess(1);
     mockImportSuccess(1);
-    const { result } = renderHook(() => useFileUpload());
+    const { result } = renderHook(() =>
+      useFileUpload({ accountId: DEFAULT_ID }),
+    );
 
     await act(async () => {
       result.current.handleFile(makeFile(MULTI_MONTH_CSV));
@@ -170,7 +186,9 @@ describe("useFileUpload — multi-month upload", () => {
     mockImportSuccess(1);
     mockImportSuccess(1);
     mockImportSuccess(1);
-    const { result } = renderHook(() => useFileUpload());
+    const { result } = renderHook(() =>
+      useFileUpload({ accountId: DEFAULT_ID }),
+    );
 
     await act(async () => {
       result.current.handleFile(makeFile(MULTI_MONTH_CSV));
@@ -184,7 +202,9 @@ describe("useFileUpload — multi-month upload", () => {
     mockImportSuccess(2);
     mockImportSuccess(3);
     mockImportSuccess(1);
-    const { result } = renderHook(() => useFileUpload());
+    const { result } = renderHook(() =>
+      useFileUpload({ accountId: DEFAULT_ID }),
+    );
 
     await act(async () => {
       result.current.handleFile(makeFile(MULTI_MONTH_CSV));
@@ -199,7 +219,9 @@ describe("useFileUpload — multi-month upload", () => {
     mockImportSuccess(1);
     mockImportSuccess(1);
     mockImportSuccess(1);
-    const { result } = renderHook(() => useFileUpload());
+    const { result } = renderHook(() =>
+      useFileUpload({ accountId: DEFAULT_ID }),
+    );
 
     await act(async () => {
       result.current.handleFile(makeFile(MULTI_MONTH_CSV));
@@ -230,7 +252,9 @@ describe("useFileUpload — confirmReplace", () => {
 describe("useFileUpload — cancelReplace", () => {
   it("clears selectedFile without calling apiFetch", async () => {
     mockImportSuccess(2);
-    const { result } = renderHook(() => useFileUpload());
+    const { result } = renderHook(() =>
+      useFileUpload({ accountId: DEFAULT_ID }),
+    );
 
     await act(async () => {
       result.current.handleFile(makeFile(VALID_CSV));
@@ -251,7 +275,9 @@ describe("useFileUpload — cancelReplace", () => {
 describe("useFileUpload — duplicateMonth", () => {
   it("is always null — localStorage duplicate detection removed in T013", async () => {
     mockImportSuccess(1);
-    const { result } = renderHook(() => useFileUpload());
+    const { result } = renderHook(() =>
+      useFileUpload({ accountId: DEFAULT_ID }),
+    );
 
     await act(async () => {
       result.current.handleFile(makeFile(VALID_CSV_APRIL));
@@ -284,5 +310,61 @@ describe("useFileUpload — per-account scoping", () => {
       `/api/accounts/${ACCOUNT_A}/transactions/import`,
       expect.objectContaining({ method: "POST" }),
     );
+  });
+});
+
+// ── uploadError — no accountId ─────────────────────────────────────────────
+
+describe("useFileUpload — uploadError when no accountId", () => {
+  it("sets uploadError and does not call apiFetch when accountId is undefined", async () => {
+    const { result } = renderHook(() => useFileUpload());
+
+    await act(async () => {
+      result.current.handleFile(makeFile(VALID_CSV));
+      await new Promise((r) => setTimeout(r, 50));
+    });
+
+    expect(mockApiFetch).not.toHaveBeenCalled();
+    expect(result.current.uploadError).toBeTruthy();
+    expect(result.current.uploadError).toContain("select a specific account");
+  });
+
+  it("uploadError is null when accountId is provided and upload succeeds", async () => {
+    mockImportSuccess(2);
+    const { result } = renderHook(() =>
+      useFileUpload({ accountId: DEFAULT_ID }),
+    );
+
+    await act(async () => {
+      result.current.handleFile(makeFile(VALID_CSV));
+      await new Promise((r) => setTimeout(r, 50));
+    });
+
+    expect(result.current.uploadError).toBeNull();
+  });
+});
+
+// ── uploadError — HTTP error ───────────────────────────────────────────────
+
+describe("useFileUpload — uploadError on HTTP failure", () => {
+  it("sets uploadError (not skippedCount) when API returns non-ok response", async () => {
+    mockApiFetch.mockResolvedValueOnce({
+      ok: false,
+      status: 404,
+      text: async () => "Account not found",
+    });
+    const { result } = renderHook(() =>
+      useFileUpload({ accountId: DEFAULT_ID }),
+    );
+
+    await act(async () => {
+      result.current.handleFile(makeFile(VALID_CSV));
+      await new Promise((r) => setTimeout(r, 50));
+    });
+
+    expect(result.current.uploadError).toBeTruthy();
+    expect(result.current.uploadError).toContain("Upload failed");
+    // skippedCount must NOT be inflated by the HTTP error
+    expect(result.current.skippedCount).toBe(0);
   });
 });

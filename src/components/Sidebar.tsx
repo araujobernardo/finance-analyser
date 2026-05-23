@@ -58,6 +58,7 @@ export function Sidebar({
     isDuplicate,
     duplicateMonth,
     parseErrors,
+    uploadError,
     handleFile,
     confirmReplace,
     cancelReplace,
@@ -84,8 +85,10 @@ export function Sidebar({
 
   const onFilesSelected = (files: File[]) => {
     if (files.length === 0) return;
+    // Guard: block upload when "All Accounts" is selected — useFileUpload has
+    // no accountId and will surface the error via uploadError state.
     fileQueueRef.current = files;
-    // Start with first file immediately.
+    // Start with first file immediately (handleFile guards internally).
     handleFile(files[0]);
   };
 
@@ -107,6 +110,9 @@ export function Sidebar({
   if (isCategorising) {
     uploadStatusMsg = "Categorising & uploading…";
     uploadStatusColor = "var(--muted)";
+  } else if (uploadError) {
+    uploadStatusMsg = uploadError;
+    uploadStatusColor = "var(--red)";
   } else if (parseErrors.length > 0) {
     uploadStatusMsg = `Parse error: ${parseErrors[0].message}`;
     uploadStatusColor = "var(--red)";
