@@ -131,3 +131,39 @@ describe("Sidebar — upload status display", () => {
     expect(screen.queryByTestId("upload-status")).not.toBeInTheDocument();
   });
 });
+
+describe("Sidebar — add account button", () => {
+  it("renders the add-account-btn beside the ACCOUNTS section label", async () => {
+    renderSidebar();
+    const btn = screen.getByTestId("add-account-btn");
+    expect(btn).toBeInTheDocument();
+    expect(btn).toHaveAttribute("aria-label", "Add account");
+  });
+
+  it("opens AddAccountModal when + button is clicked", async () => {
+    const user = userEvent.setup();
+    renderSidebar();
+
+    // Modal should not be present initially
+    expect(screen.queryByText("Add Account")).not.toBeInTheDocument();
+
+    // Click the + button
+    await user.click(screen.getByTestId("add-account-btn"));
+
+    // Modal should now appear
+    expect(screen.getByText("Add Account")).toBeInTheDocument();
+  });
+
+  it("closes AddAccountModal when Cancel is clicked", async () => {
+    const user = userEvent.setup();
+    renderSidebar();
+
+    // Open modal
+    await user.click(screen.getByTestId("add-account-btn"));
+    expect(screen.getByText("Add Account")).toBeInTheDocument();
+
+    // Click cancel
+    await user.click(screen.getByRole("button", { name: /cancel/i }));
+    expect(screen.queryByText("Add Account")).not.toBeInTheDocument();
+  });
+});
