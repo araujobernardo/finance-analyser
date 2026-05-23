@@ -78,6 +78,10 @@ test("creating a new account via modal adds it to the sidebar list", async ({
     timeout: 5_000,
   });
 
-  // New account name should appear in the sidebar
-  await expect(page.getByText(accountName)).toBeVisible({ timeout: 10_000 });
+  // New account name should appear in the sidebar within the account list.
+  // Use a longer timeout to account for Render cold-start latency — the
+  // AccountContext refetch after addAccount() can take 15–20 s on a cold instance.
+  await expect(
+    page.locator('[data-testid="account-item"]', { hasText: accountName }),
+  ).toBeVisible({ timeout: 30_000 });
 });
