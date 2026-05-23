@@ -10,11 +10,9 @@ test("budget section is hidden when no budgets are set", async ({
 });
 
 // Fix #732 — rewritten to use the Budget page modal UI (SettingsPage inputs
-// were removed in FA-CORE-001). The dashboard assertion is guarded by
-// test.fixme until BudgetSummaryWidget (PR #735 / fix #734) is deployed to
-// production — the E2E suite runs against the live Render URL, so
-// data-testid="budget-section" only exists there after that PR ships.
-test.fixme("setting a budget via Budget page shows it on the dashboard", async ({
+// were removed in FA-CORE-001). BudgetSummaryWidget (PR #735 / fix #734)
+// is now deployed to production, so this test runs live.
+test("setting a budget via Budget page shows it on the dashboard", async ({
   authenticatedPage: page,
 }) => {
   await uploadFixtures(page);
@@ -30,8 +28,9 @@ test.fixme("setting a budget via Budget page shows it on the dashboard", async (
   await page.getByLabel(/category/i).fill("Groceries");
   await page.getByLabel(/monthly limit/i).fill("500");
 
-  // Submit the form
-  await page.getByRole("button", { name: /add budget/i }).click();
+  // Submit the form — use exact match to avoid strict-mode collision with
+  // the page-level "+ Add Budget" button that remains visible in the DOM.
+  await page.getByRole("button", { name: "Add Budget", exact: true }).click();
 
   // Verify the budget row appears on the Budget page
   await expect(
