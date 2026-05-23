@@ -4,8 +4,8 @@ import type { ParseError, Transaction } from "../utils/csvParser";
 import { categoriseTransactions } from "../services/categorisation";
 import { useApi } from "../lib/api";
 
-/** Default account ID used as a fallback when no accountId option is supplied. */
-const DEFAULT_ACCOUNT_ID = "default";
+// DEFAULT_ACCOUNT_ID has been removed — callers must supply a valid accountId.
+// If accountId is undefined the hook will not attempt an upload.
 
 /** Derives a stable month key (e.g. "2024-03") from a transaction Date. */
 function monthKeyFromDate(date: Date): string {
@@ -29,6 +29,8 @@ export interface UseFileUploadResult {
   savedMonthCount: number;
   importedCount: number;
   skippedCount: number;
+  /** Non-null when the upload API returned a non-ok response. */
+  uploadError: string | null;
   handleFile: (file: File) => void;
   confirmReplace: () => void;
   cancelReplace: () => void;
@@ -69,7 +71,7 @@ function formatDateToYMD(date: Date): string {
 export function useFileUpload(
   options: UseFileUploadOptions = {},
 ): UseFileUploadResult {
-  const accountId = options.accountId ?? DEFAULT_ACCOUNT_ID;
+  const accountId = options.accountId;
   const onImportComplete = options.onImportComplete;
   const { apiFetch } = useApi();
 
@@ -80,11 +82,22 @@ export function useFileUpload(
   const [savedMonthCount, setSavedMonthCount] = useState(0);
   const [importedCount, setImportedCount] = useState(0);
   const [skippedCount, setSkippedCount] = useState(0);
+  const [uploadError, setUploadError] = useState<string | null>(null);
 
   async function saveGroup(group: MonthGroup): Promise<{
     imported: number;
     skipped: number;
+    error?: string;
   }> {
+    if (!accountId) {
+      return {
+        imported: 0,
+        skipped: 0,
+        error:
+          "No account selected. Please select a specific account before uploading.",
+      };
+    }
+
     const { transactions } = group;
     const categorised = await categoriseTransactions(transactions);
 
@@ -108,37 +121,63 @@ export function useFileUpload(
           body: JSON.stringify(payload),
         },
       );
-      if (!res.ok) return { imported: 0, skipped: payload.transactions.length };
+      if (!res.ok) {
+        const errText = await res.text().catch(() => `HTTP ${res.status}`);
+        return {
+          imported: 0,
+          skipped: 0,
+          error: `Upload failed: ${errText || `HTTP ${res.status}`}`,
+        };
+      }
       const data = (await res.json()) as { imported: number; skipped: number };
       return data;
-    } catch {
-      return { imported: 0, skipped: payload.transactions.length };
+    } catch (err) {
+      const message = err instanceof Error ? err.message : "Network error";
+      return { imported: 0, skipped: 0, error: `Upload failed: ${message}` };
     }
   }
 
   async function saveAllGroups(groups: MonthGroup[]): Promise<void> {
     setIsCategorising(true);
+    setUploadError(null);
     let totalImported = 0;
     let totalSkipped = 0;
+    let firstError: string | undefined;
     try {
       for (const group of groups) {
-        const { imported, skipped } = await saveGroup(group);
-        totalImported += imported;
-        totalSkipped += skipped;
+        const result = await saveGroup(group);
+        if (result.error) {
+          firstError = result.error;
+          break;
+        }
+        totalImported += result.imported;
+        totalSkipped += result.skipped;
       }
-      const mostRecent = groups[groups.length - 1].monthKey;
-      setSavedMonthKey(mostRecent);
-      setSavedMonthCount(groups.length);
-      setImportedCount(totalImported);
-      setSkippedCount(totalSkipped);
-      // FA-NW-004 US3: notify caller so net-worth data can be refreshed
-      onImportComplete?.();
+      if (firstError) {
+        setUploadError(firstError);
+      } else {
+        const mostRecent = groups[groups.length - 1].monthKey;
+        setSavedMonthKey(mostRecent);
+        setSavedMonthCount(groups.length);
+        setImportedCount(totalImported);
+        setSkippedCount(totalSkipped);
+        // FA-NW-004 US3: notify caller so net-worth data can be refreshed
+        onImportComplete?.();
+      }
     } finally {
       setIsCategorising(false);
     }
   }
 
   function handleFile(file: File): void {
+    // Guard: do not attempt upload if no accountId is provided.
+    if (!accountId) {
+      setUploadError(
+        "Please select a specific account before uploading a CSV.",
+      );
+      return;
+    }
+
     const reader = new FileReader();
     reader.onload = (e) => {
       const text = e.target?.result;
@@ -178,6 +217,7 @@ export function useFileUpload(
     savedMonthCount,
     importedCount,
     skippedCount,
+    uploadError,
     handleFile,
     confirmReplace,
     cancelReplace,
