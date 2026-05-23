@@ -28,8 +28,9 @@ test("setting a budget via Budget page shows it on the dashboard", async ({
   await page.getByLabel(/category/i).fill("Groceries");
   await page.getByLabel(/monthly limit/i).fill("500");
 
-  // Submit the form
-  await page.getByRole("button", { name: /add budget/i }).click();
+  // Submit the form — use exact match to avoid strict-mode collision with
+  // the page-level "+ Add Budget" button that remains visible in the DOM.
+  await page.getByRole("button", { name: "Add Budget", exact: true }).click();
 
   // Verify the budget row appears on the Budget page
   await expect(
