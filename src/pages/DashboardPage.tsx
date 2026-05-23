@@ -2,7 +2,11 @@ import { PieChart, Pie, Cell, Tooltip, ResponsiveContainer } from "recharts";
 import { useState, useMemo } from "react";
 import { ACCOUNT_COLORS } from "../constants/colors";
 import type { ApiTransaction } from "../types/api";
-import { useAccount, useAllTransactions } from "../context/AccountContext";
+import {
+  useAccount,
+  useAllTransactions,
+  ALL_ACCOUNTS_ID,
+} from "../context/AccountContext";
 import {
   buildWeeklyTotals,
   buildWeeklyCategoryTotals,
@@ -98,7 +102,7 @@ const CAT_COLORS = [
 // ── DashboardPage ────────────────────────────────────────────────────────────
 
 export function DashboardPage() {
-  const { accounts, isLoading } = useAccount();
+  const { accounts, activeAccountId, isLoading } = useAccount();
   const rawTransactions = useAllTransactions();
 
   // Adapt ApiTransaction rows for chart utilities.
@@ -129,7 +133,6 @@ export function DashboardPage() {
 
   // Month selection state — controlled; reset to most-recent when months change.
   const [selectedMonthsRaw, setSelectedMonths] = useState<string[]>([]);
-  const [acctFilter, setAcctFilter] = useState("all");
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
 
   // Effective selected months: filter out stale values, default to most-recent.
@@ -138,11 +141,6 @@ export function DashboardPage() {
     const valid = selectedMonthsRaw.filter((m) => months.includes(m));
     return valid.length > 0 ? valid : [months[0]];
   }, [selectedMonthsRaw, months]);
-
-  const handleAcctFilterChange = (next: string) => {
-    setAcctFilter(next);
-    setSelectedCategory(null);
-  };
 
   const toggleMonth = (m: string) =>
     setSelectedMonths(
@@ -161,9 +159,10 @@ export function DashboardPage() {
       adapted.filter(
         (t) =>
           selectedMonths.includes(t.month) &&
-          (acctFilter === "all" || t.account === acctFilter),
+          (activeAccountId === ALL_ACCOUNTS_ID ||
+            t.accountShort === activeAccountId),
       ),
-    [adapted, selectedMonths, acctFilter],
+    [adapted, selectedMonths, activeAccountId],
   );
 
   const real = useMemo(
@@ -235,13 +234,23 @@ export function DashboardPage() {
     [accounts, adapted, selectedMonths],
   );
 
+  // Resolve the nickname for the weekly aggregation utilities, which filter
+  // by t.account (nickname). When "all" is selected pass "all" unchanged.
+  const weeklyAccountFilter = useMemo(() => {
+    if (activeAccountId === ALL_ACCOUNTS_ID) return ALL_ACCOUNTS_ID;
+    return (
+      accounts.find((a) => a.id === activeAccountId)?.nickname ??
+      ALL_ACCOUNTS_ID
+    );
+  }, [activeAccountId, accounts]);
+
   const weeklyBuckets = useMemo(
-    () => buildWeeklyTotals(adapted, acctFilter),
-    [adapted, acctFilter],
+    () => buildWeeklyTotals(adapted, weeklyAccountFilter),
+    [adapted, weeklyAccountFilter],
   );
   const weeklyCategoryBuckets = useMemo(
-    () => buildWeeklyCategoryTotals(adapted, acctFilter),
-    [adapted, acctFilter],
+    () => buildWeeklyCategoryTotals(adapted, weeklyAccountFilter),
+    [adapted, weeklyAccountFilter],
   );
 
   // Map to Transaction shape for LargestTransactions component.
@@ -319,40 +328,6 @@ export function DashboardPage() {
         </div>
       </div>
 
-      {/* Account filter pills */}
-      {accounts.length > 1 && (
-        <div className="dash-acct-pills">
-          <button
-            className={`pill${acctFilter === "all" ? " pill-active" : ""}`}
-            onClick={() => handleAcctFilterChange("all")}
-          >
-            All Accounts
-          </button>
-          {accounts.map((a, i) => {
-            const col = ACCOUNT_COLORS[i % ACCOUNT_COLORS.length];
-            const isActive = acctFilter === a.nickname;
-            return (
-              <button
-                key={a.id}
-                className={`pill${isActive ? " pill-active" : ""}`}
-                style={
-                  isActive
-                    ? { borderColor: col, color: col, background: `${col}22` }
-                    : undefined
-                }
-                onClick={() =>
-                  handleAcctFilterChange(
-                    acctFilter === a.nickname ? "all" : a.nickname,
-                  )
-                }
-              >
-                {a.nickname}
-              </button>
-            );
-          })}
-        </div>
-      )}
-
       {/* Summary stats */}
       <div className="dash-stats-grid" data-testid="summary-stats">
         <div className="card">
@@ -407,7 +382,7 @@ export function DashboardPage() {
       )}
 
       {/* Per-account breakdown */}
-      {acctFilter === "all" && accounts.length > 1 && (
+      {activeAccountId === ALL_ACCOUNTS_ID && accounts.length > 1 && (
         <div className="dash-acct-grid">
           {acctBreakdown.map(
             ({ short, display, color, income: ai, spend: as_ }) => (

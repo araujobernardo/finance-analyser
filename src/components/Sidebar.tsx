@@ -144,18 +144,37 @@ export function Sidebar({
       )}
 
       <div className="sidebar-accounts">
-        <div className="sidebar-section-header">
-          <div className="sidebar-section-label">Accounts</div>
+        {/* Option C: "All Accounts" IS the section header — clicking it selects all */}
+        <div
+          className={`sidebar-all-accounts-row${activeAccountId === "all" ? " sidebar-all-accounts-row--active" : ""}`}
+          data-testid="account-all-accounts"
+          role="button"
+          tabIndex={0}
+          aria-pressed={activeAccountId === "all"}
+          onClick={() => setActiveAccountId("all")}
+          onKeyDown={(e) => {
+            if (e.key === "Enter" || e.key === " ") {
+              e.preventDefault();
+              setActiveAccountId("all");
+            }
+          }}
+        >
+          <div className="sidebar-all-accounts-dot" />
+          <span className="sidebar-all-accounts-label">All Accounts</span>
           <button
             className="sidebar-add-account-btn"
             title="Add account"
             aria-label="Add account"
             data-testid="add-account-btn"
-            onClick={() => setShowAddAccountModal(true)}
+            onClick={(e) => {
+              e.stopPropagation();
+              setShowAddAccountModal(true);
+            }}
           >
             +
           </button>
         </div>
+
         {accountsLoading ? (
           <Skeleton count={3} height="2.5rem" />
         ) : accountsError ? (
@@ -169,7 +188,7 @@ export function Sidebar({
             return (
               <div
                 key={acct.short}
-                className={`sidebar-account-row${isActive ? " sidebar-account-row--active" : ""}`}
+                className={`sidebar-account-row sidebar-account-row--indented${isActive ? " sidebar-account-row--active" : ""}`}
                 data-testid="account-item"
                 data-active={isActive ? "true" : undefined}
                 role="button"
