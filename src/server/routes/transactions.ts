@@ -279,6 +279,19 @@ transactionsRouter.post(
 // standalone patchDeleteRouter for /api/transactions routes.
 export const transactionOpsRouter = Router();
 
+// DELETE /api/transactions — danger zone: bulk-delete ALL transactions for the
+// authenticated user. Accounts are preserved; only transaction rows are removed.
+// Registered before /:id so Express does not attempt to parse "" as an id.
+transactionOpsRouter.delete("/", authenticateToken, async (_req, res, next) => {
+  try {
+    const userId = (res.locals as AuthLocals).user.userId;
+    await db.delete(transactions).where(eq(transactions.userId, userId));
+    res.status(204).send();
+  } catch (err) {
+    next(err);
+  }
+});
+
 transactionOpsRouter.patch(
   "/:id",
   authenticateToken,
