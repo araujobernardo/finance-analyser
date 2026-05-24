@@ -1,5 +1,42 @@
 import { test, expect, uploadFixtures } from "./fixtures";
 
+// ── #761: AddBudgetModal redesign validation scenarios ────────────────────────
+
+test("Add Budget modal shows context hint and inline validation errors", async ({
+  authenticatedPage: page,
+}) => {
+  // Navigate to the Budget page
+  await page.getByRole("link", { name: /budget/i }).click();
+  await page.waitForURL(/\/budget/);
+
+  // Open the modal
+  await page.getByRole("button", { name: /\+ add budget/i }).click();
+
+  // Context hint banner is visible
+  await expect(
+    page.getByText(/set a monthly spending limit for a category/i),
+  ).toBeVisible();
+
+  // Submit with empty fields — both errors appear
+  await page.getByRole("button", { name: "Add Budget", exact: true }).click();
+  await expect(page.getByText(/category is required/i)).toBeVisible();
+  await expect(page.getByText(/please enter a valid limit/i)).toBeVisible();
+
+  // Fill category — category error clears
+  await page.getByTestId("budget-modal-category-input").fill("Groceries");
+  await expect(page.getByText(/category is required/i)).not.toBeVisible();
+
+  // Fill limit — limit error clears
+  await page.getByTestId("budget-modal-limit-input").fill("300");
+  await expect(page.getByText(/please enter a valid limit/i)).not.toBeVisible();
+
+  // Cancel closes the modal without saving
+  await page.getByRole("button", { name: /cancel/i }).click();
+  await expect(
+    page.getByText(/set a monthly spending limit for a category/i),
+  ).not.toBeVisible();
+});
+
 test("budget section is hidden when no budgets are set", async ({
   authenticatedPage: page,
 }) => {
