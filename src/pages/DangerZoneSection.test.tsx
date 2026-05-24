@@ -212,7 +212,8 @@ describe("DangerZoneSection — per-account deletion (#770)", () => {
   it("enables the Clear account data button when an account is selected", async () => {
     const user = userEvent.setup();
     renderSection();
-    await screen.findByTestId("account-select-dropdown");
+    // Wait for accounts to be populated in the dropdown
+    await screen.findByText("Checking");
 
     await user.selectOptions(
       screen.getByTestId("account-select-dropdown"),
@@ -226,7 +227,8 @@ describe("DangerZoneSection — per-account deletion (#770)", () => {
   it("shows confirmation dialog with account name when Clear account data is clicked", async () => {
     const user = userEvent.setup();
     renderSection();
-    await screen.findByTestId("account-select-dropdown");
+    // Wait for accounts to be populated in the dropdown
+    await screen.findByText("Checking");
 
     await user.selectOptions(
       screen.getByTestId("account-select-dropdown"),
@@ -241,7 +243,8 @@ describe("DangerZoneSection — per-account deletion (#770)", () => {
   it("keeps the per-account confirm button disabled until DELETE is typed", async () => {
     const user = userEvent.setup();
     renderSection();
-    await screen.findByTestId("account-select-dropdown");
+    // Wait for accounts to be populated in the dropdown
+    await screen.findByText("Checking");
 
     await user.selectOptions(
       screen.getByTestId("account-select-dropdown"),
@@ -272,7 +275,8 @@ describe("DangerZoneSection — per-account deletion (#770)", () => {
       } as unknown as Response);
 
     renderSection();
-    await screen.findByTestId("account-select-dropdown");
+    // Wait for accounts to be populated in the dropdown
+    await screen.findByText("Checking");
 
     await user.selectOptions(
       screen.getByTestId("account-select-dropdown"),
@@ -304,7 +308,8 @@ describe("DangerZoneSection — per-account deletion (#770)", () => {
       } as unknown as Response);
 
     renderSection();
-    await screen.findByTestId("account-select-dropdown");
+    // Wait for accounts to be populated in the dropdown
+    await screen.findByText("Checking");
 
     await user.selectOptions(
       screen.getByTestId("account-select-dropdown"),
@@ -332,7 +337,8 @@ describe("DangerZoneSection — per-account deletion (#770)", () => {
       } as unknown as Response);
 
     renderSection();
-    await screen.findByTestId("account-select-dropdown");
+    // Wait for the accounts to be loaded into the dropdown options
+    await screen.findByText("Credit Card");
 
     await user.selectOptions(
       screen.getByTestId("account-select-dropdown"),
@@ -363,7 +369,8 @@ describe("DangerZoneSection — per-account deletion (#770)", () => {
       } as unknown as Response);
 
     renderSection();
-    await screen.findByTestId("account-select-dropdown");
+    // Wait for the accounts to be loaded into the dropdown options
+    await screen.findByText("Checking");
 
     await user.selectOptions(
       screen.getByTestId("account-select-dropdown"),
@@ -384,7 +391,8 @@ describe("DangerZoneSection — per-account deletion (#770)", () => {
   it("hides the dialog when Cancel is clicked", async () => {
     const user = userEvent.setup();
     renderSection();
-    await screen.findByTestId("account-select-dropdown");
+    // Wait for accounts to be populated in the dropdown
+    await screen.findByText("Checking");
 
     await user.selectOptions(
       screen.getByTestId("account-select-dropdown"),
