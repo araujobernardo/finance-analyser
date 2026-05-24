@@ -9,6 +9,7 @@ import {
 } from "../middleware/authenticateToken.ts";
 import { syncLinkedAssets } from "../utils/syncLinkedAssets.ts";
 import { recalculateUserGoals } from "../utils/recalculateUserGoals.ts";
+import { detectTransfers } from "../utils/detectTransfers.ts";
 
 export const transactionsRouter = Router({ mergeParams: true });
 
@@ -225,7 +226,23 @@ transactionsRouter.post(
       }
 
       if (validRows.length > 0) {
-        await db.insert(transactions).values(validRows);
+        const inserted = await db
+          .insert(transactions)
+          .values(validRows)
+          .returning({ id: transactions.id });
+        const insertedIds = inserted.map((r) => r.id);
+
+        // FA-766: detect inter-account transfer pairs and flag both sides.
+        // Wrapped in try-catch: detection failures must not roll back a successful import.
+        try {
+          await detectTransfers(userId, accountId, insertedIds, db);
+        } catch (transferErr) {
+          console.error(
+            "[import] detectTransfers failed (non-fatal):",
+            transferErr,
+          );
+        }
+
         // FA-NW-004 US3: sync any assets/liabilities linked to this account.
         // Wrapped in try-catch: sync failures are secondary effects and must
         // never roll back a successful import.
