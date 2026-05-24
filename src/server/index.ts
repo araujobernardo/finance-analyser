@@ -19,6 +19,7 @@ import {
   transactionsRouter,
   transactionOpsRouter,
 } from "./routes/transactions.ts";
+import { categoriesRouter } from "./routes/categories.ts";
 
 const app = express();
 const PORT = process.env.PORT ?? 3001;
@@ -38,6 +39,7 @@ app.use(authRouter);
 app.use("/api/accounts", accountsRouter);
 app.use("/api/accounts/:accountId/transactions", transactionsRouter);
 app.use("/api/transactions", transactionOpsRouter);
+app.use("/api/categories", categoriesRouter);
 app.use("/api/assets", assetsRouter);
 app.use("/api/liabilities", liabilitiesRouter);
 app.use("/api/goals", goalsRouter);
