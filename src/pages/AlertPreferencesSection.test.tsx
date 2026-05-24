@@ -24,6 +24,23 @@ vi.mock("react-router-dom", () => ({
 
 // ── Helpers ────────────────────────────────────────────────────────────────
 
+/** Build a mock Response whose .json() returns the provided body. */
+function mockOkResponse(body: unknown): Response {
+  return {
+    ok: true,
+    status: 200,
+    json: () => Promise.resolve(body),
+  } as unknown as Response;
+}
+
+function mockErrorResponse(status = 500): Response {
+  return {
+    ok: false,
+    status,
+    json: () => Promise.resolve({ error: "Server error" }),
+  } as unknown as Response;
+}
+
 function renderSection() {
   return render(<AlertPreferencesSection />);
 }
@@ -36,12 +53,11 @@ describe("AlertPreferencesSection — rendering (#636)", () => {
     // Default: GET /api/preferences returns threshold=80
     mockApiFetch.mockImplementation((url: string) => {
       if (url === "/api/preferences") {
-        return Promise.resolve({
-          alertThreshold: 80,
-          emailAlertsEnabled: true,
-        });
+        return Promise.resolve(
+          mockOkResponse({ alertThreshold: 80, emailAlertsEnabled: true }),
+        );
       }
-      return Promise.resolve({});
+      return Promise.resolve(mockOkResponse({}));
     });
   });
 
@@ -68,10 +84,9 @@ describe("AlertPreferencesSection — rendering (#636)", () => {
 describe("AlertPreferencesSection — validation (#636)", () => {
   beforeEach(() => {
     mockApiFetch.mockReset();
-    mockApiFetch.mockResolvedValue({
-      alertThreshold: 80,
-      emailAlertsEnabled: true,
-    });
+    mockApiFetch.mockResolvedValue(
+      mockOkResponse({ alertThreshold: 80, emailAlertsEnabled: true }),
+    );
   });
 
   it("shows an inline error when the user types a value below 50", async () => {
@@ -122,13 +137,13 @@ describe("AlertPreferencesSection — validation (#636)", () => {
 
   it("does not show an error for a valid value (75)", async () => {
     const user = userEvent.setup();
-    mockApiFetch.mockResolvedValue({ alertThreshold: 80 });
-    // PATCH also resolves successfully
     mockApiFetch.mockImplementation((_url: string, opts?: RequestInit) => {
       if (opts?.method === "PATCH") {
-        return Promise.resolve({ alertThreshold: 75 });
+        return Promise.resolve(mockOkResponse({ alertThreshold: 75 }));
       }
-      return Promise.resolve({ alertThreshold: 80 });
+      return Promise.resolve(
+        mockOkResponse({ alertThreshold: 80, emailAlertsEnabled: true }),
+      );
     });
 
     renderSection();
@@ -151,9 +166,11 @@ describe("AlertPreferencesSection — email alerts toggle (#638)", () => {
     mockApiFetch.mockReset();
     mockApiFetch.mockImplementation((_url: string, opts?: RequestInit) => {
       if (opts?.method === "PATCH") {
-        return Promise.resolve({ emailAlertsEnabled: true });
+        return Promise.resolve(mockOkResponse({ emailAlertsEnabled: true }));
       }
-      return Promise.resolve({ alertThreshold: 80, emailAlertsEnabled: true });
+      return Promise.resolve(
+        mockOkResponse({ alertThreshold: 80, emailAlertsEnabled: true }),
+      );
     });
   });
 
@@ -168,11 +185,10 @@ describe("AlertPreferencesSection — email alerts toggle (#638)", () => {
 
   it("renders the checkbox unchecked when emailAlertsEnabled is false", async () => {
     mockApiFetch.mockImplementation((_url: string, opts?: RequestInit) => {
-      if (opts?.method === "PATCH") return Promise.resolve({});
-      return Promise.resolve({
-        alertThreshold: 80,
-        emailAlertsEnabled: false,
-      });
+      if (opts?.method === "PATCH") return Promise.resolve(mockOkResponse({}));
+      return Promise.resolve(
+        mockOkResponse({ alertThreshold: 80, emailAlertsEnabled: false }),
+      );
     });
     renderSection();
     const checkbox = (await screen.findByTestId(
@@ -208,7 +224,9 @@ describe("AlertPreferencesSection — email alerts toggle (#638)", () => {
 
     mockApiFetch.mockImplementation((_url: string, opts?: RequestInit) => {
       if (opts?.method === "PATCH") return patchPromise;
-      return Promise.resolve({ alertThreshold: 80, emailAlertsEnabled: true });
+      return Promise.resolve(
+        mockOkResponse({ alertThreshold: 80, emailAlertsEnabled: true }),
+      );
     });
 
     const user = userEvent.setup();
@@ -225,7 +243,7 @@ describe("AlertPreferencesSection — email alerts toggle (#638)", () => {
     expect(checkbox.checked).toBe(false);
 
     // Resolve the PATCH
-    resolvePatch({ emailAlertsEnabled: false });
+    resolvePatch(mockOkResponse({ emailAlertsEnabled: false }));
   });
 });
 
@@ -238,9 +256,9 @@ describe("AlertPreferencesSection — PATCH on valid blur (#636)", () => {
     const user = userEvent.setup();
     mockApiFetch.mockImplementation((_url: string, opts?: RequestInit) => {
       if (opts?.method === "PATCH") {
-        return Promise.resolve({ alertThreshold: 70 });
+        return Promise.resolve(mockOkResponse({ alertThreshold: 70 }));
       }
-      return Promise.resolve({ alertThreshold: 80 });
+      return Promise.resolve(mockOkResponse({ alertThreshold: 80 }));
     });
 
     renderSection();
@@ -263,7 +281,9 @@ describe("AlertPreferencesSection — PATCH on valid blur (#636)", () => {
 
   it("does not call PATCH when the value is unchanged after blur", async () => {
     const user = userEvent.setup();
-    mockApiFetch.mockResolvedValue({ alertThreshold: 80 });
+    mockApiFetch.mockResolvedValue(
+      mockOkResponse({ alertThreshold: 80, emailAlertsEnabled: true }),
+    );
 
     renderSection();
     const input = await screen.findByTestId("alert-threshold-input");
@@ -279,5 +299,26 @@ describe("AlertPreferencesSection — PATCH on valid blur (#636)", () => {
       ).filter(([, opts]) => opts?.method === "PATCH");
       expect(patchCalls).toHaveLength(0);
     });
+  });
+
+  it("shows an error message when PATCH returns a non-ok response", async () => {
+    const user = userEvent.setup();
+    mockApiFetch.mockImplementation((_url: string, opts?: RequestInit) => {
+      if (opts?.method === "PATCH") {
+        return Promise.resolve(mockErrorResponse(500));
+      }
+      return Promise.resolve(mockOkResponse({ alertThreshold: 80 }));
+    });
+
+    renderSection();
+    const input = await screen.findByTestId("alert-threshold-input");
+
+    await user.clear(input);
+    await user.type(input, "70");
+    await user.tab();
+
+    expect(
+      await screen.findByTestId("alert-threshold-error"),
+    ).toBeInTheDocument();
   });
 });
