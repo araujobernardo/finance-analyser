@@ -12,6 +12,11 @@ interface Category {
   createdAt: string;
 }
 
+interface Account {
+  id: string;
+  nickname: string;
+}
+
 // ── AlertPreferencesSection ──────────────────────────────────────────────────
 // Self-contained: fetches /api/preferences directly via useApi.
 
@@ -426,13 +431,39 @@ export function CategoriesSection() {
 
 export function DangerZoneSection() {
   const { apiFetch } = useApi();
+
+  // Global delete state
   const [showDialog, setShowDialog] = useState(false);
   const [confirmText, setConfirmText] = useState("");
   const [deleting, setDeleting] = useState(false);
   const [successMsg, setSuccessMsg] = useState("");
   const [errorMsg, setErrorMsg] = useState("");
 
+  // Per-account delete state
+  const [accounts, setAccounts] = useState<Account[]>([]);
+  const [selectedAccountId, setSelectedAccountId] = useState("");
+  const [showAccountDialog, setShowAccountDialog] = useState(false);
+  const [accountConfirmText, setAccountConfirmText] = useState("");
+  const [accountDeleting, setAccountDeleting] = useState(false);
+  const [accountSuccessMsg, setAccountSuccessMsg] = useState("");
+  const [accountErrorMsg, setAccountErrorMsg] = useState("");
+
+  useEffect(() => {
+    apiFetch("/api/accounts")
+      .then(async (res) => {
+        if (!res.ok) return;
+        const data = (await res.json()) as { accounts: Account[] };
+        setAccounts(data.accounts);
+      })
+      .catch(() => {
+        // silently fail — dropdown stays empty
+      });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  const selectedAccount = accounts.find((a) => a.id === selectedAccountId);
   const isConfirmed = confirmText === "DELETE";
+  const isAccountConfirmed = accountConfirmText === "DELETE";
 
   const handleDelete = async () => {
     if (!isConfirmed) return;
@@ -453,6 +484,35 @@ export function DangerZoneSection() {
       setErrorMsg("Failed to delete transactions");
     } finally {
       setDeleting(false);
+    }
+  };
+
+  const handleAccountDelete = async () => {
+    if (!isAccountConfirmed || !selectedAccount) return;
+    setAccountDeleting(true);
+    setAccountErrorMsg("");
+    try {
+      const res = await apiFetch(
+        `/api/accounts/${selectedAccount.id}/transactions`,
+        { method: "DELETE" },
+      );
+      if (res.ok) {
+        const data = (await res.json()) as { deletedCount: number };
+        setShowAccountDialog(false);
+        setAccountConfirmText("");
+        setSelectedAccountId("");
+        setAccountSuccessMsg(
+          `${data.deletedCount} transaction${data.deletedCount === 1 ? "" : "s"} deleted from ${selectedAccount.nickname}.`,
+        );
+        setTimeout(() => setAccountSuccessMsg(""), 4000);
+      } else {
+        const err = (await res.json()) as { error?: string };
+        setAccountErrorMsg(err.error ?? "Failed to delete transactions");
+      }
+    } catch {
+      setAccountErrorMsg("Failed to delete transactions");
+    } finally {
+      setAccountDeleting(false);
     }
   };
 
@@ -538,6 +598,104 @@ export function DangerZoneSection() {
               data-testid="danger-zone-error"
             >
               {errorMsg}
+            </div>
+          )}
+        </div>
+      )}
+
+      <hr className="settings-danger-divider" />
+
+      {/* Per-account deletion */}
+      <div className="settings-section-sub">
+        Clear one account's transactions:
+      </div>
+
+      {accountSuccessMsg && (
+        <div
+          className="settings-danger-success"
+          role="status"
+          data-testid="account-clear-success"
+        >
+          {accountSuccessMsg}
+        </div>
+      )}
+
+      {!showAccountDialog ? (
+        <div className="settings-danger-account-row">
+          <select
+            className="settings-input settings-danger-account-select"
+            value={selectedAccountId}
+            onChange={(e) => setSelectedAccountId(e.target.value)}
+            data-testid="account-select-dropdown"
+            aria-label="Select account to clear"
+          >
+            <option value="">Select an account…</option>
+            {accounts.map((a) => (
+              <option key={a.id} value={a.id}>
+                {a.nickname}
+              </option>
+            ))}
+          </select>
+          <button
+            type="button"
+            className="btn-danger"
+            disabled={!selectedAccountId}
+            onClick={() => setShowAccountDialog(true)}
+            data-testid="account-clear-btn"
+          >
+            Clear account data
+          </button>
+        </div>
+      ) : (
+        <div
+          className="settings-danger-confirm"
+          data-testid="account-clear-dialog"
+        >
+          <p className="settings-danger-prompt">
+            Delete all transactions for{" "}
+            <strong>{selectedAccount?.nickname}</strong>? Type{" "}
+            <strong>DELETE</strong> to confirm:
+          </p>
+          <div className="settings-danger-confirm-row">
+            <input
+              type="text"
+              className="settings-input"
+              value={accountConfirmText}
+              onChange={(e) => setAccountConfirmText(e.target.value)}
+              placeholder="DELETE"
+              autoFocus
+              data-testid="account-clear-confirm-input"
+              aria-label="Type DELETE to confirm"
+            />
+            <button
+              type="button"
+              className="btn-danger"
+              disabled={!isAccountConfirmed || accountDeleting}
+              onClick={() => void handleAccountDelete()}
+              data-testid="account-clear-confirm-btn"
+            >
+              {accountDeleting ? "Deleting…" : "Confirm delete"}
+            </button>
+            <button
+              type="button"
+              className="btn-ghost"
+              onClick={() => {
+                setShowAccountDialog(false);
+                setAccountConfirmText("");
+                setAccountErrorMsg("");
+              }}
+              data-testid="account-clear-cancel-btn"
+            >
+              Cancel
+            </button>
+          </div>
+          {accountErrorMsg && (
+            <div
+              className="settings-alert-error"
+              role="alert"
+              data-testid="account-clear-error"
+            >
+              {accountErrorMsg}
             </div>
           )}
         </div>

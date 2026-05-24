@@ -1,8 +1,8 @@
 import { Router } from "express";
-import { eq, and, asc } from "drizzle-orm";
+import { eq, and, asc, count } from "drizzle-orm";
 import { z } from "zod";
 import { db } from "../../db/index.ts";
-import { accounts } from "../../db/schema.ts";
+import { accounts, transactions } from "../../db/schema.ts";
 import {
   authenticateToken,
   type AuthLocals,
@@ -124,3 +124,44 @@ accountsRouter.delete("/:id", authenticateToken, async (req, res, next) => {
     next(err);
   }
 });
+
+// DELETE /api/accounts/:id/transactions — danger zone: delete all transactions
+// for one account only; account itself is preserved.
+accountsRouter.delete(
+  "/:id/transactions",
+  authenticateToken,
+  async (req, res, next) => {
+    try {
+      const userId = (res.locals as AuthLocals).user.userId;
+      const id = req.params["id"] as string;
+
+      // Verify account ownership before touching transactions
+      const [account] = await db
+        .select({ id: accounts.id })
+        .from(accounts)
+        .where(and(eq(accounts.id, id), eq(accounts.userId, userId)));
+      if (!account) {
+        res.status(404).json({ error: "Account not found" });
+        return;
+      }
+
+      // Count before deleting so we can return deletedCount
+      const [{ value: deletedCount }] = await db
+        .select({ value: count() })
+        .from(transactions)
+        .where(
+          and(eq(transactions.accountId, id), eq(transactions.userId, userId)),
+        );
+
+      await db
+        .delete(transactions)
+        .where(
+          and(eq(transactions.accountId, id), eq(transactions.userId, userId)),
+        );
+
+      res.json({ deletedCount: Number(deletedCount) });
+    } catch (err) {
+      next(err);
+    }
+  },
+);

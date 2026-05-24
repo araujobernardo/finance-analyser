@@ -91,3 +91,100 @@ test("danger zone dialog is dismissed when Cancel is clicked", async ({
   await page.getByTestId("danger-zone-cancel-btn").click();
   await expect(page.getByTestId("danger-zone-dialog")).not.toBeVisible();
 });
+
+// ── #770: Per-account transaction deletion ────────────────────────────────────
+
+test("per-account account selector dropdown is visible in Danger Zone", async ({
+  authenticatedPage: page,
+}) => {
+  await page.getByRole("link", { name: /settings/i }).click();
+  await page.waitForURL(/\/settings/);
+
+  await expect(page.getByTestId("account-select-dropdown")).toBeVisible();
+});
+
+test("per-account Clear account data button is disabled until account is selected", async ({
+  authenticatedPage: page,
+}) => {
+  await page.getByRole("link", { name: /settings/i }).click();
+  await page.waitForURL(/\/settings/);
+
+  // Button is disabled with no account selected
+  await expect(page.getByTestId("account-clear-btn")).toBeDisabled();
+
+  // Select the first account option (not the placeholder)
+  const dropdown = page.getByTestId("account-select-dropdown");
+  const firstOption = dropdown.locator("option").nth(1);
+  const firstValue = await firstOption.getAttribute("value");
+  if (firstValue) {
+    await dropdown.selectOption(firstValue);
+    await expect(page.getByTestId("account-clear-btn")).toBeEnabled();
+  }
+});
+
+test("per-account confirmation dialog names the selected account", async ({
+  authenticatedPage: page,
+}) => {
+  await page.getByRole("link", { name: /settings/i }).click();
+  await page.waitForURL(/\/settings/);
+
+  const dropdown = page.getByTestId("account-select-dropdown");
+  const firstOption = dropdown.locator("option").nth(1);
+  const firstValue = await firstOption.getAttribute("value");
+  const firstName = await firstOption.textContent();
+
+  if (firstValue && firstName) {
+    await dropdown.selectOption(firstValue);
+    await page.getByTestId("account-clear-btn").click();
+
+    // Dialog should be visible and contain the account name
+    await expect(page.getByTestId("account-clear-dialog")).toBeVisible();
+    await expect(
+      page.getByTestId("account-clear-dialog").getByText(firstName.trim()),
+    ).toBeVisible();
+  }
+});
+
+test("per-account confirm button is disabled until DELETE is typed", async ({
+  authenticatedPage: page,
+}) => {
+  await page.getByRole("link", { name: /settings/i }).click();
+  await page.waitForURL(/\/settings/);
+
+  const dropdown = page.getByTestId("account-select-dropdown");
+  const firstOption = dropdown.locator("option").nth(1);
+  const firstValue = await firstOption.getAttribute("value");
+
+  if (firstValue) {
+    await dropdown.selectOption(firstValue);
+    await page.getByTestId("account-clear-btn").click();
+
+    await expect(page.getByTestId("account-clear-confirm-btn")).toBeDisabled();
+
+    await page.getByTestId("account-clear-confirm-input").fill("delete");
+    await expect(page.getByTestId("account-clear-confirm-btn")).toBeDisabled();
+
+    await page.getByTestId("account-clear-confirm-input").fill("DELETE");
+    await expect(page.getByTestId("account-clear-confirm-btn")).toBeEnabled();
+  }
+});
+
+test("per-account confirmation dialog is dismissed when Cancel is clicked", async ({
+  authenticatedPage: page,
+}) => {
+  await page.getByRole("link", { name: /settings/i }).click();
+  await page.waitForURL(/\/settings/);
+
+  const dropdown = page.getByTestId("account-select-dropdown");
+  const firstOption = dropdown.locator("option").nth(1);
+  const firstValue = await firstOption.getAttribute("value");
+
+  if (firstValue) {
+    await dropdown.selectOption(firstValue);
+    await page.getByTestId("account-clear-btn").click();
+    await expect(page.getByTestId("account-clear-dialog")).toBeVisible();
+
+    await page.getByTestId("account-clear-cancel-btn").click();
+    await expect(page.getByTestId("account-clear-dialog")).not.toBeVisible();
+  }
+});
