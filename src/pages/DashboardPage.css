@@ -161,24 +161,55 @@
   gap: 4px;
 }
 
+.stat-card {
+  /* border-top is set inline per card type (coloured 3px top bar) */
+  border-radius: 0 0 12px 12px;
+  padding-top: 16px;
+  display: flex;
+  flex-direction: column;
+}
+
 .stat-label {
   font-size: 11px;
   color: var(--muted);
   text-transform: uppercase;
   letter-spacing: 0.1em;
-  font-weight: 600;
+  font-weight: 700;
 }
 
 .stat-value {
-  font-size: 22px;
-  font-weight: 500;
+  font-size: 28px;
+  font-weight: 800;
   line-height: 1;
+  letter-spacing: -0.025em;
+  margin-top: 4px;
 }
 
 .stat-sub {
   font-size: 11px;
   color: var(--muted);
-  margin-top: 3px;
+  margin-top: 5px;
+}
+
+.stat-badge {
+  display: inline-block;
+  margin-top: 6px;
+  padding: 2px 7px;
+  border-radius: 20px;
+  font-size: 11px;
+  font-weight: 600;
+  white-space: nowrap;
+  align-self: flex-start;
+}
+
+.stat-badge--up {
+  background: color-mix(in srgb, var(--accent) 14%, transparent);
+  color: var(--accent);
+}
+
+.stat-badge--down {
+  background: color-mix(in srgb, var(--red) 14%, transparent);
+  color: var(--red);
 }
 
 .dash-transfer-notice {

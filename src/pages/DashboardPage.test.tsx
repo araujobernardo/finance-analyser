@@ -246,3 +246,84 @@ describe("DashboardPage — month pill selector (issue #786)", () => {
     expect(pill.getAttribute("aria-pressed")).toBe("true");
   });
 });
+
+describe("DashboardPage — stat cards with coloured bar and badge (issue #787)", () => {
+  it("renders all four stat cards", () => {
+    mockRawTransactions = [makeApiTxn()];
+    mockIsLoading = false;
+    const { getByTestId } = renderDashboard();
+    expect(getByTestId("stat-income")).toBeInTheDocument();
+    expect(getByTestId("stat-spent")).toBeInTheDocument();
+    expect(getByTestId("stat-net")).toBeInTheDocument();
+    expect(getByTestId("stat-transactions")).toBeInTheDocument();
+  });
+
+  it("stat cards have a coloured border-top (top bar)", () => {
+    mockRawTransactions = [makeApiTxn()];
+    mockIsLoading = false;
+    const { getByTestId } = renderDashboard();
+    const incomeCard = getByTestId("stat-income") as HTMLElement;
+    // border-top is set inline; verify the style attribute contains border-top
+    expect(incomeCard.style.borderTop).toContain("var(--accent)");
+    const spentCard = getByTestId("stat-spent") as HTMLElement;
+    expect(spentCard.style.borderTop).toContain("var(--red)");
+  });
+
+  it("savings rate subtitle appears on Net card when income > 0", () => {
+    // Income txn of $500, expense txn of $100 → net $400 → 80% savings rate
+    mockRawTransactions = [
+      makeApiTxn({ id: "t1", amount: 500, date: "2026-03-15" }), // income
+      makeApiTxn({ id: "t2", amount: -100, date: "2026-03-15" }), // expense
+    ];
+    mockIsLoading = false;
+    const { getByTestId } = renderDashboard();
+    const netSub = getByTestId("stat-net-sub");
+    expect(netSub.textContent).toMatch(/savings rate/);
+  });
+
+  it("transfers excluded count appears on Transactions card when transfers present", () => {
+    // One regular txn + one transfer txn
+    mockRawTransactions = [
+      makeApiTxn({
+        id: "t1",
+        amount: -100,
+        date: "2026-03-15",
+        isTransfer: false,
+      }),
+      makeApiTxn({
+        id: "t2",
+        amount: -50,
+        date: "2026-03-15",
+        isTransfer: true,
+      }),
+    ];
+    mockIsLoading = false;
+    const { getByTestId } = renderDashboard();
+    const txnSub = getByTestId("stat-transactions-sub");
+    expect(txnSub.textContent).toMatch(/transfers excluded/);
+  });
+
+  it("comparison badge does NOT render when only one month of data exists", () => {
+    // Only March 2026 data — no prior month → no badge
+    mockRawTransactions = [makeApiTxn({ date: "2026-03-15" })];
+    mockIsLoading = false;
+    const { queryByTestId } = renderDashboard();
+    expect(queryByTestId("stat-income-badge")).not.toBeInTheDocument();
+  });
+
+  it("comparison badge renders when prior month data exists", () => {
+    // Feb + March transactions — selecting March means Feb is prior month
+    mockRawTransactions = [
+      makeApiTxn({ id: "t1", date: "2026-02-10", amount: 400 }), // Feb income
+      makeApiTxn({ id: "t2", date: "2026-03-10", amount: 500 }), // Mar income (higher)
+    ];
+    mockIsLoading = false;
+    const { getByTestId } = renderDashboard();
+    // Most recent (March) is pre-selected; Feb exists as prior month
+    const badge = getByTestId("stat-income-badge");
+    expect(badge).toBeInTheDocument();
+    // Delta = 500 - 400 = 100 increase → up badge
+    expect(badge.textContent).toContain("↑");
+    expect(badge.textContent).toMatch(/Feb/);
+  });
+});
