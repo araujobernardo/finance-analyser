@@ -1,7 +1,8 @@
 .sidebar {
-  width: 224px;
-  background: var(--surface);
-  border-right: 1px solid var(--border);
+  width: 228px;
+  min-width: 228px;
+  background: var(--sidebar-bg);
+  border-right: 1px solid var(--sidebar-border);
   display: flex;
   flex-direction: column;
   height: 100vh;
@@ -11,85 +12,105 @@
   overflow-y: auto;
 }
 
+/* ── Brand section ───────────────────────────────────────────────────────── */
+
 .sidebar-brand {
-  padding: 28px 20px 16px;
+  padding: 26px 20px 18px;
 }
 
 .sidebar-brand-label {
   font-size: 11px;
   color: var(--accent);
-  letter-spacing: 0.15em;
-  font-weight: 700;
+  letter-spacing: 0.08em;
+  font-weight: 800;
   text-transform: uppercase;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-bottom: 3px;
+}
+
+.sidebar-brand-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--accent);
+  flex-shrink: 0;
 }
 
 .sidebar-brand-title {
-  font-size: 22px;
-  font-weight: 700;
+  font-size: 20px;
+  font-weight: 800;
   color: var(--text);
   line-height: 1.1;
-  margin-top: 2px;
 }
 
 .sidebar-brand-count {
   font-size: 11px;
   color: var(--muted);
   margin-top: 4px;
+  font-weight: 500;
 }
+
+.sidebar-divider {
+  height: 1px;
+  background: var(--border);
+  margin: 0 16px;
+}
+
+/* ── Accounts section ────────────────────────────────────────────────────── */
 
 .sidebar-accounts {
-  padding: 0 16px 14px;
-  border-bottom: 1px solid var(--border);
+  padding: 14px 16px 10px;
 }
 
-/* ── Option C: "All Accounts" clickable section header ─────────────────── */
+.sidebar-section-label {
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--subtle);
+  letter-spacing: 0.04em;
+  padding: 0 6px;
+  margin-bottom: 8px;
+}
 
+/* "All Accounts" row */
 .sidebar-all-accounts-row {
   display: flex;
   align-items: center;
-  gap: 7px;
-  padding: 5px 6px;
-  margin-left: -6px;
-  margin-bottom: 6px;
-  border-radius: 6px;
+  gap: 9px;
+  padding: 7px 10px;
+  border-radius: 10px;
   cursor: pointer;
-  border-left: 2px solid transparent;
-  transition:
-    background 0.15s,
-    border-color 0.15s;
+  transition: background 0.15s;
+  margin-bottom: 3px;
 }
 
 .sidebar-all-accounts-row:hover {
-  background: color-mix(in srgb, var(--accent) 6%, transparent);
+  background: rgba(15, 157, 138, 0.07);
 }
 
 .sidebar-all-accounts-row--active {
-  background: color-mix(in srgb, var(--accent) 12%, transparent);
-  border-left-color: var(--accent);
+  background: var(--accent-light);
 }
 
 /* Conic-gradient dot representing "all accounts combined" */
 .sidebar-all-accounts-dot {
-  width: 10px;
-  height: 10px;
-  border-radius: 50%;
+  width: 9px;
+  height: 9px;
+  border-radius: 3px;
   flex-shrink: 0;
   background: conic-gradient(
     #6c8ebf 0deg 120deg,
     #82b366 120deg 240deg,
     #d79b00 240deg 360deg
   );
-  border: 1px solid var(--border);
 }
 
 .sidebar-all-accounts-label {
   flex: 1;
-  font-size: 10px;
-  color: var(--muted);
-  text-transform: uppercase;
-  letter-spacing: 0.1em;
+  font-size: 13px;
+  color: var(--text);
   font-weight: 700;
-  transition: color 0.15s;
 }
 
 .sidebar-all-accounts-row--active .sidebar-all-accounts-label {
@@ -124,54 +145,51 @@
   outline-offset: 2px;
 }
 
+/* Individual account rows */
 .sidebar-account-row {
   display: flex;
   align-items: center;
-  gap: 7px;
-  margin-bottom: 6px;
-  padding: 4px 6px;
-  border-radius: 6px;
-  margin-left: -6px;
+  gap: 9px;
+  margin-bottom: 3px;
+  padding: 7px 10px;
+  border-radius: 10px;
   cursor: pointer;
-  border-left: 2px solid transparent;
-  transition:
-    background 0.15s,
-    border-color 0.15s;
+  transition: background 0.15s;
 }
 
 .sidebar-account-row:hover {
-  background: color-mix(in srgb, var(--accent) 6%, transparent);
+  background: rgba(15, 157, 138, 0.07);
 }
 
 .sidebar-account-row--active {
-  background: color-mix(in srgb, var(--accent) 12%, transparent);
-  border-left-color: var(--accent);
+  background: var(--accent-light);
 }
 
-/* Indent individual account rows to show they are subordinate to "All Accounts" */
+/* Indent individual account rows below "All Accounts" */
 .sidebar-account-row--indented {
-  padding-left: 22px;
+  padding-left: 20px;
 }
 
 .sidebar-account-dot {
-  width: 7px;
-  height: 7px;
-  border-radius: 50%;
+  width: 9px;
+  height: 9px;
+  border-radius: 3px;
   flex-shrink: 0;
 }
 
 .sidebar-account-name {
   flex: 1;
-  font-size: 12px;
-  color: var(--subtle);
+  font-size: 13px;
+  color: var(--text-2);
+  font-weight: 500;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
 }
 
 .sidebar-account-row--active .sidebar-account-name {
+  color: var(--accent);
   font-weight: 700;
-  color: var(--text);
 }
 
 .sidebar-account-input {
@@ -201,14 +219,20 @@
   color: var(--subtle);
 }
 
+/* ── Upload section ──────────────────────────────────────────────────────── */
+
 .sidebar-upload {
-  padding: 12px 14px;
+  padding: 12px 16px 14px;
+  border-top: 1px solid var(--border);
+  border-bottom: 1px solid var(--border);
 }
 
 .sidebar-upload-to {
   font-size: 10px;
-  margin-bottom: 6px;
+  margin-bottom: 7px;
   line-height: 1.4;
+  color: var(--muted);
+  font-weight: 600;
 }
 
 .sidebar-upload-to-prefix {
@@ -217,7 +241,7 @@
 
 .sidebar-upload-to-account {
   color: var(--accent);
-  font-weight: 600;
+  font-weight: 700;
 }
 
 .sidebar-upload-to--none .sidebar-upload-to-account {
@@ -231,24 +255,33 @@
   background: var(--accent);
   color: white;
   border: none;
-  border-radius: 8px;
+  border-radius: 10px;
   padding: 10px 0;
   font-size: 13px;
-  font-weight: 600;
+  font-weight: 700;
   cursor: pointer;
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 6px;
+  gap: 7px;
   font-family: inherit;
+  box-shadow: 0 2px 8px rgba(15, 157, 138, 0.25);
+  transition:
+    opacity 0.14s,
+    transform 0.1s;
 }
 
 .sidebar-upload-btn:hover {
   opacity: 0.9;
+  transform: translateY(-1px);
+}
+
+.sidebar-upload-btn:active {
+  transform: translateY(0);
 }
 
 .sidebar-upload-icon {
-  font-size: 16px;
+  font-size: 15px;
 }
 
 .sidebar-upload-status {
@@ -264,9 +297,11 @@
   line-height: 1.4;
 }
 
+/* ── Nav section ─────────────────────────────────────────────────────────── */
+
 .sidebar-nav {
   flex: 1;
-  padding: 0 10px;
+  padding: 12px 10px;
 }
 
 .sidebar-nav-btn {
@@ -275,56 +310,64 @@
   align-items: center;
   gap: 10px;
   padding: 10px 12px;
-  border-radius: 8px;
+  border-radius: 10px;
   border: none;
   cursor: pointer;
   text-align: left;
   background: transparent;
-  color: var(--subtle);
-  font-size: 14px;
-  font-weight: 400;
+  color: var(--muted);
+  font-size: 13px;
+  font-weight: 500;
   margin-bottom: 2px;
   font-family: inherit;
+  text-decoration: none;
   transition:
-    background 0.15s,
-    color 0.15s;
+    background 0.14s,
+    color 0.14s;
 }
 
 .sidebar-nav-btn:hover {
-  background: color-mix(in srgb, var(--accent) 8%, transparent);
+  background: rgba(15, 157, 138, 0.08);
   color: var(--text);
 }
 
 .sidebar-nav-btn.active {
-  background: color-mix(in srgb, var(--accent) 15%, transparent);
+  background: var(--accent-light);
   color: var(--accent);
-  font-weight: 600;
+  font-weight: 700;
 }
 
 .sidebar-nav-icon {
-  font-size: 16px;
+  font-size: 15px;
+  width: 18px;
+  text-align: center;
 }
 
+/* ── Footer ──────────────────────────────────────────────────────────────── */
+
 .sidebar-footer {
-  padding: 16px 20px;
+  padding: 14px 20px;
   font-size: 11px;
-  color: var(--muted);
+  color: var(--subtle);
+  font-weight: 500;
   border-top: 1px solid var(--border);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
 }
 
 .sidebar-signout {
-  width: 100%;
-  padding: 10px 20px;
   background: none;
   border: none;
-  border-top: 1px solid var(--border);
   color: var(--muted);
-  font-size: 12px;
-  text-align: left;
+  font-size: 11px;
+  font-family: inherit;
+  font-weight: 600;
   cursor: pointer;
+  padding: 0;
+  transition: color 0.12s;
 }
 
 .sidebar-signout:hover {
   color: var(--text);
-  background: color-mix(in srgb, var(--border) 50%, transparent);
 }
