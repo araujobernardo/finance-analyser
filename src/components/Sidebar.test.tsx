@@ -57,6 +57,11 @@ function renderSidebar() {
 }
 
 beforeEach(() => {
+  // Explicitly clear the active-account key so AccountProvider always starts
+  // with a clean slate. This prevents the "all" value set by a previous test
+  // from bleeding into the next one, which causes the Upload-to label to show
+  // the fallback instead of the first account's nickname (#802 flake fix).
+  localStorage.clear();
   localStorage.setItem("fa-auth-token", FAKE_TOKEN);
   // Default: GET /api/accounts returns empty list; no transaction fetches.
   mockApiFetch.mockResolvedValue({

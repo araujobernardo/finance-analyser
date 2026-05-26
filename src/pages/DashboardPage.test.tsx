@@ -1,5 +1,5 @@
 import { describe, it, expect, vi } from "vitest";
-import { render } from "@testing-library/react";
+import { render, fireEvent } from "@testing-library/react";
 import { MemoryRouter } from "react-router-dom";
 import { DashboardPage } from "./DashboardPage";
 import type { ApiTransaction } from "../types/api";
@@ -158,5 +158,91 @@ describe("DashboardPage — no account filter pills (issue #755)", () => {
     mockIsLoading = false;
     const { getByTestId } = renderDashboard();
     expect(getByTestId("summary-stats")).toBeInTheDocument();
+  });
+});
+
+describe("DashboardPage — month pill selector (issue #786)", () => {
+  it("single month selected: heading shows short month label", () => {
+    // One transaction in March 2026 → most-recent month pre-selected
+    mockRawTransactions = [makeApiTxn({ date: "2026-03-15" })];
+    mockIsLoading = false;
+    const { getByTestId } = renderDashboard();
+    // fmtMonthSh("2026-03") → "Mar '26"
+    expect(getByTestId("dash-heading").textContent).toBe("Mar '26");
+  });
+
+  it("single month selected: subtitle shows account and transaction count", () => {
+    mockRawTransactions = [makeApiTxn({ date: "2026-03-15" })];
+    mockIsLoading = false;
+    const { getByTestId } = renderDashboard();
+    const subtitle = getByTestId("dash-subtitle");
+    expect(subtitle.textContent).toMatch(/transaction/);
+  });
+
+  it("pills render for each available month", () => {
+    mockRawTransactions = [
+      makeApiTxn({ id: "t1", date: "2026-01-10" }),
+      makeApiTxn({ id: "t2", date: "2026-02-10" }),
+    ];
+    mockIsLoading = false;
+    const { getByTestId } = renderDashboard();
+    expect(getByTestId("month-pill-2026-01")).toBeInTheDocument();
+    expect(getByTestId("month-pill-2026-02")).toBeInTheDocument();
+  });
+
+  it("active pill has aria-pressed=true, inactive pill has aria-pressed=false", () => {
+    mockRawTransactions = [
+      makeApiTxn({ id: "t1", date: "2026-01-10" }),
+      makeApiTxn({ id: "t2", date: "2026-02-10" }),
+    ];
+    mockIsLoading = false;
+    const { getByTestId } = renderDashboard();
+    // Most recent (2026-02) is pre-selected
+    expect(getByTestId("month-pill-2026-02").getAttribute("aria-pressed")).toBe(
+      "true",
+    );
+    expect(getByTestId("month-pill-2026-01").getAttribute("aria-pressed")).toBe(
+      "false",
+    );
+  });
+
+  it("selecting a second month: heading shows range with en-dash", () => {
+    mockRawTransactions = [
+      makeApiTxn({ id: "t1", date: "2026-01-10" }),
+      makeApiTxn({ id: "t2", date: "2026-02-10" }),
+    ];
+    mockIsLoading = false;
+    const { getByTestId } = renderDashboard();
+    // Click the Jan pill (adding it to the selection)
+    fireEvent.click(getByTestId("month-pill-2026-01"));
+    const heading = getByTestId("dash-heading").textContent ?? "";
+    // Should be "Jan '26 – Feb '26"
+    expect(heading).toContain("–");
+    expect(heading).toMatch(/Jan '26/);
+    expect(heading).toMatch(/Feb '26/);
+  });
+
+  it("selecting a second month: subtitle shows count and deselect hint", () => {
+    mockRawTransactions = [
+      makeApiTxn({ id: "t1", date: "2026-01-10" }),
+      makeApiTxn({ id: "t2", date: "2026-02-10" }),
+    ];
+    mockIsLoading = false;
+    const { getByTestId } = renderDashboard();
+    fireEvent.click(getByTestId("month-pill-2026-01"));
+    const subtitle = getByTestId("dash-subtitle").textContent ?? "";
+    expect(subtitle).toMatch(/2 months selected/);
+    expect(subtitle).toMatch(/click to deselect/);
+  });
+
+  it("clicking the only active pill does not deselect it (guard against empty state)", () => {
+    // Only one month of data → only one pill
+    mockRawTransactions = [makeApiTxn({ date: "2026-03-15" })];
+    mockIsLoading = false;
+    const { getByTestId } = renderDashboard();
+    const pill = getByTestId("month-pill-2026-03");
+    fireEvent.click(pill);
+    // Pill should still be active (aria-pressed stays true)
+    expect(pill.getAttribute("aria-pressed")).toBe("true");
   });
 });

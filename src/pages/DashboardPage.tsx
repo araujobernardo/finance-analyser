@@ -65,15 +65,6 @@ const fmt = (n: number) =>
     maximumFractionDigits: 2,
   })}`;
 
-const fmtMonth = (m: string) => {
-  if (!m) return "";
-  const [y, mo] = m.split("-");
-  return new Date(+y, +mo - 1, 1).toLocaleString("en-NZ", {
-    month: "long",
-    year: "numeric",
-  });
-};
-
 const fmtMonthSh = (m: string) => {
   if (!m) return "";
   const [y, mo] = m.split("-");
@@ -291,9 +282,28 @@ export function DashboardPage() {
     );
   }
 
-  const headingText = multiMonth
-    ? selectedMonths.map(fmtMonthSh).join(" · ")
-    : fmtMonth(selectedMonths[0] ?? months[0]);
+  // Condensed heading: 1 month → short label ("May '25");
+  // 2+ months → range from chronologically first to last ("Jan '25 – Mar '25").
+  const headingText = (() => {
+    if (selectedMonths.length === 0) return "No month selected";
+    if (selectedMonths.length === 1) return fmtMonthSh(selectedMonths[0]);
+    const sorted = [...selectedMonths].sort();
+    return `${fmtMonthSh(sorted[0])} – ${fmtMonthSh(sorted[sorted.length - 1])}`;
+  })();
+
+  // Subtitle for single month shows account + transaction count.
+  const subtitleText = (() => {
+    if (selectedMonths.length === 0) return null;
+    if (selectedMonths.length === 1) {
+      const acctLabel =
+        activeAccountId === ALL_ACCOUNTS_ID
+          ? "All accounts"
+          : (accounts.find((a) => a.id === activeAccountId)?.nickname ??
+            "All accounts");
+      return `${acctLabel} · ${selAdapted.length} transaction${selAdapted.length === 1 ? "" : "s"}`;
+    }
+    return `${n} months selected · click to deselect`;
+  })();
 
   const tooltipStyle = {
     background: "var(--card)",
@@ -307,11 +317,13 @@ export function DashboardPage() {
     <div className="dash-scroll">
       {/* Header */}
       <div className="dash-header">
-        <div>
-          <h1 className="dash-heading">{headingText}</h1>
-          {multiMonth && (
-            <div className="dash-heading-sub">
-              {n} months selected · click to deselect
+        <div className="dash-title-block">
+          <h1 className="dash-heading" data-testid="dash-heading">
+            {headingText}
+          </h1>
+          {subtitleText && (
+            <div className="dash-heading-sub" data-testid="dash-subtitle">
+              {subtitleText}
             </div>
           )}
         </div>
@@ -321,6 +333,8 @@ export function DashboardPage() {
               key={m}
               className={`pill${selectedMonths.includes(m) ? " pill-active" : ""}`}
               onClick={() => toggleMonth(m)}
+              aria-pressed={selectedMonths.includes(m)}
+              data-testid={`month-pill-${m}`}
             >
               {fmtMonthSh(m)}
             </button>
