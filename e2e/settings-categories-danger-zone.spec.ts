@@ -188,3 +188,86 @@ test("per-account confirmation dialog is dismissed when Cancel is clicked", asyn
     await expect(page.getByTestId("account-clear-dialog")).not.toBeVisible();
   }
 });
+
+// ── #774: Categories as single source of truth ────────────────────────────────
+
+test("#774: renaming a category in Settings updates the name in the category list", async ({
+  authenticatedPage: page,
+}) => {
+  await page.getByRole("link", { name: /settings/i }).click();
+  await page.waitForURL(/\/settings/);
+
+  // Create a category to rename
+  const originalName = `E2E-Rename-${Date.now()}`;
+  const renamedName = `${originalName}-RENAMED`;
+
+  await page.getByTestId("category-new-name").fill(originalName);
+  await page.getByTestId("category-add-btn").click();
+
+  // Wait for the category to appear, then rename it
+  const nameInput = page.getByDisplayValue(originalName);
+  await expect(nameInput).toBeVisible();
+  await nameInput.fill(renamedName);
+  await nameInput.press("Enter");
+
+  // The renamed value should now appear in the category list
+  await expect(page.getByDisplayValue(renamedName)).toBeVisible();
+  await expect(page.getByDisplayValue(originalName)).not.toBeVisible();
+});
+
+test("#774: adding a category in Settings makes it appear in Transactions page filter dropdown", async ({
+  authenticatedPage: page,
+}) => {
+  // Add a new category in Settings
+  await page.getByRole("link", { name: /settings/i }).click();
+  await page.waitForURL(/\/settings/);
+
+  const uniqueName = `E2E-TxnFilter-${Date.now()}`;
+  await page.getByTestId("category-new-name").fill(uniqueName);
+  await page.getByTestId("category-add-btn").click();
+  await expect(page.getByDisplayValue(uniqueName)).toBeVisible();
+
+  // Navigate to Transactions page and check the category filter includes the new category
+  await page.getByRole("link", { name: /transactions/i }).click();
+  await page.waitForURL(/\/transactions/);
+
+  // The category select filter should include the newly added category as an option
+  const catFilter = page.locator("select.txn-select").filter({
+    has: page.locator("option[value='all']"),
+  });
+  await expect(
+    catFilter.locator(`option[value="${uniqueName}"]`),
+  ).toBeAttached();
+});
+
+test("#774: deleting a category in Settings removes it from Transactions page filter dropdown", async ({
+  authenticatedPage: page,
+}) => {
+  // Add a category, verify it shows up in Transactions, then delete it
+  await page.getByRole("link", { name: /settings/i }).click();
+  await page.waitForURL(/\/settings/);
+
+  const uniqueName = `E2E-DelFilter-${Date.now()}`;
+  await page.getByTestId("category-new-name").fill(uniqueName);
+  await page.getByTestId("category-add-btn").click();
+
+  const nameInput = page.getByDisplayValue(uniqueName);
+  await expect(nameInput).toBeVisible();
+
+  // Delete the newly created category
+  const listItem = nameInput.locator("..");
+  const deleteBtn = listItem.getByRole("button", { name: /delete category/i });
+  await deleteBtn.click();
+  await expect(page.getByDisplayValue(uniqueName)).not.toBeVisible();
+
+  // Navigate to Transactions page — the deleted category should not appear in the filter
+  await page.getByRole("link", { name: /transactions/i }).click();
+  await page.waitForURL(/\/transactions/);
+
+  const catFilter = page.locator("select.txn-select").filter({
+    has: page.locator("option[value='all']"),
+  });
+  await expect(
+    catFilter.locator(`option[value="${uniqueName}"]`),
+  ).not.toBeAttached();
+});

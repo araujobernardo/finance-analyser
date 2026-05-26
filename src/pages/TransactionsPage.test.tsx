@@ -56,7 +56,34 @@ vi.mock("../context/AccountContext", () => ({
 
 // ── Mock useApi ───────────────────────────────────────────────────────────────
 
-const mockApiFetch = vi.fn().mockResolvedValue({ ok: true } as Response);
+// Categories returned by the mock GET /api/categories — covers all names used
+// across the test file so the category select has the expected options.
+const MOCK_API_CATEGORIES = [
+  { id: "cat-1", name: "Groceries", colour: "#6366f1" },
+  { id: "cat-2", name: "Dining", colour: "#f59e0b" },
+  { id: "cat-3", name: "Transport", colour: "#10b981" },
+  { id: "cat-4", name: "Savings", colour: "#ef4444" },
+  { id: "cat-5", name: "Income", colour: "#3b82f6" },
+  { id: "cat-6", name: "Dining & Takeaways", colour: "#8b5cf6" },
+  { id: "cat-7", name: "Utilities & Bills", colour: "#ec4899" },
+];
+
+// Route by URL: /api/categories always succeeds; other calls use overrideResponse.
+function makeApiFetchImpl(
+  overrideResponse: Response = { ok: true } as Response,
+): (url: string) => Promise<Response> {
+  return async (url: string) => {
+    if (url === "/api/categories") {
+      return {
+        ok: true,
+        json: () => Promise.resolve({ categories: MOCK_API_CATEGORIES }),
+      } as unknown as Response;
+    }
+    return overrideResponse;
+  };
+}
+
+const mockApiFetch = vi.fn().mockImplementation(makeApiFetchImpl());
 
 vi.mock("../lib/api", () => ({
   useApi: () => ({ apiFetch: mockApiFetch }),
@@ -617,7 +644,7 @@ describe("TransactionsPage — T007: category PATCH persistence", () => {
     cleanup();
     mockApiFetch.mockReset();
     mockRefetch.mockReset();
-    mockApiFetch.mockResolvedValue({ ok: true } as Response);
+    mockApiFetch.mockImplementation(makeApiFetchImpl());
     mockRefetch.mockResolvedValue(undefined);
   });
 
@@ -633,6 +660,9 @@ describe("TransactionsPage — T007: category PATCH persistence", () => {
       }),
     ];
     renderPage();
+
+    // Wait for categories to load from GET /api/categories before interacting
+    await screen.findAllByRole("option", { name: "Groceries" });
 
     // Select the first txn-cat-select (t1 = Dining, switching to Groceries)
     const catSelects = screen
@@ -662,6 +692,8 @@ describe("TransactionsPage — T007: category PATCH persistence", () => {
     ];
     renderPage();
 
+    await screen.findAllByRole("option", { name: "Groceries" });
+
     const catSelects = screen
       .getAllByRole("combobox")
       .filter((el) => el.classList.contains("txn-cat-select"));
@@ -671,7 +703,9 @@ describe("TransactionsPage — T007: category PATCH persistence", () => {
 
   it("T007-3: failed PATCH shows error toast", async () => {
     const user = userEvent.setup();
-    mockApiFetch.mockResolvedValue({ ok: false, status: 500 } as Response);
+    mockApiFetch.mockImplementation(
+      makeApiFetchImpl({ ok: false, status: 500 } as Response),
+    );
     mockRawTransactions = [
       makeApiTxn({ id: "t1", description: "Countdown", category: "Dining" }),
       makeApiTxn({
@@ -681,6 +715,8 @@ describe("TransactionsPage — T007: category PATCH persistence", () => {
       }),
     ];
     const { container } = renderPage();
+
+    await screen.findAllByRole("option", { name: "Groceries" });
 
     const catSelects = screen
       .getAllByRole("combobox")

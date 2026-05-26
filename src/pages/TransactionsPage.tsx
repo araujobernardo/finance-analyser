@@ -67,6 +67,17 @@ export function TransactionsPage() {
   const [showTransfers, setShowTransfers] = useState(false);
   const [toast, setToast] = useState<string | null>(null);
 
+  // ── Categories from API ────────────────────────────────────────────────────
+  const [apiCategories, setApiCategories] = useState<string[]>([]);
+  useEffect(() => {
+    void apiFetch("/api/categories")
+      .then((res) => res.json())
+      .then((data: { categories: Array<{ name: string }> }) => {
+        setApiCategories(data.categories.map((c) => c.name).sort());
+      })
+      .catch(() => {});
+  }, [apiFetch]);
+
   // ── Transfer flagging local state ─────────────────────────────────────────
   // preFlagMap: txnId → category that was set before manual transfer flagging
   const [preFlagMap, setPreFlagMap] = useState<Map<string, string | null>>(
@@ -95,14 +106,8 @@ export function TransactionsPage() {
   const months = [...new Set(txns.map((t) => t.month))].sort().reverse();
   const uniqueAccounts = [...new Set(accounts.map((a) => a.nickname))];
 
-  // Unique categories derived from expense transactions
-  const uniqueCategories = [
-    ...new Set(
-      txns
-        .filter((t) => !t.isTransfer && !t.isCredit && t.category)
-        .map((t) => t.category as string),
-    ),
-  ].sort();
+  // Categories come from GET /api/categories — the single source of truth
+  const uniqueCategories = apiCategories;
 
   // ── Transfer flagging interaction state ────────────────────────────────────
   const [flagMode, setFlagMode] = useState<{ initiatingId: string } | null>(
