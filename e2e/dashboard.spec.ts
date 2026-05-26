@@ -33,7 +33,7 @@ test("transfer notice appears when transfers are detected", async ({
   );
 });
 
-test("month filter pill activates and updates heading", async ({
+test("month filter pill activates and updates heading (short format)", async ({
   authenticatedPage: page,
 }) => {
   await uploadFixtures(page);
@@ -42,6 +42,86 @@ test("month filter pill activates and updates heading", async ({
   const pill = page.locator('[data-testid="month-filter"] button');
   await expect(pill).toHaveClass(/pill-active/);
 
-  // Dashboard heading reflects the selected month
-  await expect(page.locator(".dash-heading")).toContainText("January 2000");
+  // Dashboard heading shows condensed short format ("Jan '00"), not long format
+  await expect(page.locator('[data-testid="dash-heading"]')).toContainText(
+    "Jan '00",
+  );
+});
+
+test("multi-select pills show range heading and count subtitle", async ({
+  authenticatedPage: page,
+}) => {
+  // Seed two months of data so there are two pills to toggle
+  await uploadFixtures(page);
+
+  // Add a second month of transactions via API so a second pill appears
+  // (uploadFixtures only seeds Jan 2000; we need Feb 2000 too)
+  const token = await page.evaluate(
+    () => localStorage.getItem("fa-auth-token") ?? "",
+  );
+  const apiBasePromise = new Promise<string>((resolve) => {
+    const handler = (res: import("@playwright/test").Response) => {
+      const url = res.url();
+      if (url.includes("/api/accounts") && !url.includes("/transactions")) {
+        page.off("response", handler);
+        resolve(url.replace(/\/api\/accounts.*$/, ""));
+      }
+    };
+    page.on("response", handler);
+  });
+  // Trigger accounts fetch
+  await page.goto("/dashboard");
+  await page.waitForURL(/\/dashboard/);
+  const apiBase = await apiBasePromise;
+
+  const accountsRes = await page.request.get(`${apiBase}/api/accounts`, {
+    headers: { Authorization: `Bearer ${token}` },
+  });
+  if (!accountsRes.ok()) return; // skip gracefully if API unavailable in CI
+  const { accounts } = (await accountsRes.json()) as {
+    accounts: { id: string }[];
+  };
+  if (accounts.length === 0) return;
+
+  await page.request.post(
+    `${apiBase}/api/accounts/${accounts[0].id}/transactions/import`,
+    {
+      headers: {
+        Authorization: `Bearer ${token}`,
+        "Content-Type": "application/json",
+      },
+      data: {
+        transactions: [
+          {
+            date: "2000-02-20",
+            amount: -50,
+            description: "Feb spend",
+            isTransfer: false,
+            isManualTransfer: false,
+          },
+        ],
+      },
+    },
+  );
+
+  await page.reload();
+  await page.waitForURL(/\/dashboard/);
+  await expect(page.locator('[data-testid="month-filter"] button')).toHaveCount(
+    2,
+    { timeout: 15_000 },
+  );
+
+  // Feb '00 is now most recent and pre-selected; click Jan to add it
+  const janPill = page.locator('[data-testid="month-pill-2000-01"]');
+  await janPill.click();
+
+  // Heading should now show a range with en-dash
+  await expect(page.locator('[data-testid="dash-heading"]')).toContainText("–");
+  // Subtitle should show "2 months selected"
+  await expect(page.locator('[data-testid="dash-subtitle"]')).toContainText(
+    "2 months selected",
+  );
+  await expect(page.locator('[data-testid="dash-subtitle"]')).toContainText(
+    "click to deselect",
+  );
 });

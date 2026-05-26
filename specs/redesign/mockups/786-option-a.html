@@ -1,0 +1,257 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Option A — Compact Inline</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg: #f4f1ed;
+  --surface: #faf8f5;
+  --card: #ffffff;
+  --border: #ede8e2;
+  --border-strong: #d9d2c8;
+  --accent: #0f9d8a;
+  --accent-light: #e8f5f3;
+  --accent-mid: #7dc8c0;
+  --text: #1e2a22;
+  --text-2: #3d4a40;
+  --muted: #7a8074;
+  --subtle: #a09890;
+  --shadow-sm: 0 1px 3px rgba(30,42,34,0.08);
+}
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body {
+  font-family: 'Nunito', sans-serif;
+  background: var(--bg);
+  color: var(--text);
+  -webkit-font-smoothing: antialiased;
+  font-size: 14px;
+}
+
+/* Banner */
+.option-badge {
+  background: var(--accent);
+  color: #fff;
+  text-align: center;
+  padding: 10px 20px;
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  position: sticky;
+  top: 0;
+  z-index: 100;
+}
+
+/* Page scaffold */
+.page {
+  max-width: 900px;
+  margin: 0 auto;
+  padding: 28px 28px 60px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+/* ── OPTION A: Compact Inline header ── */
+.dash-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.dash-title-block {}
+
+.dash-heading {
+  font-size: 24px;
+  font-weight: 800;
+  color: var(--text);
+  line-height: 1.2;
+}
+
+.dash-subtitle {
+  font-size: 12px;
+  color: var(--muted);
+  margin-top: 3px;
+  font-weight: 500;
+}
+
+/* Pills — compact inline style */
+.dash-month-pills {
+  display: flex;
+  gap: 5px;
+  flex-wrap: nowrap;
+  overflow-x: auto;
+  /* hide scrollbar on desktop */
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+.dash-month-pills::-webkit-scrollbar { display: none; }
+
+.pill {
+  padding: 5px 13px;
+  border-radius: 20px;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  border: 1.5px solid var(--border-strong);
+  background: transparent;
+  color: var(--muted);
+  font-family: inherit;
+  white-space: nowrap;
+  flex-shrink: 0;
+  transition: all 130ms ease-out;
+}
+.pill:hover {
+  border-color: var(--accent);
+  color: var(--accent);
+  background: var(--accent-light);
+}
+.pill.active {
+  border-color: var(--accent);
+  background: var(--accent);
+  color: #fff;
+  font-weight: 700;
+}
+
+/* Stat cards row */
+.stats-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 14px;
+}
+.card {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 18px 20px;
+}
+.stat-label {
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--subtle);
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  margin-bottom: 6px;
+}
+.stat-value {
+  font-size: 22px;
+  font-weight: 800;
+  line-height: 1;
+  letter-spacing: -0.02em;
+}
+.stat-sub {
+  font-size: 11px;
+  color: var(--muted);
+  margin-top: 5px;
+}
+
+/* Placeholder chart area */
+.chart-placeholder {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 20px;
+  height: 180px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--subtle);
+  font-size: 13px;
+  font-weight: 500;
+}
+
+/* Responsive: pills scroll on narrow */
+@media (max-width: 640px) {
+  .dash-header {
+    flex-wrap: wrap;
+  }
+  .dash-month-pills {
+    width: 100%;
+    padding-bottom: 4px;
+  }
+  .stats-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+</style>
+</head>
+<body>
+<div class="option-badge">Option A — Compact Inline: pills flush-right, minimal chrome, outlined/solid toggle</div>
+
+<div class="page">
+  <!-- Header -->
+  <div class="dash-header">
+    <div class="dash-title-block">
+      <h1 class="dash-heading">May 2025</h1>
+      <div class="dash-subtitle">All accounts &middot; 143 transactions</div>
+    </div>
+    <div class="dash-month-pills" id="pills-a">
+      <button class="pill" onclick="toggleA(this,'2025-01')">Jan '25</button>
+      <button class="pill" onclick="toggleA(this,'2025-02')">Feb '25</button>
+      <button class="pill" onclick="toggleA(this,'2025-03')">Mar '25</button>
+      <button class="pill" onclick="toggleA(this,'2025-04')">Apr '25</button>
+      <button class="pill active" onclick="toggleA(this,'2025-05')">May '25</button>
+    </div>
+  </div>
+
+  <!-- Stats -->
+  <div class="stats-grid">
+    <div class="card">
+      <div class="stat-label">Income</div>
+      <div class="stat-value" style="color:var(--accent)">$6,420.00</div>
+    </div>
+    <div class="card">
+      <div class="stat-label">Spent</div>
+      <div class="stat-value" style="color:var(--red,#c53030)">$3,981.50</div>
+    </div>
+    <div class="card">
+      <div class="stat-label">Net</div>
+      <div class="stat-value" style="color:var(--accent)">+$2,438.50</div>
+    </div>
+    <div class="card">
+      <div class="stat-label">Transactions</div>
+      <div class="stat-value" style="color:var(--text)">143</div>
+    </div>
+  </div>
+
+  <!-- Chart placeholder -->
+  <div class="chart-placeholder">Spending by Category chart</div>
+</div>
+
+<script>
+function toggleA(btn, month) {
+  btn.classList.toggle('active');
+  updateTitleA();
+}
+
+function updateTitleA() {
+  const allPills = Array.from(document.querySelectorAll('#pills-a .pill'));
+  const activePills = allPills.filter(p => p.classList.contains('active'));
+  const h1 = document.querySelector('.dash-heading');
+  const sub = document.querySelector('.dash-subtitle');
+
+  if (activePills.length === 0) {
+    h1.textContent = 'No month selected';
+    sub.textContent = 'All accounts · 143 transactions';
+    return;
+  }
+
+  if (activePills.length === 1) {
+    h1.textContent = activePills[0].textContent;
+    sub.textContent = 'All accounts · 143 transactions';
+    return;
+  }
+
+  // 2+ months: show range from first selected to last selected (by DOM order)
+  const first = activePills[0].textContent;
+  const last = activePills[activePills.length - 1].textContent;
+  h1.textContent = first + ' – ' + last;
+  sub.textContent = activePills.length + ' months selected · click to deselect';
+}
+</script>
+</body>
+</html>
