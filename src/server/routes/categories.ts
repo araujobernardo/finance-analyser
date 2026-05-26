@@ -49,15 +49,15 @@ categoriesRouter.get("/", async (_req, res, next) => {
   try {
     const userId = (res.locals as AuthLocals).user.userId;
 
-    // Clean up legacy data: transactions flagged as transfers that still carry
-    // a stale "Transfer" category label (set by the AI before #781 fix).
+    // Clean up legacy data: any transaction carrying "Transfer" as a category
+    // string — whether or not isTransfer is set — since "Transfer" is reserved
+    // and must never appear as a user-visible category label.
     await db
       .update(transactions)
       .set({ category: null })
       .where(
         and(
           eq(transactions.userId, userId),
-          eq(transactions.isTransfer, true),
           eq(transactions.category, RESERVED_CATEGORY),
         ),
       );
