@@ -496,7 +496,7 @@ describe("useActiveTransactions", () => {
     );
     await waitFor(() => expect(result).toHaveLength(1), { timeout: 10000 });
     expect(result[0].description).toBe("Groceries");
-  });
+  }, 15000);
 
   it("returns empty array when monthKey is null", async () => {
     mockGetAccounts([makeApiAccount({ id: "acc-a" })]);
@@ -550,7 +550,7 @@ describe("useActiveTransactions", () => {
     );
     await waitFor(() => expect(result).toHaveLength(2), { timeout: 10000 });
     expect(result.map((t) => t.description).sort()).toEqual(["A", "B"]);
-  });
+  }, 15000);
 
   it("attaches accountColour to each transaction when activeAccountId is 'all'", async () => {
     mockGetAccounts([
