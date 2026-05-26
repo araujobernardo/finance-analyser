@@ -134,7 +134,10 @@ export function Sidebar({
   return (
     <aside className="sidebar">
       <div className="sidebar-brand">
-        <div className="sidebar-brand-label">Finance</div>
+        <div className="sidebar-brand-label">
+          <span className="sidebar-brand-dot" />
+          FINANCE
+        </div>
         <div className="sidebar-brand-title">Analyser</div>
         <div className="sidebar-brand-count">{txnCount} transactions</div>
       </div>
@@ -144,7 +147,8 @@ export function Sidebar({
       )}
 
       <div className="sidebar-accounts">
-        {/* Option C: "All Accounts" IS the section header — clicking it selects all */}
+        <div className="sidebar-section-label">Accounts</div>
+        {/* "All Accounts" IS the section header — clicking it selects all */}
         <div
           className={`sidebar-all-accounts-row${activeAccountId === "all" ? " sidebar-all-accounts-row--active" : ""}`}
           data-testid="account-all-accounts"
@@ -335,17 +339,19 @@ export function Sidebar({
         ))}
       </nav>
 
-      <div className="sidebar-footer">ASB Bank · NZD</div>
-      <button
-        className="sidebar-signout"
-        data-testid="sidebar-signout"
-        onClick={() => {
-          logout();
-          navigate("/login");
-        }}
-      >
-        Sign out
-      </button>
+      <div className="sidebar-footer">
+        <span>ASB Bank · NZD</span>
+        <button
+          className="sidebar-signout"
+          data-testid="sidebar-signout"
+          onClick={() => {
+            logout();
+            navigate("/login");
+          }}
+        >
+          Sign out
+        </button>
+      </div>
     </aside>
   );
 }
