@@ -4,7 +4,7 @@
   background: var(--bg);
   color: var(--text);
   overflow: hidden;
-  font-family: "Sora", sans-serif;
+  font-family: "Nunito", sans-serif;
 }
 
 .app-content {

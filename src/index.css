@@ -1,31 +1,64 @@
 :root {
-  --bg: #060d1a;
-  --surface: #0c1526;
-  --card: #111e33;
-  --border: #1a2d4a;
-  --accent: #10b981;
-  --accent-dim: #065f46;
-  --text: #e2e8f0;
-  --muted: #64748b;
-  --subtle: #94a3b8;
-  --red: #f87171;
-  --amber: #fbbf24;
-  --colour-savings: #10b981;
+  /* ── Option B — Warm Intelligence ── */
 
-  /* Modal tokens */
-  --modal-overlay: rgba(0, 0, 0, 0.6);
-  --modal-bg: #111e33;
-  --modal-border: #1a2d4a;
-  --modal-title: #e2e8f0;
-  --modal-body: #94a3b8;
-  --modal-cancel-bg: #0c1526;
-  --modal-cancel-border: #1a2d4a;
-  --modal-cancel-text: #94a3b8;
-  --modal-replace-bg: #10b981;
-  --modal-replace-border: #065f46;
+  /* Backgrounds */
+  --bg: #f4f1ed;
+  --surface: #faf8f5;
+  --sidebar-bg: #f9f7f4;
+  --sidebar-border: #e8e2da;
+
+  /* Cards & Borders */
+  --card: #ffffff;
+  --border: #ede8e2;
+  --border-strong: #d9d2c8;
+
+  /* Accent */
+  --accent: #0f9d8a;
+  --accent-light: #e8f5f3;
+  --accent-mid: #7dc8c0;
+
+  /* Text */
+  --text: #1e2a22;
+  --text-2: #3d4a40;
+  --muted: #7a8074;
+  --subtle: #a09890;
+
+  /* Semantic */
+  --red: #c53030;
+  --red-light: #fff5f5;
+  --amber: #c07a1a;
+  --colour-savings: #0f9d8a;
+
+  /* Shadows */
+  --shadow-sm: 0 1px 3px rgba(30, 42, 34, 0.08);
+  --shadow-md: 0 4px 12px rgba(30, 42, 34, 0.12);
+
+  /* Category colours */
+  --cat-groceries: #4a7c59;
+  --cat-transport: #2e6b8a;
+  --cat-entertainment: #7b5ea7;
+  --cat-utilities: #c07a1a;
+  --cat-healthcare: #c53030;
+  --cat-dining: #b5541a;
+  --cat-shopping: #0f7a7a;
+
+  /* Modal tokens (updated for warm palette) */
+  --modal-overlay: rgba(30, 42, 34, 0.4);
+  --modal-bg: #ffffff;
+  --modal-border: #ede8e2;
+  --modal-title: #1e2a22;
+  --modal-body: #7a8074;
+  --modal-cancel-bg: #faf8f5;
+  --modal-cancel-border: #ede8e2;
+  --modal-cancel-text: #3d4a40;
+  --modal-replace-bg: #0f9d8a;
+  --modal-replace-border: #0a7d6e;
   --modal-replace-text: #ffffff;
-  --surface-hover: #152234;
-  --color-danger: #f87171;
+  --surface-hover: #f0ece6;
+  --color-danger: #c53030;
+
+  /* Legacy aliases kept for backward compatibility */
+  --accent-dim: #0a7d6e;
 }
 
 * {
@@ -35,7 +68,7 @@
 }
 
 body {
-  font-family: "Sora", sans-serif;
+  font-family: "Nunito", sans-serif;
   background: var(--bg);
   color: var(--text);
   -webkit-font-smoothing: antialiased;
