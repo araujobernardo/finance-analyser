@@ -2,7 +2,7 @@
 // Routes: GET/POST /api/categories, PATCH/DELETE /api/categories/:id
 
 import { Router } from "express";
-import { eq, and, isNotNull } from "drizzle-orm";
+import { eq, and, isNotNull, ne } from "drizzle-orm";
 import { z } from "zod";
 import { db } from "../../db/index.ts";
 import { categories, transactions } from "../../db/schema.ts";
@@ -35,24 +35,48 @@ export const categoriesRouter = Router();
 
 categoriesRouter.use(authenticateToken);
 
+// "Transfer" is a behavioral flag (isTransfer), not a category.
+// It must never appear in the categories list or be auto-migrated from transactions.
+const RESERVED_CATEGORY = "Transfer";
+
 // ── GET / ─────────────────────────────────────────────────────────────────────
 // Returns all categories for the user. On first call after the #774 fix,
 // any transaction category that has no categories-table row is auto-migrated
 // with a deterministic default colour so PATCH/DELETE always find a real row.
+// "Transfer" is excluded from both auto-migration and the response.
 
 categoriesRouter.get("/", async (_req, res, next) => {
   try {
     const userId = (res.locals as AuthLocals).user.userId;
 
+    // Clean up legacy data: transactions flagged as transfers that still carry
+    // a stale "Transfer" category label (set by the AI before #781 fix).
+    await db
+      .update(transactions)
+      .set({ category: null })
+      .where(
+        and(
+          eq(transactions.userId, userId),
+          eq(transactions.isTransfer, true),
+          eq(transactions.category, RESERVED_CATEGORY),
+        ),
+      );
+
     const existingRows = await db
       .select()
       .from(categories)
-      .where(eq(categories.userId, userId))
+      .where(
+        and(
+          eq(categories.userId, userId),
+          ne(categories.name, RESERVED_CATEGORY),
+        ),
+      )
       .orderBy(categories.createdAt);
 
     const existingNames = new Set(existingRows.map((r) => r.name));
 
-    // Find distinct category names used in transactions but not yet in the table
+    // Find distinct category names used in transactions but not yet in the table.
+    // Exclude "Transfer" — it is never a real category.
     const txnCatRows = await db
       .selectDistinct({ category: transactions.category })
       .from(transactions)
@@ -62,7 +86,7 @@ categoriesRouter.get("/", async (_req, res, next) => {
 
     const missing = txnCatRows
       .map((r) => r.category as string)
-      .filter((name) => !existingNames.has(name));
+      .filter((name) => name !== RESERVED_CATEGORY && !existingNames.has(name));
 
     if (missing.length > 0) {
       await db.insert(categories).values(
@@ -76,7 +100,12 @@ categoriesRouter.get("/", async (_req, res, next) => {
       const allRows = await db
         .select()
         .from(categories)
-        .where(eq(categories.userId, userId))
+        .where(
+          and(
+            eq(categories.userId, userId),
+            ne(categories.name, RESERVED_CATEGORY),
+          ),
+        )
         .orderBy(categories.createdAt);
       res.json({ categories: allRows });
       return;

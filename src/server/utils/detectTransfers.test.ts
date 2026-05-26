@@ -102,7 +102,10 @@ describe("detectTransfers", () => {
 
     // update().set() should have been called once to flag both transactions
     expect(updateSet).toHaveBeenCalledOnce();
-    expect(updateSet).toHaveBeenCalledWith({ isTransfer: true });
+    expect(updateSet).toHaveBeenCalledWith({
+      isTransfer: true,
+      category: null,
+    });
   });
 
   it("does not call update when no mirror transaction is found", async () => {

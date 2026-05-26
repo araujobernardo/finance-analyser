@@ -95,10 +95,11 @@ export async function detectTransfers(
       .limit(1);
 
     if (match) {
-      // Flag both sides as transfers.
+      // Flag both sides as transfers and clear any AI-assigned category so
+      // "Transfer" (or any stale label) never shows in the category dropdown.
       await db
         .update(transactions)
-        .set({ isTransfer: true })
+        .set({ isTransfer: true, category: null })
         .where(
           sql`${transactions.id} IN (${sql.raw(`'${row.id}'::uuid, '${match.id}'::uuid`)})`,
         );

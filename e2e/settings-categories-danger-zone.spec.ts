@@ -240,6 +240,39 @@ test("#774: adding a category in Settings makes it appear in Transactions page f
   ).toBeAttached();
 });
 
+// ── #781: "Transfer" must never appear as a category ─────────────────────────
+
+test("#781: Settings categories list does not include Transfer", async ({
+  authenticatedPage: page,
+}) => {
+  await page.getByRole("link", { name: /settings/i }).click();
+  await page.waitForURL(/\/settings/);
+
+  const categoriesSection = page.getByTestId("categories-section");
+  await expect(categoriesSection).toBeVisible();
+
+  // "Transfer" should not appear as a category name anywhere in the section
+  await expect(
+    categoriesSection.getByDisplayValue("Transfer"),
+  ).not.toBeAttached();
+});
+
+test("#781: Transactions page category filter does not include Transfer option", async ({
+  authenticatedPage: page,
+}) => {
+  await page.getByRole("link", { name: /transactions/i }).click();
+  await page.waitForURL(/\/transactions/);
+
+  // The category filter select should not have a "Transfer" option
+  const catFilter = page.locator("select.txn-select").filter({
+    has: page.locator("option[value='all']"),
+  });
+
+  await expect(
+    catFilter.locator("option[value='Transfer'], option:text-is('Transfer')"),
+  ).not.toBeAttached();
+});
+
 test("#774: deleting a category in Settings removes it from Transactions page filter dropdown", async ({
   authenticatedPage: page,
 }) => {

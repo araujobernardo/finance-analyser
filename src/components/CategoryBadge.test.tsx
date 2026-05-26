@@ -30,7 +30,7 @@ describe("CategoryBadge", () => {
     renderBadge();
     fireEvent.click(screen.getByRole("button"));
     const options = screen.getAllByRole("option");
-    expect(options.length).toBeGreaterThanOrEqual(11);
+    expect(options.length).toBeGreaterThanOrEqual(10);
     expect(options.some((o) => o.textContent === "Groceries")).toBe(true);
     expect(options.some((o) => o.textContent === "Transport")).toBe(true);
   });
