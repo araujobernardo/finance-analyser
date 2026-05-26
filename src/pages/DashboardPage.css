@@ -30,26 +30,34 @@
 }
 
 .pill {
-  padding: 5px 12px;
+  padding: 5px 13px;
   border-radius: 20px;
   font-size: 12px;
   font-weight: 600;
   cursor: pointer;
-  border: 1px solid var(--border);
+  border: 1.5px solid var(--border-strong);
   background: transparent;
   color: var(--muted);
   font-family: inherit;
+  white-space: nowrap;
+  flex-shrink: 0;
+  transition:
+    border-color 130ms ease-out,
+    color 130ms ease-out,
+    background 130ms ease-out;
 }
 
 .pill:hover {
   border-color: var(--accent);
   color: var(--accent);
+  background: var(--accent-light);
 }
 
 .pill.pill-active {
   border-color: var(--accent);
-  background: color-mix(in srgb, var(--accent) 15%, transparent);
-  color: var(--accent);
+  background: var(--accent);
+  color: #fff;
+  font-weight: 700;
 }
 
 /* ── Dashboard layout ───────────────────────────────────────────────────── */
@@ -99,11 +107,11 @@
 }
 
 .dash-heading {
-  font-size: 20px;
-  font-weight: 700;
+  font-size: 24px;
+  font-weight: 800;
   color: var(--text);
   margin: 0;
-  line-height: 1.3;
+  line-height: 1.2;
 }
 
 .dash-heading-sub {
@@ -115,7 +123,30 @@
 .dash-month-pills {
   display: flex;
   gap: 5px;
-  flex-wrap: wrap;
+  flex-wrap: nowrap;
+  overflow-x: auto;
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+
+.dash-month-pills::-webkit-scrollbar {
+  display: none;
+}
+
+.dash-title-block {
+  /* Title block takes up as much space as it needs; pills take the rest */
+  flex-shrink: 0;
+}
+
+/* Responsive: on narrow viewports pills move below the title */
+@media (max-width: 640px) {
+  .dash-header {
+    flex-wrap: wrap;
+  }
+
+  .dash-month-pills {
+    width: 100%;
+  }
 }
 
 .dash-stats-grid {
