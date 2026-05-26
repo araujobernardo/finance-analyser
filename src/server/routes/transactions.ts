@@ -2,7 +2,7 @@ import { Router } from "express";
 import { eq, and, desc } from "drizzle-orm";
 import { z } from "zod";
 import { db } from "../../db/index.ts";
-import { accounts, transactions } from "../../db/schema.ts";
+import { accounts, categories, transactions } from "../../db/schema.ts";
 import {
   authenticateToken,
   type AuthLocals,
@@ -264,6 +264,52 @@ transactionsRouter.post(
             "[import] recalculateUserGoals failed (non-fatal):",
             goalErr,
           );
+        }
+
+        // #774: upsert any new category names into the categories table so
+        // Settings immediately reflects all categories assigned by the AI.
+        try {
+          const newCatNames = [
+            ...new Set(
+              validRows
+                .map((r) => r.category)
+                .filter((c): c is string => c !== null),
+            ),
+          ];
+          if (newCatNames.length > 0) {
+            const existingCats = await db
+              .select({ name: categories.name })
+              .from(categories)
+              .where(eq(categories.userId, userId));
+            const existingNames = new Set(existingCats.map((c) => c.name));
+            const toInsert = newCatNames.filter((n) => !existingNames.has(n));
+            if (toInsert.length > 0) {
+              const palette = [
+                "#6366f1",
+                "#f59e0b",
+                "#10b981",
+                "#ef4444",
+                "#3b82f6",
+                "#8b5cf6",
+                "#ec4899",
+                "#14b8a6",
+              ];
+              await db.insert(categories).values(
+                toInsert.map((name) => {
+                  let hash = 0;
+                  for (const ch of name)
+                    hash = (hash * 31 + ch.charCodeAt(0)) & 0xffffffff;
+                  return {
+                    userId,
+                    name,
+                    colour: palette[Math.abs(hash) % palette.length]!,
+                  };
+                }),
+              );
+            }
+          }
+        } catch (catErr) {
+          console.error("[import] category upsert failed (non-fatal):", catErr);
         }
       }
 
