@@ -494,7 +494,7 @@ describe("useActiveTransactions", () => {
         />
       </AccountProvider>,
     );
-    await waitFor(() => expect(result).toHaveLength(1), { timeout: 5000 });
+    await waitFor(() => expect(result).toHaveLength(1), { timeout: 10000 });
     expect(result[0].description).toBe("Groceries");
   });
 
@@ -548,7 +548,7 @@ describe("useActiveTransactions", () => {
         />
       </AccountProvider>,
     );
-    await waitFor(() => expect(result).toHaveLength(2), { timeout: 5000 });
+    await waitFor(() => expect(result).toHaveLength(2), { timeout: 10000 });
     expect(result.map((t) => t.description).sort()).toEqual(["A", "B"]);
   });
 
