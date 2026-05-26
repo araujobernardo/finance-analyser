@@ -289,31 +289,40 @@
 }
 
 .dash-cat-chart-col {
-  flex: 0 0 44%;
-  min-width: 140px;
-  max-width: 300px;
+  flex: 0 0 148px;
   display: flex;
   align-items: center;
   justify-content: center;
 }
 
 .dash-cat-donut-wrap {
-  width: 100%;
-  aspect-ratio: 1;
+  width: 148px;
+  height: 148px;
+  flex-shrink: 0;
 }
 
 .dash-cat-legend {
   display: flex;
   flex-direction: column;
-  gap: 5px;
+  gap: 8px;
 }
 
 .dash-cat-legend-item {
   display: flex;
   align-items: center;
-  gap: 6px;
+  gap: 8px;
   font-size: 13px;
-  color: var(--subtle);
+  padding: 4px 6px;
+  border-radius: 6px;
+  transition: background 120ms ease;
+}
+
+.dash-cat-legend-item:hover {
+  background: var(--surface-hover);
+}
+
+.dash-cat-legend-item--active {
+  background: var(--accent-light);
 }
 
 .dash-cat-legend-name {
@@ -322,27 +331,32 @@
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
-  color: var(--text);
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--text-2);
 }
 
 .dash-cat-legend-pct {
   flex-shrink: 0;
-  color: var(--muted);
-  font-size: 12px;
+  width: 38px;
+  text-align: right;
+  color: var(--subtle);
+  font-size: 11px;
 }
 
 .dash-cat-legend-dot {
   display: inline-block;
-  width: 8px;
-  height: 8px;
-  border-radius: 2px;
+  width: 10px;
+  height: 10px;
+  border-radius: 3px;
   flex-shrink: 0;
 }
 
 .dash-cat-legend-val {
   flex-shrink: 0;
-  color: var(--subtle);
-  font-weight: 600;
+  color: var(--text);
+  font-weight: 700;
+  font-size: 12px;
 }
 
 .dash-empty-chart {

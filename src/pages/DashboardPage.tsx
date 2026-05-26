@@ -1,4 +1,3 @@
-import { PieChart, Pie, Cell, Tooltip, ResponsiveContainer } from "recharts";
 import { useState, useMemo } from "react";
 import { ACCOUNT_COLORS } from "../constants/colors";
 import type { ApiTransaction } from "../types/api";
@@ -75,7 +74,19 @@ const fmtMonthSh = (m: string) => {
   );
 };
 
-// Stable category colours derived from position in the sorted category list.
+// Category colour tokens — maps lowercase category names to --cat-* CSS variables.
+// Falls back to the CAT_COLORS array for categories not in this map.
+const CAT_TOKEN_MAP: Record<string, string> = {
+  groceries: "var(--cat-groceries)",
+  transport: "var(--cat-transport)",
+  entertainment: "var(--cat-entertainment)",
+  utilities: "var(--cat-utilities)",
+  healthcare: "var(--cat-healthcare)",
+  dining: "var(--cat-dining)",
+  shopping: "var(--cat-shopping)",
+};
+
+// Fallback palette for categories not covered by --cat-* tokens.
 const CAT_COLORS = [
   "#6C8EBF",
   "#82B366",
@@ -89,6 +100,13 @@ const CAT_COLORS = [
   "#603E8A",
   "#0E7A8A",
 ];
+
+function catColor(name: string, fallbackIndex: number): string {
+  return (
+    CAT_TOKEN_MAP[name.toLowerCase()] ??
+    CAT_COLORS[fallbackIndex % CAT_COLORS.length]
+  );
+}
 
 // ── DashboardPage ────────────────────────────────────────────────────────────
 
@@ -225,7 +243,7 @@ export function DashboardPage() {
       uniqueCategories
         .map((name, i) => ({
           name,
-          color: CAT_COLORS[i % CAT_COLORS.length],
+          color: catColor(name, i),
           value: real
             .filter((t) => t.category === name && !t.isCredit)
             .reduce((s, t) => s + Math.abs(t.amount), 0),
@@ -343,14 +361,6 @@ export function DashboardPage() {
     }
     return `${n} months selected · click to deselect`;
   })();
-
-  const tooltipStyle = {
-    background: "var(--card)",
-    border: "1px solid var(--border)",
-    borderRadius: 8,
-    fontSize: 12,
-    color: "var(--text)",
-  };
 
   return (
     <div className="dash-scroll">
@@ -505,7 +515,7 @@ export function DashboardPage() {
                   {catData.slice(0, 7).map((d) => (
                     <div
                       key={d.name}
-                      className="dash-cat-legend-item"
+                      className={`dash-cat-legend-item${selectedCategory === d.name ? " dash-cat-legend-item--active" : ""}`}
                       style={{
                         opacity:
                           selectedCategory === null ||
@@ -538,46 +548,16 @@ export function DashboardPage() {
                   ))}
                 </div>
               </div>
-              {/* Right: donut chart */}
+              {/* Right: SVG donut chart */}
               <div className="dash-cat-chart-col">
-                <div className="dash-cat-donut-wrap">
-                  <ResponsiveContainer width="100%" height="100%">
-                    <PieChart>
-                      <Pie
-                        data={catData}
-                        cx="50%"
-                        cy="50%"
-                        innerRadius="52%"
-                        outerRadius="80%"
-                        paddingAngle={2}
-                        dataKey="value"
-                      >
-                        {catData.map((d, i) => (
-                          <Cell
-                            key={i}
-                            fill={d.color}
-                            opacity={
-                              selectedCategory === null ||
-                              selectedCategory === d.name
-                                ? 1
-                                : 0.3
-                            }
-                            onClick={() =>
-                              setSelectedCategory(
-                                d.name === selectedCategory ? null : d.name,
-                              )
-                            }
-                            style={{ cursor: "pointer" }}
-                          />
-                        ))}
-                      </Pie>
-                      <Tooltip
-                        formatter={(v) => [fmt(v as number), "Spend"]}
-                        contentStyle={tooltipStyle}
-                      />
-                    </PieChart>
-                  </ResponsiveContainer>
-                </div>
+                <DonutChart
+                  data={catData}
+                  total={catTotal}
+                  selectedCategory={selectedCategory}
+                  onSelect={(name) =>
+                    setSelectedCategory(name === selectedCategory ? null : name)
+                  }
+                />
               </div>
             </div>
           ) : (
@@ -609,6 +589,117 @@ export function DashboardPage() {
         <div className="card-title">Weekly Trends</div>
         <WeeklyTrendChart data={weeklyBuckets} />
       </div>
+    </div>
+  );
+}
+
+// ── DonutChart ───────────────────────────────────────────────────────────────
+// Pure SVG donut using stroke-dasharray rings.
+// viewBox: 148×148, centre 74×74, r=48 (stroke-width 22) → circ ≈ 301.6
+
+const DONUT_R = 48;
+const DONUT_CIRC = 2 * Math.PI * DONUT_R;
+const DONUT_SIZE = 148;
+const DONUT_CX = DONUT_SIZE / 2;
+const DONUT_CY = DONUT_SIZE / 2;
+const DONUT_SW = 22;
+
+interface DonutSlice {
+  name: string;
+  color: string;
+  value: number;
+}
+
+function DonutChart({
+  data,
+  total,
+  selectedCategory,
+  onSelect,
+}: {
+  data: DonutSlice[];
+  total: number;
+  selectedCategory: string | null;
+  onSelect: (name: string) => void;
+}) {
+  // Build slices with cumulative offsets using reduce to avoid let-mutation.
+  const slices = data.reduce<
+    Array<DonutSlice & { dashLen: number; offset: number }>
+  >((acc, d) => {
+    const prevCumulative = acc.reduce(
+      (s, sl) => s + sl.dashLen / DONUT_CIRC,
+      0,
+    );
+    const pct = total > 0 ? d.value / total : 0;
+    const dashLen = pct * DONUT_CIRC;
+    // stroke-dashoffset: start from top (CIRC/4), then subtract cumulative arc.
+    const offset = DONUT_CIRC / 4 - prevCumulative * DONUT_CIRC;
+    return [...acc, { ...d, dashLen, offset }];
+  }, []);
+
+  return (
+    <div className="dash-cat-donut-wrap" data-testid="donut-svg-wrapper">
+      <svg
+        viewBox={`0 0 ${DONUT_SIZE} ${DONUT_SIZE}`}
+        width={DONUT_SIZE}
+        height={DONUT_SIZE}
+        style={{ display: "block", margin: "0 auto" }}
+        aria-label="Spending by category donut chart"
+      >
+        {/* Grey base ring */}
+        <circle
+          cx={DONUT_CX}
+          cy={DONUT_CY}
+          r={DONUT_R}
+          fill="none"
+          stroke="var(--border)"
+          strokeWidth={DONUT_SW}
+        />
+        {/* Category slices */}
+        {slices.map((s) => (
+          <circle
+            key={s.name}
+            cx={DONUT_CX}
+            cy={DONUT_CY}
+            r={DONUT_R}
+            fill="none"
+            stroke={s.color}
+            strokeWidth={DONUT_SW}
+            strokeDasharray={`${s.dashLen} ${DONUT_CIRC - s.dashLen}`}
+            strokeDashoffset={s.offset}
+            opacity={
+              selectedCategory === null || selectedCategory === s.name ? 1 : 0.3
+            }
+            style={{ cursor: "pointer", transition: "opacity 130ms ease" }}
+            onClick={() => onSelect(s.name)}
+            role="button"
+            aria-label={s.name}
+          />
+        ))}
+        {/* Centre label */}
+        <text
+          x={DONUT_CX}
+          y={DONUT_CY - 8}
+          textAnchor="middle"
+          fontSize="10"
+          fill="var(--muted)"
+          fontWeight="700"
+          letterSpacing="0.08em"
+          style={{ textTransform: "uppercase" }}
+        >
+          TOTAL
+        </text>
+        <text
+          x={DONUT_CX}
+          y={DONUT_CY + 12}
+          textAnchor="middle"
+          fontSize="16"
+          fill="var(--text)"
+          fontWeight="800"
+          fontFamily="JetBrains Mono, monospace"
+        >
+          {total > 0 ? `$${Math.round(total).toLocaleString("en-NZ")}` : "$0"}
+        </text>
+      </svg>
     </div>
   );
 }
