@@ -142,7 +142,6 @@ export function DashboardPage() {
         : [...selectedMonths, m].sort(),
     );
 
-  const multiMonth = selectedMonths.length > 1;
   const n = selectedMonths.length;
 
   const selAdapted = useMemo(
@@ -180,6 +179,46 @@ export function DashboardPage() {
         .reduce((s, t) => s + Math.abs(t.amount), 0),
     [selAdapted],
   );
+
+  // Previous month — for comparison badge.
+  // "Previous month" = the calendar month immediately before the earliest
+  // selected month. Badge only renders when prior-month data exists.
+  const prevMonth = useMemo(() => {
+    if (selectedMonths.length === 0) return null;
+    const earliest = [...selectedMonths].sort()[0];
+    const [y, mo] = earliest.split("-").map(Number);
+    const prevDate = new Date(y, mo - 2, 1); // mo-1 is current, mo-2 is previous
+    return `${prevDate.getFullYear()}-${String(prevDate.getMonth() + 1).padStart(2, "0")}`;
+  }, [selectedMonths]);
+
+  const prevAdapted = useMemo(
+    () =>
+      prevMonth
+        ? adapted.filter(
+            (t) =>
+              t.month === prevMonth &&
+              (activeAccountId === ALL_ACCOUNTS_ID ||
+                t.accountShort === activeAccountId) &&
+              !t.isTransfer,
+          )
+        : [],
+    [adapted, prevMonth, activeAccountId],
+  );
+
+  const prevIncome = useMemo(
+    () =>
+      prevAdapted.filter((t) => t.isCredit).reduce((s, t) => s + t.amount, 0),
+    [prevAdapted],
+  );
+  const prevSpend = useMemo(
+    () =>
+      prevAdapted
+        .filter((t) => !t.isCredit)
+        .reduce((s, t) => s + Math.abs(t.amount), 0),
+    [prevAdapted],
+  );
+  // Only show badge when prev month data actually exists in our dataset
+  const hasPrevData = prevAdapted.length > 0;
 
   const catData = useMemo(
     () =>
@@ -344,41 +383,63 @@ export function DashboardPage() {
 
       {/* Summary stats */}
       <div className="dash-stats-grid" data-testid="summary-stats">
-        <div className="card">
-          <Stat
-            label="Income"
-            value={fmt(income)}
-            color="var(--accent)"
-            sub={multiMonth ? `avg ${fmt(income / n)}/mo` : undefined}
-          />
-        </div>
-        <div className="card">
-          <Stat
-            label="Spent"
-            value={fmt(spend)}
-            color="var(--red)"
-            sub={multiMonth ? `avg ${fmt(spend / n)}/mo` : undefined}
-          />
-        </div>
-        <div className="card">
-          <Stat
-            label="Net"
-            value={`${net >= 0 ? "+" : ""}${fmt(net)}`}
-            color={net >= 0 ? "var(--accent)" : "var(--red)"}
-            sub={
-              multiMonth
-                ? `avg ${net >= 0 ? "+" : ""}${fmt(net / n)}/mo`
-                : undefined
-            }
-          />
-        </div>
-        <div className="card">
-          <Stat
-            label="Transactions"
-            value={String(selAdapted.length)}
-            color="var(--text)"
-          />
-        </div>
+        <StatCard
+          label="Income"
+          value={fmt(income)}
+          color="var(--accent)"
+          barColor="var(--accent)"
+          badge={
+            hasPrevData
+              ? {
+                  delta: income - prevIncome,
+                  isPositive: income >= prevIncome,
+                  prevLabel: prevMonth ? fmtMonthSh(prevMonth) : "prev",
+                }
+              : undefined
+          }
+          data-testid="stat-income"
+        />
+        <StatCard
+          label="Spent"
+          value={fmt(spend)}
+          color="var(--red)"
+          barColor="var(--red)"
+          badge={
+            hasPrevData
+              ? {
+                  delta: spend - prevSpend,
+                  // For spending, a decrease is positive (good news)
+                  isPositive: spend <= prevSpend,
+                  prevLabel: prevMonth ? fmtMonthSh(prevMonth) : "prev",
+                }
+              : undefined
+          }
+          data-testid="stat-spent"
+        />
+        <StatCard
+          label="Net"
+          value={`${net >= 0 ? "+" : ""}${fmt(net)}`}
+          color={net >= 0 ? "var(--accent)" : "var(--red)"}
+          barColor="var(--accent)"
+          sub={
+            income > 0
+              ? `${((net / income) * 100).toFixed(1)}% savings rate`
+              : undefined
+          }
+          data-testid="stat-net"
+        />
+        <StatCard
+          label="Transactions"
+          value={String(selAdapted.length)}
+          color="var(--text)"
+          barColor="var(--amber, #d97706)"
+          sub={
+            transferAmt > 0
+              ? `${selAdapted.filter((t) => t.isTransfer).length} transfers excluded`
+              : undefined
+          }
+          data-testid="stat-transactions"
+        />
       </div>
 
       {/* Goals Summary Widget */}
@@ -552,24 +613,56 @@ export function DashboardPage() {
   );
 }
 
-function Stat({
+interface StatBadge {
+  delta: number;
+  isPositive: boolean;
+  prevLabel: string;
+}
+
+function StatCard({
   label,
   value,
-  sub,
   color = "var(--text)",
+  barColor,
+  badge,
+  sub,
+  "data-testid": testId,
 }: {
   label: string;
   value: string;
-  sub?: string;
   color?: string;
+  barColor: string;
+  badge?: StatBadge;
+  sub?: string;
+  "data-testid"?: string;
 }) {
   return (
-    <div className="stat">
+    <div
+      className="card stat-card"
+      style={{ borderTop: `3px solid ${barColor}` }}
+      data-testid={testId}
+    >
       <div className="stat-label">{label}</div>
       <div className="stat-value mono" style={{ color }}>
         {value}
       </div>
-      {sub && <div className="stat-sub mono">{sub}</div>}
+      {badge && (
+        <div
+          className={`stat-badge ${badge.isPositive ? "stat-badge--up" : "stat-badge--down"}`}
+          data-testid={testId ? `${testId}-badge` : undefined}
+        >
+          {badge.isPositive ? "↑" : "↓"} {fmt(Math.abs(badge.delta))} vs{" "}
+          {badge.prevLabel}
+        </div>
+      )}
+      {sub && !badge && (
+        <div
+          className="stat-sub"
+          data-testid={testId ? `${testId}-sub` : undefined}
+        >
+          {sub}
+        </div>
+      )}
     </div>
   );
 }
