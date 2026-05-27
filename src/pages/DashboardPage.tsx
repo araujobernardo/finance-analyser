@@ -12,6 +12,7 @@ import {
 } from "../utils/weeklyAggregation";
 import { WeeklyTrendChart } from "../components/WeeklyTrendChart";
 import { LargestTransactions } from "../components/LargestTransactions";
+import { IncomeExpenseChart } from "../components/IncomeExpenseChart";
 import { SpendingTrendsByCategoryChart } from "../components/SpendingTrendsByCategoryChart";
 import { GoalsSummaryWidget } from "../components/goals/GoalsSummaryWidget";
 import { BudgetSummaryWidget } from "../components/budgets/BudgetSummaryWidget";
@@ -161,6 +162,18 @@ export function DashboardPage() {
     );
 
   const n = selectedMonths.length;
+
+  // Account-filtered but NOT month-filtered — used by IncomeExpenseChart so it
+  // always shows the last 5 months regardless of which month pills are active.
+  const acctAdapted = useMemo(
+    () =>
+      adapted.filter(
+        (t) =>
+          activeAccountId === ALL_ACCOUNTS_ID ||
+          t.accountShort === activeAccountId,
+      ),
+    [adapted, activeAccountId],
+  );
 
   const selAdapted = useMemo(
     () =>
@@ -568,12 +581,20 @@ export function DashboardPage() {
         </div>
 
         <div className="card">
-          <LargestTransactions
-            transactions={txnsForLargest}
-            selectedCategory={selectedCategory}
-            onCategoryClick={setSelectedCategory}
+          <IncomeExpenseChart
+            adapted={acctAdapted}
+            currentMonth={months[0] ?? ""}
           />
         </div>
+      </div>
+
+      {/* Largest Transactions */}
+      <div className="card">
+        <LargestTransactions
+          transactions={txnsForLargest}
+          selectedCategory={selectedCategory}
+          onCategoryClick={setSelectedCategory}
+        />
       </div>
 
       {/* Spending Trends by Category */}
