@@ -16,6 +16,7 @@ import { IncomeExpenseChart } from "../components/IncomeExpenseChart";
 import { SpendingTrendsByCategoryChart } from "../components/SpendingTrendsByCategoryChart";
 import { GoalsSummaryWidget } from "../components/goals/GoalsSummaryWidget";
 import { BudgetSummaryWidget } from "../components/budgets/BudgetSummaryWidget";
+import { SpendingTrendsLineChart } from "../components/SpendingTrendsLineChart";
 import type { Transaction } from "../utils/csvParser";
 import "./DashboardPage.css";
 
@@ -604,6 +605,12 @@ export function DashboardPage() {
           selectedCategory={selectedCategory}
         />
       </div>
+
+      {/* Spending Trends Line Chart — Option B: Focus and Fade */}
+      <SpendingTrendsLineChart
+        transactions={rawTransactions}
+        activeAccountId={activeAccountId}
+      />
 
       {/* Weekly Trends */}
       <div className="card dash-trends">

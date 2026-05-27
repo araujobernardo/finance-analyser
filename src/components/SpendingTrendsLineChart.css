@@ -1,0 +1,143 @@
+/* ── SpendingTrendsLineChart — Option B: Focus and Fade ─────────────────── */
+
+.stlc-card {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 20px 24px;
+  display: flex;
+  flex-direction: column;
+}
+
+.stlc-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 16px;
+}
+
+.stlc-title {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--subtle);
+  margin-bottom: 3px;
+}
+
+.stlc-subtitle {
+  font-size: 12px;
+  color: var(--muted);
+  font-weight: 500;
+}
+
+/* Category chips */
+.stlc-chips {
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+  margin-bottom: 14px;
+}
+
+.stlc-chip {
+  padding: 4px 10px;
+  border-radius: 20px;
+  font-size: 11px;
+  font-weight: 700;
+  cursor: pointer;
+  border: 1.5px solid transparent;
+  transition:
+    opacity 0.15s ease-out,
+    filter 0.15s ease-out;
+  user-select: none;
+  color: #fff;
+  opacity: 1;
+  filter: none;
+}
+
+.stlc-chip.stlc-chip--dimmed {
+  opacity: 0.35;
+  filter: saturate(0.3);
+}
+
+/* Chart area */
+.stlc-chart-area {
+  position: relative;
+  width: 100%;
+  cursor: crosshair;
+}
+
+.stlc-svg {
+  width: 100%;
+  height: auto;
+  display: block;
+}
+
+/* Floating tooltip */
+.stlc-tooltip {
+  position: fixed;
+  background: var(--card);
+  border: 1px solid var(--border-strong);
+  border-radius: 10px;
+  padding: 12px 16px;
+  font-size: 12px;
+  box-shadow: var(--shadow-md);
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity 0.12s ease-out;
+  z-index: 100;
+  min-width: 170px;
+}
+
+.stlc-tooltip.stlc-tooltip--visible {
+  opacity: 1;
+}
+
+.stlc-tooltip-month {
+  font-size: 13px;
+  font-weight: 800;
+  color: var(--text);
+  margin-bottom: 8px;
+}
+
+.stlc-tooltip-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 3px 0;
+  color: var(--text-2);
+}
+
+.stlc-tooltip-row--active {
+  background: var(--bg);
+  border-radius: 6px;
+  padding: 3px 6px;
+  margin: 0 -6px;
+}
+
+.stlc-tooltip-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.stlc-tooltip-cat {
+  font-size: 12px;
+  font-weight: 600;
+  flex: 1;
+}
+
+.stlc-tooltip-amount {
+  font-size: 12px;
+  font-weight: 800;
+  white-space: nowrap;
+}
+
+@media (max-width: 480px) {
+  .stlc-card {
+    padding: 16px;
+  }
+
+  .stlc-chips {
+    gap: 4px;
+  }
+}
