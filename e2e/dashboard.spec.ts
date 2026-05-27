@@ -48,6 +48,39 @@ test("month filter pill activates and updates heading (short format)", async ({
   );
 });
 
+test("income vs expenses chart is rendered in the charts row", async ({
+  authenticatedPage: page,
+}) => {
+  await uploadFixtures(page);
+
+  // The chart card must be present
+  await expect(
+    page.locator('[data-testid="income-expense-chart"]'),
+  ).toBeVisible({ timeout: 15_000 });
+});
+
+test("income vs expenses chart shows empty state when all transactions are transfers", async ({
+  authenticatedPage: page,
+}) => {
+  // Fixture only has transfer transactions, so chart shows empty state
+  await uploadFixtures(page);
+
+  await expect(
+    page.locator('[data-testid="income-expense-chart"]'),
+  ).toContainText("No data for selected account", { timeout: 15_000 });
+});
+
+test("largest transactions card is present below the charts row", async ({
+  authenticatedPage: page,
+}) => {
+  await uploadFixtures(page);
+
+  // LargestTransactions was moved to its own card row below the charts grid
+  await expect(
+    page.getByText("Largest Transactions", { exact: false }),
+  ).toBeVisible({ timeout: 15_000 });
+});
+
 test("multi-select pills show range heading and count subtitle", async ({
   authenticatedPage: page,
 }) => {
