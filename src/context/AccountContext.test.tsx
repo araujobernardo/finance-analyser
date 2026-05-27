@@ -81,7 +81,7 @@ function ContextReader({
 
 beforeEach(() => {
   localStorage.clear();
-  vi.clearAllMocks();
+  vi.resetAllMocks();
 });
 
 // ── AccountProvider ────────────────────────────────────────────────────────
