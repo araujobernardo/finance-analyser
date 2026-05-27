@@ -16,13 +16,12 @@ function makeTxn(
     id: Math.random().toString(),
     userId: "user1",
     accountId: "acc1",
-    date: overrides.date,
     description: "Test",
-    amount: overrides.amount,
-    category: overrides.category ?? "Groceries",
+    category: "Groceries",
     isTransfer: false,
     isManualTransfer: false,
     createdAt: "2025-01-01T00:00:00Z",
+    // overrides last — date, amount, category, accountId, isTransfer all override defaults
     ...overrides,
   };
 }
