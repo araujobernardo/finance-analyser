@@ -14,7 +14,6 @@ const CHART_W = W - PAD_L - PAD_R;
 const CHART_H = H - PAD_T - PAD_B;
 const TOP_5 = 5;
 
-// Maps lowercase category names to CSS token hex values (from index.css).
 const CAT_COLOR_MAP: Record<string, string> = {
   groceries: "#4a7c59",
   transport: "#2e6b8a",
@@ -39,8 +38,14 @@ function catColor(name: string, fallbackIndex: number): string {
 interface CategorySeries {
   name: string;
   color: string;
-  /** One value per month (chronological). */
   values: number[];
+}
+
+interface TooltipState {
+  visible: boolean;
+  x: number;
+  y: number;
+  monthIdx: number;
 }
 
 // ── Data derivation ────────────────────────────────────────────────────────
@@ -49,21 +54,17 @@ function buildSeries(
   transactions: ApiTransaction[],
   activeAccountId: string,
 ): { months: string[]; series: CategorySeries[] } {
-  // Expense transactions only: negative amount, not a transfer, matching account.
   const expenses = transactions.filter(
     (t) =>
       t.amount < 0 &&
       !t.isTransfer &&
       (activeAccountId === "all" || t.accountId === activeAccountId),
   );
-
   if (expenses.length === 0) return { months: [], series: [] };
 
-  // Collect all months and sort chronologically.
   const monthSet = new Set(expenses.map((t) => t.date.slice(0, 7)));
   const months = Array.from(monthSet).sort();
 
-  // Aggregate spend by category × month.
   const totals = new Map<string, Map<string, number>>();
   for (const t of expenses) {
     const cat = t.category ?? "Uncategorised";
@@ -73,7 +74,6 @@ function buildSeries(
     mMap.set(month, (mMap.get(month) ?? 0) + Math.abs(t.amount));
   }
 
-  // Rank categories by total spend, take top 5.
   const ranked = Array.from(totals.entries())
     .map(([name, mMap]) => ({
       name,
@@ -91,7 +91,7 @@ function buildSeries(
   return { months, series };
 }
 
-// ── SVG geometry helpers ───────────────────────────────────────────────────
+// ── Geometry helpers ───────────────────────────────────────────────────────
 
 function xOf(i: number, count: number): number {
   if (count <= 1) return PAD_L + CHART_W / 2;
@@ -128,79 +128,31 @@ const fmtCurrency = new Intl.NumberFormat("en-NZ", {
   maximumFractionDigits: 0,
 });
 
-// ── Props ──────────────────────────────────────────────────────────────────
+// ── ChartSvg sub-component ─────────────────────────────────────────────────
 
-interface SpendingTrendsLineChartProps {
-  transactions: ApiTransaction[];
-  activeAccountId: string;
+interface ChartSvgProps {
+  svgRef: React.RefObject<SVGSVGElement | null>;
+  months: string[];
+  visibleSeries: CategorySeries[];
+  topCat: CategorySeries | undefined;
+  hiddenCats: Set<string>;
+  hoveredCat: string | null;
+  maxVal: number;
+  onLineEnter: (name: string) => void;
+  onLineLeave: () => void;
 }
 
-// ── Component ──────────────────────────────────────────────────────────────
-
-export function SpendingTrendsLineChart({
-  transactions,
-  activeAccountId,
-}: SpendingTrendsLineChartProps) {
-  const { months, series } = useMemo(
-    () => buildSeries(transactions, activeAccountId),
-    [transactions, activeAccountId],
-  );
-
-  const [hiddenCats, setHiddenCats] = useState<Set<string>>(new Set());
-  const [hoveredCat, setHoveredCat] = useState<string | null>(null);
-  const [tooltip, setTooltip] = useState<{
-    visible: boolean;
-    x: number;
-    y: number;
-    monthIdx: number;
-  }>({ visible: false, x: 0, y: 0, monthIdx: 0 });
-
-  const svgRef = useRef<SVGSVGElement>(null);
-
-  // All hooks must be declared before any early return.
-  const toggleCat = useCallback((name: string) => {
-    setHiddenCats((prev) => {
-      const next = new Set(prev);
-      if (next.has(name)) next.delete(name);
-      else next.add(name);
-      return next;
-    });
-  }, []);
-
-  const handleMouseMove = useCallback(
-    (e: React.MouseEvent<HTMLDivElement>) => {
-      if (!svgRef.current || months.length === 0) return;
-      const rect = svgRef.current.getBoundingClientRect();
-      const relX = ((e.clientX - rect.left) / rect.width) * W;
-      const divisor = months.length > 1 ? CHART_W / (months.length - 1) : 1;
-      const idx = Math.max(
-        0,
-        Math.min(months.length - 1, Math.round(relX / divisor)),
-      );
-      setTooltip({ visible: true, x: e.clientX, y: e.clientY, monthIdx: idx });
-    },
-    [months.length],
-  );
-
-  const handleMouseLeave = useCallback(() => {
-    setTooltip((prev) => ({ ...prev, visible: false }));
-    setHoveredCat(null);
-  }, []);
-
-  // Hide the card when fewer than 2 months of data exist.
-  if (months.length < 2) return null;
-
-  const visibleSeries = series.filter((s) => !hiddenCats.has(s.name));
-  const topCat = series[0]; // series already sorted by total desc
-
-  const allVals = visibleSeries.flatMap((s) => s.values);
-  const maxVal = allVals.length > 0 ? Math.max(...allVals) * 1.1 : 1;
-
-  // Subtitle: "Jan '25 – Jun '25"
-  const subtitle = `${fmtMonthLabel(months[0])} – ${fmtMonthLabel(months[months.length - 1])}`;
-
-  // ── SVG content ──────────────────────────────────────────────────────────
-
+function ChartSvg({
+  svgRef,
+  months,
+  visibleSeries,
+  topCat,
+  hiddenCats,
+  hoveredCat,
+  maxVal,
+  onLineEnter,
+  onLineLeave,
+}: ChartSvgProps) {
   const gridLines = [0.25, 0.5, 0.75].map((frac) => {
     const y = (PAD_T + CHART_H * (1 - frac)).toFixed(1);
     return (
@@ -216,7 +168,6 @@ export function SpendingTrendsLineChart({
     );
   });
 
-  // Gradient fill for top category (only when it is visible).
   const topVisible = topCat && !hiddenCats.has(topCat.name);
   const gradientEl = topVisible ? (
     <>
@@ -250,30 +201,29 @@ export function SpendingTrendsLineChart({
         strokeOpacity={opacity}
         style={{ transition: "stroke-opacity 0.15s, stroke-width 0.15s" }}
         data-cat={s.name}
-        onMouseEnter={() => setHoveredCat(s.name)}
-        onMouseLeave={() => setHoveredCat(null)}
+        onMouseEnter={() => onLineEnter(s.name)}
+        onMouseLeave={onLineLeave}
       />
     );
   });
 
-  // Dots on the hovered line.
-  const hoverDots = (() => {
-    if (!hoveredCat) return null;
-    const s = visibleSeries.find((c) => c.name === hoveredCat);
-    if (!s) return null;
-    return s.values.map((v, i) => (
-      <circle
-        key={i}
-        cx={xOf(i, months.length).toFixed(1)}
-        cy={yOf(v, maxVal).toFixed(1)}
-        r={4}
-        fill={s.color}
-        stroke="#fff"
-        strokeWidth={1.5}
-        style={{ pointerEvents: "none" }}
-      />
-    ));
-  })();
+  const hoverSeries = hoveredCat
+    ? visibleSeries.find((c) => c.name === hoveredCat)
+    : null;
+  const hoverDots = hoverSeries
+    ? hoverSeries.values.map((v, i) => (
+        <circle
+          key={i}
+          cx={xOf(i, months.length).toFixed(1)}
+          cy={yOf(v, maxVal).toFixed(1)}
+          r={4}
+          fill={hoverSeries.color}
+          stroke="#fff"
+          strokeWidth={1.5}
+          style={{ pointerEvents: "none" }}
+        />
+      ))
+    : null;
 
   const xLabels = months.map((m, i) => (
     <text
@@ -290,10 +240,135 @@ export function SpendingTrendsLineChart({
     </text>
   ));
 
-  // Sort visible series by descending spend for the tooltip month.
+  return (
+    <svg
+      ref={svgRef}
+      className="stlc-svg"
+      viewBox={`0 0 ${W} ${H}`}
+      preserveAspectRatio="none"
+      aria-label="Spending trends by category line chart"
+    >
+      {gridLines}
+      {gradientEl}
+      {lineEls}
+      {hoverDots}
+      {xLabels}
+    </svg>
+  );
+}
+
+// ── ChartTooltip sub-component ─────────────────────────────────────────────
+
+interface ChartTooltipProps {
+  tooltip: TooltipState;
+  months: string[];
+  visibleSeries: CategorySeries[];
+  hoveredCat: string | null;
+}
+
+function ChartTooltip({
+  tooltip,
+  months,
+  visibleSeries,
+  hoveredCat,
+}: ChartTooltipProps) {
   const tooltipRows = [...visibleSeries].sort(
     (a, b) => b.values[tooltip.monthIdx] - a.values[tooltip.monthIdx],
   );
+  return (
+    <div
+      className={`stlc-tooltip${tooltip.visible ? " stlc-tooltip--visible" : ""}`}
+      style={{
+        left: Math.min(tooltip.x + 16, window.innerWidth - 190),
+        top: tooltip.y - 20,
+      }}
+      data-testid="spending-trends-tooltip"
+    >
+      <div className="stlc-tooltip-month">
+        {months[tooltip.monthIdx]
+          ? fmtMonthLabel(months[tooltip.monthIdx])
+          : ""}
+      </div>
+      {tooltipRows.map((s) => (
+        <div
+          key={s.name}
+          className={`stlc-tooltip-row${hoveredCat === s.name ? " stlc-tooltip-row--active" : ""}`}
+        >
+          <span className="stlc-tooltip-dot" style={{ background: s.color }} />
+          <span className="stlc-tooltip-cat">{s.name}</span>
+          <span className="stlc-tooltip-amount" style={{ color: s.color }}>
+            {fmtCurrency.format(s.values[tooltip.monthIdx])}
+          </span>
+        </div>
+      ))}
+    </div>
+  );
+}
+
+// ── Props ──────────────────────────────────────────────────────────────────
+
+interface SpendingTrendsLineChartProps {
+  transactions: ApiTransaction[];
+  activeAccountId: string;
+}
+
+// ── Main component ─────────────────────────────────────────────────────────
+
+export function SpendingTrendsLineChart({
+  transactions,
+  activeAccountId,
+}: SpendingTrendsLineChartProps) {
+  const { months, series } = useMemo(
+    () => buildSeries(transactions, activeAccountId),
+    [transactions, activeAccountId],
+  );
+
+  const [hiddenCats, setHiddenCats] = useState<Set<string>>(new Set());
+  const [hoveredCat, setHoveredCat] = useState<string | null>(null);
+  const [tooltip, setTooltip] = useState<TooltipState>({
+    visible: false,
+    x: 0,
+    y: 0,
+    monthIdx: 0,
+  });
+  const svgRef = useRef<SVGSVGElement>(null);
+
+  const toggleCat = useCallback((name: string) => {
+    setHiddenCats((prev) => {
+      const next = new Set(prev);
+      if (next.has(name)) next.delete(name);
+      else next.add(name);
+      return next;
+    });
+  }, []);
+
+  const handleMouseMove = useCallback(
+    (e: React.MouseEvent<HTMLDivElement>) => {
+      if (!svgRef.current || months.length === 0) return;
+      const rect = svgRef.current.getBoundingClientRect();
+      const relX = ((e.clientX - rect.left) / rect.width) * W;
+      const divisor = months.length > 1 ? CHART_W / (months.length - 1) : 1;
+      const idx = Math.max(
+        0,
+        Math.min(months.length - 1, Math.round(relX / divisor)),
+      );
+      setTooltip({ visible: true, x: e.clientX, y: e.clientY, monthIdx: idx });
+    },
+    [months.length],
+  );
+
+  const handleMouseLeave = useCallback(() => {
+    setTooltip((prev) => ({ ...prev, visible: false }));
+    setHoveredCat(null);
+  }, []);
+
+  if (months.length < 2) return null;
+
+  const visibleSeries = series.filter((s) => !hiddenCats.has(s.name));
+  const topCat = series[0];
+  const allVals = visibleSeries.flatMap((s) => s.values);
+  const maxVal = allVals.length > 0 ? Math.max(...allVals) * 1.1 : 1;
+  const subtitle = `${fmtMonthLabel(months[0])} – ${fmtMonthLabel(months[months.length - 1])}`;
 
   return (
     <>
@@ -305,7 +380,6 @@ export function SpendingTrendsLineChart({
           </div>
         </div>
 
-        {/* Category chips — toggle visibility and act as legend */}
         <div className="stlc-chips">
           {series.map((s) => (
             <span
@@ -322,58 +396,31 @@ export function SpendingTrendsLineChart({
           ))}
         </div>
 
-        {/* Chart */}
         <div
           className="stlc-chart-area"
           onMouseMove={handleMouseMove}
           onMouseLeave={handleMouseLeave}
         >
-          <svg
-            ref={svgRef}
-            className="stlc-svg"
-            viewBox={`0 0 ${W} ${H}`}
-            preserveAspectRatio="none"
-            aria-label="Spending trends by category line chart"
-          >
-            {gridLines}
-            {gradientEl}
-            {lineEls}
-            {hoverDots}
-            {xLabels}
-          </svg>
+          <ChartSvg
+            svgRef={svgRef}
+            months={months}
+            visibleSeries={visibleSeries}
+            topCat={topCat}
+            hiddenCats={hiddenCats}
+            hoveredCat={hoveredCat}
+            maxVal={maxVal}
+            onLineEnter={setHoveredCat}
+            onLineLeave={() => setHoveredCat(null)}
+          />
         </div>
       </div>
 
-      {/* Tooltip — rendered outside the card so it can escape card overflow */}
-      <div
-        className={`stlc-tooltip${tooltip.visible ? " stlc-tooltip--visible" : ""}`}
-        style={{
-          left: Math.min(tooltip.x + 16, window.innerWidth - 190),
-          top: tooltip.y - 20,
-        }}
-        data-testid="spending-trends-tooltip"
-      >
-        <div className="stlc-tooltip-month">
-          {months[tooltip.monthIdx]
-            ? fmtMonthLabel(months[tooltip.monthIdx])
-            : ""}
-        </div>
-        {tooltipRows.map((s) => (
-          <div
-            key={s.name}
-            className={`stlc-tooltip-row${hoveredCat === s.name ? " stlc-tooltip-row--active" : ""}`}
-          >
-            <span
-              className="stlc-tooltip-dot"
-              style={{ background: s.color }}
-            />
-            <span className="stlc-tooltip-cat">{s.name}</span>
-            <span className="stlc-tooltip-amount" style={{ color: s.color }}>
-              {fmtCurrency.format(s.values[tooltip.monthIdx])}
-            </span>
-          </div>
-        ))}
-      </div>
+      <ChartTooltip
+        tooltip={tooltip}
+        months={months}
+        visibleSeries={visibleSeries}
+        hoveredCat={hoveredCat}
+      />
     </>
   );
 }
