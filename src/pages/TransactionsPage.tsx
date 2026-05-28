@@ -316,6 +316,7 @@ export function TransactionsPage() {
       <div className="txn-page">
         <div className="txn-header">
           <h1 className="txn-title">Transactions</h1>
+          <span className="txn-subtitle">0 rows</span>
         </div>
         <div className="txn-empty" data-testid="txn-empty-state">
           No transactions yet. Upload your bank CSV exports using the sidebar.
@@ -326,70 +327,74 @@ export function TransactionsPage() {
 
   return (
     <div className="txn-page">
+      {/* Page header */}
       <div className="txn-header">
         <h1 className="txn-title">Transactions</h1>
-        <div className="txn-filters">
-          <input
-            className="txn-input"
-            placeholder="Search payee / memo..."
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-          />
+        <span className="txn-subtitle">{filtered.length} rows</span>
+      </div>
+
+      {/* Filter card */}
+      <div className="txn-filter-card">
+        <input
+          className="txn-input"
+          placeholder="Search payee / memo..."
+          value={search}
+          onChange={(e) => setSearch(e.target.value)}
+        />
+        <select
+          className="txn-select"
+          value={filterMonth}
+          onChange={(e) => setFilterMonth(e.target.value)}
+        >
+          <option value="all">All months</option>
+          {months.map((m) => (
+            <option key={m} value={m}>
+              {fmtMonth(m)}
+            </option>
+          ))}
+        </select>
+        {uniqueAccounts.length > 1 && (
           <select
             className="txn-select"
-            value={filterMonth}
-            onChange={(e) => setFilterMonth(e.target.value)}
+            value={filterAccount}
+            onChange={(e) => setFilterAccount(e.target.value)}
           >
-            <option value="all">All months</option>
-            {months.map((m) => (
-              <option key={m} value={m}>
-                {fmtMonth(m)}
-              </option>
-            ))}
-          </select>
-          {uniqueAccounts.length > 1 && (
-            <select
-              className="txn-select"
-              value={filterAccount}
-              onChange={(e) => setFilterAccount(e.target.value)}
-            >
-              <option value="all">All accounts</option>
-              {uniqueAccounts.map((name) => (
-                <option key={name} value={name}>
-                  {name}
-                </option>
-              ))}
-            </select>
-          )}
-          <select
-            className="txn-select"
-            value={filterCat}
-            onChange={(e) => setFilterCat(e.target.value)}
-          >
-            <option value="all">All categories</option>
-            <option value="__uncategorised__">Uncategorised</option>
-            {uniqueCategories.map((name) => (
+            <option value="all">All accounts</option>
+            {uniqueAccounts.map((name) => (
               <option key={name} value={name}>
                 {name}
               </option>
             ))}
           </select>
-          <label className="txn-transfers-label">
-            <input
-              type="checkbox"
-              checked={showTransfers}
-              onChange={(e) => setShowTransfers(e.target.checked)}
-              style={{ accentColor: "var(--accent)" }}
-              data-testid="show-transfers"
-            />
-            Show transfers
-          </label>
-          <span className="txn-row-count" data-testid="txn-row-count">
-            {filtered.length} rows
-          </span>
-        </div>
-        {toast && <div className="txn-toast">&#10003; {toast}</div>}
+        )}
+        <select
+          className="txn-select"
+          value={filterCat}
+          onChange={(e) => setFilterCat(e.target.value)}
+        >
+          <option value="all">All categories</option>
+          <option value="__uncategorised__">Uncategorised</option>
+          {uniqueCategories.map((name) => (
+            <option key={name} value={name}>
+              {name}
+            </option>
+          ))}
+        </select>
+        <label className="txn-transfers-label">
+          <input
+            type="checkbox"
+            checked={showTransfers}
+            onChange={(e) => setShowTransfers(e.target.checked)}
+            data-testid="show-transfers"
+          />
+          Show transfers
+        </label>
+        <span className="txn-row-count" data-testid="txn-row-count">
+          {filtered.length} rows
+        </span>
       </div>
+
+      {toast && <div className="txn-toast">&#10003; {toast}</div>}
 
       {/* Flag mode banner */}
       {flagMode && (
@@ -454,168 +459,157 @@ export function TransactionsPage() {
         </div>
       )}
 
-      {!filtered.length && (
-        <div className="txn-empty" data-testid="txn-empty">
-          {!showTransfers && txns.some((t) => t.isTransfer)
-            ? "All transactions are transfers — enable Show transfers to see them."
-            : "No transactions found."}
-        </div>
-      )}
+      {/* Table card */}
+      <div className="txn-table-card">
+        {!filtered.length && (
+          <div className="txn-empty" data-testid="txn-empty">
+            {!showTransfers && txns.some((t) => t.isTransfer)
+              ? "All transactions are transfers — enable Show transfers to see them."
+              : "No transactions found."}
+          </div>
+        )}
 
-      <div className="txn-table-wrap">
-        <table className="txn-table" data-testid="txn-table">
-          <thead>
-            <tr>
-              {[
-                "Date",
-                uniqueAccounts.length > 1 ? "Account" : "",
-                "Payee / Memo",
-                "Amount",
-                "Category",
-              ]
-                .filter(Boolean)
-                .map((h) => (
-                  <th key={h} className="txn-th">
-                    {h}
-                  </th>
-                ))}
-            </tr>
-          </thead>
-          <tbody>
-            {filtered.map((t) => {
-              const acctIdx = accounts.findIndex(
-                (a) => a.id === t.accountShort,
-              );
-              const ac =
-                ACCOUNT_COLORS[Math.max(0, acctIdx) % ACCOUNT_COLORS.length];
+        <div className="txn-table-wrap">
+          <table className="txn-table" data-testid="txn-table">
+            <thead>
+              <tr>
+                <th className="txn-th">Date</th>
+                {uniqueAccounts.length > 1 && (
+                  <th className="txn-th">Account</th>
+                )}
+                <th className="txn-th">Payee / Memo</th>
+                <th className="txn-th txn-th--amount">Amount</th>
+                <th className="txn-th">Category</th>
+              </tr>
+            </thead>
+            <tbody>
+              {filtered.map((t) => {
+                const acctIdx = accounts.findIndex(
+                  (a) => a.id === t.accountShort,
+                );
+                const ac =
+                  ACCOUNT_COLORS[Math.max(0, acctIdx) % ACCOUNT_COLORS.length];
 
-              // Category colour using a minimal PfaCategory-compatible array
-              const catArr = uniqueCategories.map((name, i) => ({
-                name,
-                color: ACCOUNT_COLORS[i % ACCOUNT_COLORS.length],
-              }));
-              const cc = getCatColor(t.category, catArr);
+                // Category colour using a minimal PfaCategory-compatible array
+                const catArr = uniqueCategories.map((name, i) => ({
+                  name,
+                  color: ACCOUNT_COLORS[i % ACCOUNT_COLORS.length],
+                }));
+                const cc = getCatColor(t.category, catArr);
 
-              // Determine row visual class for flagging mode
-              let flagClass = "";
-              if (flagMode) {
-                if (t.id === flagMode.initiatingId) {
-                  flagClass = " txn-row-initiating";
-                } else if (candidateIds.has(t.id)) {
-                  flagClass = " txn-row-candidate";
-                } else {
-                  flagClass = " txn-row-dimmed";
+                // Determine row visual class for flagging mode
+                let flagClass = "";
+                if (flagMode) {
+                  if (t.id === flagMode.initiatingId) {
+                    flagClass = " txn-row-initiating";
+                  } else if (candidateIds.has(t.id)) {
+                    flagClass = " txn-row-candidate";
+                  } else {
+                    flagClass = " txn-row-dimmed";
+                  }
                 }
-              }
 
-              const isClickableCandidate = !!(
-                flagMode && candidateIds.has(t.id)
-              );
-              const isClickableTransfer = t.isTransfer && showTransfers;
-              const isClickableNonTransfer = !t.isTransfer && !unflagTarget;
+                const isClickableCandidate = !!(
+                  flagMode && candidateIds.has(t.id)
+                );
+                const isClickableTransfer = t.isTransfer && showTransfers;
+                const isClickableNonTransfer = !t.isTransfer && !unflagTarget;
 
-              return (
-                <tr
-                  key={t.id}
-                  className={`txn-row${t.isTransfer ? " txn-row-transfer" : ""}${flagClass}`}
-                  onClick={() => {
-                    if (t.isTransfer) {
-                      if (isClickableTransfer) handleTransferRowClick(t.id);
-                    } else if (isClickableNonTransfer || isClickableCandidate) {
-                      handleNonTransferRowClick(t.id);
-                    }
-                  }}
-                  style={{
-                    cursor:
-                      isClickableCandidate ||
-                      isClickableTransfer ||
-                      isClickableNonTransfer
-                        ? "pointer"
-                        : "default",
-                  }}
-                >
-                  <td className="txn-td txn-date">{t.date}</td>
-                  {uniqueAccounts.length > 1 && (
-                    <td className="txn-td">
-                      <span
-                        className="txn-acct-badge"
-                        style={{
-                          color: ac,
-                          background: `${ac}18`,
-                          borderColor: `${ac}33`,
-                        }}
-                      >
-                        {t.account}
-                      </span>
-                    </td>
-                  )}
-                  <td className="txn-td txn-payee-cell">
-                    <div
-                      className="txn-payee"
-                      style={{
-                        color: t.isTransfer ? "var(--muted)" : "var(--text)",
-                      }}
-                    >
-                      {t.payee || "—"}
-                    </div>
-                    {t.memo && <div className="txn-memo">{t.memo}</div>}
-                  </td>
-                  <td
-                    className={`txn-td txn-amount mono${t.isCredit ? " credit" : " debit"}`}
+                return (
+                  <tr
+                    key={t.id}
+                    className={`txn-row${t.isTransfer ? " txn-row-transfer" : ""}${flagClass}`}
+                    onClick={() => {
+                      if (t.isTransfer) {
+                        if (isClickableTransfer) handleTransferRowClick(t.id);
+                      } else if (
+                        isClickableNonTransfer ||
+                        isClickableCandidate
+                      ) {
+                        handleNonTransferRowClick(t.id);
+                      }
+                    }}
+                    style={{
+                      cursor:
+                        isClickableCandidate ||
+                        isClickableTransfer ||
+                        isClickableNonTransfer
+                          ? "pointer"
+                          : "default",
+                    }}
                   >
-                    {t.isCredit ? "+" : ""}
-                    {fmt(t.amount)}
-                    {t.isTransfer && (
-                      <span className="txn-transfer-icon">⇔</span>
+                    <td className="txn-td txn-date">{t.date}</td>
+                    {uniqueAccounts.length > 1 && (
+                      <td className="txn-td">
+                        <span
+                          className="txn-acct-badge"
+                          style={{
+                            color: ac,
+                            background: `${ac}18`,
+                            borderColor: `${ac}33`,
+                          }}
+                        >
+                          {t.account}
+                        </span>
+                      </td>
                     )}
-                  </td>
-                  <td className="txn-td txn-cat-cell">
-                    {t.isTransfer ? (
-                      <span
-                        className="tag"
+                    <td className="txn-td txn-payee-cell">
+                      <div
+                        className="txn-payee"
                         style={{
-                          color: "var(--muted)",
-                          background:
-                            "color-mix(in srgb, var(--muted) 10%, transparent)",
-                          borderColor:
-                            "color-mix(in srgb, var(--muted) 30%, transparent)",
+                          color: t.isTransfer ? "var(--muted)" : "var(--text)",
                         }}
                       >
-                        Transfer
-                      </span>
-                    ) : (
-                      <select
-                        className={`txn-cat-select${t.category === "Savings" ? " category-badge--savings" : ""}`}
-                        value={t.category ?? ""}
-                        style={
-                          t.category === "Savings"
-                            ? { borderColor: "var(--colour-savings)" }
-                            : {
-                                borderColor: t.category
-                                  ? `${cc}55`
-                                  : "var(--border)",
-                                color: t.category ? cc : "var(--muted)",
-                              }
-                        }
-                        onClick={(e) => e.stopPropagation()}
-                        onChange={(e) =>
-                          handleCategoryChange(t.id, e.target.value)
-                        }
-                      >
-                        <option value="">Uncategorised</option>
-                        {uniqueCategories.map((name) => (
-                          <option key={name} value={name}>
-                            {name}
-                          </option>
-                        ))}
-                      </select>
-                    )}
-                  </td>
-                </tr>
-              );
-            })}
-          </tbody>
-        </table>
+                        {t.payee || "—"}
+                      </div>
+                      {t.memo && <div className="txn-memo">{t.memo}</div>}
+                    </td>
+                    <td
+                      className={`txn-td txn-amount${t.isCredit ? " credit" : " debit"}`}
+                    >
+                      {t.isCredit ? "+" : ""}
+                      {fmt(t.amount)}
+                      {t.isTransfer && (
+                        <span className="txn-transfer-icon">⇔</span>
+                      )}
+                    </td>
+                    <td className="txn-td txn-cat-cell">
+                      {t.isTransfer ? (
+                        <span className="txn-transfer-tag">Transfer</span>
+                      ) : (
+                        <select
+                          className={`txn-cat-select${t.category === "Savings" ? " category-badge--savings" : ""}`}
+                          value={t.category ?? ""}
+                          style={
+                            t.category === "Savings"
+                              ? { borderColor: "var(--colour-savings)" }
+                              : {
+                                  borderColor: t.category
+                                    ? `${cc}55`
+                                    : "var(--border)",
+                                  color: t.category ? cc : "var(--muted)",
+                                }
+                          }
+                          onClick={(e) => e.stopPropagation()}
+                          onChange={(e) =>
+                            handleCategoryChange(t.id, e.target.value)
+                          }
+                        >
+                          <option value="">Uncategorised</option>
+                          {uniqueCategories.map((name) => (
+                            <option key={name} value={name}>
+                              {name}
+                            </option>
+                          ))}
+                        </select>
+                      )}
+                    </td>
+                  </tr>
+                );
+              })}
+            </tbody>
+          </table>
+        </div>
       </div>
     </div>
   );
