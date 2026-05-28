@@ -63,17 +63,12 @@ export function LoginPage() {
 
   return (
     <div className="auth-shell">
+      {/* Option C — pill-badge logo chip: dot + wordmark */}
       <div className="auth-logo">
-        <svg
-          viewBox="0 0 24 24"
-          fill="none"
-          stroke="currentColor"
-          strokeWidth="2"
-        >
-          <path d="M12 2L2 7l10 5 10-5-10-5z" />
-          <path d="M2 17l10 5 10-5M2 12l10 5 10-5" />
-        </svg>
-        Finance Analyser
+        <div className="auth-logo-dot" />
+        <span className="auth-logo-text">
+          FINANCE <span>Analyser</span>
+        </span>
       </div>
 
       <div className="auth-card">
@@ -106,24 +101,11 @@ export function LoginPage() {
           </div>
 
           <div className="auth-field">
-            <div
-              style={{
-                display: "flex",
-                justifyContent: "space-between",
-                alignItems: "baseline",
-              }}
-            >
+            <div className="auth-label-row">
               <label className="auth-label" htmlFor="password">
                 Password
               </label>
-              <Link
-                to="/forgot-password"
-                style={{
-                  fontSize: 12,
-                  color: "var(--muted)",
-                  textDecoration: "none",
-                }}
-              >
+              <Link to="/forgot-password" className="auth-forgot-link">
                 Forgot password?
               </Link>
             </div>
