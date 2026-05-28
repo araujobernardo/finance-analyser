@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { NavLink, useNavigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
 import { useAccount } from "../context/AccountContext";
@@ -45,9 +45,37 @@ export function Sidebar({
   } = useAccount();
   const navigate = useNavigate();
   const fileRef = useRef<HTMLInputElement>(null);
+  const mobileFileRef = useRef<HTMLInputElement>(null);
   const [editingShort, setEditingShort] = useState<string | null>(null);
   const [editVal, setEditVal] = useState("");
   const [showAddAccountModal, setShowAddAccountModal] = useState(false);
+  const [drawerOpen, setDrawerOpen] = useState(false);
+  const drawerPanelRef = useRef<HTMLDivElement>(null);
+
+  const openDrawer = useCallback(() => setDrawerOpen(true), []);
+  const closeDrawer = useCallback(() => setDrawerOpen(false), []);
+
+  // Close drawer on Escape key
+  useEffect(() => {
+    if (!drawerOpen) return;
+    const handleKey = (e: KeyboardEvent) => {
+      if (e.key === "Escape") closeDrawer();
+    };
+    document.addEventListener("keydown", handleKey);
+    return () => document.removeEventListener("keydown", handleKey);
+  }, [drawerOpen, closeDrawer]);
+
+  // Prevent body scroll when drawer is open
+  useEffect(() => {
+    if (drawerOpen) {
+      document.body.style.overflow = "hidden";
+    } else {
+      document.body.style.overflow = "";
+    }
+    return () => {
+      document.body.style.overflow = "";
+    };
+  }, [drawerOpen]);
 
   // Ref-based queue for sequential multi-file uploads (no re-renders needed).
   const fileQueueRef = useRef<File[]>([]);
@@ -131,35 +159,26 @@ export function Sidebar({
       ? accounts.map((a) => ({ short: a.id, display: a.nickname }))
       : accountList;
 
-  return (
-    <aside className="sidebar">
-      <div className="sidebar-brand">
-        <div className="sidebar-brand-label">
-          <span className="sidebar-brand-dot" />
-          FINANCE
-        </div>
-        <div className="sidebar-brand-title">Analyser</div>
-        <div className="sidebar-brand-count">{txnCount} transactions</div>
-      </div>
-
-      {showAddAccountModal && (
-        <AddAccountModal onClose={() => setShowAddAccountModal(false)} />
-      )}
-
+  // Shared account list JSX — used in both desktop sidebar and mobile drawer
+  const accountListJsx = (opts: { onSelect?: () => void } = {}) => (
+    <>
       <div className="sidebar-accounts">
         <div className="sidebar-section-label">Accounts</div>
-        {/* "All Accounts" IS the section header — clicking it selects all */}
         <div
           className={`sidebar-all-accounts-row${activeAccountId === "all" ? " sidebar-all-accounts-row--active" : ""}`}
           data-testid="account-all-accounts"
           role="button"
           tabIndex={0}
           aria-pressed={activeAccountId === "all"}
-          onClick={() => setActiveAccountId("all")}
+          onClick={() => {
+            setActiveAccountId("all");
+            opts.onSelect?.();
+          }}
           onKeyDown={(e) => {
             if (e.key === "Enter" || e.key === " ") {
               e.preventDefault();
               setActiveAccountId("all");
+              opts.onSelect?.();
             }
           }}
         >
@@ -198,11 +217,15 @@ export function Sidebar({
                 role="button"
                 tabIndex={0}
                 aria-pressed={isActive}
-                onClick={() => setActiveAccountId(acct.short)}
+                onClick={() => {
+                  setActiveAccountId(acct.short);
+                  opts.onSelect?.();
+                }}
                 onKeyDown={(e) => {
                   if (e.key === "Enter" || e.key === " ") {
                     e.preventDefault();
                     setActiveAccountId(acct.short);
+                    opts.onSelect?.();
                   }
                 }}
               >
@@ -245,42 +268,61 @@ export function Sidebar({
           })
         )}
       </div>
+    </>
+  );
 
-      <div className="sidebar-upload">
-        {(() => {
-          const activeAccount = displayAccounts.find(
-            (a) => a.short === activeAccountId,
-          );
-          return (
-            <div
-              className={`sidebar-upload-to${!activeAccount ? " sidebar-upload-to--none" : ""}`}
-              data-testid="upload-to-label"
-            >
-              <span className="sidebar-upload-to-prefix">Upload to: </span>
-              <span className="sidebar-upload-to-account">
-                {activeAccount ? activeAccount.display : "(select an account)"}
-              </span>
-            </div>
-          );
-        })()}
-        <button
-          className="sidebar-upload-btn"
-          disabled={isCategorising}
-          onClick={() => fileRef.current?.click()}
-          data-testid="upload-csv-btn"
+  // Shared nav JSX — used in both desktop sidebar and mobile drawer
+  const navJsx = (opts: { onNavigate?: () => void } = {}) => (
+    <nav className="sidebar-nav">
+      {NAV.map((n) => (
+        <NavLink
+          key={n.path}
+          to={n.path}
+          className={({ isActive }) =>
+            `sidebar-nav-btn${isActive ? " active" : ""}`
+          }
+          onClick={opts.onNavigate}
         >
-          <span className="sidebar-upload-icon">
-            {isCategorising ? "⟳" : "↑"}
-          </span>{" "}
-          {isCategorising ? "Uploading…" : "Upload CSV"}
+          <span className="sidebar-nav-icon">{n.icon}</span>
+          {n.label}
+        </NavLink>
+      ))}
+    </nav>
+  );
+
+  return (
+    <>
+      {/* ── Mobile top bar (hidden on desktop) ──────────────────────────── */}
+      <div className="mobile-topbar" data-testid="mobile-topbar">
+        <button
+          className="hamburger-btn"
+          aria-label="Open menu"
+          aria-expanded={drawerOpen}
+          aria-controls="mobile-drawer"
+          onClick={openDrawer}
+          data-testid="hamburger-btn"
+        >
+          <span className="hamburger-line" />
+          <span className="hamburger-line" />
+          <span className="hamburger-line" />
+        </button>
+        <span className="mobile-topbar-title">Finance Analyser</span>
+        <button
+          className="mobile-topbar-csv"
+          disabled={isCategorising}
+          aria-label="Upload CSV"
+          onClick={() => mobileFileRef.current?.click()}
+          data-testid="mobile-upload-csv-btn"
+        >
+          {isCategorising ? "⟳" : "↑"} CSV
         </button>
         <input
-          ref={fileRef}
+          ref={mobileFileRef}
           type="file"
           accept=".csv"
           multiple
           style={{ display: "none" }}
-          data-testid="csv-file-input"
+          data-testid="mobile-csv-file-input"
           onChange={(e) => {
             if (e.target.files?.length) {
               onFilesSelected(Array.from(e.target.files));
@@ -288,70 +330,190 @@ export function Sidebar({
             }
           }}
         />
+      </div>
 
-        {/* Duplicate month confirmation */}
-        {isDuplicate && duplicateMonth && (
-          <div
-            className="sidebar-upload-duplicate"
-            data-testid="duplicate-warning"
-          >
-            <p>
-              Data for <strong>{duplicateMonth}</strong> already exists. Replace
-              it?
-            </p>
-            <div className="sidebar-upload-duplicate-actions">
-              <button onClick={confirmReplace} data-testid="confirm-replace">
-                Replace
-              </button>
-              <button onClick={cancelReplace} data-testid="cancel-replace">
-                Cancel
-              </button>
-            </div>
-          </div>
-        )}
+      {/* ── Mobile drawer overlay (hidden on desktop) ────────────────────── */}
+      <div
+        id="mobile-drawer"
+        className={`drawer-overlay${drawerOpen ? " drawer-overlay--open" : ""}`}
+        aria-hidden={!drawerOpen}
+        data-testid="mobile-drawer"
+      >
+        {/* Backdrop — tap to close */}
+        <div
+          className="drawer-backdrop"
+          aria-hidden="true"
+          onClick={closeDrawer}
+          data-testid="drawer-backdrop"
+        />
+        {/* Drawer panel — only rendered when open to avoid duplicate testIds */}
+        <div
+          ref={drawerPanelRef}
+          className="drawer-panel"
+          role="dialog"
+          aria-label="Navigation menu"
+          aria-modal="true"
+        >
+          {drawerOpen && (
+            <>
+              {/* Header row */}
+              <div className="drawer-header">
+                <div className="sidebar-brand-label">
+                  <span className="sidebar-brand-dot" />
+                  FINANCE
+                </div>
+                <button
+                  className="drawer-close-btn"
+                  aria-label="Close menu"
+                  onClick={closeDrawer}
+                  data-testid="drawer-close-btn"
+                >
+                  ✕
+                </button>
+              </div>
+              <div className="drawer-brand-title">Analyser</div>
+              <div className="drawer-brand-count">{txnCount} transactions</div>
 
-        {uploadStatusMsg && (
-          <div
-            className="sidebar-upload-status"
-            style={{ color: uploadStatusColor }}
-            data-testid="upload-status"
-          >
-            {uploadStatusMsg}
-          </div>
-        )}
-        <div className="sidebar-upload-helper">
-          Select multiple files to import all accounts at once
+              <div className="sidebar-divider" />
+
+              {/* Account list — selecting closes drawer */}
+              {accountListJsx({ onSelect: closeDrawer })}
+
+              {/* Nav — navigating closes drawer */}
+              {navJsx({ onNavigate: closeDrawer })}
+
+              <div className="sidebar-footer">
+                <span>ASB Bank · NZD</span>
+                <button
+                  className="sidebar-signout"
+                  data-testid="drawer-signout"
+                  onClick={() => {
+                    closeDrawer();
+                    logout();
+                    navigate("/login");
+                  }}
+                >
+                  Sign out
+                </button>
+              </div>
+            </>
+          )}
         </div>
       </div>
 
-      <nav className="sidebar-nav">
-        {NAV.map((n) => (
-          <NavLink
-            key={n.path}
-            to={n.path}
-            className={({ isActive }) =>
-              `sidebar-nav-btn${isActive ? " active" : ""}`
-            }
-          >
-            <span className="sidebar-nav-icon">{n.icon}</span>
-            {n.label}
-          </NavLink>
-        ))}
-      </nav>
+      {/* ── Desktop sidebar (hidden on mobile) ──────────────────────────── */}
+      <aside className="sidebar" data-testid="desktop-sidebar">
+        <div className="sidebar-brand">
+          <div className="sidebar-brand-label">
+            <span className="sidebar-brand-dot" />
+            FINANCE
+          </div>
+          <div className="sidebar-brand-title">Analyser</div>
+          <div className="sidebar-brand-count">{txnCount} transactions</div>
+        </div>
 
-      <div className="sidebar-footer">
-        <span>ASB Bank · NZD</span>
-        <button
-          className="sidebar-signout"
-          data-testid="sidebar-signout"
-          onClick={() => {
-            logout();
-            navigate("/login");
-          }}
-        >
-          Sign out
-        </button>
-      </div>
-    </aside>
+        {showAddAccountModal && (
+          <AddAccountModal onClose={() => setShowAddAccountModal(false)} />
+        )}
+
+        {accountListJsx()}
+
+        <div className="sidebar-upload">
+          {(() => {
+            const activeAccount = displayAccounts.find(
+              (a) => a.short === activeAccountId,
+            );
+            return (
+              <div
+                className={`sidebar-upload-to${!activeAccount ? " sidebar-upload-to--none" : ""}`}
+                data-testid="upload-to-label"
+              >
+                <span className="sidebar-upload-to-prefix">Upload to: </span>
+                <span className="sidebar-upload-to-account">
+                  {activeAccount
+                    ? activeAccount.display
+                    : "(select an account)"}
+                </span>
+              </div>
+            );
+          })()}
+          <button
+            className="sidebar-upload-btn"
+            disabled={isCategorising}
+            onClick={() => fileRef.current?.click()}
+            data-testid="upload-csv-btn"
+          >
+            <span className="sidebar-upload-icon">
+              {isCategorising ? "⟳" : "↑"}
+            </span>{" "}
+            {isCategorising ? "Uploading…" : "Upload CSV"}
+          </button>
+          <input
+            ref={fileRef}
+            type="file"
+            accept=".csv"
+            multiple
+            style={{ display: "none" }}
+            data-testid="csv-file-input"
+            onChange={(e) => {
+              if (e.target.files?.length) {
+                onFilesSelected(Array.from(e.target.files));
+                e.target.value = "";
+              }
+            }}
+          />
+
+          {/* Duplicate month confirmation */}
+          {isDuplicate && duplicateMonth && (
+            <div
+              className="sidebar-upload-duplicate"
+              data-testid="duplicate-warning"
+            >
+              <p>
+                Data for <strong>{duplicateMonth}</strong> already exists.
+                Replace it?
+              </p>
+              <div className="sidebar-upload-duplicate-actions">
+                <button onClick={confirmReplace} data-testid="confirm-replace">
+                  Replace
+                </button>
+                <button onClick={cancelReplace} data-testid="cancel-replace">
+                  Cancel
+                </button>
+              </div>
+            </div>
+          )}
+
+          {uploadStatusMsg && (
+            <div
+              className="sidebar-upload-status"
+              style={{ color: uploadStatusColor }}
+              data-testid="upload-status"
+            >
+              {uploadStatusMsg}
+            </div>
+          )}
+          <div className="sidebar-upload-helper">
+            Select multiple files to import all accounts at once
+          </div>
+        </div>
+
+        {navJsx()}
+
+        <div className="sidebar-footer">
+          <span>ASB Bank · NZD</span>
+          <button
+            className="sidebar-signout"
+            data-testid="sidebar-signout"
+            onClick={() => {
+              logout();
+              navigate("/login");
+            }}
+          >
+            Sign out
+          </button>
+        </div>
+      </aside>
+    </>
   );
 }
