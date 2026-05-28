@@ -156,10 +156,16 @@ export function ChatPage() {
 
   return (
     <div className="chat-page">
+      {/* Option C — Conversational Soft: branded header with teal avatar + status */}
       <div className="chat-top">
-        <h1 className="chat-title">AI Chat</h1>
-        <div className="chat-subtitle">
-          Ask anything about your finances across all accounts
+        <div className="chat-ai-avatar" aria-hidden="true">
+          ◎
+        </div>
+        <div className="chat-top-info">
+          <div className="chat-title">Finance AI</div>
+          <div className="chat-status" data-testid="chat-status">
+            ● Active
+          </div>
         </div>
       </div>
 
@@ -170,7 +176,7 @@ export function ChatPage() {
             className={`chat-msg-row${m.role === "user" ? " user" : ""}`}
           >
             <div className={`chat-avatar${m.role === "user" ? " user" : ""}`}>
-              {m.role === "user" ? "U" : "◎"}
+              {m.role === "user" ? "Me" : "◎"}
             </div>
             <div className={`chat-bubble${m.role === "user" ? " user" : ""}`}>
               {m.content}
@@ -222,17 +228,13 @@ export function ChatPage() {
                 void send();
               }
             }}
-            placeholder="Ask about your spending..."
+            placeholder="Message Finance AI..."
           />
           <button
             className="chat-send"
             data-testid="chat-send"
             disabled={!input.trim() || loading}
             onClick={() => void send()}
-            style={{
-              background:
-                input.trim() && !loading ? "var(--accent)" : "var(--border)",
-            }}
           >
             ↑
           </button>

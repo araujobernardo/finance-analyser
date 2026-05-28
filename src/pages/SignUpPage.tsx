@@ -65,17 +65,12 @@ export function SignUpPage() {
 
   return (
     <div className="auth-shell">
+      {/* Option C — pill-badge logo chip: dot + wordmark */}
       <div className="auth-logo">
-        <svg
-          viewBox="0 0 24 24"
-          fill="none"
-          stroke="currentColor"
-          strokeWidth="2"
-        >
-          <path d="M12 2L2 7l10 5 10-5-10-5z" />
-          <path d="M2 17l10 5 10-5M2 12l10 5 10-5" />
-        </svg>
-        Finance Analyser
+        <div className="auth-logo-dot" />
+        <span className="auth-logo-text">
+          FINANCE <span>Analyser</span>
+        </span>
       </div>
 
       <div className="auth-card">
