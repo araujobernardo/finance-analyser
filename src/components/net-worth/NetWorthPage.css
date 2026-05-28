@@ -8,8 +8,8 @@
 }
 
 .nw-page__title {
-  font-size: 1.4rem;
-  font-weight: 600;
+  font-size: 24px;
+  font-weight: 800;
   color: var(--text);
   margin: 0;
 }
@@ -18,9 +18,10 @@
 .nw-summary {
   display: flex;
   gap: 1.5rem;
-  background-color: var(--surface);
+  background: var(--card);
   border: 1px solid var(--border);
-  border-radius: 0.75rem;
+  border-radius: 12px;
+  box-shadow: var(--shadow-sm);
   padding: 1.25rem 1.5rem;
   flex-wrap: wrap;
 }
@@ -63,9 +64,10 @@
 
 /* Asset / Liability list panel */
 .nw-list {
-  background-color: var(--surface);
+  background: var(--card);
   border: 1px solid var(--border);
-  border-radius: 0.75rem;
+  border-radius: 12px;
+  box-shadow: var(--shadow-sm);
   padding: 1.25rem 1.5rem;
   display: flex;
   flex-direction: column;
@@ -87,18 +89,19 @@
 
 .nw-list__add-btn {
   font-size: 0.85rem;
-  font-weight: 500;
-  color: var(--accent);
-  background: none;
-  border: 1px solid var(--accent);
-  border-radius: 0.4rem;
-  padding: 0.25rem 0.75rem;
+  font-weight: 600;
+  color: #fff;
+  background: var(--accent);
+  border: none;
+  border-radius: 10px;
+  padding: 0.35rem 0.85rem;
   cursor: pointer;
-  transition: background-color 0.15s ease;
+  box-shadow: 0 2px 8px rgba(15, 157, 138, 0.2);
+  transition: opacity 0.15s ease;
 }
 
 .nw-list__add-btn:hover {
-  background-color: rgba(16, 185, 129, 0.1);
+  opacity: 0.88;
 }
 
 .nw-list__empty {
@@ -208,9 +211,10 @@
 
 /* Breakdown chart section */
 .nw-breakdown {
-  background-color: var(--surface);
+  background: var(--card);
   border: 1px solid var(--border);
-  border-radius: 0.75rem;
+  border-radius: 12px;
+  box-shadow: var(--shadow-sm);
   padding: 1.25rem 1.5rem;
 }
 
@@ -245,9 +249,10 @@
 
 /* History chart section */
 .nw-history-section {
-  background-color: var(--surface);
+  background: var(--card);
   border: 1px solid var(--border);
-  border-radius: 0.75rem;
+  border-radius: 12px;
+  box-shadow: var(--shadow-sm);
   padding: 1.25rem 1.5rem;
 }
 

@@ -61,9 +61,9 @@
 }
 
 .goal-card__status-badge--achieved {
-  background: rgba(16, 185, 129, 0.12);
+  background: color-mix(in srgb, var(--accent) 12%, transparent);
   color: var(--accent);
-  border: 1px solid rgba(16, 185, 129, 0.3);
+  border: 1px solid color-mix(in srgb, var(--accent) 30%, transparent);
 }
 
 .goal-card__status-badge--abandoned {
@@ -98,7 +98,7 @@
 }
 
 .goal-card__edit-btn:hover {
-  background: var(--card-hover, var(--surface));
+  background: var(--surface);
   border-color: var(--subtle);
   color: var(--text);
 }
@@ -127,11 +127,11 @@
 
 .goal-card__status-btn--achieved {
   color: var(--accent);
-  border-color: rgba(16, 185, 129, 0.3);
+  border-color: color-mix(in srgb, var(--accent) 30%, transparent);
 }
 
 .goal-card__status-btn--achieved:hover {
-  background: rgba(16, 185, 129, 0.08);
+  background: color-mix(in srgb, var(--accent) 8%, transparent);
   border-color: var(--accent);
 }
 
@@ -140,7 +140,7 @@
 }
 
 .goal-card__status-btn--abandoned:hover {
-  background: var(--card-hover, var(--surface));
+  background: var(--surface);
   border-color: var(--subtle);
   color: var(--text);
 }
@@ -154,9 +154,9 @@
 
 .goal-card__delete-btn {
   background: transparent;
-  border: 1px solid rgba(239, 68, 68, 0.35);
+  border: 1px solid color-mix(in srgb, var(--red) 35%, transparent);
   border-radius: 6px;
-  color: var(--color-danger);
+  color: var(--red);
   cursor: pointer;
   font-size: 0.72rem;
   font-weight: 500;
@@ -169,12 +169,12 @@
 }
 
 .goal-card__delete-btn:hover {
-  background: rgba(239, 68, 68, 0.08);
-  border-color: var(--color-danger);
+  background: color-mix(in srgb, var(--red) 8%, transparent);
+  border-color: var(--red);
 }
 
 .goal-card__delete-btn:focus-visible {
-  outline: 2px solid var(--color-danger);
+  outline: 2px solid var(--red);
   outline-offset: 2px;
 }
 
@@ -202,11 +202,11 @@
 }
 
 .goal-card__progress-fill--over {
-  background: var(--color-danger);
+  background: var(--red);
 }
 
 .goal-card__progress-fill--warning {
-  background: var(--amber);
+  background: #d97706;
 }
 
 /* ── Amounts row ─────────────────────────────────────────────────────────────── */
@@ -237,9 +237,9 @@
 .goal-card__over-badge {
   font-size: 0.68rem;
   font-weight: 600;
-  color: var(--color-danger);
-  background: rgba(239, 68, 68, 0.1);
-  border: 1px solid rgba(239, 68, 68, 0.25);
+  color: var(--red);
+  background: color-mix(in srgb, var(--red) 10%, transparent);
+  border: 1px solid color-mix(in srgb, var(--red) 25%, transparent);
   border-radius: 20px;
   padding: 1px 7px;
   margin-left: 4px;
