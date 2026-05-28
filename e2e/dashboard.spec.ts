@@ -70,15 +70,40 @@ test("income vs expenses chart shows empty state when all transactions are trans
   ).toContainText("No data for selected account", { timeout: 15_000 });
 });
 
-test("largest transactions card is present below the charts row", async ({
+test("recent transactions widget is present below the charts row", async ({
   authenticatedPage: page,
 }) => {
   await uploadFixtures(page);
 
-  // LargestTransactions was moved to its own card row below the charts grid
+  // RecentTransactions replaced LargestTransactions (#791)
   await expect(
-    page.getByText("Largest Transactions", { exact: false }),
+    page.locator('[data-testid="recent-transactions-widget"]'),
   ).toBeVisible({ timeout: 15_000 });
+});
+
+test("recent transactions widget shows empty state when all transactions are transfers", async ({
+  authenticatedPage: page,
+}) => {
+  // Fixture data only has transfer transactions — widget should show empty state
+  await uploadFixtures(page);
+
+  await expect(
+    page.locator('[data-testid="recent-transactions-widget"]'),
+  ).toContainText("No transactions for this period.", { timeout: 15_000 });
+});
+
+test("recent transactions widget 'View all' link navigates to /transactions", async ({
+  authenticatedPage: page,
+}) => {
+  await uploadFixtures(page);
+
+  await expect(
+    page.locator('[data-testid="recent-transactions-widget"]'),
+  ).toBeVisible({ timeout: 15_000 });
+
+  // Click the "View all" link in the header
+  await page.getByRole("link", { name: "View all" }).click();
+  await expect(page).toHaveURL(/\/transactions/);
 });
 
 test("multi-select pills show range heading and count subtitle", async ({

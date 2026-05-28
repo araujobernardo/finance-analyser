@@ -1,90 +1,11 @@
 import { Link } from "react-router-dom";
 import type { ApiTransaction } from "../types/api";
+import {
+  getCategoryDisplay,
+  formatDateLabel,
+  formatTxnAmount,
+} from "../utils/categoryDisplay";
 import "./RecentTransactions.css";
-
-// ── Category display map ─────────────────────────────────────────────────────
-
-interface CategoryDisplay {
-  emoji: string;
-  iconBg: string;
-  dotColor: string;
-}
-
-const CATEGORY_MAP: Record<string, CategoryDisplay> = {
-  groceries: {
-    emoji: "🛒",
-    iconBg: "#e8f4ec",
-    dotColor: "var(--cat-groceries)",
-  },
-  transport: {
-    emoji: "🚌",
-    iconBg: "#e9f2f8",
-    dotColor: "var(--cat-transport)",
-  },
-  income: {
-    emoji: "💰",
-    iconBg: "#e8f5f3",
-    dotColor: "var(--accent)",
-  },
-  dining: {
-    emoji: "🍽️",
-    iconBg: "#fdf3e8",
-    dotColor: "var(--cat-dining)",
-  },
-  utilities: {
-    emoji: "⚡",
-    iconBg: "#fef9ec",
-    dotColor: "var(--cat-utilities)",
-  },
-  healthcare: {
-    emoji: "🏥",
-    iconBg: "#fdf3f3",
-    dotColor: "var(--cat-healthcare)",
-  },
-  entertainment: {
-    emoji: "🎬",
-    iconBg: "#f3f0f9",
-    dotColor: "var(--cat-entertainment)",
-  },
-  shopping: {
-    emoji: "🛍️",
-    iconBg: "#e8f5f3",
-    dotColor: "var(--accent-mid)",
-  },
-};
-
-const FALLBACK_DISPLAY: CategoryDisplay = {
-  emoji: "💳",
-  iconBg: "#f4f1ed",
-  dotColor: "var(--muted)",
-};
-
-function getCategoryDisplay(category: string | null): CategoryDisplay {
-  if (!category) return FALLBACK_DISPLAY;
-  return CATEGORY_MAP[category.toLowerCase()] ?? FALLBACK_DISPLAY;
-}
-
-// ── Date formatting ──────────────────────────────────────────────────────────
-
-const DATE_LABEL_FMT = new Intl.DateTimeFormat("en-NZ", {
-  day: "numeric",
-  month: "short",
-});
-
-const AMT_FMT = new Intl.NumberFormat("en-NZ", {
-  minimumFractionDigits: 2,
-  maximumFractionDigits: 2,
-});
-
-function formatDateLabel(dateStr: string): string {
-  const d = new Date(`${dateStr}T00:00:00`);
-  return DATE_LABEL_FMT.format(d);
-}
-
-function formatAmount(amount: number): string {
-  const abs = `$${AMT_FMT.format(Math.abs(amount))}`;
-  return amount > 0 ? `+${abs}` : `−${abs}`;
-}
 
 // ── Grouping ─────────────────────────────────────────────────────────────────
 
@@ -203,7 +124,7 @@ export function RecentTransactions({
                     <span
                       className={`recent-txns__amount${isCredit ? " recent-txns__amount--credit" : " recent-txns__amount--debit"}`}
                     >
-                      {formatAmount(t.amount)}
+                      {formatTxnAmount(t.amount)}
                     </span>
                   </div>
                 );
