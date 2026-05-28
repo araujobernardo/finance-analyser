@@ -446,3 +446,83 @@
   border-radius: 3px;
   transition: width 0.5s;
 }
+
+/* ── Mobile responsive layout (≤768px) ─────────────────────────────────── */
+
+@media (max-width: 768px) {
+  /* Reduce padding on the scroll container */
+  .dash-scroll {
+    padding: 16px 14px;
+    gap: 12px;
+  }
+
+  /* Stats: 2×2 grid */
+  .dash-stats-grid {
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+  }
+
+  /* Net Worth card spans full width (it's the 3rd stat card — "Net") */
+  .dash-stats-grid .stat-card:nth-child(3) {
+    grid-column: span 2;
+  }
+
+  /* Reduce stat value font size for mobile */
+  .stat-value {
+    font-size: 20px;
+  }
+
+  /* Month pills: horizontal scroll, no wrap */
+  .dash-month-pills {
+    flex-wrap: nowrap;
+    overflow-x: auto;
+    scrollbar-width: none;
+    -ms-overflow-style: none;
+    padding-bottom: 2px;
+  }
+
+  .dash-month-pills::-webkit-scrollbar {
+    display: none;
+  }
+
+  /* Charts: single column, stacked vertically */
+  .dash-charts-grid {
+    grid-template-columns: 1fr;
+    gap: 12px;
+  }
+
+  /* Donut chart: stack legend below the donut (reverse column order) */
+  .dash-cat-body {
+    flex-direction: column-reverse;
+    align-items: stretch;
+  }
+
+  .dash-cat-chart-col {
+    flex: 0 0 auto;
+    justify-content: center;
+  }
+
+  .dash-cat-legend-col {
+    flex: 0 0 auto;
+  }
+
+  /* Account breakdown: 1 column on mobile */
+  .dash-acct-grid {
+    grid-template-columns: 1fr;
+  }
+
+  /* Reduce card padding on mobile */
+  .card {
+    padding: 14px 16px;
+  }
+
+  /* Header: stack title and pills vertically */
+  .dash-header {
+    flex-direction: column;
+    gap: 10px;
+  }
+
+  .dash-month-pills {
+    width: 100%;
+  }
+}
