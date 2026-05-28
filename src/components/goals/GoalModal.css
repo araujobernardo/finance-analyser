@@ -96,7 +96,7 @@
 }
 
 .goal-modal__step-dot--complete {
-  background: var(--accent-dim);
+  background: color-mix(in srgb, var(--accent) 50%, transparent);
 }
 
 .goal-modal__step-text {
@@ -155,7 +155,7 @@
 
 .goal-modal__input:focus {
   border-color: var(--accent);
-  box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.15);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--accent) 15%, transparent);
 }
 
 .goal-modal__input:hover:not(:focus) {
@@ -167,12 +167,12 @@
 }
 
 .goal-modal__input--error {
-  border-color: var(--color-danger);
+  border-color: var(--red);
 }
 
 .goal-modal__error {
   font-size: 0.8rem;
-  color: var(--color-danger);
+  color: var(--red);
   margin-top: 0.1rem;
 }
 
@@ -209,7 +209,7 @@
 
 .goal-modal__tile:hover {
   border-color: var(--subtle);
-  background: #152234;
+  background: var(--surface);
 }
 
 .goal-modal__tile:active {
@@ -218,7 +218,7 @@
 
 .goal-modal__tile--selected {
   border-color: var(--accent);
-  background: rgba(16, 185, 129, 0.08);
+  background: color-mix(in srgb, var(--accent) 8%, transparent);
 }
 
 .goal-modal__tile-icon {
@@ -266,8 +266,8 @@
 /* ── Context hint banner ─────────────────────────────────────────────────────── */
 
 .goal-modal__context-hint {
-  background: rgba(16, 185, 129, 0.07);
-  border: 1px solid rgba(16, 185, 129, 0.2);
+  background: color-mix(in srgb, var(--accent) 7%, transparent);
+  border: 1px solid color-mix(in srgb, var(--accent) 20%, transparent);
   border-radius: 8px;
   padding: 10px 14px;
   font-size: 0.75rem;
@@ -362,7 +362,7 @@
 
 .goal-modal__btn {
   padding: 10px 20px;
-  border-radius: 8px;
+  border-radius: 10px;
   font-size: 0.88rem;
   font-weight: 600;
   cursor: pointer;
@@ -397,6 +397,7 @@
 .goal-modal__btn--save {
   background: var(--accent);
   color: #fff;
+  box-shadow: 0 2px 8px rgba(15, 157, 138, 0.2);
 }
 
 .goal-modal__btn--save:hover:not(:disabled) {

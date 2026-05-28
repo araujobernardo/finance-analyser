@@ -8,8 +8,8 @@
 }
 
 .settings-title {
-  font-size: 22px;
-  font-weight: 700;
+  font-size: 24px;
+  font-weight: 800;
   color: var(--text);
   margin: 0;
 }
@@ -20,12 +20,13 @@
   background: var(--accent);
   color: white;
   border: none;
-  border-radius: 8px;
+  border-radius: 10px;
   padding: 9px 22px;
   font-size: 13px;
   font-weight: 600;
   cursor: pointer;
   font-family: inherit;
+  box-shadow: 0 2px 8px rgba(15, 157, 138, 0.2);
 }
 
 .btn-accent:hover {
@@ -36,7 +37,7 @@
   background: transparent;
   color: var(--accent);
   border: 1px solid color-mix(in srgb, var(--accent) 40%, transparent);
-  border-radius: 8px;
+  border-radius: 10px;
   padding: 8px 16px;
   font-size: 13px;
   font-weight: 600;
@@ -50,10 +51,10 @@
 }
 
 .btn-danger {
-  background: transparent;
-  color: var(--red);
-  border: 1px solid color-mix(in srgb, var(--red) 35%, transparent);
-  border-radius: 8px;
+  background: var(--red);
+  color: #fff;
+  border: none;
+  border-radius: 10px;
   padding: 8px 20px;
   font-size: 13px;
   font-weight: 600;
@@ -62,7 +63,7 @@
 }
 
 .btn-danger:hover {
-  background: color-mix(in srgb, var(--red) 10%, transparent);
+  opacity: 0.88;
 }
 
 .btn-ghost {

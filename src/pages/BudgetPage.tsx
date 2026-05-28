@@ -7,6 +7,7 @@ import { BudgetRow } from "../components/budgets/BudgetRow";
 import { MonthNavigator } from "../components/budgets/MonthNavigator";
 import { AddBudgetModal } from "../components/budgets/AddBudgetModal";
 import { ManageDefaultsModal } from "../components/budgets/ManageDefaultsModal";
+import "./BudgetPage.css";
 
 const nzd = new Intl.NumberFormat("en-NZ", {
   style: "currency",
@@ -30,8 +31,8 @@ export default function BudgetPage() {
   const totalSpend = budgets.reduce((sum, b) => sum + b.actualSpend, 0);
 
   return (
-    <div className="goals-page" style={{ padding: "24px" }}>
-      <h1>Budget</h1>
+    <div className="budget-page">
+      <h1 className="budget-page__title">Budget</h1>
 
       {/* Month navigation */}
       <MonthNavigator
@@ -43,17 +44,7 @@ export default function BudgetPage() {
 
       {/* Summary row */}
       {budgets.length > 0 && (
-        <div
-          style={{
-            display: "flex",
-            gap: 16,
-            margin: "16px 0",
-            padding: "12px",
-            background: "var(--surface, #fff)",
-            border: "1px solid var(--border, #e5e7eb)",
-            borderRadius: 8,
-          }}
-        >
+        <div className="budget-page__summary">
           <span>
             <strong>Total limit:</strong> {nzd.format(totalLimit)}
           </span>
@@ -65,15 +56,13 @@ export default function BudgetPage() {
 
       {/* Budget list */}
       {loading ? (
-        <div style={{ padding: "24px 0", color: "var(--text-muted, #6b7280)" }}>
-          Loading budgets...
-        </div>
+        <div className="budget-page__loading">Loading budgets...</div>
       ) : budgets.length === 0 ? (
-        <p style={{ color: "var(--text-muted, #6b7280)", margin: "24px 0" }}>
+        <p className="budget-page__empty">
           No budgets yet. Add your first budget to start tracking.
         </p>
       ) : (
-        <div style={{ marginTop: 16 }}>
+        <div className="budget-page__list">
           {budgets.map((b) => (
             <BudgetRow key={b.id} budget={b} />
           ))}
@@ -81,7 +70,7 @@ export default function BudgetPage() {
       )}
 
       {/* Actions */}
-      <div style={{ display: "flex", gap: 12, marginTop: 24 }}>
+      <div className="budget-page__actions">
         <button
           type="button"
           className="goals-page__add-btn"
@@ -91,12 +80,7 @@ export default function BudgetPage() {
         </button>
         <button
           type="button"
-          className="goals-page__add-btn"
-          style={{
-            background: "transparent",
-            color: "var(--text-muted, #6b7280)",
-            border: "1px solid var(--border, #e5e7eb)",
-          }}
+          className="budget-page__btn-secondary"
           onClick={() => setDefaultsModalOpen(true)}
         >
           Manage Defaults

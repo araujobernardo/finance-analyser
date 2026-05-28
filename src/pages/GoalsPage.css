@@ -19,20 +19,21 @@
 
 .goals-page__title {
   margin: 0;
-  font-size: 1.25rem;
-  font-weight: 600;
+  font-size: 24px;
+  font-weight: 800;
   color: var(--text);
 }
 
 .goals-page__add-btn {
-  padding: 9px 18px;
+  padding: 8px 18px;
   background: var(--accent);
   color: #fff;
   border: none;
-  border-radius: 8px;
+  border-radius: 10px;
   font-size: 0.88rem;
   font-weight: 600;
   cursor: pointer;
+  box-shadow: 0 2px 8px rgba(15, 157, 138, 0.2);
   transition: opacity 0.15s;
 }
 
@@ -126,8 +127,8 @@
 /* ── Delete confirmation ─────────────────────────────────────────────────────── */
 
 .goals-page__delete-confirm {
-  background: rgba(239, 68, 68, 0.07);
-  border: 1px solid rgba(239, 68, 68, 0.25);
+  background: color-mix(in srgb, var(--red) 7%, transparent);
+  border: 1px solid color-mix(in srgb, var(--red) 25%, transparent);
   border-radius: 10px;
   padding: 14px 16px;
   display: flex;
@@ -169,13 +170,13 @@
 }
 
 .goals-page__delete-confirm-btn--cancel:hover {
-  background: var(--card-hover, var(--surface));
+  background: var(--surface);
   color: var(--text);
 }
 
 .goals-page__delete-confirm-btn--confirm {
-  background: var(--color-danger);
-  border: 1px solid var(--color-danger);
+  background: var(--red);
+  border: 1px solid var(--red);
   color: #fff;
 }
 
