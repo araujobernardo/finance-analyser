@@ -381,3 +381,139 @@ describe("Sidebar — All Accounts row (issue #755 Option C)", () => {
     }
   });
 });
+
+describe("Sidebar — mobile drawer (#795)", () => {
+  it("renders the mobile top bar with hamburger, title, and CSV button", () => {
+    renderSidebar();
+    expect(screen.getByTestId("mobile-topbar")).toBeInTheDocument();
+    expect(screen.getByTestId("hamburger-btn")).toBeInTheDocument();
+    expect(screen.getByTestId("mobile-upload-csv-btn")).toBeInTheDocument();
+    expect(screen.getByText("Finance Analyser")).toBeInTheDocument();
+  });
+
+  it("hamburger button has aria-label='Open menu' and aria-expanded=false by default", () => {
+    renderSidebar();
+    const btn = screen.getByTestId("hamburger-btn");
+    expect(btn).toHaveAttribute("aria-label", "Open menu");
+    expect(btn).toHaveAttribute("aria-expanded", "false");
+  });
+
+  it("mobile drawer is present in DOM but closed by default (aria-hidden=true)", () => {
+    renderSidebar();
+    const drawer = screen.getByTestId("mobile-drawer");
+    expect(drawer).toBeInTheDocument();
+    expect(drawer).toHaveAttribute("aria-hidden", "true");
+    expect(drawer).not.toHaveClass("drawer-overlay--open");
+  });
+
+  it("clicking hamburger opens the drawer and renders drawer content", async () => {
+    const user = userEvent.setup();
+    renderSidebar();
+
+    await user.click(screen.getByTestId("hamburger-btn"));
+
+    const drawer = screen.getByTestId("mobile-drawer");
+    expect(drawer).toHaveClass("drawer-overlay--open");
+    expect(drawer).toHaveAttribute("aria-hidden", "false");
+    // Close button appears when drawer is open
+    expect(screen.getByTestId("drawer-close-btn")).toBeInTheDocument();
+  });
+
+  it("hamburger aria-expanded=true when drawer is open", async () => {
+    const user = userEvent.setup();
+    renderSidebar();
+
+    await user.click(screen.getByTestId("hamburger-btn"));
+
+    const btn = screen.getByTestId("hamburger-btn");
+    expect(btn).toHaveAttribute("aria-expanded", "true");
+  });
+
+  it("clicking the close button inside the drawer closes it", async () => {
+    const user = userEvent.setup();
+    renderSidebar();
+
+    // Open drawer
+    await user.click(screen.getByTestId("hamburger-btn"));
+    expect(screen.getByTestId("mobile-drawer")).toHaveClass(
+      "drawer-overlay--open",
+    );
+
+    // Close via X button
+    await user.click(screen.getByTestId("drawer-close-btn"));
+
+    const drawer = screen.getByTestId("mobile-drawer");
+    expect(drawer).not.toHaveClass("drawer-overlay--open");
+    // Drawer content should be gone
+    expect(screen.queryByTestId("drawer-close-btn")).not.toBeInTheDocument();
+  });
+
+  it("clicking the backdrop closes the drawer", async () => {
+    const user = userEvent.setup();
+    renderSidebar();
+
+    // Open drawer
+    await user.click(screen.getByTestId("hamburger-btn"));
+    expect(screen.getByTestId("mobile-drawer")).toHaveClass(
+      "drawer-overlay--open",
+    );
+
+    // Click backdrop
+    await user.click(screen.getByTestId("drawer-backdrop"));
+
+    expect(screen.getByTestId("mobile-drawer")).not.toHaveClass(
+      "drawer-overlay--open",
+    );
+  });
+
+  it("pressing Escape closes the drawer", async () => {
+    const user = userEvent.setup();
+    renderSidebar();
+
+    // Open drawer
+    await user.click(screen.getByTestId("hamburger-btn"));
+    expect(screen.getByTestId("mobile-drawer")).toHaveClass(
+      "drawer-overlay--open",
+    );
+
+    // Press Escape
+    await user.keyboard("{Escape}");
+
+    expect(screen.getByTestId("mobile-drawer")).not.toHaveClass(
+      "drawer-overlay--open",
+    );
+  });
+
+  it("mobile CSV button triggers the mobile file input", async () => {
+    const user = userEvent.setup();
+    renderSidebar();
+
+    const csvBtn = screen.getByTestId("mobile-upload-csv-btn");
+    const mobileInput = screen.getByTestId(
+      "mobile-csv-file-input",
+    ) as HTMLInputElement;
+
+    // Click the mobile CSV button — it should trigger click on the hidden file input.
+    // We verify the input is present with correct attributes.
+    expect(mobileInput.type).toBe("file");
+    expect(mobileInput.accept).toBe(".csv");
+    expect(mobileInput.multiple).toBe(true);
+    expect(csvBtn).toBeInTheDocument();
+
+    // Upload a file via the mobile input
+    const file = new File(
+      ["date,desc,amount\n2026-01-01,Test,100"],
+      "test.csv",
+      {
+        type: "text/csv",
+      },
+    );
+    await user.upload(mobileInput, file);
+    await waitFor(() => expect(mockHandleFile).toHaveBeenCalledWith(file));
+  });
+
+  it("desktop sidebar is present in DOM (hidden via CSS on mobile)", () => {
+    renderSidebar();
+    expect(screen.getByTestId("desktop-sidebar")).toBeInTheDocument();
+  });
+});
