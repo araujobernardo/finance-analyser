@@ -11,13 +11,12 @@ import {
   buildWeeklyCategoryTotals,
 } from "../utils/weeklyAggregation";
 import { WeeklyTrendChart } from "../components/WeeklyTrendChart";
-import { LargestTransactions } from "../components/LargestTransactions";
+import { RecentTransactions } from "../components/RecentTransactions";
 import { IncomeExpenseChart } from "../components/IncomeExpenseChart";
 import { SpendingTrendsByCategoryChart } from "../components/SpendingTrendsByCategoryChart";
 import { GoalsSummaryWidget } from "../components/goals/GoalsSummaryWidget";
 import { BudgetSummaryWidget } from "../components/budgets/BudgetSummaryWidget";
 import { SpendingTrendsLineChart } from "../components/SpendingTrendsLineChart";
-import type { Transaction } from "../utils/csvParser";
 import "./DashboardPage.css";
 
 // ── Local adapter type ────────────────────────────────────────────────────────
@@ -315,19 +314,26 @@ export function DashboardPage() {
     [adapted, weeklyAccountFilter],
   );
 
-  // Map to Transaction shape for LargestTransactions component.
-  const txnsForLargest: Transaction[] = useMemo(
+  // ApiTransaction rows filtered by selected months and active account —
+  // passed to RecentTransactions (which handles transfer exclusion internally).
+  const recentTxns = useMemo(
     () =>
-      real
-        .filter((t) => !t.isCredit)
-        .map((t) => ({
-          date: new Date(`${t.date}T00:00:00`),
-          description: t.payee || "Unknown",
-          amount: -Math.abs(t.amount),
-          category: t.category ?? undefined,
-        })),
-    [real],
+      rawTransactions.filter(
+        (t) =>
+          selectedMonths.includes(t.date.slice(0, 7)) &&
+          (activeAccountId === ALL_ACCOUNTS_ID ||
+            t.accountId === activeAccountId),
+      ),
+    [rawTransactions, selectedMonths, activeAccountId],
   );
+
+  // Month label for the Recent Transactions widget subtitle.
+  const recentTxnsMonthLabel = useMemo(() => {
+    if (selectedMonths.length === 0) return "";
+    if (selectedMonths.length === 1) return fmtMonthSh(selectedMonths[0]);
+    const sorted = [...selectedMonths].sort();
+    return `${fmtMonthSh(sorted[0])} – ${fmtMonthSh(sorted[sorted.length - 1])}`;
+  }, [selectedMonths]);
 
   // Loading state — shown only while initial fetch is running with no data yet.
   if (isLoading && adapted.length === 0) {
@@ -589,12 +595,11 @@ export function DashboardPage() {
         </div>
       </div>
 
-      {/* Largest Transactions */}
+      {/* Recent Transactions */}
       <div className="card">
-        <LargestTransactions
-          transactions={txnsForLargest}
-          selectedCategory={selectedCategory}
-          onCategoryClick={setSelectedCategory}
+        <RecentTransactions
+          transactions={recentTxns}
+          monthLabel={recentTxnsMonthLabel}
         />
       </div>
 
