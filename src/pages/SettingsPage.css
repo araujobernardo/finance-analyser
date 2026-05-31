@@ -455,3 +455,203 @@
   accent-color: var(--accent);
   flex-shrink: 0;
 }
+
+/* ── Bank Connection Section ─────────────────────────────────────────── */
+
+.settings-bank-status-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.settings-bank-status-dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.settings-bank-status-dot--connected {
+  background: var(--green, #22c55e);
+}
+
+.settings-bank-status-dot--disconnected {
+  background: var(--muted);
+}
+
+.settings-bank-status-label {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text);
+}
+
+.settings-bank-meta {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: 4px 16px;
+  font-size: 12px;
+}
+
+.settings-bank-meta dt {
+  color: var(--muted);
+}
+
+.settings-bank-meta dd {
+  color: var(--subtle);
+}
+
+.settings-bank-connect-row {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.settings-bank-privacy-note {
+  font-size: 11px;
+  color: var(--muted);
+  line-height: 1.5;
+  padding: 8px 10px;
+  background: color-mix(in srgb, var(--accent) 7%, transparent);
+  border-radius: 6px;
+}
+
+.settings-bank-error {
+  font-size: 12px;
+  color: var(--red);
+  padding: 5px 10px;
+  background: color-mix(in srgb, var(--red) 8%, transparent);
+  border: 1px solid color-mix(in srgb, var(--red) 25%, transparent);
+  border-radius: 6px;
+}
+
+.settings-bank-mapping-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 12px;
+}
+
+.settings-bank-mapping-table th {
+  text-align: left;
+  color: var(--muted);
+  font-weight: 500;
+  padding: 4px 8px;
+  border-bottom: 1px solid var(--border);
+}
+
+.settings-bank-mapping-row td {
+  padding: 6px 8px;
+  vertical-align: top;
+  border-bottom: 1px solid var(--border);
+}
+
+.settings-bank-mapping-name {
+  font-weight: 500;
+  color: var(--text);
+}
+
+.settings-bank-mapping-type {
+  color: var(--muted);
+  font-size: 11px;
+}
+
+.settings-bank-select {
+  padding: 3px 6px;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  background: var(--surface);
+  color: var(--text);
+  font-size: 12px;
+  min-width: 140px;
+  font-family: inherit;
+}
+
+.settings-bank-badge {
+  display: inline-block;
+  padding: 2px 6px;
+  border-radius: 4px;
+  font-size: 11px;
+  font-weight: 500;
+}
+
+.settings-bank-badge--active {
+  background: color-mix(in srgb, var(--green, #22c55e) 15%, transparent);
+  color: var(--green, #15803d);
+}
+
+.settings-bank-badge--syncing {
+  background: color-mix(in srgb, var(--accent) 15%, transparent);
+  color: var(--accent);
+}
+
+.settings-bank-badge--error {
+  background: color-mix(in srgb, var(--red) 15%, transparent);
+  color: var(--red);
+}
+
+.settings-bank-badge--disconnected {
+  background: color-mix(in srgb, var(--muted) 15%, transparent);
+  color: var(--muted);
+}
+
+.settings-bank-sync-error-text {
+  color: var(--red);
+  font-size: 11px;
+  margin-top: 2px;
+}
+
+.settings-bank-empty-state {
+  font-size: 13px;
+  color: var(--muted);
+  padding: 10px 0;
+}
+
+.settings-bank-sync-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.settings-bank-spinner {
+  display: inline-block;
+  width: 12px;
+  height: 12px;
+  border: 2px solid rgba(255, 255, 255, 0.4);
+  border-top-color: #fff;
+  border-radius: 50%;
+  animation: settings-bank-spin 0.6s linear infinite;
+  margin-right: 6px;
+  vertical-align: middle;
+}
+
+@keyframes settings-bank-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.settings-bank-sync-result {
+  font-size: 12px;
+  color: var(--text);
+  padding: 6px 10px;
+  background: color-mix(in srgb, var(--accent) 7%, transparent);
+  border-radius: 6px;
+}
+
+.settings-bank-sync-errors {
+  margin-top: 4px;
+  padding-left: 14px;
+  color: var(--red);
+  font-size: 11px;
+}
+
+.settings-bank-security-note {
+  font-size: 11px;
+  color: var(--muted);
+  line-height: 1.5;
+  padding: 8px 10px;
+  background: color-mix(in srgb, var(--surface) 50%, transparent);
+  border-radius: 6px;
+  border-left: 2px solid var(--border);
+}
