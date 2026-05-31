@@ -1,8 +1,141 @@
-// FA-BANK-003 T004 [US1] — Bank Connection Page
+// FA-BANK-003 T004 / T006 [US1/US2] — Bank Connection Page
 
 import { useState } from "react";
 import { useBankContext } from "../context/BankContext";
+import { useAccount } from "../context/AccountContext";
+import type { ApiAkahuAccountLink } from "../types/api";
 import "./BankConnectionPage.css";
+
+// ── AccountMappingRow ─────────────────────────────────────────────────────────
+
+function AccountMappingRow({ link }: { link: ApiAkahuAccountLink }) {
+  const { linkAccount, unlinkAccount } = useBankContext();
+  const { accounts } = useAccount();
+
+  function formatBalance(): string {
+    if (link.lastBalance === null) return "—";
+    return `NZD ${parseFloat(link.lastBalance).toFixed(2)}`;
+  }
+
+  function formatDate(iso: string | null): string {
+    if (!iso) return "Not yet synced";
+    return new Date(iso).toLocaleDateString("en-NZ", {
+      year: "numeric",
+      month: "short",
+      day: "numeric",
+    });
+  }
+
+  async function handleLinkChange(e: React.ChangeEvent<HTMLSelectElement>) {
+    const value = e.target.value;
+    if (value === "") {
+      await unlinkAccount(link.akahuAccountId);
+    } else {
+      const selectedAccount = accounts.find((a) => a.id === value);
+      const accountName = selectedAccount?.nickname ?? link.akahuAccountName;
+      await linkAccount(link.akahuAccountId, value, accountName);
+    }
+  }
+
+  function syncStatusBadge() {
+    const statusMap: Record<string, { className: string; label: string }> = {
+      active: {
+        className: "bank-status-badge bank-status-active",
+        label: "Active",
+      },
+      syncing: {
+        className: "bank-status-badge bank-status-syncing",
+        label: "Syncing…",
+      },
+      error: {
+        className: "bank-status-badge bank-status-error",
+        label: "Error",
+      },
+      disconnected: {
+        className: "bank-status-badge bank-status-disconnected",
+        label: "Disconnected",
+      },
+    };
+    const status = statusMap[link.syncStatus] ?? statusMap["active"]!;
+    return (
+      <span className={status.className} data-testid="sync-status-badge">
+        {status.label}
+      </span>
+    );
+  }
+
+  return (
+    <tr className="bank-mapping-row" data-testid="account-mapping-row">
+      <td>
+        <div className="bank-mapping-name" data-testid="akahu-account-name">
+          {link.akahuAccountName}
+        </div>
+        <div className="bank-mapping-type">{link.akahuAccountType ?? "—"}</div>
+      </td>
+      <td data-testid="akahu-balance">{formatBalance()}</td>
+      <td data-testid="akahu-last-synced">
+        {formatDate(link.lastTransactionSyncedAt)}
+      </td>
+      <td>
+        <select
+          className="bank-select"
+          value={link.financeAccountId ?? ""}
+          onChange={(e) => void handleLinkChange(e)}
+          data-testid="account-link-select"
+        >
+          <option value="">Not linked</option>
+          {accounts.map((a) => (
+            <option key={a.id} value={a.id}>
+              {a.nickname}
+            </option>
+          ))}
+        </select>
+      </td>
+      <td>
+        {syncStatusBadge()}
+        {link.syncStatus === "error" && link.syncError && (
+          <div className="bank-sync-error" data-testid="sync-error-text">
+            {link.syncError}
+          </div>
+        )}
+      </td>
+    </tr>
+  );
+}
+
+// ── AccountMappingList ────────────────────────────────────────────────────────
+
+function AccountMappingList() {
+  const { accountLinks } = useBankContext();
+
+  return (
+    <div className="bank-card" data-testid="account-mapping-list">
+      <h2 className="bank-card-title">Your Akahu Accounts</h2>
+      {accountLinks.length === 0 ? (
+        <p className="bank-empty-state" data-testid="no-accounts-message">
+          No Akahu accounts found. Try syncing first.
+        </p>
+      ) : (
+        <table className="bank-mapping-table">
+          <thead>
+            <tr>
+              <th>Account</th>
+              <th>Balance</th>
+              <th>Last synced</th>
+              <th>Link to</th>
+              <th>Status</th>
+            </tr>
+          </thead>
+          <tbody>
+            {accountLinks.map((link) => (
+              <AccountMappingRow key={link.akahuAccountId} link={link} />
+            ))}
+          </tbody>
+        </table>
+      )}
+    </div>
+  );
+}
 
 // ── ConnectionStatusCard ──────────────────────────────────────────────────────
 
@@ -127,7 +260,14 @@ export function BankConnectionPage() {
           {error}
         </p>
       )}
-      {connection !== null ? <ConnectionStatusCard /> : <ConnectForm />}
+      {connection !== null ? (
+        <>
+          <ConnectionStatusCard />
+          <AccountMappingList />
+        </>
+      ) : (
+        <ConnectForm />
+      )}
     </main>
   );
 }
