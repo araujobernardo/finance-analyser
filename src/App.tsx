@@ -5,6 +5,7 @@ import { AccountProvider } from "./context/AccountContext";
 import { NetWorthProvider } from "./context/NetWorthContext";
 import { GoalsProvider } from "./context/GoalsContext";
 import { BudgetProvider } from "./context/BudgetContext";
+import { BankProvider } from "./context/BankContext";
 import { ProtectedRoute } from "./components/ProtectedRoute";
 import { PublicOnlyRoute } from "./components/PublicOnlyRoute";
 import { Sidebar } from "./components/Sidebar";
@@ -17,6 +18,7 @@ import { SettingsPage } from "./pages/SettingsPage";
 import NetWorthPage from "./pages/NetWorthPage";
 import { GoalsPage } from "./pages/GoalsPage";
 import BudgetPage from "./pages/BudgetPage";
+import { BankConnectionPage } from "./pages/BankConnectionPage";
 import { SignUpPage } from "./pages/SignUpPage";
 import { VerifyEmailPage } from "./pages/VerifyEmailPage";
 import { LoginPage } from "./pages/LoginPage";
@@ -43,30 +45,42 @@ function AppShell() {
       <AccountProvider>
         <GoalsProvider>
           <BudgetProvider>
-            <div className="app-shell">
-              <Sidebar />
-              <div className="app-content">
-                <AlertBanner />
-                <Routes>
-                  <Route index element={<Navigate to="/dashboard" replace />} />
-                  <Route path="/dashboard" element={<DashboardPage />} />
-                  <Route path="/transactions" element={<TransactionsPage />} />
-                  <Route path="/chat" element={<ChatPage />} />
-                  <Route path="/settings" element={<SettingsPage />} />
-                  <Route
-                    path="/net-worth"
-                    element={
-                      <NetWorthProvider>
-                        <NetWorthPage />
-                      </NetWorthProvider>
-                    }
-                  />
-                  <Route path="/goals" element={<GoalsPage />} />
-                  <Route path="/budget" element={<BudgetPage />} />
-                </Routes>
+            <BankProvider>
+              <div className="app-shell">
+                <Sidebar />
+                <div className="app-content">
+                  <AlertBanner />
+                  <Routes>
+                    <Route
+                      index
+                      element={<Navigate to="/dashboard" replace />}
+                    />
+                    <Route path="/dashboard" element={<DashboardPage />} />
+                    <Route
+                      path="/transactions"
+                      element={<TransactionsPage />}
+                    />
+                    <Route path="/chat" element={<ChatPage />} />
+                    <Route path="/settings" element={<SettingsPage />} />
+                    <Route
+                      path="/net-worth"
+                      element={
+                        <NetWorthProvider>
+                          <NetWorthPage />
+                        </NetWorthProvider>
+                      }
+                    />
+                    <Route path="/goals" element={<GoalsPage />} />
+                    <Route path="/budget" element={<BudgetPage />} />
+                    <Route
+                      path="/settings/bank"
+                      element={<BankConnectionPage />}
+                    />
+                  </Routes>
+                </div>
               </div>
-            </div>
-            <Toast />
+              <Toast />
+            </BankProvider>
           </BudgetProvider>
         </GoalsProvider>
       </AccountProvider>
