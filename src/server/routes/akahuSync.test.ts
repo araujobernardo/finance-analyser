@@ -35,6 +35,7 @@ vi.mock("../../db/schema.ts", () => ({
 
 vi.mock("drizzle-orm", () => ({
   eq: vi.fn((_col: unknown, _val: unknown) => "eq-condition"),
+  and: vi.fn((..._args: unknown[]) => "and-condition"),
 }));
 
 const mockEncrypt = vi.fn();
@@ -323,5 +324,99 @@ describe("DELETE /api/bank/connection", () => {
 
     expect(res.status).toBe(500);
     expect(res.body.error).toBe("DB error");
+  });
+});
+
+// ---------------------------------------------------------------------------
+// POST /api/bank/accounts/link
+// ---------------------------------------------------------------------------
+
+// Valid UUID for Zod v4 (requires proper version/variant bits)
+const VALID_FINANCE_ACCOUNT_ID = "550e8400-e29b-41d4-a716-446655440000";
+
+const LINK_ROW = {
+  id: "link-001",
+  userId: "user-001",
+  akahuAccountId: "acc_xyz",
+  financeAccountId: VALID_FINANCE_ACCOUNT_ID,
+  akahuAccountName: "Savings",
+  akahuAccountType: null,
+  lastBalance: null,
+  lastTransactionSyncedAt: null,
+  syncStatus: "active",
+  syncError: null,
+  createdAt: new Date("2026-06-01").toISOString(),
+  updatedAt: new Date("2026-06-01").toISOString(),
+};
+
+describe("POST /api/bank/accounts/link", () => {
+  it("returns 201 with link row on success", async () => {
+    mockDbInsert.mockReturnValue({
+      values: vi.fn().mockReturnValue({
+        onConflictDoUpdate: vi.fn().mockReturnValue({
+          returning: vi.fn().mockResolvedValue([LINK_ROW]),
+        }),
+      }),
+    });
+
+    const res = await request(app).post("/api/bank/accounts/link").send({
+      akahuAccountId: "acc_xyz",
+      financeAccountId: VALID_FINANCE_ACCOUNT_ID,
+      akahuAccountName: "Savings",
+    });
+
+    expect(res.status).toBe(201);
+    expect(res.body.id).toBe("link-001");
+    expect(res.body.syncStatus).toBe("active");
+  });
+
+  it("returns 400 when body is missing required fields", async () => {
+    const res = await request(app)
+      .post("/api/bank/accounts/link")
+      .send({ akahuAccountId: "acc_xyz" });
+
+    expect(res.status).toBe(400);
+    expect(res.body.error).toBe("Invalid request body");
+  });
+
+  it("returns 400 when financeAccountId is not a UUID", async () => {
+    const res = await request(app).post("/api/bank/accounts/link").send({
+      akahuAccountId: "acc_xyz",
+      financeAccountId: "not-a-uuid",
+      akahuAccountName: "Savings",
+    });
+
+    expect(res.status).toBe(400);
+    expect(res.body.error).toBe("Invalid request body");
+  });
+});
+
+// ---------------------------------------------------------------------------
+// DELETE /api/bank/accounts/link/:akahuAccountId
+// ---------------------------------------------------------------------------
+
+describe("DELETE /api/bank/accounts/link/:akahuAccountId", () => {
+  it("returns 204 when link is deleted", async () => {
+    // This handler uses .where().returning() — build mock chain accordingly
+    const returningMock = vi.fn().mockResolvedValue([LINK_ROW]);
+    const whereMock = vi.fn().mockReturnValue({ returning: returningMock });
+    mockDbDelete.mockReturnValue({ where: whereMock });
+
+    const res = await request(app).delete("/api/bank/accounts/link/acc_xyz");
+
+    expect(res.status).toBe(204);
+  });
+
+  it("returns 404 when link does not exist", async () => {
+    const returningMock = vi.fn().mockResolvedValue([]);
+    const whereMock = vi.fn().mockReturnValue({ returning: returningMock });
+    mockDbDelete.mockReturnValue({ where: whereMock });
+
+    const res = await request(app).delete(
+      "/api/bank/accounts/link/nonexistent",
+    );
+
+    expect(res.status).toBe(404);
+    expect(res.body.error).toBe("Account link not found");
   });
 });
