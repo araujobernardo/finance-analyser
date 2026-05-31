@@ -119,6 +119,9 @@ export function BankProvider({ children }: { children: ReactNode }) {
       }
 
       await refetch();
+    } catch (err: unknown) {
+      // Network or unexpected error — surface via toast, do not propagate
+      addToast(err instanceof Error ? err.message : "Sync failed");
     } finally {
       setIsSyncing(false);
     }
