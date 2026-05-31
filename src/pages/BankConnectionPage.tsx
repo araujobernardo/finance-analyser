@@ -247,10 +247,73 @@ function ConnectForm() {
   );
 }
 
+// ── SyncControls ─────────────────────────────────────────────────────────────
+
+function SyncControls() {
+  const { isSyncing, lastSyncResult, syncNow } = useBankContext();
+
+  return (
+    <div className="bank-card" data-testid="sync-controls">
+      <h2 className="bank-card-title">Sync Transactions</h2>
+
+      <button
+        className="bank-btn-primary"
+        onClick={() => void syncNow()}
+        disabled={isSyncing}
+        data-testid="sync-now-btn"
+      >
+        {isSyncing ? (
+          <>
+            <span
+              className="bank-spinner"
+              data-testid="sync-spinner"
+              aria-label="Syncing"
+            />
+            Syncing…
+          </>
+        ) : (
+          "Sync now"
+        )}
+      </button>
+
+      {lastSyncResult !== null && (
+        <div className="bank-sync-result" data-testid="sync-result">
+          {lastSyncResult.transactionsAdded > 0 ? (
+            <p data-testid="sync-result-text">
+              Synced {lastSyncResult.transactionsAdded} new transaction
+              {lastSyncResult.transactionsAdded !== 1 ? "s" : ""} across{" "}
+              {lastSyncResult.accountsSynced} account
+              {lastSyncResult.accountsSynced !== 1 ? "s" : ""}
+            </p>
+          ) : (
+            <p data-testid="sync-result-text">No new transactions found</p>
+          )}
+          {lastSyncResult.errors.length > 0 && (
+            <ul className="bank-sync-errors" data-testid="sync-error-list">
+              {lastSyncResult.errors.map((e, i) => (
+                <li key={i}>
+                  {e.accountId}: {e.error}
+                </li>
+              ))}
+            </ul>
+          )}
+        </div>
+      )}
+
+      <p className="bank-security-note" data-testid="security-note">
+        Finance Analyser connects to your bank via Akahu, New Zealand's
+        regulated open finance platform. Your bank login credentials are never
+        shared with or stored by Finance Analyser. You can disconnect at any
+        time by clicking Disconnect below or by visiting my.akahu.nz.
+      </p>
+    </div>
+  );
+}
+
 // ── BankConnectionPage ────────────────────────────────────────────────────────
 
 export function BankConnectionPage() {
-  const { connection, error } = useBankContext();
+  const { connection, accountLinks, error } = useBankContext();
 
   return (
     <main className="bank-page" data-testid="bank-connection-page">
@@ -264,6 +327,7 @@ export function BankConnectionPage() {
         <>
           <ConnectionStatusCard />
           <AccountMappingList />
+          {accountLinks.length > 0 && <SyncControls />}
         </>
       ) : (
         <ConnectForm />
