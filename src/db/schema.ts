@@ -253,6 +253,36 @@ export const userPreferences = pgTable("user_preferences", {
     .notNull(),
 });
 
+// FA-BANK-001 — Akahu bank connection
+
+export const akahuConnections = pgTable(
+  "akahu_connections",
+  {
+    id: uuid("id").defaultRandom().primaryKey(),
+    userId: uuid("user_id")
+      .notNull()
+      .references(() => users.id, { onDelete: "cascade" }),
+    akahuUserId: varchar("akahu_user_id", { length: 50 }).notNull(),
+    encryptedUserToken: text("encrypted_user_token").notNull(),
+    connectedAt: timestamp("connected_at", { withTimezone: true })
+      .defaultNow()
+      .notNull(),
+    lastSyncedAt: timestamp("last_synced_at", { withTimezone: true }),
+    createdAt: timestamp("created_at", { withTimezone: true })
+      .defaultNow()
+      .notNull(),
+    updatedAt: timestamp("updated_at", { withTimezone: true })
+      .defaultNow()
+      .notNull(),
+  },
+  (t) => ({
+    userIdUniq: uniqueIndex("akahu_connections_user_id_idx").on(t.userId),
+  }),
+);
+
+export type AkahuConnection = typeof akahuConnections.$inferSelect;
+export type NewAkahuConnection = typeof akahuConnections.$inferInsert;
+
 // Inferred types — tsc -b verified 0 errors (FA-GOAL-001 T008, 2026-05-17)
 // Goal includes: categoryName: string | null, currentAmount: string | null, updatedAt: Date
 export type User = typeof users.$inferSelect;
