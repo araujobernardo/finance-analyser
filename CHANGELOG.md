@@ -1,5 +1,6 @@
 # Changelog
 
+- **2026-06-01** | #836 | FA-BANK-003 T004 [US1]: Create BankConnectionPage with connect/disconnect UI | Created BankConnectionPage.tsx with ConnectForm (controlled inputs, privacy note, submit calls connect()) and ConnectionStatusCard (connected date, last sync, disconnect with window.confirm guard); CSS uses custom properties only.
 - **2026-06-01** | #835 | FA-BANK-003 T003: Create BankContext with provider and hook | Created src/context/BankContext.tsx with BankProvider and useBankContext; loads connection on mount, handles 404 as "not connected", exposes connect/disconnect/linkAccount/unlinkAccount/syncNow; syncNow catches errors and surfaces via toast.
 - **2026-06-01** | #834 | FA-BANK-003 T002: Add Bank Connection nav item to Sidebar | Added { path: '/settings/bank', icon: '⊕', label: 'Bank Connection' } to the NAV array in Sidebar.tsx after the Settings entry; icon changed from ◈ (used by Net Worth) to ⊕.
 - **2026-06-01** | #833 | FA-BANK-003 T001: Add Akahu API types to src/types/api.ts | Added ApiAkahuConnection (no encryptedUserToken), ApiAkahuAccountLink (syncStatus discriminated union, lastBalance comment), and SyncResult interfaces to src/types/api.ts.
