@@ -36,6 +36,6 @@ are in [constitution.md](constitution.md).
 
 For project principles, governance, and agent workflow see: constitution.md
 
-**Active feature plan**: [specs/031-akahu-bank-connection-model/plan.md](specs/031-akahu-bank-connection-model/plan.md)
+**Active feature plan**: [specs/032-akahu-bank-sync/plan.md](specs/032-akahu-bank-sync/plan.md)
 
 <!-- SPECKIT END -->
