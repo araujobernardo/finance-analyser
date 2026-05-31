@@ -1,5 +1,6 @@
 # Changelog
 
+- **2026-06-01** | #838 | FA-BANK-003 T006 [US2]: Add AccountMappingList and AccountMappingRow to BankConnectionPage | Added AccountMappingRow (balance formatted as NZD, dropdown calls linkAccount/unlinkAccount, sync status badge with colour coding) and AccountMappingList (empty state or table of rows) to BankConnectionPage; rendered after ConnectionStatusCard when connected.
 - **2026-06-01** | #837 | FA-BANK-003 T005 [US1]: Register BankProvider and /settings/bank route in App.tsx | Wrapped AppShell content with BankProvider (inside AccountProvider), added <Route path="/settings/bank" element={<BankConnectionPage />} /> — all existing routes continue to work.
 - **2026-06-01** | #836 | FA-BANK-003 T004 [US1]: Create BankConnectionPage with connect/disconnect UI | Created BankConnectionPage.tsx with ConnectForm (controlled inputs, privacy note, submit calls connect()) and ConnectionStatusCard (connected date, last sync, disconnect with window.confirm guard); CSS uses custom properties only.
 - **2026-06-01** | #835 | FA-BANK-003 T003: Create BankContext with provider and hook | Created src/context/BankContext.tsx with BankProvider and useBankContext; loads connection on mount, handles 404 as "not connected", exposes connect/disconnect/linkAccount/unlinkAccount/syncNow; syncNow catches errors and surfaces via toast.
