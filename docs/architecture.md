@@ -32,6 +32,9 @@
 | `RESEND_FROM_EMAIL` | Server         | Sender address for auth emails               |
 | `APP_URL`           | Server         | Base URL for email links (default localhost) |
 | `VITE_API_URL`      | Browser bundle | API base URL for fetch calls (optional)      |
+| `AKAHU_APP_TOKEN`   | Server         | Akahu application token (bank sync)          |
+| `AKAHU_USER_TOKEN`  | Server         | Akahu user token (bank sync, optional)       |
+| `ENCRYPTION_KEY`    | Server         | 32-byte hex key for encrypting Akahu tokens  |
 
 ---
 
