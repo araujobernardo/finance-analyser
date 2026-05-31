@@ -8,7 +8,7 @@
  *   - connection: 200 with connection + links, 404 when none
  *   - delete connection: 204 success
  */
-import { describe, it, expect, vi, beforeEach } from "vitest";
+import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 import express from "express";
 import request from "supertest";
 
