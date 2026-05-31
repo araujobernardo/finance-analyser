@@ -1,5 +1,6 @@
 # Changelog
 
+- **2026-06-01** | #834 | FA-BANK-003 T002: Add Bank Connection nav item to Sidebar | Added { path: '/settings/bank', icon: '⊕', label: 'Bank Connection' } to the NAV array in Sidebar.tsx after the Settings entry; icon changed from ◈ (used by Net Worth) to ⊕.
 - **2026-06-01** | #833 | FA-BANK-003 T001: Add Akahu API types to src/types/api.ts | Added ApiAkahuConnection (no encryptedUserToken), ApiAkahuAccountLink (syncStatus discriminated union, lastBalance comment), and SyncResult interfaces to src/types/api.ts.
 - **2026-06-01** | #831 | FA-BANK-002 T007 [US3]: Add account link/unlink endpoints | Added POST /accounts/link (Zod-validated upsert with syncStatus: 'active') and DELETE /accounts/link/:akahuAccountId (404 when not found, 204 on success, no transaction cascade) to akahuSyncRouter.
 - **2026-06-01** | #830 | FA-BANK-002 T006 [US2]: Add connection management endpoints (connect, status, disconnect) | Added POST /connect (Zod-validated, encrypted token upsert, encryptedUserToken stripped from response), GET /connection (connection + account links, 404 when none), and DELETE /connection (CASCADE removes links, 204) to akahuSyncRouter.
