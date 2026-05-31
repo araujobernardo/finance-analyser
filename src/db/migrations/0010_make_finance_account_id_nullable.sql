@@ -1,0 +1,1 @@
+ALTER TABLE "akahu_account_links" ALTER COLUMN "finance_account_id" DROP NOT NULL;

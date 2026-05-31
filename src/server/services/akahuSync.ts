@@ -8,7 +8,7 @@ import {
   transactions,
 } from "../../db/schema.ts";
 import { decrypt } from "../utils/encryption.ts";
-import { eq, and } from "drizzle-orm";
+import { eq, and, isNotNull } from "drizzle-orm";
 
 export interface SyncResult {
   accountsSynced: number;
@@ -45,46 +45,48 @@ export async function syncUserAccounts(userId: string): Promise<SyncResult> {
   // Step 4 — list all Akahu accounts for this user
   const akahuAccounts = await akahu.accounts.list(userToken);
 
-  // Step 5 — update lastBalance on matching account link rows
+  // Step 5 — upsert a row for every discovered Akahu account (FA-BANK-002)
+  // This ensures accounts appear in the UI even before the user maps them to a
+  // Finance Analyser account. Rows with no mapping have financeAccountId = null.
   for (const akahuAccount of akahuAccounts) {
-    const balance = akahuAccount.balance?.current;
-    if (balance === undefined) continue;
-
-    const linkRows = await db
-      .select()
-      .from(akahuAccountLinks)
-      .where(
-        and(
-          eq(akahuAccountLinks.userId, userId),
-          eq(akahuAccountLinks.akahuAccountId, akahuAccount._id),
-        ),
-      );
-
-    if (linkRows.length > 0) {
-      await db
-        .update(akahuAccountLinks)
-        .set({
-          lastBalance: String(balance),
+    await db
+      .insert(akahuAccountLinks)
+      .values({
+        userId,
+        akahuAccountId: akahuAccount._id,
+        financeAccountId: null,
+        akahuAccountName: akahuAccount.name,
+        akahuAccountType: akahuAccount.type ?? null,
+        lastBalance:
+          akahuAccount.balance?.current != null
+            ? String(akahuAccount.balance.current)
+            : null,
+        syncStatus: "active",
+      })
+      .onConflictDoUpdate({
+        target: [akahuAccountLinks.userId, akahuAccountLinks.akahuAccountId],
+        set: {
+          akahuAccountName: akahuAccount.name,
+          akahuAccountType: akahuAccount.type ?? null,
+          lastBalance:
+            akahuAccount.balance?.current != null
+              ? String(akahuAccount.balance.current)
+              : null,
           updatedAt: new Date(),
-        })
-        .where(
-          and(
-            eq(akahuAccountLinks.userId, userId),
-            eq(akahuAccountLinks.akahuAccountId, akahuAccount._id),
-          ),
-        );
-    }
+        },
+      });
   }
 
-  // Step 6 — for each linked account, fetch and insert transactions
+  // Step 6 — for each account link that has a financeAccountId, fetch and insert transactions.
+  // Unlinked discovery rows (financeAccountId IS NULL) are skipped — no Finance Analyser
+  // account to attach transactions to yet.
   const linkRows = await db
     .select()
     .from(akahuAccountLinks)
     .where(
       and(
         eq(akahuAccountLinks.userId, userId),
-        // Only process links that have a financeAccountId
-        // (not null enforced at DB level, but added for clarity)
+        isNotNull(akahuAccountLinks.financeAccountId),
       ),
     );
 
@@ -96,6 +98,10 @@ export async function syncUserAccounts(userId: string): Promise<SyncResult> {
   const now = new Date();
 
   for (const link of linkRows) {
+    // Guard: skip if financeAccountId is null (filtered by query, but TS type is nullable)
+    if (!link.financeAccountId) continue;
+    const financeAccountId: string = link.financeAccountId;
+
     // Find the matching Akahu account
     const akahuAccount = akahuAccounts.find(
       (a) => a._id === link.akahuAccountId,
@@ -152,7 +158,7 @@ export async function syncUserAccounts(userId: string): Promise<SyncResult> {
           .from(transactions)
           .where(
             and(
-              eq(transactions.accountId, link.financeAccountId),
+              eq(transactions.accountId, financeAccountId),
               eq(transactions.date, txDate),
               eq(transactions.description, txDesc),
             ),
@@ -166,7 +172,7 @@ export async function syncUserAccounts(userId: string): Promise<SyncResult> {
         // Insert the transaction
         await db.insert(transactions).values({
           userId,
-          accountId: link.financeAccountId,
+          accountId: financeAccountId,
           date: txDate,
           amount: txAmount,
           description: txDesc,
@@ -233,9 +239,10 @@ export async function syncUserAccounts(userId: string): Promise<SyncResult> {
     const pendingTxList = await akahu.transactions.listPending(userToken);
 
     for (const tx of pendingTxList) {
-      // Find matching link for this Akahu account
+      // Find matching link for this Akahu account (linkRows only contains mapped accounts)
       const link = linkRows.find((l) => l.akahuAccountId === tx._account);
-      if (!link) continue;
+      if (!link || !link.financeAccountId) continue;
+      const pendingFinanceAccountId: string = link.financeAccountId;
 
       const txDate = tx.date.split("T")[0] ?? tx.date;
       const txAmount = String(tx.amount);
@@ -247,7 +254,7 @@ export async function syncUserAccounts(userId: string): Promise<SyncResult> {
         .from(transactions)
         .where(
           and(
-            eq(transactions.accountId, link.financeAccountId),
+            eq(transactions.accountId, pendingFinanceAccountId),
             eq(transactions.date, txDate),
             eq(transactions.description, txDesc),
           ),
@@ -257,7 +264,7 @@ export async function syncUserAccounts(userId: string): Promise<SyncResult> {
 
       await db.insert(transactions).values({
         userId,
-        accountId: link.financeAccountId,
+        accountId: pendingFinanceAccountId,
         date: txDate,
         amount: txAmount,
         description: txDesc,
