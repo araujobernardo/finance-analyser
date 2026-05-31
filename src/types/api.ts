@@ -117,3 +117,37 @@ export interface AlertedCategory {
   actualSpend: number;
   percentageUsed: number;
 }
+
+// FA-BANK-003 — Akahu bank connection
+
+export interface ApiAkahuConnection {
+  id: string;
+  userId: string;
+  akahuUserId: string;
+  connectedAt: string;
+  lastSyncedAt: string | null;
+  createdAt: string;
+  updatedAt: string;
+  // encryptedUserToken is never sent to the frontend
+}
+
+export interface ApiAkahuAccountLink {
+  id: string;
+  userId: string;
+  akahuAccountId: string;
+  financeAccountId: string;
+  akahuAccountName: string;
+  akahuAccountType: string | null;
+  lastBalance: string | null; // postgres-js returns numeric as string; call parseFloat() before arithmetic
+  lastTransactionSyncedAt: string | null;
+  syncStatus: "active" | "syncing" | "error" | "disconnected";
+  syncError: string | null;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface SyncResult {
+  accountsSynced: number;
+  transactionsAdded: number;
+  errors: { accountId: string; error: string }[];
+}
