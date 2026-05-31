@@ -1,11 +1,11 @@
 /**
- * FA-BANK-002 T005 — Route tests for POST /api/bank/sync
+ * FA-BANK-002 T005 / T006 — Route tests for akahuSyncRouter
  *
- * Verifies:
- *  - 200 with sync result on success
- *  - 404 with error message when no Akahu connection exists
- *  - 401 without a valid auth token (via the real authenticateToken middleware)
- *  - Other errors are forwarded to the Express error handler
+ * T005 (POST /sync): 200 success, 404 no connection, 401 no auth, 500 unexpected error
+ * T006 (POST /connect, GET /connection, DELETE /connection):
+ *   - connect: 201 success (no encryptedUserToken in response), 400 bad body
+ *   - connection: 200 with connection + links, 404 when none
+ *   - delete connection: 204 success
  */
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import express from "express";
@@ -15,12 +15,34 @@ import request from "supertest";
 // Mocks
 // ---------------------------------------------------------------------------
 
+// db mock — individual test groups override as needed via mockDb helper
+const mockDbInsert = vi.fn();
+const mockDbSelect = vi.fn();
+const mockDbDelete = vi.fn();
+
 vi.mock("../../db/index.ts", () => ({
-  db: {},
+  db: {
+    insert: (...args: unknown[]) => mockDbInsert(...args),
+    select: (...args: unknown[]) => mockDbSelect(...args),
+    delete: (...args: unknown[]) => mockDbDelete(...args),
+  },
+}));
+
+vi.mock("../../db/schema.ts", () => ({
+  akahuConnections: { userId: "userId" },
+  akahuAccountLinks: { userId: "userId" },
+}));
+
+vi.mock("drizzle-orm", () => ({
+  eq: vi.fn((_col: unknown, _val: unknown) => "eq-condition"),
+}));
+
+const mockEncrypt = vi.fn();
+vi.mock("../utils/encryption.ts", () => ({
+  encrypt: (...args: unknown[]) => mockEncrypt(...args),
 }));
 
 const mockSyncUserAccounts = vi.fn();
-
 vi.mock("../services/akahuSync.ts", () => ({
   syncUserAccounts: (...args: unknown[]) => mockSyncUserAccounts(...args),
 }));
@@ -46,6 +68,10 @@ let app: express.Express;
 beforeEach(async () => {
   vi.resetModules();
   mockSyncUserAccounts.mockReset();
+  mockDbInsert.mockReset();
+  mockDbSelect.mockReset();
+  mockDbDelete.mockReset();
+  mockEncrypt.mockReset();
 
   const { akahuSyncRouter } = await import("./akahuSync.ts");
   app = express();
@@ -66,7 +92,7 @@ beforeEach(async () => {
 });
 
 // ---------------------------------------------------------------------------
-// Tests
+// POST /api/bank/sync
 // ---------------------------------------------------------------------------
 
 const SYNC_RESULT = {
@@ -108,7 +134,6 @@ describe("POST /api/bank/sync", () => {
 
   it("returns 401 when no Bearer token is provided", async () => {
     // Build a separate app with a real auth-rejecting middleware
-    // (simulates the real authenticateToken when no token is present)
     const noAuthApp = express();
     noAuthApp.use(express.json());
     noAuthApp.use("/api/bank", (req, res, next) => {
@@ -127,5 +152,176 @@ describe("POST /api/bank/sync", () => {
 
     expect(res.status).toBe(401);
     expect(res.body).toEqual({ error: "Authentication required" });
+  });
+});
+
+// ---------------------------------------------------------------------------
+// POST /api/bank/connect
+// ---------------------------------------------------------------------------
+
+describe("POST /api/bank/connect", () => {
+  const CONNECTION_ROW = {
+    id: "conn-001",
+    userId: "user-001",
+    akahuUserId: "user_abc123",
+    encryptedUserToken: "encrypted-secret",
+    connectedAt: new Date("2026-06-01").toISOString(),
+    lastSyncedAt: null,
+    createdAt: new Date("2026-06-01").toISOString(),
+    updatedAt: new Date("2026-06-01").toISOString(),
+  };
+
+  function setupConnectMock() {
+    mockEncrypt.mockReturnValue("encrypted-secret");
+    mockDbInsert.mockReturnValue({
+      values: vi.fn().mockReturnValue({
+        onConflictDoUpdate: vi.fn().mockReturnValue({
+          returning: vi.fn().mockResolvedValue([CONNECTION_ROW]),
+        }),
+      }),
+    });
+  }
+
+  it("returns 201 with connection row excluding encryptedUserToken", async () => {
+    setupConnectMock();
+
+    const res = await request(app)
+      .post("/api/bank/connect")
+      .send({ akahuUserId: "user_abc123", userToken: "user_token_secret" });
+
+    expect(res.status).toBe(201);
+    expect(res.body).not.toHaveProperty("encryptedUserToken");
+    expect(res.body.id).toBe("conn-001");
+    expect(res.body.akahuUserId).toBe("user_abc123");
+    expect(mockEncrypt).toHaveBeenCalledWith("user_token_secret");
+  });
+
+  it("returns 400 when akahuUserId is missing", async () => {
+    const res = await request(app)
+      .post("/api/bank/connect")
+      .send({ userToken: "user_token_secret" });
+
+    expect(res.status).toBe(400);
+    expect(res.body.error).toBe("Invalid request body");
+  });
+
+  it("returns 400 when userToken is missing", async () => {
+    const res = await request(app)
+      .post("/api/bank/connect")
+      .send({ akahuUserId: "user_abc123" });
+
+    expect(res.status).toBe(400);
+    expect(res.body.error).toBe("Invalid request body");
+  });
+
+  it("returns 400 when body is empty", async () => {
+    const res = await request(app).post("/api/bank/connect").send({});
+
+    expect(res.status).toBe(400);
+  });
+
+  it("never includes encryptedUserToken in the response even on reconnect", async () => {
+    setupConnectMock();
+
+    const res = await request(app)
+      .post("/api/bank/connect")
+      .send({ akahuUserId: "user_abc123", userToken: "new_token" });
+
+    expect(res.status).toBe(201);
+    expect(Object.keys(res.body)).not.toContain("encryptedUserToken");
+  });
+});
+
+// ---------------------------------------------------------------------------
+// GET /api/bank/connection
+// ---------------------------------------------------------------------------
+
+describe("GET /api/bank/connection", () => {
+  const CONNECTION_ROW = {
+    id: "conn-001",
+    userId: "user-001",
+    akahuUserId: "user_abc123",
+    encryptedUserToken: "encrypted-secret",
+    connectedAt: new Date("2026-06-01").toISOString(),
+    lastSyncedAt: null,
+    createdAt: new Date("2026-06-01").toISOString(),
+    updatedAt: new Date("2026-06-01").toISOString(),
+  };
+
+  const ACCOUNT_LINK = {
+    id: "link-001",
+    userId: "user-001",
+    akahuAccountId: "acc_xyz",
+    financeAccountId: "fin-acc-001",
+    akahuAccountName: "Savings",
+    akahuAccountType: "SAVINGS",
+    lastBalance: "1234.56",
+    lastTransactionSyncedAt: null,
+    syncStatus: "active",
+    syncError: null,
+    createdAt: new Date("2026-06-01").toISOString(),
+    updatedAt: new Date("2026-06-01").toISOString(),
+  };
+
+  it("returns 200 with connection (no encryptedUserToken) and accountLinks", async () => {
+    // First select = akahuConnections, second = akahuAccountLinks
+    let callCount = 0;
+    mockDbSelect.mockImplementation(() => ({
+      from: vi.fn().mockReturnValue({
+        where: vi
+          .fn()
+          .mockResolvedValue(
+            callCount++ === 0 ? [CONNECTION_ROW] : [ACCOUNT_LINK],
+          ),
+      }),
+    }));
+
+    const res = await request(app).get("/api/bank/connection");
+
+    expect(res.status).toBe(200);
+    expect(res.body.connection).not.toHaveProperty("encryptedUserToken");
+    expect(res.body.connection.id).toBe("conn-001");
+    expect(res.body.accountLinks).toHaveLength(1);
+    expect(res.body.accountLinks[0].id).toBe("link-001");
+  });
+
+  it("returns 404 when no connection exists", async () => {
+    mockDbSelect.mockImplementation(() => ({
+      from: vi.fn().mockReturnValue({
+        where: vi.fn().mockResolvedValue([]),
+      }),
+    }));
+
+    const res = await request(app).get("/api/bank/connection");
+
+    expect(res.status).toBe(404);
+    expect(res.body.error).toBe("No connection found");
+  });
+});
+
+// ---------------------------------------------------------------------------
+// DELETE /api/bank/connection
+// ---------------------------------------------------------------------------
+
+describe("DELETE /api/bank/connection", () => {
+  it("returns 204 on successful deletion", async () => {
+    mockDbDelete.mockReturnValue({
+      where: vi.fn().mockResolvedValue([]),
+    });
+
+    const res = await request(app).delete("/api/bank/connection");
+
+    expect(res.status).toBe(204);
+  });
+
+  it("forwards unexpected errors to the Express error handler", async () => {
+    mockDbDelete.mockReturnValue({
+      where: vi.fn().mockRejectedValue(new Error("DB error")),
+    });
+
+    const res = await request(app).delete("/api/bank/connection");
+
+    expect(res.status).toBe(500);
+    expect(res.body.error).toBe("DB error");
   });
 });
