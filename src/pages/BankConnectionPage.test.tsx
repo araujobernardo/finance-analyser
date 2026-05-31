@@ -339,3 +339,132 @@ describe("AccountMappingRow — error sync status", () => {
     expect(screen.getByTestId("sync-status-badge")).toHaveTextContent("Error");
   });
 });
+
+// ── SyncControls tests (#839) ─────────────────────────────────────────────────
+
+describe("SyncControls — rendering", () => {
+  it("shows SyncControls when connected with linked accounts", () => {
+    currentContext = {
+      ...DEFAULT_CONTEXT,
+      connection: MOCK_CONNECTION,
+      accountLinks: [MOCK_ACCOUNT_LINK],
+    };
+    renderPage();
+    expect(screen.getByTestId("sync-controls")).toBeInTheDocument();
+  });
+
+  it("does not show SyncControls when connected but no linked accounts", () => {
+    currentContext = {
+      ...DEFAULT_CONTEXT,
+      connection: MOCK_CONNECTION,
+      accountLinks: [],
+    };
+    renderPage();
+    expect(screen.queryByTestId("sync-controls")).not.toBeInTheDocument();
+  });
+
+  it("does not show SyncControls when not connected", () => {
+    currentContext = { ...DEFAULT_CONTEXT, connection: null };
+    renderPage();
+    expect(screen.queryByTestId("sync-controls")).not.toBeInTheDocument();
+  });
+
+  it("shows security note when SyncControls is rendered", () => {
+    currentContext = {
+      ...DEFAULT_CONTEXT,
+      connection: MOCK_CONNECTION,
+      accountLinks: [MOCK_ACCOUNT_LINK],
+    };
+    renderPage();
+    const securityNote = screen.getByTestId("security-note");
+    expect(securityNote).toBeInTheDocument();
+    expect(securityNote.textContent).toMatch(/Akahu/i);
+    expect(securityNote.textContent).toMatch(/credentials are never shared/i);
+  });
+
+  it("Sync now button is disabled while isSyncing", () => {
+    currentContext = {
+      ...DEFAULT_CONTEXT,
+      connection: MOCK_CONNECTION,
+      accountLinks: [MOCK_ACCOUNT_LINK],
+      isSyncing: true,
+    };
+    renderPage();
+    expect(screen.getByTestId("sync-now-btn")).toBeDisabled();
+    expect(screen.getByTestId("sync-spinner")).toBeInTheDocument();
+  });
+
+  it("calls syncNow() when Sync now button is clicked", async () => {
+    const user = userEvent.setup();
+    mockSyncNow.mockResolvedValueOnce(undefined);
+    currentContext = {
+      ...DEFAULT_CONTEXT,
+      connection: MOCK_CONNECTION,
+      accountLinks: [MOCK_ACCOUNT_LINK],
+    };
+    renderPage();
+
+    await user.click(screen.getByTestId("sync-now-btn"));
+
+    await waitFor(() => {
+      expect(mockSyncNow).toHaveBeenCalled();
+    });
+  });
+});
+
+describe("SyncControls — sync result display", () => {
+  beforeEach(() => {
+    currentContext = {
+      ...DEFAULT_CONTEXT,
+      connection: MOCK_CONNECTION,
+      accountLinks: [MOCK_ACCOUNT_LINK],
+    };
+  });
+
+  it("shows 'Synced X new transactions' when transactions were added", () => {
+    currentContext = {
+      ...currentContext,
+      lastSyncResult: { accountsSynced: 2, transactionsAdded: 14, errors: [] },
+    };
+    renderPage();
+    expect(screen.getByTestId("sync-result-text")).toHaveTextContent(
+      "Synced 14 new transactions across 2 accounts",
+    );
+  });
+
+  it("shows 'No new transactions found' when transactionsAdded is 0", () => {
+    currentContext = {
+      ...currentContext,
+      lastSyncResult: { accountsSynced: 1, transactionsAdded: 0, errors: [] },
+    };
+    renderPage();
+    expect(screen.getByTestId("sync-result-text")).toHaveTextContent(
+      "No new transactions found",
+    );
+  });
+
+  it("shows per-account errors when errors are present", () => {
+    currentContext = {
+      ...currentContext,
+      lastSyncResult: {
+        accountsSynced: 0,
+        transactionsAdded: 0,
+        errors: [{ accountId: "acc_xyz", error: "Token expired" }],
+      },
+    };
+    renderPage();
+    expect(screen.getByTestId("sync-error-list")).toBeInTheDocument();
+    expect(screen.getByTestId("sync-error-list").textContent).toContain(
+      "acc_xyz",
+    );
+    expect(screen.getByTestId("sync-error-list").textContent).toContain(
+      "Token expired",
+    );
+  });
+
+  it("does not show sync result card when lastSyncResult is null", () => {
+    currentContext = { ...currentContext, lastSyncResult: null };
+    renderPage();
+    expect(screen.queryByTestId("sync-result")).not.toBeInTheDocument();
+  });
+});
