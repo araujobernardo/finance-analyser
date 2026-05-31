@@ -23,7 +23,7 @@ export interface BankContextValue {
   isSyncing: boolean;
   lastSyncResult: SyncResult | null;
   error: string | null;
-  connect: (akahuUserId: string, userToken: string) => Promise<boolean>;
+  connect: () => Promise<boolean>;
   disconnect: () => Promise<boolean>;
   linkAccount: (
     akahuAccountId: string,
@@ -127,23 +127,16 @@ export function BankProvider({ children }: { children: ReactNode }) {
     }
   }, [apiFetch, addToast, refetch]);
 
-  const connect = useCallback(
-    async (akahuUserId: string, userToken: string): Promise<boolean> => {
-      try {
-        const res = await apiFetch("/api/bank/connect", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ akahuUserId, userToken }),
-        });
-        if (!res.ok) return false;
-        await refetch();
-        return true;
-      } catch {
-        return false;
-      }
-    },
-    [apiFetch, refetch],
-  );
+  const connect = useCallback(async (): Promise<boolean> => {
+    try {
+      const res = await apiFetch("/api/bank/connect", { method: "POST" });
+      if (!res.ok) return false;
+      await refetch();
+      return true;
+    } catch {
+      return false;
+    }
+  }, [apiFetch, refetch]);
 
   const disconnect = useCallback(async (): Promise<boolean> => {
     try {

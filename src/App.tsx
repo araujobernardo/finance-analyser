@@ -18,7 +18,6 @@ import { SettingsPage } from "./pages/SettingsPage";
 import NetWorthPage from "./pages/NetWorthPage";
 import { GoalsPage } from "./pages/GoalsPage";
 import BudgetPage from "./pages/BudgetPage";
-import { BankConnectionPage } from "./pages/BankConnectionPage";
 import { SignUpPage } from "./pages/SignUpPage";
 import { VerifyEmailPage } from "./pages/VerifyEmailPage";
 import { LoginPage } from "./pages/LoginPage";
@@ -72,10 +71,6 @@ function AppShell() {
                     />
                     <Route path="/goals" element={<GoalsPage />} />
                     <Route path="/budget" element={<BudgetPage />} />
-                    <Route
-                      path="/settings/bank"
-                      element={<BankConnectionPage />}
-                    />
                   </Routes>
                 </div>
               </div>

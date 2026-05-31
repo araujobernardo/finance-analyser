@@ -1,5 +1,8 @@
 import { useState, useEffect, useCallback } from "react";
 import { useApi } from "../lib/api";
+import { useBankContext } from "../context/BankContext";
+import { useAccount } from "../context/AccountContext";
+import type { ApiAkahuAccountLink } from "../types/api";
 import "./SettingsPage.css";
 
 // ── Types ─────────────────────────────────────────────────────────────────────
@@ -704,8 +707,342 @@ export function DangerZoneSection() {
   );
 }
 
+// ── BankConnectionSection ─────────────────────────────────────────────────────
+// Embedded in Settings page between Categories and Danger Zone.
+// Credentials come from server env vars (#875) — no credential inputs here.
+
+function AccountMappingRow({ link }: { link: ApiAkahuAccountLink }) {
+  const { linkAccount, unlinkAccount } = useBankContext();
+  const { accounts } = useAccount();
+
+  function formatBalance(): string {
+    if (link.lastBalance === null) return "—";
+    return `NZD ${parseFloat(link.lastBalance).toFixed(2)}`;
+  }
+
+  function formatDate(iso: string | null): string {
+    if (!iso) return "Not yet synced";
+    return new Date(iso).toLocaleDateString("en-NZ", {
+      year: "numeric",
+      month: "short",
+      day: "numeric",
+    });
+  }
+
+  async function handleLinkChange(e: React.ChangeEvent<HTMLSelectElement>) {
+    const value = e.target.value;
+    if (value === "") {
+      await unlinkAccount(link.akahuAccountId);
+    } else {
+      const selectedAccount = accounts.find((a) => a.id === value);
+      const accountName = selectedAccount?.nickname ?? link.akahuAccountName;
+      await linkAccount(link.akahuAccountId, value, accountName);
+    }
+  }
+
+  const statusMap: Record<string, { className: string; label: string }> = {
+    active: {
+      className: "settings-bank-badge settings-bank-badge--active",
+      label: "Active",
+    },
+    syncing: {
+      className: "settings-bank-badge settings-bank-badge--syncing",
+      label: "Syncing…",
+    },
+    error: {
+      className: "settings-bank-badge settings-bank-badge--error",
+      label: "Error",
+    },
+    disconnected: {
+      className: "settings-bank-badge settings-bank-badge--disconnected",
+      label: "Disconnected",
+    },
+  };
+  const statusEntry = statusMap[link.syncStatus] ?? statusMap["active"]!;
+
+  return (
+    <tr className="settings-bank-mapping-row" data-testid="account-mapping-row">
+      <td>
+        <div
+          className="settings-bank-mapping-name"
+          data-testid="akahu-account-name"
+        >
+          {link.akahuAccountName}
+        </div>
+        <div className="settings-bank-mapping-type">
+          {link.akahuAccountType ?? "—"}
+        </div>
+      </td>
+      <td data-testid="akahu-balance">{formatBalance()}</td>
+      <td data-testid="akahu-last-synced">
+        {formatDate(link.lastTransactionSyncedAt)}
+      </td>
+      <td>
+        <select
+          className="settings-bank-select"
+          value={link.financeAccountId ?? ""}
+          onChange={(e) => void handleLinkChange(e)}
+          data-testid="account-link-select"
+        >
+          <option value="">Not linked</option>
+          {accounts.map((a) => (
+            <option key={a.id} value={a.id}>
+              {a.nickname}
+            </option>
+          ))}
+        </select>
+      </td>
+      <td>
+        <span className={statusEntry.className} data-testid="sync-status-badge">
+          {statusEntry.label}
+        </span>
+        {link.syncStatus === "error" && link.syncError && (
+          <div
+            className="settings-bank-sync-error-text"
+            data-testid="sync-error-text"
+          >
+            {link.syncError}
+          </div>
+        )}
+      </td>
+    </tr>
+  );
+}
+
+export function BankConnectionSection() {
+  const {
+    connection,
+    accountLinks,
+    isLoading,
+    isSyncing,
+    lastSyncResult,
+    error,
+    connect,
+    disconnect,
+    syncNow,
+  } = useBankContext();
+
+  const [connectError, setConnectError] = useState<string | null>(null);
+
+  function formatDate(iso: string | null): string {
+    if (!iso) return "Never synced";
+    return new Date(iso).toLocaleDateString("en-NZ", {
+      year: "numeric",
+      month: "long",
+      day: "numeric",
+    });
+  }
+
+  async function handleConnect() {
+    setConnectError(null);
+    const ok = await connect();
+    if (!ok) {
+      setConnectError(
+        error ?? "Bank connection is not configured on the server",
+      );
+    }
+  }
+
+  async function handleDisconnect() {
+    const confirmed = window.confirm(
+      "Disconnect your Akahu account? This will remove all account links.",
+    );
+    if (confirmed) {
+      await disconnect();
+    }
+  }
+
+  return (
+    <div
+      className="card settings-section"
+      data-testid="bank-connection-section"
+    >
+      <div className="settings-section-title">Bank Connection</div>
+      <div className="settings-section-sub">
+        Connect to Akahu to automatically sync your bank transactions.
+        Credentials are held securely on the server — nothing is stored in your
+        browser.
+      </div>
+
+      {/* Error from context (network / API errors) */}
+      {error && !connectError && (
+        <div className="settings-bank-error" data-testid="bank-error">
+          {error}
+        </div>
+      )}
+
+      {connection !== null ? (
+        <>
+          {/* Connected state */}
+          <div
+            className="settings-bank-status-row"
+            data-testid="connection-status-card"
+          >
+            <span className="settings-bank-status-dot settings-bank-status-dot--connected" />
+            <span className="settings-bank-status-label">
+              Connected to Akahu
+            </span>
+          </div>
+          <dl className="settings-bank-meta">
+            <dt>Connected since</dt>
+            <dd data-testid="connected-at">
+              {formatDate(connection.connectedAt)}
+            </dd>
+            <dt>Last synced</dt>
+            <dd data-testid="last-synced-at">
+              {formatDate(connection.lastSyncedAt)}
+            </dd>
+          </dl>
+          <div>
+            <button
+              type="button"
+              className="btn-danger"
+              onClick={() => void handleDisconnect()}
+              disabled={isLoading}
+              data-testid="disconnect-btn"
+            >
+              Disconnect
+            </button>
+          </div>
+
+          {/* Account mapping */}
+          <div data-testid="account-mapping-list">
+            <div className="settings-section-sub" style={{ marginBottom: 6 }}>
+              Your Akahu Accounts
+            </div>
+            {accountLinks.length === 0 ? (
+              <p
+                className="settings-bank-empty-state"
+                data-testid="no-accounts-message"
+              >
+                No Akahu accounts found. Try syncing first.
+              </p>
+            ) : (
+              <table className="settings-bank-mapping-table">
+                <thead>
+                  <tr>
+                    <th>Account</th>
+                    <th>Balance</th>
+                    <th>Last synced</th>
+                    <th>Link to</th>
+                    <th>Status</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {accountLinks.map((link) => (
+                    <AccountMappingRow key={link.akahuAccountId} link={link} />
+                  ))}
+                </tbody>
+              </table>
+            )}
+          </div>
+
+          {/* Sync controls — only when there are linked accounts */}
+          {accountLinks.length > 0 && (
+            <div data-testid="sync-controls">
+              <div className="settings-bank-sync-row">
+                <button
+                  type="button"
+                  className="btn-accent"
+                  onClick={() => void syncNow()}
+                  disabled={isSyncing}
+                  data-testid="sync-now-btn"
+                >
+                  {isSyncing ? (
+                    <>
+                      <span
+                        className="settings-bank-spinner"
+                        data-testid="sync-spinner"
+                        aria-label="Syncing"
+                      />
+                      Syncing…
+                    </>
+                  ) : (
+                    "Sync now"
+                  )}
+                </button>
+              </div>
+
+              {lastSyncResult !== null && (
+                <div
+                  className="settings-bank-sync-result"
+                  data-testid="sync-result"
+                >
+                  {lastSyncResult.transactionsAdded > 0 ? (
+                    <p data-testid="sync-result-text">
+                      Synced {lastSyncResult.transactionsAdded} new transaction
+                      {lastSyncResult.transactionsAdded !== 1
+                        ? "s"
+                        : ""} across {lastSyncResult.accountsSynced} account
+                      {lastSyncResult.accountsSynced !== 1 ? "s" : ""}
+                    </p>
+                  ) : (
+                    <p data-testid="sync-result-text">
+                      No new transactions found
+                    </p>
+                  )}
+                  {lastSyncResult.errors.length > 0 && (
+                    <ul
+                      className="settings-bank-sync-errors"
+                      data-testid="sync-error-list"
+                    >
+                      {lastSyncResult.errors.map((e, i) => (
+                        <li key={i}>
+                          {e.accountId}: {e.error}
+                        </li>
+                      ))}
+                    </ul>
+                  )}
+                </div>
+              )}
+
+              <p
+                className="settings-bank-security-note"
+                data-testid="security-note"
+              >
+                Finance Analyser connects to your bank via Akahu, New Zealand's
+                regulated open finance platform. Your bank login credentials are
+                never shared with or stored by Finance Analyser. You can
+                disconnect at any time by clicking Disconnect above or by
+                visiting my.akahu.nz.
+              </p>
+            </div>
+          )}
+        </>
+      ) : (
+        /* Disconnected state */
+        <div
+          className="settings-bank-connect-row"
+          data-testid="connect-form-card"
+        >
+          {connectError && (
+            <div className="settings-bank-error" data-testid="connect-error">
+              {connectError}
+            </div>
+          )}
+          <div>
+            <button
+              type="button"
+              className="btn-accent"
+              onClick={() => void handleConnect()}
+              disabled={isLoading}
+              data-testid="connect-submit-btn"
+            >
+              {isLoading ? "Connecting…" : "Connect to Akahu"}
+            </button>
+          </div>
+          <p className="settings-bank-privacy-note" data-testid="privacy-note">
+            Your bank credentials are never stored. The connection uses tokens
+            held securely on the server.
+          </p>
+        </div>
+      )}
+    </div>
+  );
+}
+
 // ── SettingsPage ─────────────────────────────────────────────────────────────
-// Layout (top to bottom): Alert Preferences → Categories → Danger Zone.
+// Layout (top to bottom): Alert Preferences → Categories → Bank Connection → Danger Zone.
 // The top info card was removed per user decision (#769 UX brief, Option A).
 
 export function SettingsPage() {
@@ -714,6 +1051,7 @@ export function SettingsPage() {
       <h1 className="settings-title">Settings</h1>
       <AlertPreferencesSection />
       <CategoriesSection />
+      <BankConnectionSection />
       <DangerZoneSection />
     </div>
   );
