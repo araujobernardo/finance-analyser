@@ -112,7 +112,7 @@ function setupSelectSpy(responses: unknown[][]) {
             return Promise.resolve(response);
           },
         }),
-      }) as ReturnType<typeof db.select>,
+      }) as unknown as ReturnType<typeof db.select>,
   );
 }
 
@@ -121,14 +121,14 @@ function setupUpdateSpy() {
     set: () => ({
       where: vi.fn().mockResolvedValue([]),
     }),
-  } as ReturnType<typeof db.update>);
+  } as unknown as ReturnType<typeof db.update>);
 }
 
 function setupInsertSpy() {
   const mockValues = vi.fn().mockResolvedValue([]);
   vi.spyOn(db, "insert").mockReturnValue({
     values: mockValues,
-  } as ReturnType<typeof db.insert>);
+  } as unknown as ReturnType<typeof db.insert>);
   return mockValues;
 }
 
