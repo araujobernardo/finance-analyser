@@ -27,7 +27,6 @@ const NAV = [
   { path: "/goals", icon: "◉", label: "Goals" },
   { path: "/budget", icon: "◧", label: "Budget" },
   { path: "/settings", icon: "⚙", label: "Settings" },
-  { path: "/settings/bank", icon: "⊕", label: "Bank Connection" },
 ];
 
 export function Sidebar({

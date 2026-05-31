@@ -1,5 +1,93 @@
 import { test, expect } from "./fixtures";
 
+// ── #879: Bank Connection section embedded in Settings ────────────────────────
+
+test("#879: Settings page shows Bank Connection section between Categories and Danger Zone", async ({
+  authenticatedPage: page,
+}) => {
+  await page.getByRole("link", { name: /settings/i }).click();
+  await page.waitForURL(/\/settings/);
+
+  await expect(page.getByTestId("bank-connection-section")).toBeVisible();
+
+  // Verify ordering: categories before bank-connection before danger-zone
+  const sections = page.locator(
+    '[data-testid="categories-section"], [data-testid="bank-connection-section"], [data-testid="danger-zone-section"]',
+  );
+  await expect(sections.nth(0)).toHaveAttribute(
+    "data-testid",
+    "categories-section",
+  );
+  await expect(sections.nth(1)).toHaveAttribute(
+    "data-testid",
+    "bank-connection-section",
+  );
+  await expect(sections.nth(2)).toHaveAttribute(
+    "data-testid",
+    "danger-zone-section",
+  );
+});
+
+test("#879: Sidebar does not show a Bank Connection nav item", async ({
+  authenticatedPage: page,
+}) => {
+  await page.goto("/dashboard");
+  await page.waitForURL(/\/dashboard/);
+
+  // The sidebar should not contain any link to /settings/bank
+  await expect(page.locator('a[href*="/settings/bank"]')).not.toBeAttached();
+  // And no visible text "Bank Connection" in the sidebar nav
+  const sidebar = page.locator(".sidebar");
+  await expect(
+    sidebar.getByRole("link", { name: /bank connection/i }),
+  ).not.toBeAttached();
+});
+
+test("#879: /settings/bank route is no longer accessible (no BankConnectionPage)", async ({
+  authenticatedPage: page,
+}) => {
+  await page.goto("/settings/bank");
+  // Route is removed — should redirect to 404 or the root dashboard
+  // Assert the old BankConnectionPage headline is NOT rendered
+  await expect(
+    page.getByRole("heading", { name: /bank connection/i }),
+  ).not.toBeVisible({ timeout: 5_000 });
+});
+
+test("#879: Bank Connection section uses .card.settings-section style", async ({
+  authenticatedPage: page,
+}) => {
+  await page.getByRole("link", { name: /settings/i }).click();
+  await page.waitForURL(/\/settings/);
+
+  const section = page.getByTestId("bank-connection-section");
+  await expect(section).toBeVisible();
+  await expect(section).toHaveClass(/card/);
+  await expect(section).toHaveClass(/settings-section/);
+});
+
+test("#879: Bank Connection disconnected state shows Connect button with no text inputs", async ({
+  authenticatedPage: page,
+}) => {
+  await page.getByRole("link", { name: /settings/i }).click();
+  await page.waitForURL(/\/settings/);
+
+  const section = page.getByTestId("bank-connection-section");
+  await expect(section).toBeVisible();
+
+  // When disconnected: connect button present, no text/password inputs for credentials
+  const isConnected = await page
+    .getByTestId("connection-status-card")
+    .isVisible();
+  if (!isConnected) {
+    await expect(page.getByTestId("connect-submit-btn")).toBeVisible();
+    // No credential text inputs (akahuUserId / userToken fields should not exist)
+    await expect(
+      section.locator('input[type="text"], input[type="password"]'),
+    ).toHaveCount(0);
+  }
+});
+
 // ── #769: Settings — category management and danger zone ──────────────────────
 
 test("Settings page does not show the top info card", async ({
@@ -12,7 +100,7 @@ test("Settings page does not show the top info card", async ({
   await expect(page.getByText(/◎ Finance Analyser/i)).not.toBeVisible();
 });
 
-test("Settings page shows Alert Preferences, Categories, and Danger Zone sections", async ({
+test("Settings page shows Alert Preferences, Categories, Bank Connection, and Danger Zone sections", async ({
   authenticatedPage: page,
 }) => {
   await page.getByRole("link", { name: /settings/i }).click();
@@ -20,6 +108,7 @@ test("Settings page shows Alert Preferences, Categories, and Danger Zone section
 
   await expect(page.getByTestId("alert-preferences-section")).toBeVisible();
   await expect(page.getByTestId("categories-section")).toBeVisible();
+  await expect(page.getByTestId("bank-connection-section")).toBeVisible();
   await expect(page.getByTestId("danger-zone-section")).toBeVisible();
 });
 

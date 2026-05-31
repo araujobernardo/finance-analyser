@@ -250,7 +250,7 @@ describe("BankContext — connect()", () => {
 
     let result: boolean | undefined;
     await act(async () => {
-      result = await getContext().connect("user_abc", "user_token_secret");
+      result = await getContext().connect();
     });
 
     expect(result).toBe(true);

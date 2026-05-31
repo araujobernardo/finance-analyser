@@ -525,28 +525,5 @@ describe("Sidebar — mobile drawer (#795)", () => {
   });
 });
 
-// ── Tests — FA-BANK-003 T002: Bank Connection nav item ────────────────────────
-
-describe("Sidebar — Bank Connection nav item (#834)", () => {
-  it("renders a 'Bank Connection' link in the navigation", async () => {
-    renderSidebar();
-    await waitFor(() => {
-      const links = screen.getAllByRole("link");
-      const bankLink = links.find((l) =>
-        l.textContent?.includes("Bank Connection"),
-      );
-      expect(bankLink).toBeDefined();
-    });
-  });
-
-  it("Bank Connection link points to /settings/bank", async () => {
-    renderSidebar();
-    await waitFor(() => {
-      const links = screen.getAllByRole("link");
-      const bankLink = links.find((l) =>
-        l.textContent?.includes("Bank Connection"),
-      );
-      expect(bankLink).toHaveAttribute("href", "/settings/bank");
-    });
-  });
-});
+// Bank Connection nav item was removed in #879 — bank connection is now
+// embedded in the Settings page, not a separate route.
