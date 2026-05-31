@@ -6,9 +6,25 @@
 import { Router } from "express";
 import {
   authenticateToken,
-  type AuthLocals as _AuthLocals,
+  type AuthLocals,
 } from "../middleware/authenticateToken.ts";
+import { syncUserAccounts } from "../services/akahuSync.ts";
 
 export const akahuSyncRouter = Router();
 
 akahuSyncRouter.use(authenticateToken);
+
+// POST /api/bank/sync — manually trigger a bank sync for the authenticated user
+akahuSyncRouter.post("/sync", async (_req, res, next) => {
+  try {
+    const userId = (res.locals as AuthLocals).user.userId;
+    const result = await syncUserAccounts(userId);
+    res.json(result);
+  } catch (err: unknown) {
+    if (err instanceof Error && err.message.includes("No Akahu connection")) {
+      res.status(404).json({ error: "No Akahu connection found" });
+      return;
+    }
+    next(err);
+  }
+});
