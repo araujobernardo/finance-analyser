@@ -100,3 +100,86 @@ Two mutually exclusive states in a single page (`src/pages/BankConnectionPage.ts
 After implementation, run:
 
 - `npx impeccable detect src/pages/BankConnectionPage.tsx --format summary` — verify no design regressions
+
+---
+
+## #885: Account Connections card in SettingsPage
+
+**Chosen option:** Option C — compact table with column headers
+**Date:** 2026-06-01
+**Issue:** #885 Settings: Add account management card — Finance Analyser accounts with linked Akahu account
+
+### Decision
+
+Option C was selected by the product owner. It provides an at-a-glance read-only status overview without any editing affordances in this card (editing links remains in the Bank Connection card above).
+
+### Layout & Structure
+
+A new card inserted in `SettingsPage.tsx` between `<BankConnectionSection />` and `<DangerZoneSection />`. The card is only rendered when `useAccount().accounts.length > 0`.
+
+**Card title:** "Account Connections"
+
+**Card subtitle:** "Your Finance Analyser accounts and their linked bank accounts."
+
+**Table columns (in order):**
+
+| Column       | Content                                                                                                             |
+| ------------ | ------------------------------------------------------------------------------------------------------------------- |
+| Your account | Finance Analyser `account.nickname` + `account.accountType` in muted text below                                     |
+| Bank account | Linked `akahuAccountName` if a link exists, or em-dash ("—")                                                        |
+| Balance      | `lastBalance` formatted as `NZD X,XXX.XX`, or "—" if null                                                           |
+| Status       | Pill badge: "Linked" (green tones) when `financeAccountId` matches, "Not linked" (muted/border) when no link exists |
+
+**Summary row:** A single row spanning all columns at the bottom of the table body, rendered as a `<tfoot>` element:
+
+> "X of Y accounts linked — link accounts in Bank Connection above"
+
+Where X = count of Finance Analyser accounts that have at least one matching entry in `accountLinks` (i.e. `accountLinks.some(l => l.financeAccountId === account.id)`), and Y = total Finance Analyser accounts.
+
+**Not-connected state:** When `useBankContext().connection === null` (no Akahu connection), all rows show "Not linked" with "—" for Bank account and Balance. The card still renders if the user has Finance Analyser accounts — it simply shows the not-linked state for all rows.
+
+### Component Decisions
+
+- Export as `AccountConnectionsSection` from `SettingsPage.tsx` — co-located with the other section components in that file
+- Uses `useAccount()` for the Finance Analyser accounts list
+- Uses `useBankContext()` for the `accountLinks` array (already available on this page)
+- No new state required — purely derived from context data
+- Condition to hide: `accounts.length === 0` (do not render the card)
+
+### CSS
+
+**No new CSS classes.** Use only the existing classes already defined in `SettingsPage.css`:
+
+- Card wrapper: `card settings-section` (matches every other section card)
+- Title: `settings-section-title`
+- Subtitle: `settings-section-sub`
+- Table: `settings-bank-mapping-table` (already defined — same `border-collapse`, `font-size: 12px` table used by `BankConnectionSection`)
+- Table header: existing `th` styles in `.settings-bank-mapping-table th`
+- Table row: existing `td` styles in `.settings-bank-mapping-row td`
+- Table row class: `settings-bank-mapping-row`
+- "Linked" badge: `settings-bank-badge settings-bank-badge--active` (green pill — already defined)
+- "Not linked" badge: `settings-bank-badge settings-bank-badge--disconnected` (muted pill — already defined)
+- Summary tfoot row: use `settings-section-sub` for the text inside a `<td>` spanning all columns (`colSpan={4}`)
+
+### Interaction Model
+
+- Read-only — no interactive controls in this card
+- No `onClick`, no dropdowns, no editing affordances
+
+### Copy
+
+- Card title: `"Account Connections"`
+- Card subtitle: `"Your Finance Analyser accounts and their linked bank accounts."`
+- Linked badge label: `"Linked"`
+- Not linked badge label: `"Not linked"`
+- Summary: `"{X} of {Y} account{Y !== 1 ? "s" : ""} linked — link accounts in Bank Connection above"`
+- Balance not available: `"—"`
+- Bank account not linked: `"—"`
+
+### Constraints
+
+- Do not introduce new CSS classes or CSS custom properties — use only what is already in `SettingsPage.css` and the global stylesheet
+- Do not use any hardcoded hex colours
+- Card must match the visual style of the adjacent cards exactly (same `card settings-section` wrapper, same typography scale)
+- `data-testid` attributes required on: the section wrapper, each account row, the linked badge, the not-linked badge, and the summary row
+- `tsc --noEmit` must pass with zero errors after implementation
