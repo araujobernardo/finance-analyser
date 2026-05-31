@@ -1,5 +1,7 @@
 # Changelog
 
+- **2026-05-31** | #824 | FA-BANK-001 T005: Generate Drizzle migration for Akahu tables | Generated 0009_lying_midnight.sql via npm run db:generate; migration creates akahu_connections (8 cols) and akahu_account_links (12 cols) with 3 unique indexes and 2 cascade FK constraints.
+- **2026-05-31** | #823 | FA-BANK-001 T004: Add akahuAccountLinks table and types to schema | Added akahuAccountLinks pgTable with 12 columns (2 unique indexes: userId+akahuAccountId, financeAccountId; 2 cascade FKs), plus AkahuAccountLink and NewAkahuAccountLink inferred types.
 - **2026-05-31** | #822 | FA-BANK-001 T003: Add akahuConnections table and types to schema | Added akahuConnections pgTable definition with 8 columns (uniqueIndex on userId, FK cascade to users), plus AkahuConnection and NewAkahuConnection inferred types — encryptedUserToken stores ciphertext only.
 - **2026-05-31** | #821 | FA-BANK-001 T002: Create AES-256-GCM encryption utility | Created src/server/utils/encryption.ts with encrypt/decrypt functions using AES-256-GCM via Node.js built-in crypto; random 12-byte IV per call; throws descriptive error if ENCRYPTION_KEY env var missing or malformed; 9 unit tests.
 - **2026-05-31** | #820 | FA-BANK-001 T001: Add Akahu env vars to .env.example | Added ENCRYPTION_KEY, AKAHU_APP_TOKEN, and AKAHU_USER_TOKEN placeholder entries to .env.example with a generation comment for ENCRYPTION_KEY — no real values committed.
