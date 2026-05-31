@@ -1,10 +1,11 @@
 /**
- * FA-BANK-003 T004 — Component tests for BankConnectionPage
+ * FA-BANK-003 T004 / T006 — Component tests for BankConnectionPage
  *
  * Covers:
  * - Connect form shown when not connected; status card shown when connected
  * - Privacy note visible on connect form without scrolling
  * - Disconnect button triggers window.confirm before calling disconnect()
+ * - AccountMappingList and AccountMappingRow rendering
  * - tsc --noEmit passes with zero errors
  */
 import { describe, it, expect, vi, beforeEach } from "vitest";
@@ -42,6 +43,17 @@ let currentContext: BankContextValue = { ...DEFAULT_CONTEXT };
 vi.mock("../context/BankContext", () => ({
   useBankContext: () => currentContext,
   BankProvider: ({ children }: { children: React.ReactNode }) => children,
+}));
+
+// ── Mock AccountContext ────────────────────────────────────────────────────────
+
+const MOCK_FINANCE_ACCOUNTS = [
+  { id: "acc-1", nickname: "Cheque", colour: "#aaa" },
+  { id: "acc-2", nickname: "Savings", colour: "#bbb" },
+];
+
+vi.mock("../context/AccountContext", () => ({
+  useAccount: () => ({ accounts: MOCK_FINANCE_ACCOUNTS }),
 }));
 
 // ── Helpers ────────────────────────────────────────────────────────────────────
@@ -178,5 +190,152 @@ describe("BankConnectionPage — error state", () => {
     expect(screen.getByTestId("bank-error")).toHaveTextContent(
       "Connection failed",
     );
+  });
+});
+
+// ── AccountMappingList and AccountMappingRow tests (#838) ─────────────────────
+
+const MOCK_CONNECTION = {
+  id: "conn-1",
+  userId: "user-1",
+  akahuUserId: "user_abc",
+  connectedAt: "2026-06-01T00:00:00.000Z",
+  lastSyncedAt: null,
+  createdAt: "2026-06-01T00:00:00.000Z",
+  updatedAt: "2026-06-01T00:00:00.000Z",
+};
+
+const MOCK_ACCOUNT_LINK = {
+  id: "link-1",
+  userId: "user-1",
+  akahuAccountId: "acc_xyz",
+  financeAccountId: "acc-1",
+  akahuAccountName: "Everyday Cheque",
+  akahuAccountType: "CHECKING",
+  lastBalance: "1234.56",
+  lastTransactionSyncedAt: "2026-05-30T00:00:00.000Z",
+  syncStatus: "active" as const,
+  syncError: null,
+  createdAt: "2026-06-01T00:00:00.000Z",
+  updatedAt: "2026-06-01T00:00:00.000Z",
+};
+
+describe("AccountMappingList — connected with accounts", () => {
+  beforeEach(() => {
+    currentContext = {
+      ...DEFAULT_CONTEXT,
+      connection: MOCK_CONNECTION,
+      accountLinks: [MOCK_ACCOUNT_LINK],
+    };
+  });
+
+  it("shows AccountMappingList when connected", () => {
+    renderPage();
+    expect(screen.getByTestId("account-mapping-list")).toBeInTheDocument();
+  });
+
+  it("renders account name from accountLinks", () => {
+    renderPage();
+    expect(screen.getByTestId("akahu-account-name")).toHaveTextContent(
+      "Everyday Cheque",
+    );
+  });
+
+  it("renders formatted balance with NZD prefix", () => {
+    renderPage();
+    expect(screen.getByTestId("akahu-balance")).toHaveTextContent(
+      "NZD 1234.56",
+    );
+  });
+
+  it("renders last synced date", () => {
+    renderPage();
+    expect(screen.getByTestId("akahu-last-synced").textContent).not.toBe("");
+  });
+
+  it("shows Finance Analyser account dropdown with options", () => {
+    renderPage();
+    const select = screen.getByTestId(
+      "account-link-select",
+    ) as HTMLSelectElement;
+    expect(select).toBeInTheDocument();
+    expect(select.value).toBe("acc-1");
+    const options = Array.from(select.options).map((o) => o.text);
+    expect(options).toContain("Cheque");
+    expect(options).toContain("Savings");
+  });
+
+  it("calls linkAccount when a Finance Analyser account is selected", async () => {
+    const user = userEvent.setup();
+    mockLinkAccount.mockResolvedValueOnce(true);
+    renderPage();
+
+    const select = screen.getByTestId("account-link-select");
+    await user.selectOptions(select, "acc-2");
+
+    await waitFor(() => {
+      expect(mockLinkAccount).toHaveBeenCalledWith(
+        "acc_xyz",
+        "acc-2",
+        "Savings",
+      );
+    });
+  });
+
+  it("calls unlinkAccount when 'Not linked' is selected", async () => {
+    const user = userEvent.setup();
+    mockUnlinkAccount.mockResolvedValueOnce(true);
+    renderPage();
+
+    const select = screen.getByTestId("account-link-select");
+    await user.selectOptions(select, "");
+
+    await waitFor(() => {
+      expect(mockUnlinkAccount).toHaveBeenCalledWith("acc_xyz");
+    });
+  });
+
+  it("shows active sync status badge", () => {
+    renderPage();
+    expect(screen.getByTestId("sync-status-badge")).toHaveTextContent("Active");
+  });
+});
+
+describe("AccountMappingList — connected with no accounts", () => {
+  beforeEach(() => {
+    currentContext = {
+      ...DEFAULT_CONTEXT,
+      connection: MOCK_CONNECTION,
+      accountLinks: [],
+    };
+  });
+
+  it("shows empty state message when accountLinks is empty", () => {
+    renderPage();
+    expect(screen.getByTestId("no-accounts-message")).toBeInTheDocument();
+    expect(screen.getByTestId("no-accounts-message")).toHaveTextContent(
+      "No Akahu accounts found. Try syncing first.",
+    );
+  });
+});
+
+describe("AccountMappingRow — error sync status", () => {
+  it("shows sync error text when syncStatus is error", () => {
+    currentContext = {
+      ...DEFAULT_CONTEXT,
+      connection: MOCK_CONNECTION,
+      accountLinks: [
+        {
+          ...MOCK_ACCOUNT_LINK,
+          syncStatus: "error" as const,
+          syncError: "Connection timed out",
+        },
+      ],
+    };
+    renderPage();
+    expect(screen.getByTestId("sync-error-text")).toHaveTextContent(
+      "Connection timed out",
+    );
+    expect(screen.getByTestId("sync-status-badge")).toHaveTextContent("Error");
   });
 });
