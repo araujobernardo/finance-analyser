@@ -1,0 +1,510 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Option A — Inline Sections</title>
+<style>
+  :root {
+    --bg: #060d1a;
+    --surface: #0c1526;
+    --card: #111e33;
+    --border: #1a2d4a;
+    --accent: #10b981;
+    --accent-dim: #065f46;
+    --text: #e2e8f0;
+    --muted: #64748b;
+    --subtle: #94a3b8;
+    --red: #f87171;
+    --amber: #fbbf24;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: "Sora", system-ui, -apple-system, sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    -webkit-font-smoothing: antialiased;
+    min-height: 100vh;
+  }
+
+  /* Option banner */
+  .option-banner {
+    background: var(--accent);
+    color: #fff;
+    font-size: 12px;
+    font-weight: 700;
+    text-align: center;
+    padding: 8px;
+    letter-spacing: 0.04em;
+  }
+
+  .settings-scroll {
+    max-width: 720px;
+    margin: 0 auto;
+    padding: 28px;
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+  }
+
+  .settings-title {
+    font-size: 22px;
+    font-weight: 700;
+    color: var(--text);
+  }
+
+  .card {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 24px;
+  }
+
+  .settings-section { display: flex; flex-direction: column; gap: 12px; }
+
+  .settings-section-title {
+    font-size: 15px;
+    font-weight: 600;
+    color: var(--text);
+  }
+
+  .settings-section-sub {
+    font-size: 12px;
+    color: var(--muted);
+    line-height: 1.5;
+  }
+
+  /* Category list */
+  .cat-header {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding-bottom: 6px;
+    border-bottom: 1px solid var(--border);
+    font-size: 11px;
+    color: var(--muted);
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    font-weight: 600;
+  }
+  .cat-header .col-color { width: 28px; flex-shrink: 0; }
+  .cat-header .col-name  { flex: 1; }
+  .cat-header .col-del   { width: 28px; }
+
+  .cat-list { display: flex; flex-direction: column; gap: 6px; }
+
+  .cat-row {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+
+  .color-swatch {
+    width: 28px; height: 28px;
+    border-radius: 6px;
+    border: none;
+    cursor: pointer;
+    padding: 2px;
+    background: none;
+    flex-shrink: 0;
+  }
+
+  .settings-input {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 7px;
+    padding: 6px 10px;
+    color: var(--text);
+    font-size: 13px;
+    outline: none;
+    font-family: inherit;
+    flex: 1;
+  }
+  .settings-input:focus { border-color: var(--accent); }
+
+  .delete-btn {
+    width: 28px; height: 28px;
+    background: transparent;
+    border: none;
+    cursor: pointer;
+    color: var(--muted);
+    font-size: 18px;
+    line-height: 1;
+    flex-shrink: 0;
+    display: flex; align-items: center; justify-content: center;
+    border-radius: 6px;
+    transition: color 150ms, background 150ms;
+  }
+  .delete-btn:hover { color: var(--red); background: rgba(248,113,113,0.08); }
+
+  /* Add row */
+  .add-row {
+    display: flex;
+    gap: 8px;
+    align-items: center;
+    padding-top: 10px;
+    border-top: 1px solid var(--border);
+  }
+
+  .btn-accent {
+    background: var(--accent);
+    color: #fff;
+    border: none;
+    border-radius: 8px;
+    padding: 7px 18px;
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+    font-family: inherit;
+    white-space: nowrap;
+    transition: opacity 150ms;
+  }
+  .btn-accent:hover { opacity: 0.9; }
+
+  .btn-accent-outline {
+    background: transparent;
+    color: var(--accent);
+    border: 1px solid rgba(16,185,129,0.4);
+    border-radius: 8px;
+    padding: 7px 16px;
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+    font-family: inherit;
+    white-space: nowrap;
+    transition: background 150ms;
+  }
+  .btn-accent-outline:hover { background: rgba(16,185,129,0.08); }
+
+  /* Danger Zone */
+  .danger-card {
+    background: var(--card);
+    border: 1px solid rgba(248,113,113,0.3);
+    border-radius: 12px;
+    padding: 24px;
+  }
+
+  .danger-title {
+    font-size: 15px;
+    font-weight: 600;
+    color: var(--red);
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .danger-sub {
+    font-size: 12px;
+    color: var(--muted);
+    line-height: 1.5;
+    margin-top: 6px;
+  }
+
+  .danger-item {
+    margin-top: 16px;
+    padding: 14px 16px;
+    background: rgba(248,113,113,0.05);
+    border: 1px solid rgba(248,113,113,0.2);
+    border-radius: 9px;
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 16px;
+    flex-wrap: wrap;
+  }
+
+  .danger-item-label { font-size: 13px; font-weight: 600; color: var(--text); }
+  .danger-item-desc  { font-size: 12px; color: var(--muted); margin-top: 3px; }
+
+  .btn-danger {
+    background: transparent;
+    color: var(--red);
+    border: 1px solid rgba(248,113,113,0.35);
+    border-radius: 8px;
+    padding: 8px 20px;
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+    font-family: inherit;
+    white-space: nowrap;
+    transition: background 150ms;
+    flex-shrink: 0;
+  }
+  .btn-danger:hover { background: rgba(248,113,113,0.1); }
+
+  /* Confirm dialog overlay */
+  .dialog-overlay {
+    display: none;
+    position: fixed; inset: 0;
+    background: rgba(0,0,0,0.6);
+    z-index: 100;
+    align-items: center;
+    justify-content: center;
+  }
+  .dialog-overlay.visible { display: flex; }
+
+  .dialog {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 28px;
+    width: 100%;
+    max-width: 420px;
+    margin: 0 16px;
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+  }
+
+  .dialog-title { font-size: 16px; font-weight: 700; color: var(--red); }
+  .dialog-body  { font-size: 13px; color: var(--subtle); line-height: 1.6; }
+  .dialog-confirm-label { font-size: 12px; color: var(--muted); }
+  .dialog-confirm-input {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 7px;
+    padding: 8px 12px;
+    color: var(--text);
+    font-size: 14px;
+    outline: none;
+    font-family: inherit;
+    width: 100%;
+  }
+  .dialog-confirm-input:focus { border-color: var(--red); }
+  .dialog-actions { display: flex; gap: 10px; justify-content: flex-end; }
+
+  .btn-ghost {
+    background: transparent;
+    color: var(--muted);
+    border: 1px solid var(--border);
+    border-radius: 7px;
+    padding: 7px 14px;
+    font-size: 12px;
+    cursor: pointer;
+    font-family: inherit;
+  }
+
+  /* toast */
+  .toast {
+    position: fixed;
+    bottom: 24px; right: 24px;
+    background: var(--accent-dim);
+    border: 1px solid var(--accent);
+    color: var(--accent);
+    padding: 10px 18px;
+    border-radius: 8px;
+    font-size: 13px;
+    font-weight: 600;
+    display: none;
+    z-index: 200;
+  }
+  .toast.visible { display: block; }
+
+  /* Alert Preferences */
+  .settings-alert-row { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
+  .settings-alert-label { font-size: 13px; color: var(--subtle); flex-shrink: 0; }
+  .settings-alert-input { width: 80px; }
+  .settings-alert-toggle-row { display: flex; align-items: center; gap: 10px; }
+  .settings-alert-toggle-label {
+    display: flex; align-items: center; gap: 8px;
+    font-size: 13px; color: var(--subtle);
+    cursor: pointer; user-select: none;
+  }
+  .settings-alert-checkbox {
+    width: 16px; height: 16px;
+    cursor: pointer;
+    accent-color: var(--accent);
+  }
+
+  @media (max-width: 480px) {
+    .settings-scroll { padding: 16px; }
+    .danger-item { flex-direction: column; }
+    .danger-item .btn-danger { width: 100%; text-align: center; }
+  }
+</style>
+</head>
+<body>
+<div class="option-banner">Option A — Inline Sections (vertically stacked cards per concern)</div>
+
+<div class="settings-scroll">
+  <h1 class="settings-title">Settings</h1>
+
+  <!-- App info -->
+  <div class="card">
+    <div style="font-size:13px;font-weight:600;color:var(--accent);margin-bottom:6px;">◎ Finance Analyser</div>
+    <div style="font-size:13px;color:var(--muted);line-height:1.6;">
+      Manage your budget categories and monthly targets on the <a href="#" style="color:var(--accent);">Budget page</a>.
+      AI categorisation requires a <code style="font-family:monospace;font-size:12px;background:rgba(26,45,74,0.5);padding:1px 5px;border-radius:4px;">VITE_ANTHROPIC_API_KEY</code> environment variable.
+    </div>
+  </div>
+
+  <!-- Alert Preferences -->
+  <div class="card settings-section">
+    <div class="settings-section-title">Alert Preferences</div>
+    <div class="settings-section-sub">Set the budget usage percentage at which an alert banner appears.</div>
+    <div class="settings-alert-row">
+      <label for="alert-threshold" class="settings-alert-label">Alert threshold (%)</label>
+      <input id="alert-threshold" type="number" min="50" max="100" class="settings-input settings-alert-input" value="80" />
+    </div>
+    <div class="settings-alert-toggle-row">
+      <label class="settings-alert-toggle-label">
+        <input type="checkbox" class="settings-alert-checkbox" checked />
+        <span>Send email alerts when a budget is exceeded</span>
+      </label>
+    </div>
+  </div>
+
+  <!-- Categories -->
+  <div class="card settings-section">
+    <div style="display:flex;align-items:center;justify-content:space-between;gap:12px;">
+      <div>
+        <div class="settings-section-title">Categories</div>
+        <div class="settings-section-sub" style="margin-top:4px;">Spending categories used to label your transactions.</div>
+      </div>
+      <button class="btn-accent-outline" onclick="addCategory()">+ Add</button>
+    </div>
+
+    <div class="cat-header">
+      <div class="col-color">Colour</div>
+      <div class="col-name">Name</div>
+      <div class="col-del"></div>
+    </div>
+
+    <div class="cat-list" id="catList">
+      <!-- populated by JS -->
+    </div>
+
+    <div class="add-row" id="addRow" style="display:none;">
+      <input type="color" class="color-swatch" id="newColor" value="#10b981" />
+      <input type="text" class="settings-input" id="newName" placeholder="Category name…" />
+      <button class="btn-accent" onclick="saveNewCategory()">Save</button>
+      <button class="btn-ghost" onclick="cancelAdd()">Cancel</button>
+    </div>
+  </div>
+
+  <!-- Danger Zone -->
+  <div class="danger-card">
+    <div class="settings-section">
+      <div class="danger-title">⚠ Danger Zone</div>
+      <div class="danger-sub">These actions are irreversible. Proceed with caution.</div>
+
+      <div class="danger-item">
+        <div>
+          <div class="danger-item-label">Delete all my data</div>
+          <div class="danger-item-desc">Permanently deletes all transactions across all accounts. Accounts themselves are preserved.</div>
+        </div>
+        <button class="btn-danger" onclick="openDialog('all')">Delete all transactions</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Confirm dialog -->
+<div class="dialog-overlay" id="dialogOverlay">
+  <div class="dialog">
+    <div class="dialog-title" id="dialogTitle">Delete all transactions?</div>
+    <div class="dialog-body" id="dialogBody">This will permanently delete all your transaction data. This cannot be undone.</div>
+    <div class="dialog-confirm-label">Type <strong>DELETE</strong> to confirm</div>
+    <input type="text" class="dialog-confirm-input" id="confirmInput" placeholder="DELETE" oninput="checkConfirm()" />
+    <div class="dialog-actions">
+      <button class="btn-ghost" onclick="closeDialog()">Cancel</button>
+      <button class="btn-danger" id="confirmBtn" style="opacity:0.4;pointer-events:none;" onclick="doDelete()">Confirm</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast">✓ All transactions deleted</div>
+
+<script>
+  const categories = [
+    { id: 1, name: "Groceries",    color: "#10b981" },
+    { id: 2, name: "Transport",    color: "#3b82f6" },
+    { id: 3, name: "Dining Out",   color: "#f59e0b" },
+    { id: 4, name: "Utilities",    color: "#8b5cf6" },
+    { id: 5, name: "Entertainment",color: "#ec4899" },
+  ];
+
+  function renderCategories() {
+    const list = document.getElementById("catList");
+    list.innerHTML = "";
+    categories.forEach(cat => {
+      const row = document.createElement("div");
+      row.className = "cat-row";
+      row.innerHTML = `
+        <input type="color" class="color-swatch" value="${cat.color}"
+          onchange="cat.color = this.value" title="Pick colour" style="background:${cat.color}" />
+        <input type="text" class="settings-input" value="${cat.name}"
+          oninput="cat.name = this.value" />
+        <button class="delete-btn" onclick="deleteCategory(${cat.id})" title="Delete">×</button>
+      `;
+      list.appendChild(row);
+    });
+  }
+
+  function addCategory() {
+    document.getElementById("addRow").style.display = "flex";
+    document.getElementById("newName").focus();
+  }
+
+  function cancelAdd() {
+    document.getElementById("addRow").style.display = "none";
+    document.getElementById("newName").value = "";
+  }
+
+  function saveNewCategory() {
+    const name = document.getElementById("newName").value.trim();
+    const color = document.getElementById("newColor").value;
+    if (!name) return;
+    categories.push({ id: Date.now(), name, color });
+    renderCategories();
+    cancelAdd();
+    showToast("Category added");
+  }
+
+  function deleteCategory(id) {
+    const idx = categories.findIndex(c => c.id === id);
+    if (idx > -1) { categories.splice(idx, 1); renderCategories(); }
+    showToast("Category removed");
+  }
+
+  function openDialog(type) {
+    document.getElementById("dialogOverlay").classList.add("visible");
+    document.getElementById("confirmInput").value = "";
+    document.getElementById("confirmBtn").style.opacity = "0.4";
+    document.getElementById("confirmBtn").style.pointerEvents = "none";
+  }
+
+  function closeDialog() {
+    document.getElementById("dialogOverlay").classList.remove("visible");
+  }
+
+  function checkConfirm() {
+    const val = document.getElementById("confirmInput").value;
+    const btn = document.getElementById("confirmBtn");
+    if (val === "DELETE") {
+      btn.style.opacity = "1";
+      btn.style.pointerEvents = "auto";
+    } else {
+      btn.style.opacity = "0.4";
+      btn.style.pointerEvents = "none";
+    }
+  }
+
+  function doDelete() {
+    closeDialog();
+    showToast("✓ All transactions deleted");
+  }
+
+  function showToast(msg) {
+    const t = document.getElementById("toast");
+    t.textContent = msg;
+    t.classList.add("visible");
+    setTimeout(() => t.classList.remove("visible"), 2500);
+  }
+
+  renderCategories();
+</script>
+</body>
+</html>

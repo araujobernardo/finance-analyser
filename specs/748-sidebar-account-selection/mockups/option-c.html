@@ -1,0 +1,294 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Option C — Pill Selector + Floating Context Tag</title>
+<style>
+  :root {
+    --bg: #060d1a;
+    --surface: #0c1526;
+    --card: #111e33;
+    --border: #1a2d4a;
+    --accent: #10b981;
+    --accent-dim: #065f46;
+    --text: #e2e8f0;
+    --muted: #64748b;
+    --subtle: #94a3b8;
+    --red: #f87171;
+    --motion-fast: 150ms;
+    --radius-md: 8px;
+    --radius-full: 9999px;
+  }
+
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: "Sora", "Inter", system-ui, sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    display: flex;
+    min-height: 100vh;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  .demo-banner {
+    position: fixed;
+    top: 0; left: 0; right: 0;
+    background: var(--accent);
+    color: #fff;
+    font-size: 11px;
+    font-weight: 700;
+    text-align: center;
+    padding: 5px;
+    letter-spacing: 0.05em;
+    z-index: 100;
+  }
+
+  .sidebar {
+    width: 224px;
+    background: var(--surface);
+    border-right: 1px solid var(--border);
+    display: flex;
+    flex-direction: column;
+    height: 100vh;
+    position: sticky;
+    top: 0;
+    flex-shrink: 0;
+    overflow-y: auto;
+    padding-top: 24px;
+  }
+
+  .sidebar-brand { padding: 28px 20px 16px; }
+  .sidebar-brand-label { font-size: 11px; color: var(--accent); letter-spacing: 0.15em; font-weight: 700; text-transform: uppercase; }
+  .sidebar-brand-title { font-size: 22px; font-weight: 700; color: var(--text); line-height: 1.1; margin-top: 2px; }
+  .sidebar-brand-count { font-size: 11px; color: var(--muted); margin-top: 4px; }
+
+  /* ── Accounts ── */
+  .sidebar-accounts { padding: 0 12px 14px; border-bottom: 1px solid var(--border); }
+  .section-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 8px; }
+  .section-label { font-size: 10px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.1em; font-weight: 600; }
+  .add-btn {
+    background: none; border: none; cursor: pointer; color: var(--muted);
+    font-size: 14px; padding: 2px 4px; border-radius: 4px;
+    transition: color var(--motion-fast), background var(--motion-fast);
+  }
+  .add-btn:hover { color: var(--accent); background: color-mix(in srgb, var(--accent) 8%, transparent); }
+
+  /* ── Option C: each account is a pill/chip; active pill has full accent fill ── */
+  .account-pills {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+  }
+
+  .account-pill {
+    display: flex;
+    align-items: center;
+    gap: 7px;
+    padding: 6px 10px;
+    border-radius: var(--radius-full);
+    border: 1px solid transparent;
+    cursor: pointer;
+    font-size: 12px;
+    color: var(--subtle);
+    background: transparent;
+    font-family: inherit;
+    text-align: left;
+    width: 100%;
+    transition: background var(--motion-fast), border-color var(--motion-fast), color var(--motion-fast);
+    position: relative;
+  }
+  .account-pill:hover {
+    background: color-mix(in srgb, var(--card) 100%, transparent);
+    border-color: var(--border);
+    color: var(--text);
+  }
+  .account-pill.active {
+    background: color-mix(in srgb, var(--accent) 10%, transparent);
+    border-color: color-mix(in srgb, var(--accent) 40%, transparent);
+    color: var(--text);
+    font-weight: 500;
+  }
+
+  .pill-dot {
+    width: 7px; height: 7px;
+    border-radius: 50%;
+    flex-shrink: 0;
+  }
+
+  .pill-name { flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+
+  /* Checkmark indicator for active */
+  .pill-check {
+    font-size: 10px;
+    color: var(--accent);
+    opacity: 0;
+    flex-shrink: 0;
+    transition: opacity var(--motion-fast);
+  }
+  .account-pill.active .pill-check { opacity: 1; }
+
+  .pill-edit {
+    background: none; border: none; cursor: pointer; color: var(--muted);
+    font-size: 11px; padding: 0 2px; opacity: 0; flex-shrink: 0;
+    transition: opacity var(--motion-fast);
+  }
+  .account-pill:hover .pill-edit { opacity: 1; }
+
+  /* ── Upload section: small floating context chip above button ── */
+  .sidebar-upload { padding: 12px 14px; border-bottom: 1px solid var(--border); }
+
+  .upload-context {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    margin-bottom: 7px;
+  }
+  .upload-context-arrow {
+    font-size: 10px;
+    color: var(--muted);
+  }
+  /* A small colored chip showing the active account, matching its dot color */
+  .upload-context-chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    background: color-mix(in srgb, var(--accent) 12%, transparent);
+    border: 1px solid color-mix(in srgb, var(--accent) 30%, transparent);
+    border-radius: var(--radius-full);
+    padding: 2px 8px 2px 5px;
+    font-size: 10px;
+    font-weight: 600;
+    color: var(--accent);
+  }
+  .chip-dot {
+    width: 5px; height: 5px;
+    border-radius: 50%;
+  }
+
+  .upload-btn {
+    width: 100%;
+    background: var(--accent);
+    color: #fff;
+    border: none;
+    border-radius: var(--radius-md);
+    padding: 10px 0;
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    font-family: inherit;
+    transition: opacity var(--motion-fast);
+  }
+  .upload-btn:hover { opacity: 0.9; }
+
+  .upload-helper { font-size: 10px; color: var(--muted); margin-top: 6px; line-height: 1.4; }
+
+  /* ── Nav ── */
+  .sidebar-nav { flex: 1; padding: 6px 10px; }
+  .nav-item {
+    width: 100%;
+    display: flex; align-items: center; gap: 10px;
+    padding: 9px 10px; border-radius: var(--radius-md);
+    color: var(--subtle); font-size: 13px; cursor: pointer;
+    transition: background var(--motion-fast), color var(--motion-fast);
+    margin-bottom: 2px; background: none; border: none;
+    text-align: left; font-family: inherit;
+  }
+  .nav-item:hover { background: color-mix(in srgb, var(--accent) 8%, transparent); color: var(--text); }
+  .nav-item.active { background: color-mix(in srgb, var(--accent) 15%, transparent); color: var(--accent); font-weight: 600; }
+
+  .sidebar-footer { padding: 14px 20px; font-size: 11px; color: var(--muted); border-top: 1px solid var(--border); }
+
+  .main { flex: 1; display: flex; align-items: center; justify-content: center; color: var(--muted); font-size: 14px; }
+
+  @media (max-width: 480px) {
+    .sidebar { width: 100%; height: auto; position: relative; }
+    .main { display: none; }
+    body { flex-direction: column; }
+  }
+</style>
+</head>
+<body>
+<div class="demo-banner">Option C — Pill Selector + Context Chip (click accounts to select)</div>
+
+<aside class="sidebar">
+  <div class="sidebar-brand">
+    <div class="sidebar-brand-label">Finance</div>
+    <div class="sidebar-brand-title">Analyser</div>
+    <div class="sidebar-brand-count">3,204 transactions</div>
+  </div>
+
+  <div class="sidebar-accounts">
+    <div class="section-header">
+      <span class="section-label">Accounts</span>
+      <button class="add-btn">+</button>
+    </div>
+
+    <div class="account-pills">
+      <button class="account-pill active" data-name="ASB Cheque" data-color="#10b981" onclick="selectAccount(this)">
+        <div class="pill-dot" style="background:#10b981;"></div>
+        <span class="pill-name">ASB Cheque</span>
+        <span class="pill-check">✓</span>
+        <span class="pill-edit" onclick="event.stopPropagation()">✎</span>
+      </button>
+      <button class="account-pill" data-name="Credit Card" data-color="#3b82f6" onclick="selectAccount(this)">
+        <div class="pill-dot" style="background:#3b82f6;"></div>
+        <span class="pill-name">Credit Card</span>
+        <span class="pill-check">✓</span>
+        <span class="pill-edit" onclick="event.stopPropagation()">✎</span>
+      </button>
+      <button class="account-pill" data-name="Savings" data-color="#a78bfa" onclick="selectAccount(this)">
+        <div class="pill-dot" style="background:#a78bfa;"></div>
+        <span class="pill-name">Savings</span>
+        <span class="pill-check">✓</span>
+        <span class="pill-edit" onclick="event.stopPropagation()">✎</span>
+      </button>
+    </div>
+  </div>
+
+  <div class="sidebar-upload">
+    <div class="upload-context">
+      <span class="upload-context-arrow">Upload target:</span>
+      <span class="upload-context-chip" id="context-chip">
+        <span class="chip-dot" id="chip-dot" style="background:#10b981;"></span>
+        <span id="chip-name">ASB Cheque</span>
+      </span>
+    </div>
+    <button class="upload-btn">
+      <span>↑</span> Upload CSV
+    </button>
+    <div class="upload-helper">Select multiple files to import all accounts at once</div>
+  </div>
+
+  <nav class="sidebar-nav">
+    <button class="nav-item active">⬡ &nbsp;Dashboard</button>
+    <button class="nav-item">≡ &nbsp;Transactions</button>
+    <button class="nav-item">◎ &nbsp;AI Chat</button>
+    <button class="nav-item">◈ &nbsp;Net Worth</button>
+    <button class="nav-item">◉ &nbsp;Goals</button>
+    <button class="nav-item">◧ &nbsp;Budget</button>
+    <button class="nav-item">⚙ &nbsp;Settings</button>
+  </nav>
+
+  <div class="sidebar-footer">ASB Bank · NZD</div>
+</aside>
+
+<main class="main">Main content area</main>
+
+<script>
+  function selectAccount(pill) {
+    document.querySelectorAll('.account-pill').forEach(p => p.classList.remove('active'));
+    pill.classList.add('active');
+    const name = pill.dataset.name;
+    const color = pill.dataset.color;
+    document.getElementById('chip-name').textContent = name;
+    document.getElementById('chip-dot').style.background = color;
+  }
+</script>
+</body>
+</html>

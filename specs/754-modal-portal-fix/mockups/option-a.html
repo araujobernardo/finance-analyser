@@ -1,0 +1,388 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Option A — Targeted Portal Fix</title>
+<style>
+  :root {
+    --bg: #060d1a;
+    --surface: #0c1526;
+    --card: #111e33;
+    --border: #1a2d4a;
+    --accent: #10b981;
+    --accent-dim: #065f46;
+    --text: #e2e8f0;
+    --muted: #64748b;
+    --subtle: #94a3b8;
+    --red: #f87171;
+    --modal-overlay: rgba(0,0,0,0.6);
+    --modal-bg: #111e33;
+    --modal-border: #1a2d4a;
+    --modal-title: #e2e8f0;
+    --modal-cancel-bg: #0c1526;
+    --modal-cancel-border: #1a2d4a;
+    --modal-cancel-text: #94a3b8;
+    --color-danger: #f87171;
+    --surface-hover: #152234;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: "Segoe UI", system-ui, sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100vh;
+  }
+
+  /* Option banner */
+  .option-banner {
+    background: var(--accent);
+    color: #fff;
+    text-align: center;
+    padding: 10px 16px;
+    font-size: 0.8rem;
+    font-weight: 600;
+    letter-spacing: 0.03em;
+  }
+
+  /* Simulated app layout */
+  .app {
+    display: flex;
+    height: calc(100vh - 38px);
+    position: relative;
+  }
+
+  /* Simulated sidebar with position:sticky stacking context */
+  .sidebar {
+    width: 240px;
+    background: var(--surface);
+    border-right: 1px solid var(--border);
+    padding: 24px 16px;
+    position: sticky;
+    top: 0;
+    height: 100%;
+    flex-shrink: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    z-index: 10;
+  }
+
+  .sidebar-title {
+    font-size: 0.7rem;
+    font-weight: 600;
+    color: var(--muted);
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    margin-bottom: 8px;
+  }
+
+  .sidebar-account {
+    padding: 10px 12px;
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-size: 0.875rem;
+    color: var(--subtle);
+    cursor: pointer;
+  }
+
+  .sidebar-account.active {
+    background: var(--card);
+    color: var(--text);
+  }
+
+  .sidebar-dot {
+    width: 8px; height: 8px;
+    border-radius: 50%;
+    background: var(--accent);
+    flex-shrink: 0;
+  }
+
+  .sidebar-add-btn {
+    margin-top: auto;
+    padding: 10px 14px;
+    background: var(--accent);
+    color: #fff;
+    border: none;
+    border-radius: 8px;
+    font-size: 0.85rem;
+    font-weight: 600;
+    cursor: pointer;
+    width: 100%;
+    transition: opacity 0.15s;
+  }
+
+  .sidebar-add-btn:hover { opacity: 0.88; }
+
+  /* Main content with charts that create z-index competition */
+  .main {
+    flex: 1;
+    padding: 32px;
+    overflow-y: auto;
+  }
+
+  .chart-card {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 24px;
+    margin-bottom: 20px;
+    /* This would normally have z-index from recharts SVG layers */
+    position: relative;
+    z-index: 5;
+  }
+
+  .chart-title {
+    font-size: 0.85rem;
+    color: var(--subtle);
+    margin-bottom: 16px;
+    font-weight: 600;
+  }
+
+  /* Fake pie chart */
+  .fake-pie {
+    width: 160px;
+    height: 160px;
+    border-radius: 50%;
+    background: conic-gradient(
+      var(--accent) 0deg 120deg,
+      #3b82f6 120deg 220deg,
+      #f59e0b 220deg 300deg,
+      var(--red) 300deg 360deg
+    );
+    margin: 0 auto;
+    position: relative;
+  }
+
+  .fake-pie::after {
+    content: '';
+    position: absolute;
+    inset: 30%;
+    border-radius: 50%;
+    background: var(--card);
+  }
+
+  /* THE FIX: Modal renders via createPortal on document.body */
+  /* This means it's completely outside the sidebar's stacking context */
+  .modal-backdrop {
+    position: fixed;
+    inset: 0;
+    background-color: var(--modal-overlay);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 9999; /* Now genuinely at the top of the stacking order */
+    display: none;
+  }
+
+  .modal-backdrop.open { display: flex; }
+
+  .modal-panel {
+    background: var(--modal-bg);
+    border: 1px solid var(--modal-border);
+    border-radius: 12px;
+    padding: 28px 32px;
+    max-width: 460px;
+    width: 90%;
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+    box-shadow: 0 24px 64px rgba(0,0,0,0.6);
+    animation: modalIn 0.2s cubic-bezier(0, 0, 0.2, 1);
+  }
+
+  @keyframes modalIn {
+    from { opacity: 0; transform: scale(0.96) translateY(8px); }
+    to { opacity: 1; transform: scale(1) translateY(0); }
+  }
+
+  .modal-title {
+    font-size: 1rem;
+    font-weight: 600;
+    color: var(--modal-title);
+    margin: 0;
+  }
+
+  .modal-field { display: flex; flex-direction: column; gap: 6px; }
+
+  .modal-label {
+    font-size: 0.75rem;
+    font-weight: 600;
+    color: var(--subtle);
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+  }
+
+  .modal-input {
+    padding: 10px 14px;
+    background: var(--modal-cancel-bg);
+    border: 1px solid var(--modal-cancel-border);
+    border-radius: 8px;
+    color: var(--modal-title);
+    font-size: 0.9rem;
+    outline: none;
+    transition: border-color 0.15s;
+  }
+
+  .modal-input:focus { border-color: var(--accent); }
+
+  .modal-actions {
+    display: flex;
+    gap: 10px;
+    justify-content: flex-end;
+  }
+
+  .btn-cancel {
+    padding: 10px 20px;
+    border-radius: 8px;
+    border: 1px solid var(--modal-cancel-border);
+    background: var(--modal-cancel-bg);
+    color: var(--modal-cancel-text);
+    font-size: 0.875rem;
+    font-weight: 500;
+    cursor: pointer;
+  }
+
+  .btn-save {
+    padding: 10px 20px;
+    border-radius: 8px;
+    border: none;
+    background: var(--accent);
+    color: #fff;
+    font-size: 0.875rem;
+    font-weight: 600;
+    cursor: pointer;
+  }
+
+  /* Scope annotation */
+  .scope-callout {
+    background: rgba(16, 185, 129, 0.08);
+    border: 1px solid rgba(16, 185, 129, 0.25);
+    border-radius: 8px;
+    padding: 16px 20px;
+    margin: 24px 0;
+    font-size: 0.8rem;
+    color: var(--subtle);
+    line-height: 1.6;
+  }
+
+  .scope-callout strong { color: var(--text); }
+
+  .scope-callout ul { padding-left: 16px; margin-top: 8px; }
+
+  .scope-callout li { margin-bottom: 4px; }
+
+  .fixed-tag {
+    display: inline-block;
+    background: rgba(16, 185, 129, 0.15);
+    color: var(--accent);
+    font-size: 0.7rem;
+    font-weight: 700;
+    padding: 1px 7px;
+    border-radius: 4px;
+    margin-left: 6px;
+    vertical-align: middle;
+  }
+
+  .audit-tag {
+    display: inline-block;
+    background: rgba(251, 191, 36, 0.12);
+    color: #fbbf24;
+    font-size: 0.7rem;
+    font-weight: 700;
+    padding: 1px 7px;
+    border-radius: 4px;
+    margin-left: 6px;
+    vertical-align: middle;
+  }
+
+  @media (max-width: 480px) {
+    .app { flex-direction: column; }
+    .sidebar { width: 100%; height: auto; position: relative; }
+    .modal-panel { padding: 20px; }
+  }
+</style>
+</head>
+<body>
+
+<div class="option-banner">Option A — Targeted Portal Fix</div>
+
+<div class="app">
+  <!-- Sidebar: renders AddAccountModal only — via createPortal -->
+  <div class="sidebar">
+    <div class="sidebar-title">Accounts</div>
+    <div class="sidebar-account active">
+      <div class="sidebar-dot"></div>
+      Savings
+    </div>
+    <div class="sidebar-account">
+      <div class="sidebar-dot" style="background:#3b82f6"></div>
+      Credit Card
+    </div>
+    <button class="sidebar-add-btn" onclick="document.getElementById('modal').classList.add('open')">
+      + Add Account
+    </button>
+  </div>
+
+  <!-- Main content with competing z-index -->
+  <div class="main">
+    <h2 style="font-size: 1.1rem; margin-bottom: 24px; color: var(--text);">Dashboard</h2>
+
+    <div class="scope-callout">
+      <strong>Option A scope:</strong> Only <code>AddAccountModal</code> is migrated to <code>createPortal</code>. The other modals (GoalModal, NetWorthModal, DuplicateWarningModal, etc.) are <em>audited</em> for the same bug but changes are only made if they are confirmed broken in testing.
+      <ul>
+        <li>AddAccountModal <span class="fixed-tag">FIXED</span></li>
+        <li>GoalModal <span class="audit-tag">AUDIT ONLY</span></li>
+        <li>DuplicateWarningModal <span class="audit-tag">AUDIT ONLY</span></li>
+        <li>NetWorthModal <span class="audit-tag">AUDIT ONLY</span></li>
+        <li>AssetModal / LiabilityModal <span class="audit-tag">AUDIT ONLY</span></li>
+      </ul>
+    </div>
+
+    <div class="chart-card">
+      <div class="chart-title">Spending by Category</div>
+      <div class="fake-pie"></div>
+      <p style="font-size: 0.75rem; color: var(--muted); text-align: center; margin-top: 12px;">
+        Modal now renders above this chart via portal — no more z-index conflict
+      </p>
+    </div>
+  </div>
+</div>
+
+<!-- Modal rendered via createPortal on document.body — outside sidebar stacking context -->
+<div class="modal-backdrop" id="modal">
+  <div class="modal-panel">
+    <h2 class="modal-title">Add Account</h2>
+    <div class="modal-field">
+      <label class="modal-label">Account Name</label>
+      <input class="modal-input" type="text" placeholder="e.g. Savings" autofocus>
+    </div>
+    <div class="modal-field">
+      <label class="modal-label">Account Type</label>
+      <select class="modal-input">
+        <option>Checking</option>
+        <option>Savings</option>
+        <option>Credit Card</option>
+        <option>Investment</option>
+        <option>Cash</option>
+      </select>
+    </div>
+    <div class="modal-actions">
+      <button class="btn-cancel" onclick="document.getElementById('modal').classList.remove('open')">Cancel</button>
+      <button class="btn-save">Save</button>
+    </div>
+  </div>
+</div>
+
+<script>
+  document.getElementById('modal').addEventListener('click', function(e) {
+    if (e.target === this) this.classList.remove('open');
+  });
+  document.addEventListener('keydown', function(e) {
+    if (e.key === 'Escape') document.getElementById('modal').classList.remove('open');
+  });
+</script>
+</body>
+</html>

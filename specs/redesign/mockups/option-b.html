@@ -1,0 +1,1292 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Option B — Warm Intelligence</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Nunito:wght@300;400;500;600;700;800&family=Nunito+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+/* ── Design tokens ─────────────────────────────────────────────────────────── */
+:root {
+  --bg: #f4f1ed;
+  --surface: #faf8f5;
+  --sidebar-bg: #f9f7f4;
+  --sidebar-border: #e8e2da;
+  --card: #ffffff;
+  --border: #ede8e2;
+  --border-strong: #d9d2c8;
+  --accent: #0f9d8a;
+  --accent-light: #e8f5f3;
+  --accent-mid: #7dc8c0;
+  --text: #1e2a22;
+  --text-2: #3d4a40;
+  --muted: #7a8074;
+  --subtle: #a09890;
+  --red: #c53030;
+  --red-light: #fff5f5;
+  --amber: #c07a1a;
+  --shadow-sm: 0 1px 4px rgba(30,42,34,0.07);
+  --shadow-md: 0 4px 16px rgba(30,42,34,0.08);
+
+  /* Category colour tokens — same token used in donut legend AND line chart */
+  --cat-groceries: #0f9d8a;
+  --cat-transport: #3b82c4;
+  --cat-entertainment: #8b5cf6;
+  --cat-utilities: #c07a1a;
+  --cat-healthcare: #c53030;
+  --cat-dining: #d4638a;
+  --cat-shopping: #0891b2;
+}
+
+* { box-sizing: border-box; margin: 0; padding: 0; }
+
+body {
+  font-family: 'Nunito', sans-serif;
+  background: var(--bg);
+  color: var(--text);
+  -webkit-font-smoothing: antialiased;
+  font-size: 14px;
+  line-height: 1.55;
+}
+
+/* ── Option badge ──────────────────────────────────────────────────────────── */
+.option-badge {
+  background: var(--accent);
+  color: #fff;
+  text-align: center;
+  padding: 10px 20px;
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  position: sticky;
+  top: 0;
+  z-index: 100;
+  border-bottom: 2px solid rgba(255,255,255,0.15);
+}
+
+/* ── App shell ─────────────────────────────────────────────────────────────── */
+.app-shell {
+  display: flex;
+  min-height: 100vh;
+  max-width: 1280px;
+  margin: 0 auto;
+  background: var(--bg);
+}
+
+/* ── Sidebar ───────────────────────────────────────────────────────────────── */
+.sidebar {
+  width: 228px;
+  min-width: 228px;
+  background: var(--sidebar-bg);
+  border-right: 1px solid var(--sidebar-border);
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+  position: sticky;
+  top: 40px;
+}
+
+.sidebar-brand {
+  padding: 26px 20px 18px;
+}
+
+.sidebar-wordmark {
+  font-size: 11px;
+  font-weight: 800;
+  color: var(--accent);
+  letter-spacing: 0.08em;
+  margin-bottom: 3px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.brand-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--accent);
+}
+
+.sidebar-title {
+  font-size: 20px;
+  font-weight: 800;
+  color: var(--text);
+  line-height: 1.1;
+}
+
+.sidebar-subtitle {
+  font-size: 11px;
+  color: var(--muted);
+  margin-top: 4px;
+  font-weight: 500;
+}
+
+.sidebar-divider {
+  height: 1px;
+  background: var(--border);
+  margin: 0 16px;
+}
+
+.sidebar-section {
+  padding: 14px 16px 10px;
+}
+
+.sidebar-section-label {
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--subtle);
+  letter-spacing: 0.04em;
+  padding: 0 6px;
+  margin-bottom: 8px;
+}
+
+.account-row {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  padding: 7px 10px;
+  border-radius: 10px;
+  cursor: pointer;
+  transition: background 0.15s;
+  margin-bottom: 3px;
+}
+
+.account-row:hover { background: rgba(15,157,138,0.07); }
+
+.account-row.active {
+  background: var(--accent-light);
+}
+
+.account-dot {
+  width: 9px;
+  height: 9px;
+  border-radius: 3px;
+  flex-shrink: 0;
+}
+
+.account-name {
+  flex: 1;
+  font-size: 13px;
+  color: var(--text-2);
+  font-weight: 500;
+}
+
+.account-row.active .account-name {
+  color: var(--accent);
+  font-weight: 700;
+}
+
+.account-row-all .account-name {
+  color: var(--text);
+  font-weight: 700;
+}
+
+.sidebar-upload {
+  padding: 12px 16px 14px;
+  border-top: 1px solid var(--border);
+  border-bottom: 1px solid var(--border);
+}
+
+.upload-label {
+  font-size: 10px;
+  color: var(--muted);
+  font-weight: 600;
+  margin-bottom: 7px;
+}
+
+.upload-btn {
+  width: 100%;
+  background: var(--accent);
+  color: #fff;
+  border: none;
+  border-radius: 10px;
+  padding: 10px 0;
+  font-size: 13px;
+  font-weight: 700;
+  cursor: pointer;
+  font-family: 'Nunito', sans-serif;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+  transition: opacity 0.14s, transform 0.1s;
+  box-shadow: 0 2px 8px rgba(15,157,138,0.25);
+}
+
+.upload-btn:hover { opacity: 0.9; transform: translateY(-1px); }
+.upload-btn:active { transform: translateY(0); }
+
+.sidebar-nav {
+  flex: 1;
+  padding: 12px 10px;
+}
+
+.nav-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 12px;
+  border-radius: 10px;
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--muted);
+  cursor: pointer;
+  transition: background 0.14s, color 0.14s;
+  margin-bottom: 2px;
+  text-decoration: none;
+}
+
+.nav-item:hover {
+  background: rgba(15,157,138,0.08);
+  color: var(--text);
+}
+
+.nav-item.active {
+  background: var(--accent-light);
+  color: var(--accent);
+  font-weight: 700;
+}
+
+.nav-icon { font-size: 15px; width: 18px; text-align: center; }
+
+.sidebar-footer {
+  padding: 14px 20px;
+  border-top: 1px solid var(--border);
+  font-size: 11px;
+  color: var(--subtle);
+  font-weight: 500;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.signout-btn {
+  font-size: 11px;
+  color: var(--muted);
+  cursor: pointer;
+  background: none;
+  border: none;
+  font-family: 'Nunito', sans-serif;
+  font-weight: 600;
+  transition: color 0.12s;
+}
+
+.signout-btn:hover { color: var(--text); }
+
+/* ── Main content ──────────────────────────────────────────────────────────── */
+.main {
+  flex: 1;
+  min-width: 0;
+  padding: 32px 36px;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+/* ── Page header ───────────────────────────────────────────────────────────── */
+.page-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+  flex-wrap: wrap;
+}
+
+.page-title {
+  font-size: 24px;
+  font-weight: 800;
+  color: var(--text);
+  line-height: 1.15;
+}
+
+.page-subtitle {
+  font-size: 12px;
+  color: var(--muted);
+  margin-top: 2px;
+  font-weight: 500;
+}
+
+.month-pills {
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+  align-items: center;
+}
+
+.pill {
+  padding: 6px 13px;
+  border-radius: 20px;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  border: 1.5px solid var(--border);
+  background: var(--surface);
+  color: var(--muted);
+  font-family: 'Nunito', sans-serif;
+  transition: all 0.14s;
+}
+
+.pill:hover { border-color: var(--accent); color: var(--accent); background: var(--accent-light); }
+
+.pill.active {
+  border-color: var(--accent);
+  background: var(--accent);
+  color: #fff;
+  font-weight: 700;
+}
+
+/* ── Summary cards ─────────────────────────────────────────────────────────── */
+.stats-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 14px;
+}
+
+.stat-card {
+  background: var(--card);
+  border: 1.5px solid var(--border);
+  border-radius: 12px;
+  padding: 20px 22px;
+  box-shadow: var(--shadow-sm);
+  position: relative;
+  overflow: hidden;
+}
+
+/* Subtle top accent bar — distinct from side-stripe: it's decorative top inset, not a card border treatment */
+.stat-card::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 3px;
+  border-radius: 12px 12px 0 0;
+}
+
+.stat-card.income::before { background: var(--accent); }
+.stat-card.spent::before { background: var(--red); }
+.stat-card.net::before { background: var(--accent); }
+.stat-card.txns::before { background: var(--amber); }
+
+.stat-label {
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--muted);
+  margin-bottom: 8px;
+}
+
+.stat-value {
+  font-size: 28px;
+  font-weight: 800;
+  line-height: 1;
+  letter-spacing: -0.025em;
+}
+
+.stat-sub {
+  font-size: 11px;
+  color: var(--muted);
+  margin-top: 6px;
+  font-weight: 500;
+}
+
+.stat-badge {
+  display: inline-flex;
+  align-items: center;
+  font-size: 10px;
+  font-weight: 700;
+  padding: 2px 7px;
+  border-radius: 20px;
+  margin-top: 6px;
+}
+
+.badge-up { background: #e8f5f3; color: var(--accent); }
+.badge-down { background: #fff0f0; color: var(--red); }
+
+.stat-card.income .stat-value { color: var(--accent); }
+.stat-card.spent .stat-value { color: var(--red); }
+.stat-card.net .stat-value { color: var(--accent); }
+.stat-card.txns .stat-value { color: var(--text); }
+
+/* ── Charts row ─────────────────────────────────────────────────────────────── */
+.charts-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+}
+
+.card {
+  background: var(--card);
+  border: 1.5px solid var(--border);
+  border-radius: 12px;
+  padding: 22px 24px;
+  box-shadow: var(--shadow-sm);
+}
+
+.card-title {
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--text);
+  margin-bottom: 4px;
+}
+
+.card-subtitle {
+  font-size: 11px;
+  color: var(--muted);
+  font-weight: 500;
+  margin-bottom: 16px;
+}
+
+/* ── Donut chart ───────────────────────────────────────────────────────────── */
+.donut-layout {
+  display: flex;
+  gap: 20px;
+  align-items: center;
+}
+
+.legend-list {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.legend-item {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  cursor: pointer;
+  padding: 4px 6px;
+  border-radius: 8px;
+  transition: background 0.12s;
+}
+
+.legend-item:hover { background: var(--bg); }
+
+.legend-dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 3px;
+  flex-shrink: 0;
+}
+
+.legend-name {
+  flex: 1;
+  font-size: 13px;
+  color: var(--text-2);
+  font-weight: 500;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.legend-val {
+  font-size: 12px;
+  color: var(--text);
+  font-weight: 700;
+}
+
+.legend-pct {
+  font-size: 11px;
+  color: var(--subtle);
+  width: 38px;
+  text-align: right;
+}
+
+.donut-wrap {
+  flex: 0 0 148px;
+  height: 148px;
+  position: relative;
+}
+
+.donut-center-text {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  pointer-events: none;
+}
+
+.donut-center-label {
+  font-size: 10px;
+  font-weight: 700;
+  color: var(--muted);
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+}
+
+.donut-center-value {
+  font-size: 18px;
+  font-weight: 800;
+  color: var(--text);
+  letter-spacing: -0.02em;
+}
+
+/* ── Bar chart ─────────────────────────────────────────────────────────────── */
+.bar-chart-area {
+  height: 160px;
+  display: flex;
+  align-items: flex-end;
+  gap: 10px;
+  padding-bottom: 26px;
+  position: relative;
+  border-bottom: 1px solid var(--border);
+}
+
+.bar-group {
+  flex: 1;
+  display: flex;
+  align-items: flex-end;
+  gap: 4px;
+  height: 100%;
+  position: relative;
+}
+
+.bar {
+  flex: 1;
+  border-radius: 5px 5px 0 0;
+  transition: opacity 0.15s;
+}
+
+.bar:hover { opacity: 0.82; }
+
+.bar-label {
+  position: absolute;
+  bottom: -22px;
+  left: 0;
+  right: 0;
+  text-align: center;
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--subtle);
+  font-family: 'Nunito', sans-serif;
+}
+
+.bar-chart-legend {
+  display: flex;
+  gap: 16px;
+  margin-top: 12px;
+}
+
+.bar-legend-item {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--muted);
+}
+
+.bar-legend-dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 3px;
+}
+
+/* ── Transaction list ──────────────────────────────────────────────────────── */
+.txn-list {
+  display: flex;
+  flex-direction: column;
+}
+
+.txn-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 11px 8px;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: background 0.1s;
+}
+
+.txn-row:hover { background: var(--bg); }
+
+.txn-row + .txn-row {
+  border-top: 1px solid var(--border);
+  border-radius: 0;
+  padding-left: 8px;
+}
+
+/* override hover border interaction */
+.txn-row:hover { border-radius: 8px; }
+
+.txn-icon {
+  width: 34px;
+  height: 34px;
+  border-radius: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  font-size: 14px;
+}
+
+.txn-info { flex: 1; min-width: 0; }
+
+.txn-payee {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.txn-meta {
+  font-size: 11px;
+  color: var(--muted);
+  margin-top: 2px;
+  font-weight: 500;
+}
+
+.txn-amount {
+  font-size: 14px;
+  font-weight: 700;
+  text-align: right;
+  flex-shrink: 0;
+}
+
+.txn-amount.debit { color: var(--red); }
+.txn-amount.credit { color: var(--accent); }
+
+/* ── Trend chart ───────────────────────────────────────────────────────────── */
+.trend-chart-area {
+  height: 130px;
+  position: relative;
+}
+
+.trend-chart-area svg { width: 100%; height: 100%; overflow: visible; }
+
+/* ── Mobile preview ─────────────────────────────────────────────────────────── */
+.mobile-preview-banner {
+  background: var(--text);
+  color: #fff;
+  text-align: center;
+  padding: 12px;
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  margin-top: 40px;
+}
+
+.mobile-preview-wrap {
+  background: #2a1f1f;
+  padding: 32px;
+  display: flex;
+  justify-content: center;
+}
+
+.mobile-frame {
+  width: 375px;
+  background: var(--bg);
+  border-radius: 24px;
+  overflow: hidden;
+  box-shadow: 0 20px 60px rgba(0,0,0,0.35);
+}
+
+.mobile-topbar {
+  background: var(--surface);
+  border-bottom: 1px solid var(--border);
+  padding: 16px 16px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.mobile-menu-btn {
+  width: 36px;
+  height: 36px;
+  background: var(--bg);
+  border: 1.5px solid var(--border);
+  border-radius: 10px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  cursor: pointer;
+}
+
+.mobile-menu-line {
+  width: 14px;
+  height: 1.5px;
+  background: var(--text);
+  border-radius: 1px;
+}
+
+.mobile-topbar-title {
+  font-size: 15px;
+  font-weight: 800;
+  color: var(--text);
+}
+
+.mobile-upload-btn-sm {
+  background: var(--accent);
+  color: #fff;
+  border: none;
+  border-radius: 10px;
+  padding: 7px 13px;
+  font-size: 12px;
+  font-weight: 700;
+  cursor: pointer;
+  font-family: 'Nunito', sans-serif;
+  box-shadow: 0 2px 6px rgba(15,157,138,0.28);
+}
+
+.mobile-content {
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.mobile-stats-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+}
+
+.mobile-stat-card {
+  background: var(--card);
+  border: 1.5px solid var(--border);
+  border-radius: 12px;
+  padding: 14px 16px;
+  box-shadow: var(--shadow-sm);
+}
+
+.mobile-stat-label {
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--muted);
+  margin-bottom: 5px;
+}
+
+.mobile-stat-value {
+  font-size: 22px;
+  font-weight: 800;
+  letter-spacing: -0.02em;
+}
+
+.mobile-card {
+  background: var(--card);
+  border: 1.5px solid var(--border);
+  border-radius: 12px;
+  padding: 16px;
+  box-shadow: var(--shadow-sm);
+}
+
+.mobile-card-title {
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--text);
+  margin-bottom: 10px;
+}
+
+.mobile-txn-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 9px 0;
+  border-bottom: 1px solid var(--border);
+}
+
+.mobile-txn-row:last-child { border-bottom: none; }
+
+.mobile-txn-payee {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text);
+}
+
+.mobile-txn-sub {
+  font-size: 11px;
+  color: var(--muted);
+  font-weight: 500;
+  margin-top: 1px;
+}
+
+.mobile-txn-amount {
+  font-size: 13px;
+  font-weight: 700;
+}
+</style>
+</head>
+<body>
+
+<div class="option-badge">Option B &mdash; Warm Intelligence &nbsp;|&nbsp; Nunito &middot; Warm Teal #0F9D8A &middot; Off-white #F9F7F4 &middot; Approachable &amp; data-dense</div>
+
+<!-- Desktop layout -->
+<div class="app-shell">
+
+  <!-- Sidebar -->
+  <aside class="sidebar">
+    <div class="sidebar-brand">
+      <div class="sidebar-wordmark">
+        <div class="brand-dot"></div>
+        Finance
+      </div>
+      <div class="sidebar-title">Analyser</div>
+      <div class="sidebar-subtitle">3,241 transactions</div>
+    </div>
+
+    <div class="sidebar-divider"></div>
+
+    <div class="sidebar-section">
+      <div class="sidebar-section-label">Accounts</div>
+
+      <div class="account-row account-row-all active">
+        <div class="account-dot" style="background: conic-gradient(#0f9d8a 0deg 120deg, #3b82c4 120deg 240deg, #8b5cf6 240deg 360deg); border-radius:50%; width:10px; height:10px;"></div>
+        <span class="account-name">All Accounts</span>
+      </div>
+      <div class="account-row" style="padding-left:20px;">
+        <div class="account-dot" style="background:#0f9d8a;"></div>
+        <span class="account-name">ASB Everyday</span>
+      </div>
+      <div class="account-row" style="padding-left:20px;">
+        <div class="account-dot" style="background:#3b82c4;"></div>
+        <span class="account-name">ASB Savings</span>
+      </div>
+      <div class="account-row" style="padding-left:20px;">
+        <div class="account-dot" style="background:#8b5cf6;"></div>
+        <span class="account-name">Kiwibank Visa</span>
+      </div>
+    </div>
+
+    <div class="sidebar-upload">
+      <div class="upload-label">Upload to: <span style="color:var(--accent);">ASB Everyday</span></div>
+      <button class="upload-btn">&#8593; Upload CSV</button>
+    </div>
+
+    <nav class="sidebar-nav">
+      <div class="nav-item active">
+        <span class="nav-icon">⬡</span> Dashboard
+      </div>
+      <div class="nav-item">
+        <span class="nav-icon">≡</span> Transactions
+      </div>
+      <div class="nav-item">
+        <span class="nav-icon">◎</span> AI Chat
+      </div>
+      <div class="nav-item">
+        <span class="nav-icon">◈</span> Net Worth
+      </div>
+      <div class="nav-item">
+        <span class="nav-icon">◉</span> Goals
+      </div>
+      <div class="nav-item">
+        <span class="nav-icon">◧</span> Budget
+      </div>
+      <div class="nav-item">
+        <span class="nav-icon">⚙</span> Settings
+      </div>
+    </nav>
+
+    <div class="sidebar-footer">
+      <span>ASB Bank &middot; NZD</span>
+      <button class="signout-btn">Sign out</button>
+    </div>
+  </aside>
+
+  <!-- Main -->
+  <main class="main">
+
+    <!-- Header -->
+    <div class="page-header">
+      <div>
+        <div class="page-title">May 2026</div>
+        <div class="page-subtitle">All accounts &middot; 284 transactions</div>
+      </div>
+      <div class="month-pills">
+        <button class="pill">Jan '26</button>
+        <button class="pill">Feb '26</button>
+        <button class="pill">Mar '26</button>
+        <button class="pill">Apr '26</button>
+        <button class="pill active">May '26</button>
+      </div>
+    </div>
+
+    <!-- Summary stats -->
+    <div class="stats-grid">
+      <div class="stat-card income">
+        <div class="stat-label">Income</div>
+        <div class="stat-value">$8,450</div>
+        <div class="stat-badge badge-up">&#8593; $320 vs Apr</div>
+      </div>
+      <div class="stat-card spent">
+        <div class="stat-label">Spent</div>
+        <div class="stat-value">$5,218</div>
+        <div class="stat-badge badge-down">&#8595; $180 vs Apr</div>
+      </div>
+      <div class="stat-card net">
+        <div class="stat-label">Net</div>
+        <div class="stat-value">+$3,231</div>
+        <div class="stat-sub">38.3% savings rate</div>
+      </div>
+      <div class="stat-card txns">
+        <div class="stat-label">Transactions</div>
+        <div class="stat-value">284</div>
+        <div class="stat-sub">12 transfers excluded</div>
+      </div>
+    </div>
+
+    <!-- Charts row -->
+    <div class="charts-row">
+
+      <!-- Spending by Category -->
+      <div class="card">
+        <div class="card-title">Spending by Category</div>
+        <div class="card-subtitle">May 2026 &middot; $5,218.40 total</div>
+        <div class="donut-layout">
+          <div class="legend-list">
+            <div class="legend-item">
+              <div class="legend-dot" style="background:var(--cat-groceries);"></div>
+              <span class="legend-name">Groceries</span>
+              <span class="legend-val">$1,240</span>
+              <span class="legend-pct">23.8%</span>
+            </div>
+            <div class="legend-item">
+              <div class="legend-dot" style="background:var(--cat-transport);"></div>
+              <span class="legend-name">Transport</span>
+              <span class="legend-val">$894</span>
+              <span class="legend-pct">17.1%</span>
+            </div>
+            <div class="legend-item">
+              <div class="legend-dot" style="background:var(--cat-dining);"></div>
+              <span class="legend-name">Dining</span>
+              <span class="legend-val">$743</span>
+              <span class="legend-pct">14.2%</span>
+            </div>
+            <div class="legend-item">
+              <div class="legend-dot" style="background:var(--cat-utilities);"></div>
+              <span class="legend-name">Utilities</span>
+              <span class="legend-val">$612</span>
+              <span class="legend-pct">11.7%</span>
+            </div>
+            <div class="legend-item">
+              <div class="legend-dot" style="background:var(--cat-entertainment);"></div>
+              <span class="legend-name">Entertainment</span>
+              <span class="legend-val">$480</span>
+              <span class="legend-pct">9.2%</span>
+            </div>
+            <div class="legend-item">
+              <div class="legend-dot" style="background:var(--cat-healthcare);"></div>
+              <span class="legend-name">Healthcare</span>
+              <span class="legend-val">$348</span>
+              <span class="legend-pct">6.7%</span>
+            </div>
+            <div class="legend-item">
+              <div class="legend-dot" style="background:var(--cat-shopping);"></div>
+              <span class="legend-name">Shopping</span>
+              <span class="legend-val">$899</span>
+              <span class="legend-pct">17.2%</span>
+            </div>
+          </div>
+
+          <div class="donut-wrap">
+            <svg viewBox="0 0 148 148">
+              <circle cx="74" cy="74" r="54" fill="none" stroke="#ede8e2" stroke-width="22"/>
+              <circle cx="74" cy="74" r="54" fill="none" stroke="var(--cat-groceries)" stroke-width="22"
+                stroke-dasharray="160.6 178.7" stroke-dashoffset="89.4" />
+              <circle cx="74" cy="74" r="54" fill="none" stroke="var(--cat-transport)" stroke-width="22"
+                stroke-dasharray="115.5 223.8" stroke-dashoffset="-71.2" />
+              <circle cx="74" cy="74" r="54" fill="none" stroke="var(--cat-dining)" stroke-width="22"
+                stroke-dasharray="95.8 243.5" stroke-dashoffset="-186.7" />
+              <circle cx="74" cy="74" r="54" fill="none" stroke="var(--cat-utilities)" stroke-width="22"
+                stroke-dasharray="79.0 260.3" stroke-dashoffset="-282.5" />
+              <circle cx="74" cy="74" r="54" fill="none" stroke="var(--cat-entertainment)" stroke-width="22"
+                stroke-dasharray="62.1 277.2" stroke-dashoffset="-361.5" />
+              <circle cx="74" cy="74" r="54" fill="none" stroke="var(--cat-healthcare)" stroke-width="22"
+                stroke-dasharray="45.2 294.1" stroke-dashoffset="-423.6" />
+              <circle cx="74" cy="74" r="54" fill="none" stroke="var(--cat-shopping)" stroke-width="22"
+                stroke-dasharray="116.2 223.1" stroke-dashoffset="-468.8" />
+            </svg>
+            <div class="donut-center-text">
+              <div class="donut-center-label">Total</div>
+              <div class="donut-center-value">$5,218</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Income vs Expenses -->
+      <div class="card">
+        <div class="card-title">Income vs Expenses</div>
+        <div class="card-subtitle">Last 5 months</div>
+        <div class="bar-chart-area">
+          <div class="bar-group">
+            <div class="bar" style="height:60%; background:var(--accent); opacity:0.7;"></div>
+            <div class="bar" style="height:50%; background:var(--red); opacity:0.65;"></div>
+            <span class="bar-label">Jan</span>
+          </div>
+          <div class="bar-group">
+            <div class="bar" style="height:64%; background:var(--accent); opacity:0.75;"></div>
+            <div class="bar" style="height:53%; background:var(--red); opacity:0.65;"></div>
+            <span class="bar-label">Feb</span>
+          </div>
+          <div class="bar-group">
+            <div class="bar" style="height:67%; background:var(--accent); opacity:0.8;"></div>
+            <div class="bar" style="height:47%; background:var(--red); opacity:0.65;"></div>
+            <span class="bar-label">Mar</span>
+          </div>
+          <div class="bar-group">
+            <div class="bar" style="height:65%; background:var(--accent); opacity:0.82;"></div>
+            <div class="bar" style="height:52%; background:var(--red); opacity:0.65;"></div>
+            <span class="bar-label">Apr</span>
+          </div>
+          <div class="bar-group">
+            <div class="bar" style="height:70%; background:var(--accent);"></div>
+            <div class="bar" style="height:49%; background:var(--red); opacity:0.8;"></div>
+            <span class="bar-label" style="color:var(--text);font-weight:700;">May</span>
+          </div>
+        </div>
+        <div class="bar-chart-legend">
+          <div class="bar-legend-item">
+            <div class="bar-legend-dot" style="background:var(--accent);"></div> Income
+          </div>
+          <div class="bar-legend-item">
+            <div class="bar-legend-dot" style="background:var(--red);"></div> Expenses
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Spending Trends by Category -->
+    <div class="card">
+      <div class="card-title">Spending Trends by Category</div>
+      <div class="card-subtitle">Jan–May 2026</div>
+      <div style="display:flex; gap:24px; align-items:flex-start;">
+        <div class="trend-chart-area" style="flex:1;">
+          <svg viewBox="0 0 700 130" preserveAspectRatio="none">
+            <defs>
+              <linearGradient id="grocGrad" x1="0" y1="0" x2="0" y2="1">
+                <stop offset="0%" stop-color="var(--cat-groceries)" stop-opacity="0.15"/>
+                <stop offset="100%" stop-color="var(--cat-groceries)" stop-opacity="0"/>
+              </linearGradient>
+            </defs>
+            <!-- Grid -->
+            <line x1="0" y1="35" x2="700" y2="35" stroke="#ede8e2" stroke-width="1"/>
+            <line x1="0" y1="65" x2="700" y2="65" stroke="#ede8e2" stroke-width="1"/>
+            <line x1="0" y1="95" x2="700" y2="95" stroke="#ede8e2" stroke-width="1"/>
+            <!-- Groceries fill -->
+            <polygon points="0,52 140,48 280,55 420,54 560,50 700,48 700,130 0,130"
+              fill="url(#grocGrad)"/>
+            <!-- Lines -->
+            <polyline points="0,52 140,48 280,55 420,54 560,50 700,48"
+              fill="none" stroke="var(--cat-groceries)" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
+            <polyline points="0,68 140,65 280,70 420,67 560,63 700,60"
+              fill="none" stroke="var(--cat-transport)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+            <polyline points="0,76 140,74 280,72 420,78 560,75 700,73"
+              fill="none" stroke="var(--cat-dining)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+            <polyline points="0,83 140,85 280,84 420,82 560,86 700,83"
+              fill="none" stroke="var(--cat-utilities)" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+            <polyline points="0,93 140,90 280,92 420,91 560,94 700,92"
+              fill="none" stroke="var(--cat-entertainment)" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+            <!-- X labels -->
+            <text x="0" y="120" fill="var(--subtle)" font-size="10" font-family="Nunito,sans-serif" font-weight="600">Jan</text>
+            <text x="130" y="120" fill="var(--subtle)" font-size="10" font-family="Nunito,sans-serif" font-weight="600">Feb</text>
+            <text x="268" y="120" fill="var(--subtle)" font-size="10" font-family="Nunito,sans-serif" font-weight="600">Mar</text>
+            <text x="408" y="120" fill="var(--subtle)" font-size="10" font-family="Nunito,sans-serif" font-weight="600">Apr</text>
+            <text x="548" y="120" fill="var(--subtle)" font-size="10" font-family="Nunito,sans-serif" font-weight="600">May</text>
+          </svg>
+        </div>
+        <div style="display:flex; flex-direction:column; gap:7px; padding-top:4px; min-width:100px;">
+          <div style="display:flex; align-items:center; gap:7px; font-size:12px; font-weight:600; color:var(--muted);">
+            <div style="width:16px;height:3px;background:var(--cat-groceries);border-radius:2px;"></div>Groceries
+          </div>
+          <div style="display:flex; align-items:center; gap:7px; font-size:12px; font-weight:600; color:var(--muted);">
+            <div style="width:16px;height:2px;background:var(--cat-transport);border-radius:2px;"></div>Transport
+          </div>
+          <div style="display:flex; align-items:center; gap:7px; font-size:12px; font-weight:600; color:var(--muted);">
+            <div style="width:16px;height:2px;background:var(--cat-dining);border-radius:2px;"></div>Dining
+          </div>
+          <div style="display:flex; align-items:center; gap:7px; font-size:12px; font-weight:600; color:var(--muted);">
+            <div style="width:16px;height:2px;background:var(--cat-utilities);border-radius:2px;"></div>Utilities
+          </div>
+          <div style="display:flex; align-items:center; gap:7px; font-size:12px; font-weight:600; color:var(--muted);">
+            <div style="width:16px;height:2px;background:var(--cat-entertainment);border-radius:2px;"></div>Entertainment
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Recent Transactions -->
+    <div class="card">
+      <div class="card-title">Recent Transactions</div>
+      <div class="card-subtitle">May 2026</div>
+      <div class="txn-list">
+        <div class="txn-row">
+          <div class="txn-icon" style="background:#e8f5f3;">🛒</div>
+          <div class="txn-info">
+            <div class="txn-payee">Countdown Newmarket</div>
+            <div class="txn-meta">Groceries &middot; 24 May 2026</div>
+          </div>
+          <div class="txn-amount debit">-$142.30</div>
+        </div>
+        <div class="txn-row">
+          <div class="txn-icon" style="background:#eff6ff;">🚌</div>
+          <div class="txn-info">
+            <div class="txn-payee">AT Monthly Pass</div>
+            <div class="txn-meta">Transport &middot; 23 May 2026</div>
+          </div>
+          <div class="txn-amount debit">-$210.00</div>
+        </div>
+        <div class="txn-row">
+          <div class="txn-icon" style="background:#e8f5f3;">💰</div>
+          <div class="txn-info">
+            <div class="txn-payee">Salary — Acme Corp</div>
+            <div class="txn-meta">Income &middot; 22 May 2026</div>
+          </div>
+          <div class="txn-amount credit">+$4,225.00</div>
+        </div>
+        <div class="txn-row">
+          <div class="txn-icon" style="background:#fdf2f8;">🍽️</div>
+          <div class="txn-info">
+            <div class="txn-payee">Depot Eatery</div>
+            <div class="txn-meta">Dining &middot; 21 May 2026</div>
+          </div>
+          <div class="txn-amount debit">-$87.50</div>
+        </div>
+        <div class="txn-row">
+          <div class="txn-icon" style="background:#fefce8;">⚡</div>
+          <div class="txn-info">
+            <div class="txn-payee">Mercury Energy</div>
+            <div class="txn-meta">Utilities &middot; 20 May 2026</div>
+          </div>
+          <div class="txn-amount debit">-$198.40</div>
+        </div>
+        <div class="txn-row">
+          <div class="txn-icon" style="background:#fff5f5;">🏥</div>
+          <div class="txn-info">
+            <div class="txn-payee">Auckland City Medical</div>
+            <div class="txn-meta">Healthcare &middot; 18 May 2026</div>
+          </div>
+          <div class="txn-amount debit">-$75.00</div>
+        </div>
+        <div class="txn-row">
+          <div class="txn-icon" style="background:#f5f3ff;">🎬</div>
+          <div class="txn-info">
+            <div class="txn-payee">Sky TV Subscription</div>
+            <div class="txn-meta">Entertainment &middot; 17 May 2026</div>
+          </div>
+          <div class="txn-amount debit">-$54.99</div>
+        </div>
+      </div>
+    </div>
+
+  </main>
+</div>
+
+<!-- Mobile preview -->
+<div class="mobile-preview-banner">Mobile Preview — 375px</div>
+<div class="mobile-preview-wrap">
+  <div class="mobile-frame">
+    <div class="mobile-topbar">
+      <div class="mobile-menu-btn">
+        <div class="mobile-menu-line"></div>
+        <div class="mobile-menu-line"></div>
+        <div class="mobile-menu-line"></div>
+      </div>
+      <div class="mobile-topbar-title">Finance Analyser</div>
+      <button class="mobile-upload-btn-sm">&#8593; CSV</button>
+    </div>
+
+    <div class="mobile-content">
+      <div style="display:flex; gap:6px; overflow-x:auto; padding-bottom:2px;">
+        <button class="pill" style="white-space:nowrap;flex-shrink:0;">Jan '26</button>
+        <button class="pill" style="white-space:nowrap;flex-shrink:0;">Feb '26</button>
+        <button class="pill" style="white-space:nowrap;flex-shrink:0;">Mar '26</button>
+        <button class="pill" style="white-space:nowrap;flex-shrink:0;">Apr '26</button>
+        <button class="pill active" style="white-space:nowrap;flex-shrink:0;">May '26</button>
+      </div>
+
+      <div>
+        <div style="font-size:22px; font-weight:800; color:var(--text);">May 2026</div>
+        <div style="font-size:12px; color:var(--muted); font-weight:500; margin-top:2px;">284 transactions</div>
+      </div>
+
+      <div class="mobile-stats-grid">
+        <div class="mobile-stat-card">
+          <div class="mobile-stat-label">Income</div>
+          <div class="mobile-stat-value" style="color:var(--accent);">$8,450</div>
+        </div>
+        <div class="mobile-stat-card">
+          <div class="mobile-stat-label">Spent</div>
+          <div class="mobile-stat-value" style="color:var(--red);">$5,218</div>
+        </div>
+        <div class="mobile-stat-card" style="grid-column:span 2;">
+          <div class="mobile-stat-label">Net savings</div>
+          <div class="mobile-stat-value" style="color:var(--accent);">+$3,231 <span style="font-size:14px; font-weight:700;">(38.3%)</span></div>
+        </div>
+      </div>
+
+      <div class="mobile-card">
+        <div class="mobile-card-title">Spending by Category</div>
+        <div style="display:flex; flex-direction:column; gap:9px;">
+          <div style="display:flex; align-items:center; gap:9px;">
+            <div style="width:10px;height:10px;border-radius:3px;background:var(--cat-groceries);flex-shrink:0;"></div>
+            <span style="flex:1;font-size:13px;font-weight:600;color:var(--text-2);">Groceries</span>
+            <span style="font-size:13px;font-weight:700;color:var(--text);">$1,240</span>
+            <span style="font-size:11px;color:var(--subtle);width:36px;text-align:right;">23.8%</span>
+          </div>
+          <div style="display:flex; align-items:center; gap:9px;">
+            <div style="width:10px;height:10px;border-radius:3px;background:var(--cat-transport);flex-shrink:0;"></div>
+            <span style="flex:1;font-size:13px;font-weight:600;color:var(--text-2);">Transport</span>
+            <span style="font-size:13px;font-weight:700;color:var(--text);">$894</span>
+            <span style="font-size:11px;color:var(--subtle);width:36px;text-align:right;">17.1%</span>
+          </div>
+          <div style="display:flex; align-items:center; gap:9px;">
+            <div style="width:10px;height:10px;border-radius:3px;background:var(--cat-dining);flex-shrink:0;"></div>
+            <span style="flex:1;font-size:13px;font-weight:600;color:var(--text-2);">Dining</span>
+            <span style="font-size:13px;font-weight:700;color:var(--text);">$743</span>
+            <span style="font-size:11px;color:var(--subtle);width:36px;text-align:right;">14.2%</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="mobile-card">
+        <div class="mobile-card-title">Recent Transactions</div>
+        <div class="mobile-txn-row">
+          <div>
+            <div class="mobile-txn-payee">Countdown Newmarket</div>
+            <div class="mobile-txn-sub">Groceries &middot; 24 May</div>
+          </div>
+          <div class="mobile-txn-amount" style="color:var(--red);">-$142.30</div>
+        </div>
+        <div class="mobile-txn-row">
+          <div>
+            <div class="mobile-txn-payee">AT Monthly Pass</div>
+            <div class="mobile-txn-sub">Transport &middot; 23 May</div>
+          </div>
+          <div class="mobile-txn-amount" style="color:var(--red);">-$210.00</div>
+        </div>
+        <div class="mobile-txn-row">
+          <div>
+            <div class="mobile-txn-payee">Salary — Acme Corp</div>
+            <div class="mobile-txn-sub">Income &middot; 22 May</div>
+          </div>
+          <div class="mobile-txn-amount" style="color:var(--accent);">+$4,225.00</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<style>
+@media (max-width: 768px) {
+  .app-shell { flex-direction: column; }
+  .sidebar { width: 100%; height: auto; position: relative; top: 0; display: none; }
+  .main { padding: 16px; gap: 14px; }
+  .stats-grid { grid-template-columns: 1fr 1fr; }
+  .stat-card:nth-child(3) { grid-column: span 2; }
+  .charts-row { grid-template-columns: 1fr; }
+  .donut-layout { flex-direction: column-reverse; align-items: center; }
+  .donut-wrap { flex: 0 0 130px; height: 130px; }
+}
+</style>
+
+</body>
+</html>

@@ -1,0 +1,1266 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Option C — Premium Minimalism</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,300;0,9..144,600;0,9..144,700;1,9..144,300&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<style>
+/* ── Design tokens ─────────────────────────────────────────────────────────── */
+:root {
+  --bg: #ffffff;
+  --surface: #ffffff;
+  --sidebar-bg: #f7faf8;
+  --sidebar-border: #e2ebe5;
+  --card: #ffffff;
+  --border: #e8ede9;
+  --border-subtle: #f0f5f1;
+  --accent: #166534;
+  --accent-mid: #16a34a;
+  --accent-light: #f0faf2;
+  --accent-sage: #dcfce7;
+  --text: #111714;
+  --text-2: #2d3a31;
+  --muted: #6b7d6f;
+  --subtle: #9aaf9e;
+  --red: #b91c1c;
+  --red-light: #fef2f2;
+  --amber: #92400e;
+
+  /* Category colour tokens — same token used in donut legend AND line chart */
+  --cat-groceries: #166534;
+  --cat-transport: #1d4ed8;
+  --cat-entertainment: #6d28d9;
+  --cat-utilities: #92400e;
+  --cat-healthcare: #b91c1c;
+  --cat-dining: #be185d;
+  --cat-shopping: #0e7490;
+}
+
+* { box-sizing: border-box; margin: 0; padding: 0; }
+
+body {
+  font-family: 'Inter', sans-serif;
+  background: var(--bg);
+  color: var(--text);
+  -webkit-font-smoothing: antialiased;
+  font-size: 14px;
+  line-height: 1.5;
+}
+
+/* ── Option badge ──────────────────────────────────────────────────────────── */
+.option-badge {
+  background: var(--accent);
+  color: #fff;
+  text-align: center;
+  padding: 10px 20px;
+  font-size: 12px;
+  font-weight: 500;
+  letter-spacing: 0.05em;
+  position: sticky;
+  top: 0;
+  z-index: 100;
+  font-family: 'Inter', sans-serif;
+}
+
+/* ── App shell ─────────────────────────────────────────────────────────────── */
+.app-shell {
+  display: flex;
+  min-height: 100vh;
+  max-width: 1280px;
+  margin: 0 auto;
+}
+
+/* ── Sidebar ───────────────────────────────────────────────────────────────── */
+.sidebar {
+  width: 216px;
+  min-width: 216px;
+  background: var(--sidebar-bg);
+  border-right: 1px solid var(--sidebar-border);
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+  position: sticky;
+  top: 40px;
+}
+
+.sidebar-brand {
+  padding: 30px 20px 20px;
+  border-bottom: 1px solid var(--border);
+}
+
+.sidebar-mark {
+  width: 28px;
+  height: 28px;
+  background: var(--accent);
+  border-radius: 6px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 10px;
+}
+
+.sidebar-mark-inner {
+  width: 12px;
+  height: 12px;
+  border: 2px solid rgba(255,255,255,0.6);
+  border-radius: 2px;
+}
+
+.sidebar-title {
+  font-family: 'Fraunces', serif;
+  font-size: 17px;
+  font-weight: 600;
+  color: var(--text);
+  line-height: 1.2;
+  letter-spacing: -0.01em;
+}
+
+.sidebar-subtitle {
+  font-size: 11px;
+  color: var(--muted);
+  margin-top: 3px;
+  font-weight: 400;
+}
+
+.sidebar-section {
+  padding: 16px 16px 12px;
+  border-bottom: 1px solid var(--border);
+}
+
+.sidebar-section-label {
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--subtle);
+  padding: 0 4px;
+  margin-bottom: 8px;
+}
+
+.account-row {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  padding: 6px 8px;
+  border-radius: 5px;
+  cursor: pointer;
+  transition: background 0.12s;
+  margin-bottom: 2px;
+}
+
+.account-row:hover { background: var(--accent-light); }
+
+.account-row.active {
+  background: var(--accent-light);
+}
+
+.account-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.account-name {
+  flex: 1;
+  font-size: 13px;
+  color: var(--text-2);
+  font-weight: 400;
+}
+
+.account-row.active .account-name {
+  color: var(--accent);
+  font-weight: 600;
+}
+
+.account-row-all .account-name {
+  color: var(--text);
+  font-weight: 500;
+  font-size: 12px;
+}
+
+.sidebar-upload {
+  padding: 14px 16px;
+  border-bottom: 1px solid var(--border);
+}
+
+.upload-label {
+  font-size: 10px;
+  color: var(--muted);
+  font-weight: 400;
+  margin-bottom: 7px;
+}
+
+.upload-btn {
+  width: 100%;
+  background: var(--accent);
+  color: #fff;
+  border: none;
+  border-radius: 5px;
+  padding: 9px 0;
+  font-size: 13px;
+  font-weight: 500;
+  cursor: pointer;
+  font-family: 'Inter', sans-serif;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  letter-spacing: 0.01em;
+  transition: background 0.12s;
+}
+
+.upload-btn:hover { background: #145a2e; }
+
+.sidebar-nav {
+  flex: 1;
+  padding: 12px 10px;
+}
+
+.nav-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 10px;
+  border-radius: 5px;
+  font-size: 13px;
+  font-weight: 400;
+  color: var(--muted);
+  cursor: pointer;
+  transition: background 0.12s, color 0.12s;
+  margin-bottom: 2px;
+  text-decoration: none;
+}
+
+.nav-item:hover { background: var(--accent-light); color: var(--text); }
+
+.nav-item.active {
+  background: var(--accent-light);
+  color: var(--accent);
+  font-weight: 600;
+}
+
+.nav-icon { font-size: 14px; width: 18px; text-align: center; opacity: 0.7; }
+
+.sidebar-footer {
+  padding: 14px 20px;
+  border-top: 1px solid var(--border);
+  font-size: 11px;
+  color: var(--subtle);
+  font-weight: 400;
+}
+
+/* ── Main content ──────────────────────────────────────────────────────────── */
+.main {
+  flex: 1;
+  min-width: 0;
+  padding: 40px 44px;
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+  background: var(--bg);
+}
+
+/* ── Page header ───────────────────────────────────────────────────────────── */
+.page-header {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 16px;
+  flex-wrap: wrap;
+  border-bottom: 1px solid var(--border);
+  padding-bottom: 24px;
+}
+
+.page-title {
+  font-family: 'Fraunces', serif;
+  font-size: 36px;
+  font-weight: 600;
+  color: var(--text);
+  line-height: 1.1;
+  letter-spacing: -0.025em;
+}
+
+.page-subtitle {
+  font-size: 12px;
+  color: var(--muted);
+  margin-top: 4px;
+  font-weight: 400;
+  letter-spacing: 0.02em;
+}
+
+.month-pills {
+  display: flex;
+  gap: 4px;
+  flex-wrap: wrap;
+  align-items: center;
+}
+
+.pill {
+  padding: 5px 12px;
+  border-radius: 3px;
+  font-size: 12px;
+  font-weight: 400;
+  cursor: pointer;
+  border: 1px solid var(--border);
+  background: transparent;
+  color: var(--muted);
+  font-family: 'Inter', sans-serif;
+  transition: all 0.12s;
+  letter-spacing: 0.02em;
+}
+
+.pill:hover { border-color: var(--accent); color: var(--accent); }
+
+.pill.active {
+  border-color: var(--accent);
+  background: var(--accent);
+  color: #fff;
+  font-weight: 500;
+}
+
+/* ── Summary cards ─────────────────────────────────────────────────────────── */
+.stats-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 1px;
+  background: var(--border);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  overflow: hidden;
+}
+
+.stat-card {
+  background: var(--card);
+  padding: 24px 28px;
+}
+
+.stat-label {
+  font-size: 11px;
+  font-weight: 500;
+  color: var(--muted);
+  margin-bottom: 10px;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.stat-value {
+  font-family: 'Fraunces', serif;
+  font-size: 32px;
+  font-weight: 600;
+  line-height: 1;
+  letter-spacing: -0.03em;
+}
+
+.stat-delta {
+  font-size: 11px;
+  color: var(--muted);
+  margin-top: 6px;
+  font-weight: 400;
+}
+
+.delta-up { color: var(--accent-mid); }
+.delta-down { color: var(--red); }
+
+.stat-card.income .stat-value { color: var(--accent); }
+.stat-card.spent .stat-value { color: var(--red); }
+.stat-card.net .stat-value { color: var(--accent); }
+.stat-card.txns .stat-value { color: var(--text); font-size:38px; }
+
+/* ── Charts ─────────────────────────────────────────────────────────────────── */
+.charts-row {
+  display: grid;
+  grid-template-columns: 1.1fr 0.9fr;
+  gap: 1px;
+  background: var(--border);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  overflow: hidden;
+}
+
+.card {
+  background: var(--card);
+  padding: 24px 28px;
+}
+
+.card-title {
+  font-size: 11px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--muted);
+  margin-bottom: 4px;
+}
+
+.card-hero {
+  font-family: 'Fraunces', serif;
+  font-size: 22px;
+  font-weight: 600;
+  color: var(--text);
+  letter-spacing: -0.02em;
+  margin-bottom: 16px;
+}
+
+/* ── Donut chart ───────────────────────────────────────────────────────────── */
+.donut-layout {
+  display: flex;
+  gap: 24px;
+  align-items: flex-start;
+}
+
+.legend-list {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+}
+
+.legend-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  cursor: pointer;
+  padding: 7px 0;
+  border-bottom: 1px solid var(--border-subtle);
+  transition: opacity 0.12s;
+}
+
+.legend-item:last-child { border-bottom: none; }
+.legend-item:hover { opacity: 0.75; }
+
+.legend-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.legend-name {
+  flex: 1;
+  font-size: 12px;
+  color: var(--text-2);
+  font-weight: 400;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.legend-val {
+  font-size: 12px;
+  color: var(--text);
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+  min-width: 60px;
+  text-align: right;
+}
+
+.legend-pct {
+  font-size: 11px;
+  color: var(--subtle);
+  min-width: 36px;
+  text-align: right;
+}
+
+.donut-wrap {
+  flex: 0 0 130px;
+  height: 130px;
+  position: relative;
+}
+
+.donut-center-text {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  pointer-events: none;
+}
+
+.donut-center-label {
+  font-size: 9px;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+
+.donut-center-value {
+  font-family: 'Fraunces', serif;
+  font-size: 16px;
+  font-weight: 600;
+  color: var(--text);
+  letter-spacing: -0.02em;
+}
+
+/* ── Bar chart ─────────────────────────────────────────────────────────────── */
+.bar-chart-area {
+  height: 150px;
+  display: flex;
+  align-items: flex-end;
+  gap: 12px;
+  padding-bottom: 28px;
+  position: relative;
+  border-bottom: 1px solid var(--border);
+}
+
+.bar-group {
+  flex: 1;
+  display: flex;
+  align-items: flex-end;
+  gap: 3px;
+  height: 100%;
+  position: relative;
+}
+
+.bar {
+  flex: 1;
+  border-radius: 2px 2px 0 0;
+  transition: opacity 0.12s;
+}
+
+.bar:hover { opacity: 0.7; }
+
+.bar-label {
+  position: absolute;
+  bottom: -24px;
+  left: 0;
+  right: 0;
+  text-align: center;
+  font-size: 10px;
+  font-weight: 400;
+  color: var(--subtle);
+  letter-spacing: 0.03em;
+}
+
+.bar-chart-legend {
+  display: flex;
+  gap: 16px;
+  margin-top: 14px;
+}
+
+.bar-legend-item {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 11px;
+  color: var(--muted);
+  font-weight: 400;
+}
+
+.bar-legend-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+}
+
+/* ── Transaction list ─────────────────────────────────────────────────────── */
+.txn-list { display: flex; flex-direction: column; }
+
+.txn-row {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 13px 0;
+  border-bottom: 1px solid var(--border-subtle);
+  cursor: pointer;
+  transition: background 0.1s;
+}
+
+.txn-row:last-child { border-bottom: none; }
+
+.txn-cat-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.txn-info { flex: 1; min-width: 0; }
+
+.txn-payee {
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--text);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.txn-meta {
+  font-size: 11px;
+  color: var(--muted);
+  margin-top: 2px;
+  font-weight: 400;
+}
+
+.txn-cat-label {
+  font-size: 11px;
+  color: var(--subtle);
+  font-weight: 400;
+  flex-shrink: 0;
+}
+
+.txn-amount {
+  font-size: 13px;
+  font-weight: 600;
+  text-align: right;
+  flex-shrink: 0;
+  font-variant-numeric: tabular-nums;
+}
+
+.txn-amount.debit { color: var(--red); }
+.txn-amount.credit { color: var(--accent); }
+
+/* ── Trend chart ─────────────────────────────────────────────────────────── */
+.trend-chart-area {
+  height: 120px;
+  position: relative;
+}
+
+.trend-chart-area svg { width: 100%; height: 100%; overflow: visible; }
+
+/* ── Mobile preview ─────────────────────────────────────────────────────────── */
+.mobile-preview-banner {
+  background: var(--text);
+  color: #fff;
+  text-align: center;
+  padding: 12px;
+  font-size: 11px;
+  font-weight: 500;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  margin-top: 40px;
+}
+
+.mobile-preview-wrap {
+  background: #0f1a12;
+  padding: 32px;
+  display: flex;
+  justify-content: center;
+}
+
+.mobile-frame {
+  width: 375px;
+  background: var(--bg);
+  border-radius: 24px;
+  overflow: hidden;
+  box-shadow: 0 20px 60px rgba(0,0,0,0.4);
+}
+
+.mobile-topbar {
+  background: var(--surface);
+  border-bottom: 1px solid var(--border);
+  padding: 16px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.mobile-topbar-brand {
+  font-family: 'Fraunces', serif;
+  font-size: 16px;
+  font-weight: 600;
+  color: var(--text);
+  letter-spacing: -0.01em;
+}
+
+.mobile-menu-btn {
+  width: 32px;
+  height: 32px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  cursor: pointer;
+}
+
+.mobile-menu-line {
+  width: 16px;
+  height: 1px;
+  background: var(--text);
+}
+
+.mobile-upload-btn-sm {
+  background: var(--accent);
+  color: #fff;
+  border: none;
+  border-radius: 4px;
+  padding: 6px 12px;
+  font-size: 12px;
+  font-weight: 500;
+  cursor: pointer;
+  font-family: 'Inter', sans-serif;
+}
+
+.mobile-content {
+  padding: 24px 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.mobile-page-title {
+  font-family: 'Fraunces', serif;
+  font-size: 28px;
+  font-weight: 600;
+  color: var(--text);
+  letter-spacing: -0.025em;
+  line-height: 1.1;
+}
+
+.mobile-page-sub {
+  font-size: 12px;
+  color: var(--muted);
+  margin-top: 2px;
+}
+
+.mobile-stats-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1px;
+  background: var(--border);
+  border: 1px solid var(--border);
+  border-radius: 5px;
+  overflow: hidden;
+}
+
+.mobile-stat-cell {
+  background: var(--card);
+  padding: 16px 16px;
+}
+
+.mobile-stat-label {
+  font-size: 10px;
+  font-weight: 500;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--muted);
+  margin-bottom: 6px;
+}
+
+.mobile-stat-value {
+  font-family: 'Fraunces', serif;
+  font-size: 24px;
+  font-weight: 600;
+  letter-spacing: -0.025em;
+  line-height: 1;
+}
+
+.mobile-section-title {
+  font-size: 10px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  color: var(--muted);
+  margin-bottom: 12px;
+}
+
+.mobile-cat-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 0;
+  border-bottom: 1px solid var(--border-subtle);
+}
+
+.mobile-cat-row:last-child { border-bottom: none; }
+
+.mobile-txn-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 10px 0;
+  border-bottom: 1px solid var(--border-subtle);
+}
+
+.mobile-txn-row:last-child { border-bottom: none; }
+
+.mobile-txn-payee {
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--text);
+}
+
+.mobile-txn-sub {
+  font-size: 11px;
+  color: var(--muted);
+  margin-top: 1px;
+}
+
+.mobile-txn-amount {
+  font-size: 13px;
+  font-weight: 600;
+}
+</style>
+</head>
+<body>
+
+<div class="option-badge">Option C &mdash; Premium Minimalism &nbsp;|&nbsp; Fraunces + Inter &middot; Forest Green #166534 &middot; Pure white &middot; Restrained luxury</div>
+
+<!-- Desktop layout -->
+<div class="app-shell">
+
+  <!-- Sidebar -->
+  <aside class="sidebar">
+    <div class="sidebar-brand">
+      <div class="sidebar-mark"><div class="sidebar-mark-inner"></div></div>
+      <div class="sidebar-title">Finance Analyser</div>
+      <div class="sidebar-subtitle">3,241 transactions</div>
+    </div>
+
+    <div class="sidebar-section">
+      <div class="sidebar-section-label">Accounts</div>
+
+      <div class="account-row account-row-all active">
+        <div class="account-dot" style="background: conic-gradient(#166534 0deg 120deg, #1d4ed8 120deg 240deg, #6d28d9 240deg 360deg);"></div>
+        <span class="account-name">All Accounts</span>
+      </div>
+      <div class="account-row" style="padding-left:20px;">
+        <div class="account-dot" style="background:#166534;"></div>
+        <span class="account-name">ASB Everyday</span>
+      </div>
+      <div class="account-row" style="padding-left:20px;">
+        <div class="account-dot" style="background:#1d4ed8;"></div>
+        <span class="account-name">ASB Savings</span>
+      </div>
+      <div class="account-row" style="padding-left:20px;">
+        <div class="account-dot" style="background:#6d28d9;"></div>
+        <span class="account-name">Kiwibank Visa</span>
+      </div>
+    </div>
+
+    <div class="sidebar-upload">
+      <div class="upload-label">Upload to: <span style="color:var(--accent); font-weight:500;">ASB Everyday</span></div>
+      <button class="upload-btn">&#8593; Upload CSV</button>
+    </div>
+
+    <nav class="sidebar-nav">
+      <div class="nav-item active">
+        <span class="nav-icon">⬡</span> Dashboard
+      </div>
+      <div class="nav-item">
+        <span class="nav-icon">≡</span> Transactions
+      </div>
+      <div class="nav-item">
+        <span class="nav-icon">◎</span> AI Chat
+      </div>
+      <div class="nav-item">
+        <span class="nav-icon">◈</span> Net Worth
+      </div>
+      <div class="nav-item">
+        <span class="nav-icon">◉</span> Goals
+      </div>
+      <div class="nav-item">
+        <span class="nav-icon">◧</span> Budget
+      </div>
+      <div class="nav-item">
+        <span class="nav-icon">⚙</span> Settings
+      </div>
+    </nav>
+
+    <div class="sidebar-footer">ASB Bank &middot; NZD</div>
+  </aside>
+
+  <!-- Main -->
+  <main class="main">
+
+    <!-- Header -->
+    <div class="page-header">
+      <div>
+        <div class="page-title">May 2026</div>
+        <div class="page-subtitle">All accounts &middot; 284 transactions</div>
+      </div>
+      <div class="month-pills">
+        <button class="pill">Jan '26</button>
+        <button class="pill">Feb '26</button>
+        <button class="pill">Mar '26</button>
+        <button class="pill">Apr '26</button>
+        <button class="pill active">May '26</button>
+      </div>
+    </div>
+
+    <!-- Summary cards — connected grid, no individual shadows -->
+    <div class="stats-grid">
+      <div class="stat-card income">
+        <div class="stat-label">Income</div>
+        <div class="stat-value">$8,450</div>
+        <div class="stat-delta"><span class="delta-up">&#8593; $320</span> vs Apr</div>
+      </div>
+      <div class="stat-card spent">
+        <div class="stat-label">Spent</div>
+        <div class="stat-value">$5,218</div>
+        <div class="stat-delta"><span class="delta-down">&#8595; $180</span> vs Apr</div>
+      </div>
+      <div class="stat-card net">
+        <div class="stat-label">Net saved</div>
+        <div class="stat-value">+$3,231</div>
+        <div class="stat-delta">38.3% savings rate</div>
+      </div>
+      <div class="stat-card txns">
+        <div class="stat-label">Transactions</div>
+        <div class="stat-value">284</div>
+        <div class="stat-delta">12 transfers excluded</div>
+      </div>
+    </div>
+
+    <!-- Charts row -->
+    <div class="charts-row">
+
+      <!-- Spending by Category -->
+      <div class="card">
+        <div class="card-title">Spending by Category</div>
+        <div class="card-hero">$5,218.40</div>
+        <div class="donut-layout">
+          <div class="legend-list">
+            <div class="legend-item">
+              <div class="legend-dot" style="background:var(--cat-groceries);"></div>
+              <span class="legend-name">Groceries</span>
+              <span class="legend-val">$1,240.80</span>
+              <span class="legend-pct">23.8%</span>
+            </div>
+            <div class="legend-item">
+              <div class="legend-dot" style="background:var(--cat-transport);"></div>
+              <span class="legend-name">Transport</span>
+              <span class="legend-val">$894.50</span>
+              <span class="legend-pct">17.1%</span>
+            </div>
+            <div class="legend-item">
+              <div class="legend-dot" style="background:var(--cat-shopping);"></div>
+              <span class="legend-name">Shopping</span>
+              <span class="legend-val">$899.00</span>
+              <span class="legend-pct">17.2%</span>
+            </div>
+            <div class="legend-item">
+              <div class="legend-dot" style="background:var(--cat-dining);"></div>
+              <span class="legend-name">Dining</span>
+              <span class="legend-val">$743.20</span>
+              <span class="legend-pct">14.2%</span>
+            </div>
+            <div class="legend-item">
+              <div class="legend-dot" style="background:var(--cat-utilities);"></div>
+              <span class="legend-name">Utilities</span>
+              <span class="legend-val">$612.00</span>
+              <span class="legend-pct">11.7%</span>
+            </div>
+            <div class="legend-item">
+              <div class="legend-dot" style="background:var(--cat-entertainment);"></div>
+              <span class="legend-name">Entertainment</span>
+              <span class="legend-val">$480.90</span>
+              <span class="legend-pct">9.2%</span>
+            </div>
+            <div class="legend-item">
+              <div class="legend-dot" style="background:var(--cat-healthcare);"></div>
+              <span class="legend-name">Healthcare</span>
+              <span class="legend-val">$348.00</span>
+              <span class="legend-pct">6.7%</span>
+            </div>
+          </div>
+
+          <div class="donut-wrap">
+            <svg viewBox="0 0 130 130">
+              <circle cx="65" cy="65" r="48" fill="none" stroke="#e8ede9" stroke-width="18"/>
+              <circle cx="65" cy="65" r="48" fill="none" stroke="var(--cat-groceries)" stroke-width="18"
+                stroke-dasharray="143.3 158.5" stroke-dashoffset="79.3" />
+              <circle cx="65" cy="65" r="48" fill="none" stroke="var(--cat-shopping)" stroke-width="18"
+                stroke-dasharray="108.5 193.3" stroke-dashoffset="-64.0" />
+              <circle cx="65" cy="65" r="48" fill="none" stroke="var(--cat-transport)" stroke-width="18"
+                stroke-dasharray="107.5 194.3" stroke-dashoffset="-172.5" />
+              <circle cx="65" cy="65" r="48" fill="none" stroke="var(--cat-dining)" stroke-width="18"
+                stroke-dasharray="89.3 212.5" stroke-dashoffset="-280.0" />
+              <circle cx="65" cy="65" r="48" fill="none" stroke="var(--cat-utilities)" stroke-width="18"
+                stroke-dasharray="73.5 228.3" stroke-dashoffset="-369.3" />
+              <circle cx="65" cy="65" r="48" fill="none" stroke="var(--cat-entertainment)" stroke-width="18"
+                stroke-dasharray="57.8 244.0" stroke-dashoffset="-442.8" />
+              <circle cx="65" cy="65" r="48" fill="none" stroke="var(--cat-healthcare)" stroke-width="18"
+                stroke-dasharray="42.0 259.8" stroke-dashoffset="-500.6" />
+            </svg>
+            <div class="donut-center-text">
+              <div class="donut-center-label">Total</div>
+              <div class="donut-center-value">$5,218</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Income vs Expenses -->
+      <div class="card">
+        <div class="card-title">Income vs Expenses</div>
+        <div class="card-hero">Last 5 months</div>
+        <div class="bar-chart-area">
+          <div class="bar-group">
+            <div class="bar" style="height:58%; background:var(--accent); opacity:0.5;"></div>
+            <div class="bar" style="height:49%; background:var(--red); opacity:0.45;"></div>
+            <span class="bar-label">Jan</span>
+          </div>
+          <div class="bar-group">
+            <div class="bar" style="height:62%; background:var(--accent); opacity:0.6;"></div>
+            <div class="bar" style="height:52%; background:var(--red); opacity:0.45;"></div>
+            <span class="bar-label">Feb</span>
+          </div>
+          <div class="bar-group">
+            <div class="bar" style="height:65%; background:var(--accent); opacity:0.7;"></div>
+            <div class="bar" style="height:47%; background:var(--red); opacity:0.5;"></div>
+            <span class="bar-label">Mar</span>
+          </div>
+          <div class="bar-group">
+            <div class="bar" style="height:63%; background:var(--accent); opacity:0.75;"></div>
+            <div class="bar" style="height:51%; background:var(--red); opacity:0.5;"></div>
+            <span class="bar-label">Apr</span>
+          </div>
+          <div class="bar-group">
+            <div class="bar" style="height:70%; background:var(--accent);"></div>
+            <div class="bar" style="height:48%; background:var(--red); opacity:0.7;"></div>
+            <span class="bar-label" style="color:var(--text-2); font-weight:500;">May</span>
+          </div>
+        </div>
+        <div class="bar-chart-legend">
+          <div class="bar-legend-item">
+            <div class="bar-legend-dot" style="background:var(--accent);"></div> Income
+          </div>
+          <div class="bar-legend-item">
+            <div class="bar-legend-dot" style="background:var(--red);"></div> Expenses
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Spending Trends by Category -->
+    <div class="card" style="border: 1px solid var(--border); border-radius: 6px;">
+      <div class="card-title">Spending Trends by Category</div>
+      <div class="card-hero" style="font-size:18px; margin-bottom:20px;">Jan–May 2026</div>
+      <div style="display:flex; gap:32px; align-items:flex-start;">
+        <div class="trend-chart-area" style="flex:1;">
+          <svg viewBox="0 0 700 120" preserveAspectRatio="none">
+            <!-- Grid lines -->
+            <line x1="0" y1="30" x2="700" y2="30" stroke="#e8ede9" stroke-width="0.75"/>
+            <line x1="0" y1="60" x2="700" y2="60" stroke="#e8ede9" stroke-width="0.75"/>
+            <line x1="0" y1="90" x2="700" y2="90" stroke="#e8ede9" stroke-width="0.75"/>
+            <!-- Lines — same category tokens as donut -->
+            <polyline points="0,48 140,44 280,52 420,50 560,47 700,44"
+              fill="none" stroke="var(--cat-groceries)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+            <polyline points="0,64 140,61 280,66 420,63 560,61 700,58"
+              fill="none" stroke="var(--cat-transport)" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+            <polyline points="0,70 140,68 280,66 420,73 560,70 700,68"
+              fill="none" stroke="var(--cat-dining)" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+            <polyline points="0,78 140,80 280,79 420,77 560,81 700,78"
+              fill="none" stroke="var(--cat-utilities)" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+            <polyline points="0,87 140,84 280,87 420,85 560,89 700,86"
+              fill="none" stroke="var(--cat-entertainment)" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+            <!-- X labels -->
+            <text x="0" y="113" fill="#9aaf9e" font-size="9" font-family="Inter,sans-serif">Jan</text>
+            <text x="130" y="113" fill="#9aaf9e" font-size="9" font-family="Inter,sans-serif">Feb</text>
+            <text x="268" y="113" fill="#9aaf9e" font-size="9" font-family="Inter,sans-serif">Mar</text>
+            <text x="408" y="113" fill="#9aaf9e" font-size="9" font-family="Inter,sans-serif">Apr</text>
+            <text x="548" y="113" fill="#9aaf9e" font-size="9" font-family="Inter,sans-serif">May</text>
+          </svg>
+        </div>
+        <div style="display:flex; flex-direction:column; gap:8px; padding-top:2px; min-width:100px;">
+          <div style="display:flex; align-items:center; gap:8px; font-size:12px; color:var(--muted);">
+            <div style="width:16px;height:2px;background:var(--cat-groceries);border-radius:1px;"></div>Groceries
+          </div>
+          <div style="display:flex; align-items:center; gap:8px; font-size:12px; color:var(--muted);">
+            <div style="width:16px;height:2px;background:var(--cat-transport);border-radius:1px;"></div>Transport
+          </div>
+          <div style="display:flex; align-items:center; gap:8px; font-size:12px; color:var(--muted);">
+            <div style="width:16px;height:2px;background:var(--cat-dining);border-radius:1px;"></div>Dining
+          </div>
+          <div style="display:flex; align-items:center; gap:8px; font-size:12px; color:var(--muted);">
+            <div style="width:16px;height:2px;background:var(--cat-utilities);border-radius:1px;"></div>Utilities
+          </div>
+          <div style="display:flex; align-items:center; gap:8px; font-size:12px; color:var(--muted);">
+            <div style="width:16px;height:2px;background:var(--cat-entertainment);border-radius:1px;"></div>Entertainment
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Recent transactions -->
+    <div class="card" style="border: 1px solid var(--border); border-radius: 6px;">
+      <div class="card-title">Recent Transactions</div>
+      <div class="card-hero" style="font-size:18px; margin-bottom:16px;">May 2026</div>
+      <div class="txn-list">
+        <div class="txn-row">
+          <div class="txn-cat-dot" style="background:var(--cat-groceries);"></div>
+          <div class="txn-info">
+            <div class="txn-payee">Countdown Newmarket</div>
+            <div class="txn-meta">24 May 2026</div>
+          </div>
+          <span class="txn-cat-label">Groceries</span>
+          <div class="txn-amount debit">-$142.30</div>
+        </div>
+        <div class="txn-row">
+          <div class="txn-cat-dot" style="background:var(--cat-transport);"></div>
+          <div class="txn-info">
+            <div class="txn-payee">AT Monthly Pass</div>
+            <div class="txn-meta">23 May 2026</div>
+          </div>
+          <span class="txn-cat-label">Transport</span>
+          <div class="txn-amount debit">-$210.00</div>
+        </div>
+        <div class="txn-row">
+          <div class="txn-cat-dot" style="background:var(--accent);"></div>
+          <div class="txn-info">
+            <div class="txn-payee">Salary — Acme Corp</div>
+            <div class="txn-meta">22 May 2026</div>
+          </div>
+          <span class="txn-cat-label">Income</span>
+          <div class="txn-amount credit">+$4,225.00</div>
+        </div>
+        <div class="txn-row">
+          <div class="txn-cat-dot" style="background:var(--cat-dining);"></div>
+          <div class="txn-info">
+            <div class="txn-payee">Depot Eatery</div>
+            <div class="txn-meta">21 May 2026</div>
+          </div>
+          <span class="txn-cat-label">Dining</span>
+          <div class="txn-amount debit">-$87.50</div>
+        </div>
+        <div class="txn-row">
+          <div class="txn-cat-dot" style="background:var(--cat-utilities);"></div>
+          <div class="txn-info">
+            <div class="txn-payee">Mercury Energy</div>
+            <div class="txn-meta">20 May 2026</div>
+          </div>
+          <span class="txn-cat-label">Utilities</span>
+          <div class="txn-amount debit">-$198.40</div>
+        </div>
+        <div class="txn-row">
+          <div class="txn-cat-dot" style="background:var(--cat-healthcare);"></div>
+          <div class="txn-info">
+            <div class="txn-payee">Auckland City Medical</div>
+            <div class="txn-meta">18 May 2026</div>
+          </div>
+          <span class="txn-cat-label">Healthcare</span>
+          <div class="txn-amount debit">-$75.00</div>
+        </div>
+        <div class="txn-row">
+          <div class="txn-cat-dot" style="background:var(--cat-entertainment);"></div>
+          <div class="txn-info">
+            <div class="txn-payee">Sky TV Subscription</div>
+            <div class="txn-meta">17 May 2026</div>
+          </div>
+          <span class="txn-cat-label">Entertainment</span>
+          <div class="txn-amount debit">-$54.99</div>
+        </div>
+      </div>
+    </div>
+
+  </main>
+</div>
+
+<!-- Mobile preview -->
+<div class="mobile-preview-banner">Mobile Preview — 375px</div>
+<div class="mobile-preview-wrap">
+  <div class="mobile-frame">
+    <div class="mobile-topbar">
+      <div class="mobile-menu-btn">
+        <div class="mobile-menu-line"></div>
+        <div class="mobile-menu-line"></div>
+        <div class="mobile-menu-line"></div>
+      </div>
+      <div class="mobile-topbar-brand">Finance Analyser</div>
+      <button class="mobile-upload-btn-sm">&#8593; CSV</button>
+    </div>
+
+    <div class="mobile-content">
+      <!-- Month pills -->
+      <div style="display:flex; gap:4px; overflow-x:auto; padding-bottom:2px;">
+        <button class="pill" style="white-space:nowrap;flex-shrink:0;">Jan</button>
+        <button class="pill" style="white-space:nowrap;flex-shrink:0;">Feb</button>
+        <button class="pill" style="white-space:nowrap;flex-shrink:0;">Mar</button>
+        <button class="pill" style="white-space:nowrap;flex-shrink:0;">Apr</button>
+        <button class="pill active" style="white-space:nowrap;flex-shrink:0;">May</button>
+      </div>
+
+      <div>
+        <div class="mobile-page-title">May 2026</div>
+        <div class="mobile-page-sub">All accounts &middot; 284 transactions</div>
+      </div>
+
+      <!-- Stats grid — connected like desktop -->
+      <div class="mobile-stats-grid">
+        <div class="mobile-stat-cell">
+          <div class="mobile-stat-label">Income</div>
+          <div class="mobile-stat-value" style="color:var(--accent);">$8,450</div>
+        </div>
+        <div class="mobile-stat-cell">
+          <div class="mobile-stat-label">Spent</div>
+          <div class="mobile-stat-value" style="color:var(--red);">$5,218</div>
+        </div>
+        <div class="mobile-stat-cell" style="grid-column:span 2;">
+          <div class="mobile-stat-label">Net saved</div>
+          <div class="mobile-stat-value" style="color:var(--accent); font-size:26px;">+$3,231</div>
+        </div>
+      </div>
+
+      <!-- Category breakdown -->
+      <div>
+        <div class="mobile-section-title">Spending by Category</div>
+        <div class="mobile-cat-row">
+          <div style="width:6px;height:6px;border-radius:50%;background:var(--cat-groceries);flex-shrink:0;"></div>
+          <span style="flex:1;font-size:13px;font-weight:500;color:var(--text-2);">Groceries</span>
+          <span style="font-size:13px;font-weight:600;color:var(--text);">$1,240.80</span>
+          <span style="font-size:11px;color:var(--subtle);width:36px;text-align:right;">23.8%</span>
+        </div>
+        <div class="mobile-cat-row">
+          <div style="width:6px;height:6px;border-radius:50%;background:var(--cat-transport);flex-shrink:0;"></div>
+          <span style="flex:1;font-size:13px;font-weight:500;color:var(--text-2);">Transport</span>
+          <span style="font-size:13px;font-weight:600;color:var(--text);">$894.50</span>
+          <span style="font-size:11px;color:var(--subtle);width:36px;text-align:right;">17.1%</span>
+        </div>
+        <div class="mobile-cat-row">
+          <div style="width:6px;height:6px;border-radius:50%;background:var(--cat-shopping);flex-shrink:0;"></div>
+          <span style="flex:1;font-size:13px;font-weight:500;color:var(--text-2);">Shopping</span>
+          <span style="font-size:13px;font-weight:600;color:var(--text);">$899.00</span>
+          <span style="font-size:11px;color:var(--subtle);width:36px;text-align:right;">17.2%</span>
+        </div>
+      </div>
+
+      <!-- Transactions -->
+      <div>
+        <div class="mobile-section-title">Recent Transactions</div>
+        <div class="mobile-txn-row">
+          <div>
+            <div class="mobile-txn-payee">Countdown Newmarket</div>
+            <div class="mobile-txn-sub">Groceries &middot; 24 May</div>
+          </div>
+          <div class="mobile-txn-amount" style="color:var(--red);">-$142.30</div>
+        </div>
+        <div class="mobile-txn-row">
+          <div>
+            <div class="mobile-txn-payee">AT Monthly Pass</div>
+            <div class="mobile-txn-sub">Transport &middot; 23 May</div>
+          </div>
+          <div class="mobile-txn-amount" style="color:var(--red);">-$210.00</div>
+        </div>
+        <div class="mobile-txn-row">
+          <div>
+            <div class="mobile-txn-payee">Salary — Acme Corp</div>
+            <div class="mobile-txn-sub">Income &middot; 22 May</div>
+          </div>
+          <div class="mobile-txn-amount" style="color:var(--accent);">+$4,225.00</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<style>
+@media (max-width: 768px) {
+  .app-shell { flex-direction: column; }
+  .sidebar { width: 100%; height: auto; position: relative; top: 0; display: none; }
+  .main { padding: 20px 16px; gap: 20px; }
+  .stats-grid { grid-template-columns: 1fr 1fr; }
+  .stat-card:nth-child(3) { grid-column: span 2; }
+  .charts-row { grid-template-columns: 1fr; }
+  .donut-layout { flex-direction: column-reverse; align-items: flex-start; gap: 16px; }
+  .donut-wrap { flex: 0 0 120px; height: 120px; }
+}
+</style>
+
+</body>
+</html>

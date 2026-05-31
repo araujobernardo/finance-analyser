@@ -1,0 +1,293 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Option C — Inline Summary Card</title>
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --bg: #060d1a;
+    --surface: #0c1526;
+    --card: #111e33;
+    --border: #1a2d4a;
+    --accent: #10b981;
+    --accent-dim: #065f46;
+    --text: #e2e8f0;
+    --muted: #64748b;
+    --subtle: #94a3b8;
+    --color-danger: #f87171;
+    --warning: #fbbf24;
+    --modal-overlay: rgba(0,0,0,0.6);
+    --surface-hover: #152234;
+  }
+
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: flex-start;
+    padding: 16px;
+  }
+
+  .banner {
+    width: 100%;
+    max-width: 560px;
+    background: var(--accent-dim);
+    border: 1px solid var(--accent);
+    border-radius: 8px;
+    padding: 10px 16px;
+    font-size: 0.78rem;
+    font-weight: 600;
+    color: var(--accent);
+    letter-spacing: 0.03em;
+    margin-bottom: 20px;
+    text-align: center;
+  }
+
+  .backdrop {
+    width: 100%;
+    max-width: 540px;
+    border-radius: 12px;
+    padding: 4px;
+  }
+
+  .panel {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    box-shadow: 0 24px 64px rgba(0,0,0,0.5);
+  }
+
+  /* Header */
+  .header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 20px 24px 18px;
+    border-bottom: 1px solid var(--border);
+  }
+  .title { font-size: 1rem; font-weight: 600; color: var(--text); }
+  .close {
+    width: 32px; height: 32px; border-radius: 8px;
+    border: 1px solid var(--border); background: transparent;
+    color: var(--muted); cursor: pointer; display: flex; align-items: center;
+    justify-content: center; font-size: 1.1rem; transition: background 0.15s, color 0.15s;
+  }
+  .close:hover { background: var(--card); color: var(--text); }
+
+  /* Body */
+  .body { padding: 24px; display: flex; flex-direction: column; gap: 20px; }
+
+  /* Live preview card — updates as user types */
+  .preview-card {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 14px 16px;
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    transition: border-color 0.2s;
+  }
+  .preview-card.has-data { border-color: rgba(16,185,129,0.35); }
+
+  .preview-icon {
+    width: 36px; height: 36px;
+    background: var(--accent-dim);
+    border-radius: 8px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 1rem;
+    flex-shrink: 0;
+  }
+
+  .preview-text { flex: 1; min-width: 0; }
+  .preview-cat {
+    font-size: 0.88rem; font-weight: 600; color: var(--text);
+    white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+  }
+  .preview-cat.placeholder { color: var(--muted); font-weight: 400; font-style: italic; }
+  .preview-month { font-size: 0.72rem; color: var(--muted); margin-top: 2px; }
+
+  .preview-amount {
+    font-size: 1.1rem; font-weight: 700;
+    color: var(--accent);
+    font-variant-numeric: tabular-nums;
+    white-space: nowrap;
+  }
+  .preview-amount.placeholder { color: var(--muted); font-size: 0.88rem; font-weight: 400; }
+
+  /* Fields */
+  .fields-row { display: flex; gap: 14px; }
+  .fields-row .field { flex: 1; }
+
+  .field { display: flex; flex-direction: column; gap: 6px; }
+  .label {
+    font-size: 0.75rem; font-weight: 600; color: var(--subtle);
+    text-transform: uppercase; letter-spacing: 0.04em;
+  }
+  .label-badge {
+    font-size: 0.68rem; font-weight: 400; color: var(--muted);
+    text-transform: none; letter-spacing: 0; margin-left: 5px;
+  }
+
+  .input {
+    width: 100%; padding: 10px 14px;
+    background: var(--card); border: 1px solid var(--border);
+    border-radius: 8px; color: var(--text); font-size: 0.9rem;
+    outline: none; appearance: none; -webkit-appearance: none;
+    transition: border-color 0.15s, box-shadow 0.15s; font-family: inherit;
+  }
+  .input:focus { border-color: var(--accent); box-shadow: 0 0 0 3px rgba(16,185,129,0.15); }
+  .input:hover:not(:focus) { border-color: var(--subtle); }
+  .input::placeholder { color: var(--muted); }
+  .input.error { border-color: var(--color-danger); }
+
+  .error-msg { font-size: 0.8rem; color: var(--color-danger); }
+  .hint { font-size: 0.72rem; color: var(--muted); line-height: 1.4; }
+
+  /* NZD prefix */
+  .prefix-wrap { position: relative; }
+  .prefix-wrap .input { padding-left: 44px; }
+  .prefix {
+    position: absolute; left: 0; top: 0; bottom: 0; width: 38px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 0.8rem; font-weight: 600; color: var(--muted);
+    border-right: 1px solid var(--border); pointer-events: none;
+  }
+
+  /* Footer */
+  .footer {
+    display: flex; justify-content: flex-end; gap: 10px;
+    padding: 16px 24px 20px; border-top: 1px solid var(--border);
+  }
+  .btn {
+    padding: 10px 20px; border-radius: 8px; font-size: 0.88rem;
+    font-weight: 600; cursor: pointer; border: none;
+    transition: opacity 0.15s, background 0.15s, transform 0.1s; font-family: inherit;
+  }
+  .btn:active { transform: scale(0.97); }
+  .btn-cancel { background: transparent; border: 1px solid var(--border); color: var(--subtle); }
+  .btn-cancel:hover { background: var(--card); border-color: var(--subtle); color: var(--text); }
+  .btn-save { background: var(--accent); color: #fff; }
+  .btn-save:hover { opacity: 0.88; }
+
+  @media (max-width: 480px) {
+    .body { padding: 16px; }
+    .header { padding: 14px 16px; }
+    .footer { padding: 12px 16px 16px; }
+    .fields-row { flex-direction: column; gap: 16px; }
+  }
+</style>
+</head>
+<body>
+
+<div class="banner">Option C — Inline Preview Card: live budget summary updates as you type</div>
+
+<div class="backdrop">
+  <div class="panel">
+
+    <div class="header">
+      <h2 class="title">Add Budget</h2>
+      <button class="close" aria-label="Close">✕</button>
+    </div>
+
+    <div class="body">
+
+      <!-- Live preview card -->
+      <div class="preview-card has-data" id="preview">
+        <div class="preview-icon">📊</div>
+        <div class="preview-text">
+          <div class="preview-cat" id="preview-cat">Groceries</div>
+          <div class="preview-month" id="preview-month">May 2026</div>
+        </div>
+        <div class="preview-amount" id="preview-amount">NZD 350.00 / mo</div>
+      </div>
+
+      <!-- Category + Limit side by side on desktop -->
+      <div class="fields-row">
+        <div class="field">
+          <label class="label" for="cat">Category</label>
+          <input id="cat" class="input" type="text" placeholder="e.g. Groceries" maxlength="100" value="Groceries" oninput="updatePreview()" />
+        </div>
+        <div class="field">
+          <label class="label" for="limit">Limit</label>
+          <div class="prefix-wrap">
+            <span class="prefix">NZD</span>
+            <input id="limit" class="input" type="number" min="0" step="0.01" placeholder="0.00" value="350.00" oninput="updatePreview()" />
+          </div>
+        </div>
+      </div>
+
+      <!-- Month picker -->
+      <div class="field">
+        <label class="label" for="month">Month <span class="label-badge">(defaults to current)</span></label>
+        <input id="month" class="input" type="month" value="2026-05" oninput="updatePreview()" />
+        <span class="hint">Budget applies to this single calendar month.</span>
+      </div>
+
+    </div>
+
+    <div class="footer">
+      <button class="btn btn-cancel">Cancel</button>
+      <button class="btn btn-save">Add Budget</button>
+    </div>
+  </div>
+</div>
+
+<script>
+  const MONTH_NAMES = ['January','February','March','April','May','June','July','August','September','October','November','December'];
+
+  function updatePreview() {
+    const cat = document.getElementById('cat').value.trim();
+    const limit = document.getElementById('limit').value;
+    const month = document.getElementById('month').value; // YYYY-MM
+
+    const catEl = document.getElementById('preview-cat');
+    const monthEl = document.getElementById('preview-month');
+    const amtEl = document.getElementById('preview-amount');
+    const card = document.getElementById('preview');
+
+    if (cat) {
+      catEl.textContent = cat;
+      catEl.classList.remove('placeholder');
+    } else {
+      catEl.textContent = 'Category name';
+      catEl.classList.add('placeholder');
+    }
+
+    if (month) {
+      const [yr, mo] = month.split('-');
+      monthEl.textContent = MONTH_NAMES[parseInt(mo, 10) - 1] + ' ' + yr;
+    } else {
+      monthEl.textContent = 'Select a month';
+    }
+
+    if (limit && parseFloat(limit) > 0) {
+      amtEl.textContent = 'NZD ' + parseFloat(limit).toFixed(2) + ' / mo';
+      amtEl.classList.remove('placeholder');
+    } else {
+      amtEl.textContent = 'Enter limit';
+      amtEl.classList.add('placeholder');
+    }
+
+    const hasData = cat && limit && month;
+    card.classList.toggle('has-data', !!hasData);
+  }
+
+  document.querySelectorAll('input[type="month"]').forEach(el => {
+    el.style.colorScheme = 'dark';
+  });
+</script>
+
+</body>
+</html>

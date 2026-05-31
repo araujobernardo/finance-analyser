@@ -1,0 +1,238 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Option B — Sticky Context Strip</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg: #f4f1ed;
+  --surface: #faf8f5;
+  --card: #ffffff;
+  --border: #ede8e2;
+  --border-strong: #d9d2c8;
+  --accent: #0f9d8a;
+  --accent-light: #e8f5f3;
+  --text: #1e2a22;
+  --text-2: #3d4a40;
+  --muted: #7a8074;
+  --subtle: #a09890;
+  --shadow-sm: 0 1px 3px rgba(30,42,34,0.08);
+}
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body {
+  font-family: 'Nunito', sans-serif;
+  background: var(--bg);
+  color: var(--text);
+  -webkit-font-smoothing: antialiased;
+  font-size: 14px;
+}
+
+.option-badge {
+  background: var(--accent);
+  color: #fff;
+  text-align: center;
+  padding: 10px 20px;
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  position: sticky;
+  top: 0;
+  z-index: 100;
+}
+
+.page {
+  max-width: 900px;
+  margin: 0 auto;
+  padding: 0 0 60px;
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+}
+
+/* ── OPTION B: Sticky Context Strip ── */
+/* The header is a distinct card-like strip that sticks to the top.
+   Title + pills in one contained surface with a bottom border.
+   Provides clear visual separation — feels like a persistent context bar. */
+
+.dash-header-strip {
+  background: var(--card);
+  border-bottom: 1px solid var(--border);
+  padding: 18px 28px 14px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  position: sticky;
+  top: 36px; /* below the option badge */
+  z-index: 50;
+  box-shadow: var(--shadow-sm);
+}
+
+.dash-title-block .dash-heading {
+  font-size: 24px;
+  font-weight: 800;
+  color: var(--text);
+  line-height: 1.2;
+}
+.dash-title-block .dash-subtitle {
+  font-size: 12px;
+  color: var(--muted);
+  margin-top: 4px;
+  font-weight: 500;
+}
+
+.dash-month-pills {
+  display: flex;
+  gap: 6px;
+  flex-wrap: nowrap;
+  overflow-x: auto;
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+  padding-bottom: 2px;
+}
+.dash-month-pills::-webkit-scrollbar { display: none; }
+
+.pill {
+  padding: 5px 13px;
+  border-radius: 20px;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  border: 1.5px solid var(--border-strong);
+  background: transparent;
+  color: var(--muted);
+  font-family: inherit;
+  white-space: nowrap;
+  flex-shrink: 0;
+  transition: all 130ms ease-out;
+}
+.pill:hover {
+  border-color: var(--accent);
+  color: var(--accent);
+  background: var(--accent-light);
+}
+.pill.active {
+  border-color: var(--accent);
+  background: var(--accent);
+  color: #fff;
+  font-weight: 700;
+}
+
+/* Page content below the strip */
+.page-body {
+  padding: 20px 28px 0;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.stats-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 14px;
+}
+.card {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 18px 20px;
+}
+.stat-label {
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--subtle);
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  margin-bottom: 6px;
+}
+.stat-value {
+  font-size: 22px;
+  font-weight: 800;
+  line-height: 1;
+  letter-spacing: -0.02em;
+}
+.chart-placeholder {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 20px;
+  height: 180px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--subtle);
+  font-size: 13px;
+  font-weight: 500;
+}
+
+@media (max-width: 640px) {
+  .dash-header-strip {
+    flex-wrap: wrap;
+    gap: 12px;
+  }
+  .dash-month-pills {
+    width: 100%;
+  }
+  .stats-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+</style>
+</head>
+<body>
+<div class="option-badge">Option B — Sticky Context Strip: header is a contained surface that sticks at top</div>
+
+<div class="page">
+  <div class="dash-header-strip">
+    <div class="dash-title-block">
+      <h1 class="dash-heading" id="heading-b">May 2025</h1>
+      <div class="dash-subtitle" id="subtitle-b">All accounts &middot; 143 transactions</div>
+    </div>
+    <div class="dash-month-pills" id="pills-b">
+      <button class="pill" onclick="toggleB(this)">Jan '25</button>
+      <button class="pill" onclick="toggleB(this)">Feb '25</button>
+      <button class="pill" onclick="toggleB(this)">Mar '25</button>
+      <button class="pill" onclick="toggleB(this)">Apr '25</button>
+      <button class="pill active" onclick="toggleB(this)">May '25</button>
+    </div>
+  </div>
+
+  <div class="page-body">
+    <div class="stats-grid">
+      <div class="card">
+        <div class="stat-label">Income</div>
+        <div class="stat-value" style="color:var(--accent)">$6,420.00</div>
+      </div>
+      <div class="card">
+        <div class="stat-label">Spent</div>
+        <div class="stat-value" style="color:#c53030">$3,981.50</div>
+      </div>
+      <div class="card">
+        <div class="stat-label">Net</div>
+        <div class="stat-value" style="color:var(--accent)">+$2,438.50</div>
+      </div>
+      <div class="card">
+        <div class="stat-label">Transactions</div>
+        <div class="stat-value" style="color:var(--text)">143</div>
+      </div>
+    </div>
+    <div class="chart-placeholder">Spending by Category chart</div>
+    <div style="height:200px"></div>
+  </div>
+</div>
+
+<script>
+function toggleB(btn) {
+  btn.classList.toggle('active');
+  const activePills = document.querySelectorAll('#pills-b .pill.active');
+  const h1 = document.getElementById('heading-b');
+  const months = Array.from(activePills).map(p => p.textContent);
+  if (months.length === 0) { h1.textContent = 'No month selected'; return; }
+  h1.textContent = months.length === 1 ? 'May 2025' : months.join(' · ');
+}
+</script>
+</body>
+</html>
