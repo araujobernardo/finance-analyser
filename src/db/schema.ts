@@ -291,9 +291,10 @@ export const akahuAccountLinks = pgTable(
       .notNull()
       .references(() => users.id, { onDelete: "cascade" }),
     akahuAccountId: varchar("akahu_account_id", { length: 50 }).notNull(),
-    financeAccountId: uuid("finance_account_id")
-      .notNull()
-      .references(() => accounts.id, { onDelete: "cascade" }),
+    // FA-BANK-002: nullable — unlinked discovery rows have no Finance Analyser account yet
+    financeAccountId: uuid("finance_account_id").references(() => accounts.id, {
+      onDelete: "cascade",
+    }),
     akahuAccountName: varchar("akahu_account_name", { length: 200 }).notNull(),
     akahuAccountType: varchar("akahu_account_type", { length: 50 }),
     lastBalance: numeric("last_balance", { precision: 15, scale: 2 }), // postgres-js returns numeric as string; call parseFloat() before arithmetic

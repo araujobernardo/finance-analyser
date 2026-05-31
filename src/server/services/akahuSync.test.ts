@@ -7,7 +7,11 @@ import { describe, it, expect, vi, beforeEach } from "vitest";
 vi.mock("../../db/index.ts", () => ({
   db: {
     select: () => ({ from: () => ({ where: () => Promise.resolve([]) }) }),
-    insert: () => ({ values: () => Promise.resolve([]) }),
+    insert: () => ({
+      values: () => ({
+        onConflictDoUpdate: () => Promise.resolve([]),
+      }),
+    }),
     update: () => ({ set: () => ({ where: () => Promise.resolve([]) }) }),
   },
 }));
@@ -99,7 +103,7 @@ function makeTxResult(items: unknown[]) {
 }
 
 // A helper to set up the db.select spy with sequential responses.
-// responses[0] = akahuConnections, responses[1] = balance check, ...
+// responses[0] = akahuConnections, responses[1] = akahuAccountLinks (filtered), ...
 function setupSelectSpy(responses: unknown[][]) {
   let callCount = 0;
   vi.spyOn(db, "select").mockImplementation(
@@ -124,12 +128,24 @@ function setupUpdateSpy() {
   } as unknown as ReturnType<typeof db.update>);
 }
 
+/**
+ * Sets up the db.insert spy supporting both:
+ *   - upsert chain: .insert().values().onConflictDoUpdate()
+ *   - plain insert chain: .insert().values()
+ *
+ * Returns the mockValues fn so tests can assert on transaction inserts.
+ */
 function setupInsertSpy() {
-  const mockValues = vi.fn().mockResolvedValue([]);
+  const mockOnConflictDoUpdate = vi.fn().mockResolvedValue([]);
+  const mockValues = vi.fn().mockReturnValue({
+    onConflictDoUpdate: mockOnConflictDoUpdate,
+    // also resolves directly when no chaining (plain insert)
+    then: (resolve: (v: unknown[]) => void) => resolve([]),
+  });
   vi.spyOn(db, "insert").mockReturnValue({
     values: mockValues,
   } as unknown as ReturnType<typeof db.insert>);
-  return mockValues;
+  return { mockValues, mockOnConflictDoUpdate };
 }
 
 // ── Tests ─────────────────────────────────────────────────────────────────────
@@ -146,6 +162,7 @@ describe("syncUserAccounts", () => {
     // All selects return empty — no connection found
     setupSelectSpy([[]]);
     setupUpdateSpy();
+    setupInsertSpy();
 
     await expect(syncUserAccounts("user-1")).rejects.toThrow(
       "No Akahu connection found",
@@ -154,8 +171,9 @@ describe("syncUserAccounts", () => {
 
   it("calls decrypt with the encryptedUserToken from the connection row", async () => {
     // Connection found; no account links
-    setupSelectSpy([[makeConnectionRow()], [], []]);
+    setupSelectSpy([[makeConnectionRow()], []]);
     setupUpdateSpy();
+    setupInsertSpy();
 
     await syncUserAccounts("user-1");
 
@@ -165,6 +183,7 @@ describe("syncUserAccounts", () => {
   it("returns zero counts when no account links exist", async () => {
     setupSelectSpy([[makeConnectionRow()], []]);
     setupUpdateSpy();
+    setupInsertSpy();
     mockAccountsList.mockResolvedValue([]);
 
     const result = await syncUserAccounts("user-1");
@@ -176,12 +195,55 @@ describe("syncUserAccounts", () => {
     });
   });
 
+  it("upserts a discovery row for each Akahu account returned by the SDK", async () => {
+    // Two Akahu accounts, no existing Finance Analyser links
+    setupSelectSpy([[makeConnectionRow()], []]);
+    setupUpdateSpy();
+    const { mockValues, mockOnConflictDoUpdate } = setupInsertSpy();
+
+    mockAccountsList.mockResolvedValue([
+      makeAkahuAccount({ _id: "akahu-acc-1", name: "Cheque" }),
+      makeAkahuAccount({ _id: "akahu-acc-2", name: "Savings" }),
+    ]);
+
+    await syncUserAccounts("user-1");
+
+    // insert called twice — once per Akahu account
+    expect(mockValues).toHaveBeenCalledTimes(2);
+    // onConflictDoUpdate chained on each upsert
+    expect(mockOnConflictDoUpdate).toHaveBeenCalledTimes(2);
+  });
+
+  it("upserts account name and balance but does not overwrite financeAccountId on conflict", async () => {
+    setupSelectSpy([[makeConnectionRow()], []]);
+    setupUpdateSpy();
+    const { mockOnConflictDoUpdate } = setupInsertSpy();
+
+    mockAccountsList.mockResolvedValue([
+      makeAkahuAccount({
+        _id: "akahu-acc-1",
+        name: "Updated Name",
+        balance: { currency: "NZD", current: 999.99 },
+      }),
+    ]);
+
+    await syncUserAccounts("user-1");
+
+    // The set clause must NOT include financeAccountId (we don't overwrite mappings)
+    const setArg = mockOnConflictDoUpdate.mock.calls[0]?.[0]?.set as
+      | Record<string, unknown>
+      | undefined;
+    expect(setArg).toBeDefined();
+    expect(setArg).toHaveProperty("akahuAccountName", "Updated Name");
+    expect(setArg).toHaveProperty("lastBalance", "999.99");
+    expect(setArg).not.toHaveProperty("financeAccountId");
+  });
+
   it("increments accountsSynced and transactionsAdded on a successful sync", async () => {
-    // Responses: connection, (balance update — no link found), links, (dedup — not found)
+    // Responses: connection row, then linked accounts (financeAccountId not null)
     setupSelectSpy([
       [makeConnectionRow()], // akahuConnections
-      [], // balance update check (no link for account)
-      [makeLinkRow()], // akahuAccountLinks
+      [makeLinkRow()], // akahuAccountLinks (mapped rows only)
       [], // dedup check — no existing transaction
     ]);
     setupUpdateSpy();
@@ -209,15 +271,13 @@ describe("syncUserAccounts", () => {
   });
 
   it("skips insertion when a transaction already exists (dedup)", async () => {
-    // Dedup check returns an existing transaction
     setupSelectSpy([
       [makeConnectionRow()], // connection
-      [], // balance update
       [makeLinkRow()], // links
       [{ id: "existing-tx" }], // dedup found — skip insert
     ]);
     setupUpdateSpy();
-    const mockValues = setupInsertSpy();
+    const { mockValues } = setupInsertSpy();
 
     mockAccountsList.mockResolvedValue([makeAkahuAccount()]);
     mockTransactionsList.mockResolvedValue(
@@ -235,8 +295,17 @@ describe("syncUserAccounts", () => {
 
     const result = await syncUserAccounts("user-1");
 
-    expect(mockValues).not.toHaveBeenCalled();
+    // insert.values is called once per discovered Akahu account (upsert), but
+    // NOT called again for the transaction because the dedup check found a match.
+    // The upsert for akahu-acc-1 = 1 call; tx insert = 0 (deduped)
+    const txInsertCalls = mockValues.mock.calls.filter(
+      (call) => !("onConflictDoUpdate" in (call[0] ?? {})),
+    );
+    // All transaction insert calls would NOT have onConflictDoUpdate logic.
+    // Since dedup fires, only the upsert is called (1 upsert for 1 account).
+    expect(mockValues).toHaveBeenCalledTimes(1); // only upsert, no tx insert
     expect(result.transactionsAdded).toBe(0);
+    void txInsertCalls; // suppress unused-variable warning
   });
 
   it("a per-account error does not stop other accounts from syncing", async () => {
@@ -245,11 +314,10 @@ describe("syncUserAccounts", () => {
 
     setupSelectSpy([
       [makeConnectionRow()], // connection
-      [], // balance update acc-1
-      [], // balance update acc-2
       [link1, link2], // links
     ]);
     setupUpdateSpy();
+    setupInsertSpy();
 
     mockAccountsList.mockResolvedValue([
       makeAkahuAccount({ _id: "akahu-acc-1" }),
@@ -270,5 +338,28 @@ describe("syncUserAccounts", () => {
     expect(result.errors).toHaveLength(1);
     expect(result.errors[0]?.error).toBe("Network timeout");
     expect(result.accountsSynced).toBe(1);
+  });
+
+  it("skips transaction sync for unlinked accounts (financeAccountId is null)", async () => {
+    // linkRows returns empty (all accounts unlinked) — no transaction processing
+    setupSelectSpy([
+      [makeConnectionRow()], // connection
+      [], // akahuAccountLinks with isNotNull filter = empty (no mapped accounts)
+    ]);
+    setupUpdateSpy();
+    setupInsertSpy();
+
+    mockAccountsList.mockResolvedValue([
+      makeAkahuAccount({ _id: "akahu-acc-1" }),
+    ]);
+
+    const result = await syncUserAccounts("user-1");
+
+    // Discovered account upserted, but no transactions synced
+    expect(result.accountsSynced).toBe(0);
+    expect(result.transactionsAdded).toBe(0);
+    expect(result.errors).toEqual([]);
+    // Transactions.list should NOT have been called since no linked accounts
+    expect(mockTransactionsList).not.toHaveBeenCalled();
   });
 });
