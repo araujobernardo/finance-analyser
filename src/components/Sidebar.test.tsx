@@ -197,11 +197,18 @@ describe("Sidebar — account selection (issue #748)", () => {
       }),
     });
     renderSidebar();
-    const label = await screen.findByTestId("upload-to-label");
-    expect(label).toBeInTheDocument();
-    // Active account is the first one loaded
+    // findByTestId resolves when the element appears (may still show the fallback
+    // while the async account fetch is in flight). Use waitFor to wait until the
+    // context has loaded accounts and resolved the active account to "acc-1".
+    await waitFor(
+      () => {
+        const label = screen.getByTestId("upload-to-label");
+        expect(label).toHaveTextContent("Cheque");
+      },
+      { timeout: 3000 },
+    );
+    const label = screen.getByTestId("upload-to-label");
     expect(label).toHaveTextContent("Upload to:");
-    expect(label).toHaveTextContent("Cheque");
   });
 
   it("clicking an account row selects it and updates Upload to label", async () => {
