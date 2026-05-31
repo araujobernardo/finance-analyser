@@ -1,0 +1,390 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Option B — Annotated Peaks</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Nunito:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg: #f4f1ed;
+  --surface: #faf8f5;
+  --card: #ffffff;
+  --border: #ede8e2;
+  --border-strong: #d9d2c8;
+  --accent: #0f9d8a;
+  --accent-light: #e8f5f3;
+  --text: #1e2a22;
+  --text-2: #3d4a40;
+  --muted: #7a8074;
+  --subtle: #a09890;
+  --red: #c53030;
+  --red-light: #fff5f5;
+  --shadow-sm: 0 1px 4px rgba(30,42,34,0.07);
+  --shadow-md: 0 4px 16px rgba(30,42,34,0.08);
+}
+
+* { box-sizing: border-box; margin: 0; padding: 0; }
+
+body {
+  font-family: 'Nunito', sans-serif;
+  background: var(--bg);
+  color: var(--text);
+  -webkit-font-smoothing: antialiased;
+  min-height: 100vh;
+  padding: 24px;
+}
+
+.option-badge {
+  background: var(--accent);
+  color: #fff;
+  text-align: center;
+  padding: 10px 20px;
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  border-radius: 8px;
+  margin-bottom: 24px;
+}
+
+.card {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  box-shadow: var(--shadow-sm);
+  padding: 20px;
+  max-width: 480px;
+}
+
+.card-header {
+  margin-bottom: 16px;
+}
+
+.card-title {
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--text);
+}
+
+.card-subtitle {
+  font-size: 11px;
+  color: var(--muted);
+  font-weight: 500;
+  margin-top: 2px;
+}
+
+.chart-wrapper {
+  position: relative;
+}
+
+/* Subtle horizontal grid lines */
+.grid-lines {
+  position: absolute;
+  inset: 0 0 1px 0;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  pointer-events: none;
+}
+
+.grid-line {
+  width: 100%;
+  height: 1px;
+  background: var(--border);
+}
+
+.chart-area {
+  position: relative;
+  height: 160px;
+  display: flex;
+  align-items: flex-end;
+  border-bottom: 1px solid var(--border);
+  margin-bottom: 6px;
+}
+
+.bar-group {
+  flex: 1;
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  gap: 4px;
+  padding: 0 6px;
+  position: relative;
+}
+
+.bar-wrapper {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: flex-end;
+  height: 160px;
+  position: relative;
+}
+
+.bar-wrapper:hover .tooltip {
+  opacity: 1;
+  transform: translateX(-50%) translateY(0);
+}
+
+.bar {
+  width: 100%;
+  border-radius: 5px 5px 0 0;
+  cursor: default;
+  transition: opacity 0.15s ease;
+  position: relative;
+}
+
+.bar:hover { opacity: 0.75; }
+.bar--income { background: var(--accent); }
+.bar--expense { background: var(--red); }
+
+/* Peak annotation dot */
+.peak-dot {
+  position: absolute;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  border: 2px solid var(--card);
+  top: -5px;
+  left: 50%;
+  transform: translateX(-50%);
+}
+
+.peak-dot--income { background: var(--accent); }
+.peak-dot--expense { background: var(--red); }
+
+/* Peak label */
+.peak-label {
+  position: absolute;
+  font-size: 9px;
+  font-weight: 800;
+  white-space: nowrap;
+  top: -18px;
+  left: 50%;
+  transform: translateX(-50%);
+}
+
+.peak-label--income { color: var(--accent); }
+.peak-label--expense { color: var(--red); }
+
+/* Tooltip */
+.tooltip {
+  position: absolute;
+  bottom: calc(100% + 8px);
+  left: 50%;
+  transform: translateX(-50%) translateY(4px);
+  background: var(--text);
+  color: #fff;
+  font-size: 10px;
+  font-weight: 700;
+  padding: 3px 6px;
+  border-radius: 4px;
+  white-space: nowrap;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.15s ease, transform 0.15s ease;
+  z-index: 10;
+}
+
+.tooltip::after {
+  content: '';
+  position: absolute;
+  top: 100%;
+  left: 50%;
+  transform: translateX(-50%);
+  border: 4px solid transparent;
+  border-top-color: var(--text);
+}
+
+/* Month labels */
+.month-labels {
+  display: flex;
+  margin-bottom: 14px;
+}
+
+.month-label {
+  flex: 1;
+  text-align: center;
+  font-size: 10px;
+  color: var(--muted);
+  font-weight: 500;
+  padding-top: 5px;
+}
+
+.month-label--current {
+  color: var(--text);
+  font-weight: 700;
+}
+
+/* Legend */
+.legend {
+  display: flex;
+  gap: 16px;
+  justify-content: center;
+}
+
+.legend-item {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 11px;
+  color: var(--text-2);
+  font-weight: 500;
+}
+
+.legend-dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+}
+
+.legend-dot--income { background: var(--accent); }
+.legend-dot--expense { background: var(--red); }
+
+/* Context */
+.context {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 20px;
+  max-width: 480px;
+  margin-top: 24px;
+}
+
+.context h3 {
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--muted);
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  margin-bottom: 8px;
+}
+
+.context p {
+  font-size: 12px;
+  color: var(--text-2);
+  line-height: 1.6;
+  margin-bottom: 6px;
+}
+
+.tradeoff {
+  background: var(--accent-light);
+  border: 1px solid #c0e0db;
+  border-radius: 6px;
+  padding: 8px 10px;
+  font-size: 11px;
+  color: var(--text-2);
+  margin-top: 10px;
+}
+</style>
+</head>
+<body>
+
+<div class="option-badge">Option B — Annotated Peaks</div>
+
+<div class="card">
+  <div class="card-header">
+    <div class="card-title">Income vs Expenses</div>
+    <div class="card-subtitle">Last 5 months</div>
+  </div>
+
+  <div class="chart-wrapper">
+    <div class="grid-lines">
+      <div class="grid-line"></div>
+      <div class="grid-line"></div>
+      <div class="grid-line"></div>
+    </div>
+    <div class="chart-area" id="chart"></div>
+  </div>
+
+  <div class="month-labels" id="monthLabels"></div>
+
+  <div class="legend">
+    <div class="legend-item">
+      <div class="legend-dot legend-dot--income"></div>
+      Income
+    </div>
+    <div class="legend-item">
+      <div class="legend-dot legend-dot--expense"></div>
+      Expenses
+    </div>
+  </div>
+</div>
+
+<div class="context">
+  <h3>Option B — Annotated Peaks</h3>
+  <p>Same grouped bar chart as Option A, but the highest-income month gets a teal peak dot + "$X,XXX" label above its bar, and the highest-expense month gets a red peak dot + label. This draws the eye to outlier months instantly without requiring careful reading of bar heights.</p>
+  <p>Three subtle horizontal grid lines provide a y-axis reference without explicit y-axis labels. Hover tooltip still available on every bar.</p>
+  <div class="tradeoff">Tradeoff: The peak annotations add visual noise; in months where income-peak and expense-peak coincide, the labels overlap and clutter the top of the chart.</div>
+</div>
+
+<script>
+const data = [
+  { month: "Jan '25", income: 4200, expense: 3100 },
+  { month: "Feb '25", income: 4200, expense: 3680 },
+  { month: "Mar '25", income: 4500, expense: 2900 },
+  { month: "Apr '25", income: 4200, expense: 4010 },
+  { month: "May '25", income: 5100, expense: 3450 },
+];
+
+const CHART_HEIGHT = 160;
+const maxVal = Math.max(...data.flatMap(d => [d.income, d.expense]));
+const maxIncome = Math.max(...data.map(d => d.income));
+const maxExpense = Math.max(...data.map(d => d.expense));
+
+const chart = document.getElementById('chart');
+const labelsRow = document.getElementById('monthLabels');
+
+data.forEach((d, i) => {
+  const incomeH = Math.round((d.income / maxVal) * CHART_HEIGHT * 0.85);
+  const expenseH = Math.round((d.expense / maxVal) * CHART_HEIGHT * 0.85);
+  const isCurrent = i === data.length - 1;
+  const isIncomePeak = d.income === maxIncome;
+  const isExpensePeak = d.expense === maxExpense;
+
+  const group = document.createElement('div');
+  group.className = 'bar-group';
+
+  const mkBarWrapper = (height, cls, amount, isPeak, peakCls, peakLabel) => {
+    const wrap = document.createElement('div');
+    wrap.className = 'bar-wrapper';
+
+    const tip = document.createElement('div');
+    tip.className = 'tooltip';
+    tip.textContent = '$' + amount.toLocaleString('en-NZ');
+
+    const bar = document.createElement('div');
+    bar.className = `bar ${cls}`;
+    bar.style.height = height + 'px';
+    bar.style.width = '100%';
+
+    if (isPeak) {
+      const dot = document.createElement('div');
+      dot.className = `peak-dot ${peakCls}`;
+      bar.appendChild(dot);
+
+      const lbl = document.createElement('div');
+      lbl.className = `peak-label ${peakCls.replace('dot', 'label')}`;
+      lbl.textContent = '$' + (amount / 1000).toFixed(1) + 'k';
+      bar.appendChild(lbl);
+    }
+
+    wrap.appendChild(tip);
+    wrap.appendChild(bar);
+    return wrap;
+  };
+
+  group.appendChild(mkBarWrapper(incomeH, 'bar--income', d.income, isIncomePeak, 'peak-dot--income', 'peak-label--income'));
+  group.appendChild(mkBarWrapper(expenseH, 'bar--expense', d.expense, isExpensePeak, 'peak-dot--expense', 'peak-label--expense'));
+  chart.appendChild(group);
+
+  const lbl = document.createElement('div');
+  lbl.className = 'month-label' + (isCurrent ? ' month-label--current' : '');
+  lbl.textContent = d.month;
+  labelsRow.appendChild(lbl);
+});
+</script>
+</body>
+</html>

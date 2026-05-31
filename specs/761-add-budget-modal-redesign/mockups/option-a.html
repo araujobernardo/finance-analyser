@@ -1,0 +1,332 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Option A — Direct Match</title>
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --bg: #060d1a;
+    --surface: #0c1526;
+    --card: #111e33;
+    --border: #1a2d4a;
+    --accent: #10b981;
+    --accent-dim: #065f46;
+    --text: #e2e8f0;
+    --muted: #64748b;
+    --subtle: #94a3b8;
+    --color-danger: #f87171;
+    --modal-overlay: rgba(0,0,0,0.6);
+    --surface-hover: #152234;
+  }
+
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: flex-start;
+    padding: 16px;
+  }
+
+  /* Banner */
+  .banner {
+    width: 100%;
+    max-width: 560px;
+    background: var(--accent-dim);
+    border: 1px solid var(--accent);
+    border-radius: 8px;
+    padding: 10px 16px;
+    font-size: 0.78rem;
+    font-weight: 600;
+    color: var(--accent);
+    letter-spacing: 0.03em;
+    margin-bottom: 20px;
+    text-align: center;
+  }
+
+  /* Backdrop */
+  .backdrop {
+    position: relative;
+    width: 100%;
+    max-width: 560px;
+    background: var(--modal-overlay);
+    border-radius: 12px;
+    padding: 4px;
+  }
+
+  /* Panel */
+  .panel {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    box-shadow: 0 24px 64px rgba(0,0,0,0.5);
+  }
+
+  /* Header */
+  .header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 20px 24px 18px;
+    border-bottom: 1px solid var(--border);
+  }
+
+  .title {
+    font-size: 1rem;
+    font-weight: 600;
+    color: var(--text);
+  }
+
+  .close {
+    width: 32px;
+    height: 32px;
+    border-radius: 8px;
+    border: 1px solid var(--border);
+    background: transparent;
+    color: var(--muted);
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.1rem;
+    transition: background 0.15s, color 0.15s, border-color 0.15s;
+  }
+  .close:hover { background: var(--card); color: var(--text); border-color: var(--subtle); }
+
+  /* Body */
+  .body {
+    padding: 24px;
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+  }
+
+  /* Context hint */
+  .context-hint {
+    background: rgba(16, 185, 129, 0.07);
+    border: 1px solid rgba(16, 185, 129, 0.2);
+    border-radius: 8px;
+    padding: 10px 14px;
+    font-size: 0.75rem;
+    color: var(--subtle);
+    line-height: 1.5;
+  }
+
+  /* Field */
+  .field {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+  }
+
+  .label {
+    font-size: 0.75rem;
+    font-weight: 600;
+    color: var(--subtle);
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+  }
+
+  .label-badge {
+    font-size: 0.68rem;
+    font-weight: 400;
+    color: var(--muted);
+    text-transform: none;
+    letter-spacing: 0;
+    margin-left: 5px;
+  }
+
+  .input {
+    width: 100%;
+    padding: 10px 14px;
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    color: var(--text);
+    font-size: 0.9rem;
+    outline: none;
+    appearance: none;
+    -webkit-appearance: none;
+    transition: border-color 0.15s, box-shadow 0.15s;
+    font-family: inherit;
+  }
+  .input:focus {
+    border-color: var(--accent);
+    box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.15);
+  }
+  .input:hover:not(:focus) { border-color: var(--subtle); }
+  .input::placeholder { color: var(--muted); }
+  .input.error { border-color: var(--color-danger); }
+
+  .error-msg {
+    font-size: 0.8rem;
+    color: var(--color-danger);
+    margin-top: 0.1rem;
+  }
+
+  .hint {
+    font-size: 0.72rem;
+    color: var(--muted);
+    line-height: 1.4;
+  }
+
+  /* Prefix wrap (NZD) */
+  .prefix-wrap { position: relative; }
+  .prefix-wrap .input { padding-left: 44px; }
+  .prefix {
+    position: absolute;
+    left: 0; top: 0; bottom: 0;
+    width: 38px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.8rem;
+    font-weight: 600;
+    color: var(--muted);
+    border-right: 1px solid var(--border);
+    pointer-events: none;
+  }
+
+  /* Footer */
+  .footer {
+    display: flex;
+    justify-content: flex-end;
+    gap: 10px;
+    padding: 16px 24px 20px;
+    border-top: 1px solid var(--border);
+  }
+
+  .btn {
+    padding: 10px 20px;
+    border-radius: 8px;
+    font-size: 0.88rem;
+    font-weight: 600;
+    cursor: pointer;
+    border: none;
+    transition: opacity 0.15s, background 0.15s, transform 0.1s;
+    font-family: inherit;
+  }
+  .btn:active { transform: scale(0.97); }
+
+  .btn-cancel {
+    background: transparent;
+    border: 1px solid var(--border);
+    color: var(--subtle);
+  }
+  .btn-cancel:hover { background: var(--card); border-color: var(--subtle); color: var(--text); }
+
+  .btn-save {
+    background: var(--accent);
+    color: #fff;
+  }
+  .btn-save:hover { opacity: 0.88; }
+
+  /* Inline validation demo */
+  .demo-note {
+    font-size: 0.72rem;
+    color: var(--muted);
+    text-align: center;
+    padding: 0 24px 12px;
+    font-style: italic;
+  }
+
+  @media (max-width: 480px) {
+    .body { padding: 16px; }
+    .header { padding: 14px 16px; }
+    .footer { padding: 12px 16px 16px; flex-direction: column; }
+    .btn { width: 100%; justify-content: center; }
+    .btn-save { order: -1; }
+  }
+</style>
+</head>
+<body>
+
+<div class="banner">Option A — Direct Match: GoalModal parity, same shell, refined fields</div>
+
+<div class="backdrop">
+  <div class="panel">
+
+    <div class="header">
+      <h2 class="title">Add Budget</h2>
+      <button class="close" aria-label="Close" onclick="this.blur()">✕</button>
+    </div>
+
+    <div class="body">
+
+      <!-- Context hint (new) -->
+      <div class="context-hint">
+        Set a monthly spending limit for a category. Your actual spending will be tracked against it each month.
+      </div>
+
+      <!-- Category -->
+      <div class="field">
+        <label class="label" for="cat">Category</label>
+        <input id="cat" class="input" type="text" placeholder="e.g. Groceries" maxlength="100" value="Groceries" />
+      </div>
+
+      <!-- Limit -->
+      <div class="field">
+        <label class="label" for="limit">Monthly Limit</label>
+        <div class="prefix-wrap">
+          <span class="prefix">NZD</span>
+          <input id="limit" class="input" type="number" min="0" step="0.01" placeholder="0.00" value="450.00" />
+        </div>
+      </div>
+
+      <!-- Month picker (combined) -->
+      <div class="field">
+        <label class="label" for="month">Month <span class="label-badge">(defaults to current)</span></label>
+        <input id="month" class="input" type="month" value="2026-05" />
+        <span class="hint">Budgets apply to a single calendar month.</span>
+      </div>
+
+      <!-- Validation demo: error state -->
+      <div class="field" style="display:none" id="error-demo">
+        <label class="label" for="cat-err">Category</label>
+        <input id="cat-err" class="input error" type="text" placeholder="e.g. Groceries" />
+        <span class="error-msg" role="alert">Category is required.</span>
+      </div>
+
+    </div>
+
+    <p class="demo-note">Click "Validate" to see error state</p>
+
+    <div class="footer">
+      <button class="btn btn-cancel" onclick="alert('Cancelled')">Cancel</button>
+      <button class="btn btn-save" onclick="showError()">Add Budget</button>
+    </div>
+  </div>
+</div>
+
+<script>
+  let errorShown = false;
+  function showError() {
+    if (!errorShown) {
+      document.getElementById('error-demo').style.display = 'flex';
+      document.querySelector('.demo-note').textContent = 'Error state shown above';
+      errorShown = true;
+    } else {
+      document.getElementById('error-demo').style.display = 'none';
+      document.querySelector('.demo-note').textContent = 'Click "Add Budget" to see error state';
+      errorShown = false;
+    }
+  }
+
+  // Month input color fix for dark mode
+  document.querySelectorAll('input[type="month"]').forEach(el => {
+    el.style.colorScheme = 'dark';
+  });
+</script>
+
+</body>
+</html>

@@ -36,6 +36,6 @@ are in [constitution.md](constitution.md).
 
 For project principles, governance, and agent workflow see: constitution.md
 
-**Active feature plan**: [specs/030-migrate-transactions-db/plan.md](specs/030-migrate-transactions-db/plan.md)
+**Active feature plan**: [specs/033-bank-connection-ui/plan.md](specs/033-bank-connection-ui/plan.md)
 
 <!-- SPECKIT END -->

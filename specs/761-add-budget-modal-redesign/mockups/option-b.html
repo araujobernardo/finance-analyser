@@ -1,0 +1,320 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Option B — Category Tile Picker</title>
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --bg: #060d1a;
+    --surface: #0c1526;
+    --card: #111e33;
+    --border: #1a2d4a;
+    --accent: #10b981;
+    --accent-dim: #065f46;
+    --text: #e2e8f0;
+    --muted: #64748b;
+    --subtle: #94a3b8;
+    --color-danger: #f87171;
+    --modal-overlay: rgba(0,0,0,0.6);
+    --surface-hover: #152234;
+  }
+
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: flex-start;
+    padding: 16px;
+  }
+
+  .banner {
+    width: 100%;
+    max-width: 560px;
+    background: var(--accent-dim);
+    border: 1px solid var(--accent);
+    border-radius: 8px;
+    padding: 10px 16px;
+    font-size: 0.78rem;
+    font-weight: 600;
+    color: var(--accent);
+    letter-spacing: 0.03em;
+    margin-bottom: 20px;
+    text-align: center;
+  }
+
+  .backdrop {
+    position: relative;
+    width: 100%;
+    max-width: 560px;
+    border-radius: 12px;
+    padding: 4px;
+  }
+
+  .panel {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    box-shadow: 0 24px 64px rgba(0,0,0,0.5);
+  }
+
+  .header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 20px 24px 18px;
+    border-bottom: 1px solid var(--border);
+  }
+
+  .title { font-size: 1rem; font-weight: 600; color: var(--text); }
+
+  .close {
+    width: 32px; height: 32px;
+    border-radius: 8px; border: 1px solid var(--border);
+    background: transparent; color: var(--muted);
+    cursor: pointer; display: flex; align-items: center; justify-content: center;
+    font-size: 1.1rem; transition: background 0.15s, color 0.15s;
+  }
+  .close:hover { background: var(--card); color: var(--text); }
+
+  .body {
+    padding: 24px;
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+    max-height: 75vh;
+    overflow-y: auto;
+  }
+
+  /* Tile grid for common categories */
+  .section-label {
+    font-size: 0.75rem;
+    font-weight: 600;
+    color: var(--subtle);
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    margin-bottom: 2px;
+  }
+
+  .tiles {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 8px;
+  }
+
+  .tile {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 4px;
+    padding: 10px 12px;
+    background: var(--card);
+    border: 2px solid var(--border);
+    border-radius: 10px;
+    cursor: pointer;
+    text-align: left;
+    transition: border-color 0.15s, background 0.15s, transform 0.1s;
+  }
+  .tile:hover { border-color: var(--subtle); background: var(--surface-hover); }
+  .tile:active { transform: scale(0.97); }
+  .tile.selected { border-color: var(--accent); background: rgba(16,185,129,0.08); }
+
+  .tile-icon { font-size: 1.1rem; line-height: 1; }
+  .tile-name { font-size: 0.78rem; font-weight: 600; color: var(--text); line-height: 1.2; }
+  .tile.selected .tile-name { color: var(--accent); }
+
+  /* OR divider */
+  .or-divider {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    color: var(--muted);
+    font-size: 0.72rem;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+  }
+  .or-divider::before, .or-divider::after {
+    content: '';
+    flex: 1;
+    height: 1px;
+    background: var(--border);
+  }
+
+  /* Custom input */
+  .field { display: flex; flex-direction: column; gap: 6px; }
+  .label {
+    font-size: 0.75rem; font-weight: 600; color: var(--subtle);
+    text-transform: uppercase; letter-spacing: 0.04em;
+  }
+  .label-badge {
+    font-size: 0.68rem; font-weight: 400; color: var(--muted);
+    text-transform: none; letter-spacing: 0; margin-left: 5px;
+  }
+  .input {
+    width: 100%; padding: 10px 14px;
+    background: var(--card); border: 1px solid var(--border);
+    border-radius: 8px; color: var(--text); font-size: 0.9rem;
+    outline: none; appearance: none; transition: border-color 0.15s, box-shadow 0.15s;
+    font-family: inherit;
+  }
+  .input:focus { border-color: var(--accent); box-shadow: 0 0 0 3px rgba(16,185,129,0.15); }
+  .input:hover:not(:focus) { border-color: var(--subtle); }
+  .input::placeholder { color: var(--muted); }
+  .input.error { border-color: var(--color-danger); }
+
+  .error-msg { font-size: 0.8rem; color: var(--color-danger); }
+  .hint { font-size: 0.72rem; color: var(--muted); line-height: 1.4; }
+
+  /* Prefix wrap */
+  .prefix-wrap { position: relative; }
+  .prefix-wrap .input { padding-left: 44px; }
+  .prefix {
+    position: absolute; left: 0; top: 0; bottom: 0; width: 38px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 0.8rem; font-weight: 600; color: var(--muted);
+    border-right: 1px solid var(--border); pointer-events: none;
+  }
+
+  /* Month row */
+  .month-row { display: flex; gap: 10px; }
+  .month-row .field { flex: 1; }
+
+  .footer {
+    display: flex; justify-content: flex-end; gap: 10px;
+    padding: 16px 24px 20px; border-top: 1px solid var(--border);
+  }
+
+  .btn {
+    padding: 10px 20px; border-radius: 8px; font-size: 0.88rem;
+    font-weight: 600; cursor: pointer; border: none;
+    transition: opacity 0.15s, background 0.15s, transform 0.1s; font-family: inherit;
+  }
+  .btn:active { transform: scale(0.97); }
+  .btn-cancel { background: transparent; border: 1px solid var(--border); color: var(--subtle); }
+  .btn-cancel:hover { background: var(--card); border-color: var(--subtle); color: var(--text); }
+  .btn-save { background: var(--accent); color: #fff; }
+  .btn-save:hover { opacity: 0.88; }
+
+  #custom-name-field { display: none; }
+  #custom-name-field.visible { display: flex; }
+
+  @media (max-width: 480px) {
+    .tiles { grid-template-columns: repeat(2, 1fr); }
+    .body { padding: 16px; }
+    .header { padding: 14px 16px; }
+    .footer { padding: 12px 16px 16px; }
+    .month-row { flex-direction: column; }
+  }
+</style>
+</head>
+<body>
+
+<div class="banner">Option B — Category Tile Picker: quick-select common categories, then fill details</div>
+
+<div class="backdrop">
+  <div class="panel">
+
+    <div class="header">
+      <h2 class="title">Add Budget</h2>
+      <button class="close" aria-label="Close">✕</button>
+    </div>
+
+    <div class="body">
+
+      <!-- Category tiles -->
+      <div class="field">
+        <span class="section-label">Category</span>
+        <div class="tiles" id="tiles">
+          <button class="tile" data-val="Groceries" onclick="selectTile(this)">
+            <span class="tile-icon">🛒</span>
+            <span class="tile-name">Groceries</span>
+          </button>
+          <button class="tile" data-val="Dining" onclick="selectTile(this)">
+            <span class="tile-icon">🍽️</span>
+            <span class="tile-name">Dining</span>
+          </button>
+          <button class="tile selected" data-val="Transport" onclick="selectTile(this)">
+            <span class="tile-icon">🚗</span>
+            <span class="tile-name">Transport</span>
+          </button>
+          <button class="tile" data-val="Entertainment" onclick="selectTile(this)">
+            <span class="tile-icon">🎬</span>
+            <span class="tile-name">Entertainment</span>
+          </button>
+          <button class="tile" data-val="Subscriptions" onclick="selectTile(this)">
+            <span class="tile-icon">📱</span>
+            <span class="tile-name">Subscriptions</span>
+          </button>
+          <button class="tile" data-val="Health" onclick="selectTile(this)">
+            <span class="tile-icon">💊</span>
+            <span class="tile-name">Health</span>
+          </button>
+        </div>
+      </div>
+
+      <div class="or-divider">or type a custom category</div>
+
+      <!-- Custom name (shown when no tile selected, or user wants custom) -->
+      <div class="field" id="custom-name-field">
+        <label class="label" for="custom-name">Custom Category</label>
+        <input id="custom-name" class="input" type="text" placeholder="e.g. Pet Care, School Fees" maxlength="100" />
+      </div>
+
+      <!-- Monthly Limit -->
+      <div class="field">
+        <label class="label" for="limit">Monthly Limit</label>
+        <div class="prefix-wrap">
+          <span class="prefix">NZD</span>
+          <input id="limit" class="input" type="number" min="0" step="0.01" placeholder="0.00" value="200.00" />
+        </div>
+      </div>
+
+      <!-- Month picker (combined) -->
+      <div class="field">
+        <label class="label" for="month">Month <span class="label-badge">(defaults to current)</span></label>
+        <input id="month" class="input" type="month" value="2026-05" />
+        <span class="hint">Budget applies to this single calendar month.</span>
+      </div>
+
+    </div>
+
+    <div class="footer">
+      <button class="btn btn-cancel">Cancel</button>
+      <button class="btn btn-save">Add Budget</button>
+    </div>
+  </div>
+</div>
+
+<script>
+  let selectedTile = document.querySelector('.tile.selected');
+
+  function selectTile(el) {
+    // Deselect previous
+    document.querySelectorAll('.tile').forEach(t => t.classList.remove('selected'));
+    if (selectedTile === el) {
+      selectedTile = null;
+      document.getElementById('custom-name-field').classList.add('visible');
+    } else {
+      el.classList.add('selected');
+      selectedTile = el;
+      document.getElementById('custom-name-field').classList.remove('visible');
+    }
+  }
+
+  document.querySelectorAll('input[type="month"]').forEach(el => {
+    el.style.colorScheme = 'dark';
+  });
+</script>
+
+</body>
+</html>

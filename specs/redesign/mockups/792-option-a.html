@@ -1,0 +1,445 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Option A — Elevated Card Shell</title>
+<link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg: #f4f1ed;
+  --surface: #faf8f5;
+  --card: #ffffff;
+  --border: #ede8e2;
+  --border-strong: #d9d2c8;
+  --accent: #0f9d8a;
+  --accent-light: #e8f5f3;
+  --accent-mid: #7dc8c0;
+  --text: #1e2a22;
+  --text-2: #3d4a40;
+  --muted: #7a8074;
+  --subtle: #a09890;
+  --red: #c53030;
+  --red-light: #fff5f5;
+  --shadow-sm: 0 1px 3px rgba(30,42,34,0.08);
+  --shadow-md: 0 4px 12px rgba(30,42,34,0.12);
+  --surface-hover: #f0ece6;
+}
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+body {
+  font-family: 'Nunito', sans-serif;
+  background: var(--bg);
+  color: var(--text);
+  -webkit-font-smoothing: antialiased;
+  min-height: 100vh;
+}
+
+/* Option banner */
+.option-banner {
+  background: var(--accent);
+  color: #fff;
+  text-align: center;
+  padding: 8px 20px;
+  font-size: 13px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+}
+
+/* App shell */
+.shell {
+  display: flex;
+  height: calc(100vh - 36px);
+  overflow: hidden;
+}
+.sidebar {
+  width: 220px;
+  background: #f9f7f4;
+  border-right: 1px solid var(--border);
+  padding: 20px 16px;
+  flex-shrink: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+.sidebar-brand {
+  font-size: 15px;
+  font-weight: 800;
+  color: var(--text);
+  margin-bottom: 20px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.sidebar-brand-dot {
+  width: 9px; height: 9px;
+  border-radius: 2px;
+  background: var(--accent);
+}
+.sidebar-nav-item {
+  padding: 8px 10px;
+  border-radius: 8px;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--muted);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.sidebar-nav-item.active {
+  background: var(--accent-light);
+  color: var(--accent);
+}
+
+/* Page */
+.page {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  padding: 28px;
+  gap: 16px;
+}
+
+/* Page header row */
+.page-header {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  flex-shrink: 0;
+}
+.page-title {
+  font-size: 24px;
+  font-weight: 800;
+  color: var(--text);
+  line-height: 1.2;
+}
+.page-subtitle {
+  font-size: 13px;
+  color: var(--muted);
+  font-weight: 500;
+}
+
+/* Filter card */
+.filter-card {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  box-shadow: var(--shadow-sm);
+  padding: 14px 18px;
+  display: flex;
+  gap: 10px;
+  align-items: center;
+  flex-wrap: wrap;
+  flex-shrink: 0;
+}
+.filter-input,
+.filter-select {
+  background: var(--surface);
+  border: 1.5px solid var(--border-strong);
+  border-radius: 8px;
+  padding: 7px 11px;
+  color: var(--text);
+  font-size: 12px;
+  font-family: 'Nunito', sans-serif;
+  font-weight: 500;
+  outline: none;
+  transition: border-color 140ms ease;
+}
+.filter-input { width: 200px; }
+.filter-input:focus,
+.filter-select:focus { border-color: var(--accent); }
+.filter-check-label {
+  font-size: 12px;
+  color: var(--muted);
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  cursor: pointer;
+  font-weight: 500;
+}
+.filter-check-label input[type="checkbox"] {
+  accent-color: var(--accent);
+  width: 14px; height: 14px;
+}
+.filter-row-count {
+  margin-left: auto;
+  font-size: 12px;
+  color: var(--muted);
+  font-weight: 600;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 20px;
+  padding: 3px 10px;
+}
+
+/* Table card */
+.table-card {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  box-shadow: var(--shadow-sm);
+  flex: 1;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+}
+.table-scroll {
+  overflow-y: auto;
+  flex: 1;
+}
+table {
+  width: 100%;
+  border-collapse: collapse;
+}
+thead {
+  position: sticky;
+  top: 0;
+  background: var(--card);
+  z-index: 1;
+}
+thead tr {
+  border-bottom: 1px solid var(--border);
+}
+th {
+  text-align: left;
+  font-size: 10px;
+  font-weight: 700;
+  color: var(--subtle);
+  text-transform: uppercase;
+  letter-spacing: 0.09em;
+  padding: 11px 16px;
+}
+tbody tr {
+  border-bottom: 1px solid var(--border);
+  cursor: pointer;
+  transition: background 120ms ease-out;
+}
+tbody tr:last-child { border-bottom: none; }
+tbody tr:hover { background: var(--surface-hover); }
+tbody tr.transfer-row { opacity: 0.6; background: color-mix(in srgb, var(--muted) 4%, transparent); }
+tbody tr.transfer-row:hover { background: color-mix(in srgb, var(--muted) 8%, transparent); }
+td {
+  padding: 10px 16px;
+  font-size: 13px;
+}
+.col-date {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 11px;
+  color: var(--muted);
+  white-space: nowrap;
+  width: 100px;
+}
+.col-acct .acct-badge {
+  font-size: 11px;
+  font-weight: 600;
+  border-radius: 5px;
+  padding: 2px 8px;
+  white-space: nowrap;
+  border: 1px solid transparent;
+}
+.col-payee { max-width: 260px; }
+.payee-name {
+  font-weight: 600;
+  font-size: 13px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  color: var(--text);
+}
+.payee-memo {
+  font-size: 11px;
+  color: var(--muted);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  margin-top: 1px;
+}
+.transfer-label {
+  font-size: 11px;
+  color: var(--muted);
+  font-style: italic;
+}
+.col-amount {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 13px;
+  font-weight: 700;
+  white-space: nowrap;
+  text-align: right;
+}
+.col-amount.credit { color: var(--accent); }
+.col-amount.debit { color: var(--red); }
+.transfer-icon { font-size: 10px; color: var(--muted); margin-left: 5px; }
+.col-cat { width: 150px; }
+.cat-select {
+  background: transparent;
+  border: 1.5px solid var(--border);
+  border-radius: 6px;
+  padding: 3px 7px;
+  font-size: 11px;
+  font-family: 'Nunito', sans-serif;
+  font-weight: 600;
+  cursor: pointer;
+  outline: none;
+  color: var(--text);
+  transition: border-color 140ms ease;
+}
+.cat-select:focus { border-color: var(--accent); }
+.cat-select.groceries { border-color: #4a7c5988; color: #4a7c59; }
+.cat-select.transport { border-color: #2e6b8a88; color: #2e6b8a; }
+.cat-select.dining { border-color: #b5541a88; color: #b5541a; }
+.cat-select.utilities { border-color: #c07a1a88; color: #c07a1a; }
+.cat-select.savings { border-color: #0f9d8a88; color: var(--accent); }
+.transfer-tag {
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--muted);
+  background: color-mix(in srgb, var(--muted) 10%, transparent);
+  border: 1px solid color-mix(in srgb, var(--muted) 28%, transparent);
+  border-radius: 5px;
+  padding: 2px 8px;
+}
+
+@media (max-width: 480px) {
+  .shell { flex-direction: column; }
+  .sidebar { display: none; }
+  .page { padding: 16px; gap: 12px; }
+  .filter-card { gap: 8px; }
+  .filter-input { width: 100%; }
+  th:nth-child(2), td:nth-child(2) { display: none; }
+}
+</style>
+</head>
+<body>
+<div class="option-banner">Option A — Elevated Card Shell</div>
+<div class="shell">
+  <nav class="sidebar">
+    <div class="sidebar-brand">
+      <span class="sidebar-brand-dot"></span>
+      Finance
+    </div>
+    <div class="sidebar-nav-item">Dashboard</div>
+    <div class="sidebar-nav-item active">Transactions</div>
+    <div class="sidebar-nav-item">Goals</div>
+    <div class="sidebar-nav-item">Budget</div>
+    <div class="sidebar-nav-item">Net Worth</div>
+  </nav>
+
+  <main class="page">
+    <!-- Page header -->
+    <div class="page-header">
+      <h1 class="page-title">Transactions</h1>
+      <span class="page-subtitle">148 rows</span>
+    </div>
+
+    <!-- Filter card -->
+    <div class="filter-card">
+      <input class="filter-input" placeholder="Search payee / memo..." />
+      <select class="filter-select">
+        <option>All months</option>
+        <option selected>May 2025</option>
+        <option>Apr 2025</option>
+        <option>Mar 2025</option>
+      </select>
+      <select class="filter-select">
+        <option>All accounts</option>
+        <option selected>Cheque</option>
+        <option>Savings</option>
+      </select>
+      <select class="filter-select">
+        <option>All categories</option>
+        <option>Groceries</option>
+        <option>Transport</option>
+        <option>Dining</option>
+      </select>
+      <label class="filter-check-label">
+        <input type="checkbox"> Show transfers
+      </label>
+      <span class="filter-row-count">148 rows</span>
+    </div>
+
+    <!-- Table card -->
+    <div class="table-card">
+      <div class="table-scroll">
+        <table>
+          <thead>
+            <tr>
+              <th>Date</th>
+              <th>Account</th>
+              <th>Payee / Memo</th>
+              <th style="text-align:right">Amount</th>
+              <th>Category</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td class="col-date">2025-05-27</td>
+              <td class="col-acct"><span class="acct-badge" style="color:#0f9d8a;background:#0f9d8a18;border-color:#0f9d8a33">Cheque</span></td>
+              <td class="col-payee"><div class="payee-name">Countdown Supermarket</div><div class="payee-memo">Weekly groceries</div></td>
+              <td class="col-amount debit">−$124.50</td>
+              <td class="col-cat"><select class="cat-select groceries"><option>Groceries</option></select></td>
+            </tr>
+            <tr>
+              <td class="col-date">2025-05-26</td>
+              <td class="col-acct"><span class="acct-badge" style="color:#0f9d8a;background:#0f9d8a18;border-color:#0f9d8a33">Cheque</span></td>
+              <td class="col-payee"><div class="payee-name">Metlink Wellington</div></td>
+              <td class="col-amount debit">−$8.00</td>
+              <td class="col-cat"><select class="cat-select transport"><option>Transport</option></select></td>
+            </tr>
+            <tr>
+              <td class="col-date">2025-05-25</td>
+              <td class="col-acct"><span class="acct-badge" style="color:#0f9d8a;background:#0f9d8a18;border-color:#0f9d8a33">Cheque</span></td>
+              <td class="col-payee"><div class="payee-name">Salary — Wellington City</div></td>
+              <td class="col-amount credit">+$4,800.00</td>
+              <td class="col-cat"><select class="cat-select savings"><option>Income</option></select></td>
+            </tr>
+            <tr>
+              <td class="col-date">2025-05-24</td>
+              <td class="col-acct"><span class="acct-badge" style="color:#0f9d8a;background:#0f9d8a18;border-color:#0f9d8a33">Cheque</span></td>
+              <td class="col-payee"><div class="payee-name">Logan Brown Restaurant</div><div class="payee-memo">Anniversary dinner</div></td>
+              <td class="col-amount debit">−$186.00</td>
+              <td class="col-cat"><select class="cat-select dining"><option>Dining</option></select></td>
+            </tr>
+            <tr>
+              <td class="col-date">2025-05-23</td>
+              <td class="col-acct"><span class="acct-badge" style="color:#82b36688;color:#2e6b8a;background:#2e6b8a18;border-color:#2e6b8a33">Savings</span></td>
+              <td class="col-payee"><div class="payee-name">Wellington City Council</div></td>
+              <td class="col-amount debit">−$210.00</td>
+              <td class="col-cat"><select class="cat-select utilities"><option>Utilities</option></select></td>
+            </tr>
+            <tr>
+              <td class="col-date">2025-05-22</td>
+              <td class="col-acct"><span class="acct-badge" style="color:#0f9d8a;background:#0f9d8a18;border-color:#0f9d8a33">Cheque</span></td>
+              <td class="col-payee"><div class="payee-name">New World Supermarket</div></td>
+              <td class="col-amount debit">−$87.30</td>
+              <td class="col-cat"><select class="cat-select"><option value="">Uncategorised</option><option>Groceries</option></select></td>
+            </tr>
+            <tr>
+              <td class="col-date">2025-05-21</td>
+              <td class="col-acct"><span class="acct-badge" style="color:#0f9d8a;background:#0f9d8a18;border-color:#0f9d8a33">Cheque</span></td>
+              <td class="col-payee"><div class="payee-name">Hoyts Cinema Wellington</div></td>
+              <td class="col-amount debit">−$22.50</td>
+              <td class="col-cat"><select class="cat-select"><option>Entertainment</option></select></td>
+            </tr>
+            <tr>
+              <td class="col-date">2025-05-20</td>
+              <td class="col-acct"><span class="acct-badge" style="color:#0f9d8a;background:#0f9d8a18;border-color:#0f9d8a33">Cheque</span></td>
+              <td class="col-payee"><div class="payee-name">Spark NZ Monthly Plan</div></td>
+              <td class="col-amount debit">−$49.99</td>
+              <td class="col-cat"><select class="cat-select utilities"><option>Utilities</option></select></td>
+            </tr>
+            <tr>
+              <td class="col-date">2025-05-18</td>
+              <td class="col-acct"><span class="acct-badge" style="color:#0f9d8a;background:#0f9d8a18;border-color:#0f9d8a33">Cheque</span></td>
+              <td class="col-payee"><div class="payee-name">Trade Me Purchase</div><div class="payee-memo">Ref: TM-88421</div></td>
+              <td class="col-amount debit">−$65.00</td>
+              <td class="col-cat"><select class="cat-select"><option>Shopping</option></select></td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </main>
+</div>
+</body>
+</html>

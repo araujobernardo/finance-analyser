@@ -1,0 +1,335 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Option A — Highlighted Row</title>
+<style>
+  /* ── Design system tokens (from src/index.css + design-system.md) ── */
+  :root {
+    --bg: #060d1a;
+    --surface: #0c1526;
+    --card: #111e33;
+    --border: #1a2d4a;
+    --accent: #10b981;
+    --accent-dim: #065f46;
+    --text: #e2e8f0;
+    --muted: #64748b;
+    --subtle: #94a3b8;
+    --red: #f87171;
+    --amber: #fbbf24;
+    --motion-fast: 150ms;
+    --motion-normal: 250ms;
+    --radius-md: 8px;
+    --radius-sm: 4px;
+  }
+
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: "Sora", "Inter", system-ui, sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    display: flex;
+    min-height: 100vh;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  /* ── Demo banner ── */
+  .demo-banner {
+    position: fixed;
+    top: 0; left: 0; right: 0;
+    background: var(--accent);
+    color: #fff;
+    font-size: 11px;
+    font-weight: 700;
+    text-align: center;
+    padding: 5px;
+    letter-spacing: 0.05em;
+    z-index: 100;
+  }
+
+  /* ── Sidebar ── */
+  .sidebar {
+    width: 224px;
+    background: var(--surface);
+    border-right: 1px solid var(--border);
+    display: flex;
+    flex-direction: column;
+    height: 100vh;
+    position: sticky;
+    top: 0;
+    flex-shrink: 0;
+    overflow-y: auto;
+    padding-top: 24px; /* offset for demo banner */
+  }
+
+  .sidebar-brand {
+    padding: 28px 20px 16px;
+  }
+  .sidebar-brand-label {
+    font-size: 11px;
+    color: var(--accent);
+    letter-spacing: 0.15em;
+    font-weight: 700;
+    text-transform: uppercase;
+  }
+  .sidebar-brand-title {
+    font-size: 22px;
+    font-weight: 700;
+    color: var(--text);
+    line-height: 1.1;
+    margin-top: 2px;
+  }
+  .sidebar-brand-count {
+    font-size: 11px;
+    color: var(--muted);
+    margin-top: 4px;
+  }
+
+  /* ── Accounts section ── */
+  .sidebar-accounts {
+    padding: 0 10px 14px;
+    border-bottom: 1px solid var(--border);
+  }
+  .sidebar-section-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0 6px;
+    margin-bottom: 6px;
+  }
+  .sidebar-section-label {
+    font-size: 10px;
+    color: var(--muted);
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    font-weight: 600;
+  }
+  .sidebar-add-btn {
+    background: none;
+    border: none;
+    cursor: pointer;
+    color: var(--muted);
+    font-size: 14px;
+    padding: 2px 4px;
+    border-radius: 4px;
+    transition: color var(--motion-fast), background var(--motion-fast);
+  }
+  .sidebar-add-btn:hover { color: var(--accent); background: color-mix(in srgb, var(--accent) 8%, transparent); }
+
+  /* ── Account row — Option A: full highlighted row ── */
+  .account-row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 7px 8px;
+    border-radius: var(--radius-md);
+    cursor: pointer;
+    transition: background var(--motion-fast) ease-out;
+    margin-bottom: 2px;
+    position: relative;
+  }
+  .account-row:hover {
+    background: color-mix(in srgb, var(--accent) 6%, transparent);
+  }
+  .account-row.active {
+    background: color-mix(in srgb, var(--accent) 12%, transparent);
+  }
+  .account-dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    flex-shrink: 0;
+    transition: box-shadow var(--motion-fast);
+  }
+  .account-row.active .account-dot {
+    box-shadow: 0 0 0 2px color-mix(in srgb, currentcolor 30%, transparent);
+  }
+  .account-name {
+    flex: 1;
+    font-size: 13px;
+    color: var(--subtle);
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    transition: color var(--motion-fast), font-weight var(--motion-fast);
+  }
+  .account-row.active .account-name {
+    color: var(--text);
+    font-weight: 600;
+  }
+  .account-edit-btn {
+    background: none;
+    border: none;
+    cursor: pointer;
+    color: var(--muted);
+    font-size: 12px;
+    padding: 1px 3px;
+    opacity: 0;
+    transition: opacity var(--motion-fast), color var(--motion-fast);
+    flex-shrink: 0;
+  }
+  .account-row:hover .account-edit-btn { opacity: 1; }
+  .account-edit-btn:hover { color: var(--subtle); }
+
+  /* ── Upload section ── */
+  .sidebar-upload {
+    padding: 12px 14px;
+    border-bottom: 1px solid var(--border);
+  }
+  .upload-target-label {
+    font-size: 11px;
+    color: var(--muted);
+    margin-bottom: 6px;
+    display: flex;
+    align-items: center;
+    gap: 4px;
+  }
+  .upload-target-label span.target-name {
+    color: var(--accent);
+    font-weight: 600;
+  }
+  .upload-btn {
+    width: 100%;
+    background: var(--accent);
+    color: #fff;
+    border: none;
+    border-radius: var(--radius-md);
+    padding: 10px 0;
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    font-family: inherit;
+    transition: opacity var(--motion-fast);
+  }
+  .upload-btn:hover { opacity: 0.9; }
+  .upload-helper {
+    font-size: 10px;
+    color: var(--muted);
+    margin-top: 6px;
+    line-height: 1.4;
+  }
+
+  /* ── Nav ── */
+  .sidebar-nav { flex: 1; padding: 6px 10px; }
+  .nav-item {
+    width: 100%;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 9px 10px;
+    border-radius: var(--radius-md);
+    color: var(--subtle);
+    font-size: 13px;
+    cursor: pointer;
+    transition: background var(--motion-fast), color var(--motion-fast);
+    margin-bottom: 2px;
+    background: none;
+    border: none;
+    text-align: left;
+    font-family: inherit;
+  }
+  .nav-item:hover { background: color-mix(in srgb, var(--accent) 8%, transparent); color: var(--text); }
+  .nav-item.active { background: color-mix(in srgb, var(--accent) 15%, transparent); color: var(--accent); font-weight: 600; }
+
+  /* ── Footer ── */
+  .sidebar-footer {
+    padding: 14px 20px;
+    font-size: 11px;
+    color: var(--muted);
+    border-top: 1px solid var(--border);
+  }
+
+  /* ── Main content area (just a placeholder) ── */
+  .main {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--muted);
+    font-size: 14px;
+  }
+
+  @media (max-width: 480px) {
+    .sidebar { width: 100%; height: auto; position: relative; }
+    .main { display: none; }
+    body { flex-direction: column; }
+  }
+</style>
+</head>
+<body>
+<div class="demo-banner">Option A — Highlighted Row (click accounts to select)</div>
+
+<aside class="sidebar">
+  <div class="sidebar-brand">
+    <div class="sidebar-brand-label">Finance</div>
+    <div class="sidebar-brand-title">Analyser</div>
+    <div class="sidebar-brand-count">3,204 transactions</div>
+  </div>
+
+  <div class="sidebar-accounts">
+    <div class="sidebar-section-header">
+      <span class="sidebar-section-label">Accounts</span>
+      <button class="sidebar-add-btn" title="Add account">+</button>
+    </div>
+
+    <div class="account-row active" data-id="asb-cheque" onclick="selectAccount(this)" data-name="ASB Cheque">
+      <div class="account-dot" style="background:#10b981;"></div>
+      <span class="account-name">ASB Cheque</span>
+      <button class="account-edit-btn" title="Rename" onclick="event.stopPropagation()">✎</button>
+    </div>
+    <div class="account-row" data-id="asb-credit" onclick="selectAccount(this)" data-name="Credit Card">
+      <div class="account-dot" style="background:#3b82f6;"></div>
+      <span class="account-name">Credit Card</span>
+      <button class="account-edit-btn" title="Rename" onclick="event.stopPropagation()">✎</button>
+    </div>
+    <div class="account-row" data-id="savings" onclick="selectAccount(this)" data-name="Savings">
+      <div class="account-dot" style="background:#a78bfa;"></div>
+      <span class="account-name">Savings</span>
+      <button class="account-edit-btn" title="Rename" onclick="event.stopPropagation()">✎</button>
+    </div>
+  </div>
+
+  <div class="sidebar-upload">
+    <div class="upload-target-label" id="upload-target-label">
+      <span>Upload to:</span>
+      <span class="target-name" id="target-name">ASB Cheque</span>
+    </div>
+    <button class="upload-btn">
+      <span>↑</span> Upload CSV
+    </button>
+    <div class="upload-helper">Select multiple files to import all accounts at once</div>
+  </div>
+
+  <nav class="sidebar-nav">
+    <button class="nav-item active">⬡ &nbsp;Dashboard</button>
+    <button class="nav-item">≡ &nbsp;Transactions</button>
+    <button class="nav-item">◎ &nbsp;AI Chat</button>
+    <button class="nav-item">◈ &nbsp;Net Worth</button>
+    <button class="nav-item">◉ &nbsp;Goals</button>
+    <button class="nav-item">◧ &nbsp;Budget</button>
+    <button class="nav-item">⚙ &nbsp;Settings</button>
+  </nav>
+
+  <div class="sidebar-footer">ASB Bank · NZD</div>
+</aside>
+
+<main class="main">
+  Main content area
+</main>
+
+<script>
+  function selectAccount(row) {
+    document.querySelectorAll('.account-row').forEach(r => r.classList.remove('active'));
+    row.classList.add('active');
+    const name = row.dataset.name;
+    document.getElementById('target-name').textContent = name;
+  }
+</script>
+</body>
+</html>

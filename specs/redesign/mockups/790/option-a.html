@@ -1,0 +1,362 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Option A — Layered Lines</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+<style>
+  :root {
+    --bg: #f4f1ed;
+    --surface: #faf8f5;
+    --card: #ffffff;
+    --border: #ede8e2;
+    --border-strong: #d9d2c8;
+    --accent: #0f9d8a;
+    --accent-light: #e8f5f3;
+    --accent-mid: #7dc8c0;
+    --text: #1e2a22;
+    --text-2: #3d4a40;
+    --muted: #7a8074;
+    --subtle: #a09890;
+    --shadow-sm: 0 1px 3px rgba(30, 42, 34, 0.08);
+    --shadow-md: 0 4px 12px rgba(30, 42, 34, 0.12);
+    --cat-groceries: #4a7c59;
+    --cat-transport: #2e6b8a;
+    --cat-entertainment: #7b5ea7;
+    --cat-utilities: #c07a1a;
+    --cat-healthcare: #c53030;
+    --cat-dining: #b5541a;
+    --cat-shopping: #0f7a7a;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: "Nunito", system-ui, sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    padding: 24px;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  .option-banner {
+    background: var(--accent);
+    color: #fff;
+    font-size: 12px;
+    font-weight: 700;
+    letter-spacing: 0.04em;
+    padding: 6px 14px;
+    border-radius: 6px;
+    display: inline-block;
+    margin-bottom: 20px;
+  }
+
+  .page-context {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 20px 24px;
+    margin-bottom: 16px;
+    opacity: 0.5;
+    font-size: 13px;
+    color: var(--muted);
+  }
+
+  .card {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 24px;
+    box-shadow: var(--shadow-sm);
+  }
+
+  .card-header {
+    margin-bottom: 20px;
+  }
+
+  .card-title {
+    font-size: 15px;
+    font-weight: 700;
+    color: var(--text);
+    margin-bottom: 3px;
+  }
+
+  .card-subtitle {
+    font-size: 12px;
+    color: var(--muted);
+    font-weight: 500;
+  }
+
+  /* Chart area */
+  .chart-area {
+    position: relative;
+    width: 100%;
+    overflow: hidden;
+  }
+
+  .chart-svg {
+    width: 100%;
+    height: auto;
+    display: block;
+    cursor: crosshair;
+  }
+
+  /* Legend — compact horizontal row below chart */
+  .legend {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px 16px;
+    margin-top: 16px;
+    padding-top: 14px;
+    border-top: 1px solid var(--border);
+  }
+
+  .legend-item {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--text-2);
+    cursor: pointer;
+    transition: opacity 0.15s ease-out;
+  }
+
+  .legend-item:hover { opacity: 0.7; }
+
+  .legend-swatch {
+    width: 18px;
+    height: 3px;
+    border-radius: 2px;
+    flex-shrink: 0;
+  }
+
+  /* Tooltip */
+  .tooltip {
+    position: fixed;
+    background: var(--card);
+    border: 1px solid var(--border-strong);
+    border-radius: 8px;
+    padding: 10px 14px;
+    font-size: 12px;
+    box-shadow: var(--shadow-md);
+    pointer-events: none;
+    opacity: 0;
+    transition: opacity 0.1s ease-out;
+    z-index: 100;
+    min-width: 160px;
+  }
+
+  .tooltip.visible { opacity: 1; }
+
+  .tooltip-month {
+    font-size: 11px;
+    font-weight: 700;
+    color: var(--muted);
+    margin-bottom: 6px;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+  }
+
+  .tooltip-row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 2px 0;
+    font-weight: 600;
+    color: var(--text);
+  }
+
+  .tooltip-dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    flex-shrink: 0;
+  }
+
+  .tooltip-amount {
+    margin-left: auto;
+    font-weight: 700;
+  }
+
+  @media (max-width: 480px) {
+    body { padding: 12px; }
+    .card { padding: 16px; }
+    .legend { gap: 6px 10px; }
+  }
+</style>
+</head>
+<body>
+
+<div class="option-banner">Option A — Layered Lines</div>
+
+<div class="page-context">↑ Existing weekly Recharts SpendingTrendsByCategoryChart lives here</div>
+
+<div class="card">
+  <div class="card-header">
+    <div class="card-title">Spending Trends by Category</div>
+    <div class="card-subtitle">Jan 2025 – Jun 2025</div>
+  </div>
+
+  <div class="chart-area" id="chartArea">
+    <svg class="chart-svg" id="chartSvg" viewBox="0 0 700 130" preserveAspectRatio="none"></svg>
+  </div>
+
+  <div class="legend" id="legend"></div>
+</div>
+
+<div class="tooltip" id="tooltip">
+  <div class="tooltip-month" id="tooltipMonth"></div>
+  <div id="tooltipRows"></div>
+</div>
+
+<script>
+  // ── Data ──────────────────────────────────────────────────────────────────
+  const months = ["Jan '25", "Feb '25", "Mar '25", "Apr '25", "May '25", "Jun '25"];
+  const categories = [
+    { name: "Groceries",     color: "#4a7c59", values: [620, 580, 700, 650, 720, 690] },
+    { name: "Transport",     color: "#2e6b8a", values: [210, 240, 195, 280, 230, 260] },
+    { name: "Dining",        color: "#b5541a", values: [380, 420, 360, 440, 390, 510] },
+    { name: "Entertainment", color: "#7b5ea7", values: [150, 90, 200, 130, 180, 220] },
+    { name: "Utilities",     color: "#c07a1a", values: [310, 310, 295, 320, 315, 308] },
+  ];
+
+  // Find top category (highest total)
+  const topCat = categories.reduce((a, b) =>
+    b.values.reduce((s, v) => s + v, 0) > a.values.reduce((s, v) => s + v, 0) ? b : a
+  );
+
+  // ── SVG chart geometry ────────────────────────────────────────────────────
+  const W = 700, H = 130;
+  const padL = 0, padR = 0, padT = 10, padB = 28;
+  const chartW = W - padL - padR;
+  const chartH = H - padT - padB;
+
+  const allVals = categories.flatMap(c => c.values);
+  const maxVal = Math.max(...allVals) * 1.1;
+
+  function xOf(i) { return padL + (i / (months.length - 1)) * chartW; }
+  function yOf(v) { return padT + chartH - (v / maxVal) * chartH; }
+
+  function makePath(values) {
+    return values.map((v, i) => `${i === 0 ? "M" : "L"}${xOf(i).toFixed(1)},${yOf(v).toFixed(1)}`).join(" ");
+  }
+
+  function makeGradArea(values, color, id) {
+    const pathD = values.map((v, i) => `${i === 0 ? "M" : "L"}${xOf(i).toFixed(1)},${yOf(v).toFixed(1)}`).join(" ");
+    const bottom = padT + chartH;
+    const closeD = `L${xOf(values.length - 1).toFixed(1)},${bottom} L${xOf(0).toFixed(1)},${bottom} Z`;
+    return `<defs>
+      <linearGradient id="${id}" x1="0" y1="0" x2="0" y2="1">
+        <stop offset="0%" stop-color="${color}" stop-opacity="0.22"/>
+        <stop offset="100%" stop-color="${color}" stop-opacity="0"/>
+      </linearGradient>
+    </defs>
+    <path d="${pathD} ${closeD}" fill="url(#${id})" />`;
+  }
+
+  const svg = document.getElementById("chartSvg");
+
+  // Grid lines
+  const gridSvg = [0.25, 0.5, 0.75].map(frac => {
+    const y = (padT + chartH * (1 - frac)).toFixed(1);
+    const label = Math.round(maxVal * frac);
+    return `<line x1="${padL}" y1="${y}" x2="${W - padR}" y2="${y}" stroke="#ede8e2" stroke-width="1"/>`;
+  }).join("");
+
+  // X-axis labels
+  const xLabels = months.map((m, i) =>
+    `<text x="${xOf(i).toFixed(1)}" y="${H - 4}" text-anchor="middle" font-size="10" fill="#7a8074" font-family="Nunito,sans-serif" font-weight="600">${m}</text>`
+  ).join("");
+
+  // Gradient for top category
+  const topGradId = "topGrad";
+  let svgContent = makeGradArea(topCat.values, topCat.color, topGradId);
+  svgContent += gridSvg;
+
+  // Lines
+  categories.forEach(cat => {
+    const isTop = cat.name === topCat.name;
+    const sw = isTop ? 2.5 : 2;
+    svgContent += `<path d="${makePath(cat.values)}" fill="none" stroke="${cat.color}" stroke-width="${sw}" stroke-linecap="round" stroke-linejoin="round" class="line" data-cat="${cat.name}" data-sw="${sw}" style="transition: stroke-width 0.15s, stroke-opacity 0.15s"/>`;
+  });
+
+  // Hover dots (invisible by default, shown on interaction)
+  categories.forEach((cat, ci) => {
+    months.forEach((m, i) => {
+      svgContent += `<circle class="hover-dot" data-cat="${cat.name}" data-mi="${i}" cx="${xOf(i).toFixed(1)}" cy="${yOf(cat.values[i]).toFixed(1)}" r="4" fill="${cat.color}" stroke="#fff" stroke-width="1.5" opacity="0"/>`;
+    });
+  });
+
+  svgContent += xLabels;
+  svg.innerHTML = svgContent;
+
+  // ── Legend ────────────────────────────────────────────────────────────────
+  const legend = document.getElementById("legend");
+  categories.forEach(cat => {
+    const item = document.createElement("div");
+    item.className = "legend-item";
+    item.innerHTML = `<span class="legend-swatch" style="background:${cat.color}"></span>${cat.name}`;
+    legend.appendChild(item);
+  });
+
+  // ── Interaction ───────────────────────────────────────────────────────────
+  const tooltip = document.getElementById("tooltip");
+  const tooltipMonth = document.getElementById("tooltipMonth");
+  const tooltipRows = document.getElementById("tooltipRows");
+  const chartArea = document.getElementById("chartArea");
+  const fmt = new Intl.NumberFormat("en-NZ", { style: "currency", currency: "NZD", minimumFractionDigits: 0, maximumFractionDigits: 0 });
+
+  let activeMonthIdx = null;
+
+  function getMonthIdxFromX(svgX) {
+    const step = chartW / (months.length - 1);
+    return Math.round(svgX / step);
+  }
+
+  chartArea.addEventListener("mousemove", (e) => {
+    const rect = svg.getBoundingClientRect();
+    const relX = (e.clientX - rect.left) / rect.width * W;
+    const idx = Math.max(0, Math.min(months.length - 1, getMonthIdxFromX(relX)));
+
+    if (idx !== activeMonthIdx) {
+      activeMonthIdx = idx;
+      updateHighlight(idx);
+    }
+
+    // Position tooltip
+    const tx = e.clientX + 16;
+    const ty = e.clientY - 20;
+    tooltip.style.left = Math.min(tx, window.innerWidth - 180) + "px";
+    tooltip.style.top = ty + "px";
+    tooltip.classList.add("visible");
+
+    tooltipMonth.textContent = months[idx];
+    tooltipRows.innerHTML = "";
+    // Sort by value descending for tooltip
+    const sorted = [...categories].sort((a, b) => b.values[idx] - a.values[idx]);
+    sorted.forEach(cat => {
+      const row = document.createElement("div");
+      row.className = "tooltip-row";
+      row.innerHTML = `<span class="tooltip-dot" style="background:${cat.color}"></span><span>${cat.name}</span><span class="tooltip-amount">${fmt.format(cat.values[idx])}</span>`;
+      tooltipRows.appendChild(row);
+    });
+  });
+
+  function updateHighlight(idx) {
+    // Show dots for active month
+    document.querySelectorAll(".hover-dot").forEach(dot => {
+      dot.setAttribute("opacity", dot.dataset.mi == idx ? "1" : "0");
+    });
+  }
+
+  chartArea.addEventListener("mouseleave", () => {
+    tooltip.classList.remove("visible");
+    activeMonthIdx = null;
+    document.querySelectorAll(".hover-dot").forEach(d => d.setAttribute("opacity", "0"));
+  });
+</script>
+</body>
+</html>

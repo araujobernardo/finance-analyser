@@ -1,0 +1,426 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Option C — Two-Column with Sidebar Legend</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+<style>
+  :root {
+    --bg: #f4f1ed;
+    --surface: #faf8f5;
+    --card: #ffffff;
+    --border: #ede8e2;
+    --border-strong: #d9d2c8;
+    --accent: #0f9d8a;
+    --accent-light: #e8f5f3;
+    --text: #1e2a22;
+    --text-2: #3d4a40;
+    --muted: #7a8074;
+    --shadow-sm: 0 1px 3px rgba(30, 42, 34, 0.08);
+    --shadow-md: 0 4px 12px rgba(30, 42, 34, 0.12);
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: "Nunito", system-ui, sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    padding: 24px;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  .option-banner {
+    background: var(--accent);
+    color: #fff;
+    font-size: 12px;
+    font-weight: 700;
+    letter-spacing: 0.04em;
+    padding: 6px 14px;
+    border-radius: 6px;
+    display: inline-block;
+    margin-bottom: 20px;
+  }
+
+  .page-context {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 20px 24px;
+    margin-bottom: 16px;
+    opacity: 0.5;
+    font-size: 13px;
+    color: var(--muted);
+  }
+
+  .card {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 24px;
+    box-shadow: var(--shadow-sm);
+  }
+
+  .card-title {
+    font-size: 15px;
+    font-weight: 700;
+    color: var(--text);
+    margin-bottom: 3px;
+  }
+
+  .card-subtitle {
+    font-size: 12px;
+    color: var(--muted);
+    font-weight: 500;
+    margin-bottom: 18px;
+  }
+
+  /* Two-column layout: chart left, legend right */
+  .chart-layout {
+    display: flex;
+    gap: 20px;
+    align-items: stretch;
+  }
+
+  .chart-col {
+    flex: 1;
+    min-width: 0;
+    position: relative;
+  }
+
+  .chart-svg {
+    width: 100%;
+    height: auto;
+    display: block;
+    cursor: crosshair;
+  }
+
+  /* Legend column — right sidebar */
+  .legend-col {
+    min-width: 108px;
+    max-width: 130px;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    gap: 10px;
+    padding-left: 16px;
+    border-left: 1px solid var(--border);
+  }
+
+  .legend-item {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    cursor: pointer;
+    transition: opacity 0.15s;
+  }
+
+  .legend-item:hover { opacity: 0.7; }
+
+  .legend-item.highlighted .legend-label {
+    font-weight: 800;
+    color: var(--text);
+  }
+
+  .legend-swatch {
+    width: 16px;
+    height: 3px;
+    border-radius: 2px;
+    flex-shrink: 0;
+    transition: height 0.15s;
+  }
+
+  .legend-item.highlighted .legend-swatch {
+    height: 4px;
+  }
+
+  .legend-label {
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--text-2);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .legend-amount {
+    font-size: 11px;
+    color: var(--muted);
+    font-weight: 500;
+    display: none;
+  }
+
+  .legend-item.highlighted .legend-amount {
+    display: block;
+  }
+
+  /* Tooltip */
+  .tooltip {
+    position: fixed;
+    background: var(--card);
+    border: 1px solid var(--border-strong);
+    border-radius: 10px;
+    padding: 12px 14px;
+    font-size: 12px;
+    box-shadow: var(--shadow-md);
+    pointer-events: none;
+    opacity: 0;
+    transition: opacity 0.1s ease-out;
+    z-index: 100;
+    min-width: 150px;
+  }
+
+  .tooltip.visible { opacity: 1; }
+
+  .tooltip-header {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 6px;
+  }
+
+  .tooltip-dot {
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    flex-shrink: 0;
+  }
+
+  .tooltip-cat {
+    font-size: 13px;
+    font-weight: 800;
+    color: var(--text);
+  }
+
+  .tooltip-month {
+    font-size: 11px;
+    color: var(--muted);
+    font-weight: 600;
+    margin-bottom: 4px;
+  }
+
+  .tooltip-amount {
+    font-size: 18px;
+    font-weight: 800;
+    color: var(--text);
+    font-variant-numeric: tabular-nums;
+  }
+
+  @media (max-width: 480px) {
+    body { padding: 12px; }
+    .card { padding: 16px; }
+    .chart-layout { flex-direction: column; }
+    .legend-col {
+      flex-direction: row;
+      flex-wrap: wrap;
+      min-width: unset;
+      max-width: unset;
+      border-left: none;
+      border-top: 1px solid var(--border);
+      padding-left: 0;
+      padding-top: 12px;
+      gap: 8px 16px;
+    }
+  }
+</style>
+</head>
+<body>
+
+<div class="option-banner">Option C — Two-Column with Sidebar Legend</div>
+
+<div class="page-context">↑ Existing weekly Recharts SpendingTrendsByCategoryChart lives here</div>
+
+<div class="card">
+  <div class="card-title">Spending Trends by Category</div>
+  <div class="card-subtitle">Jan 2025 – Jun 2025</div>
+
+  <div class="chart-layout">
+    <!-- SVG chart -->
+    <div class="chart-col" id="chartCol">
+      <svg class="chart-svg" id="chartSvg" viewBox="0 0 700 130" preserveAspectRatio="none"></svg>
+    </div>
+
+    <!-- Right legend -->
+    <div class="legend-col" id="legendCol"></div>
+  </div>
+</div>
+
+<div class="tooltip" id="tooltip">
+  <div class="tooltip-header">
+    <span class="tooltip-dot" id="tooltipDot"></span>
+    <span class="tooltip-cat" id="tooltipCat"></span>
+  </div>
+  <div class="tooltip-month" id="tooltipMonth"></div>
+  <div class="tooltip-amount" id="tooltipAmount"></div>
+</div>
+
+<script>
+  const months = ["Jan '25", "Feb '25", "Mar '25", "Apr '25", "May '25", "Jun '25"];
+  const categories = [
+    { name: "Groceries",     color: "#4a7c59", values: [620, 580, 700, 650, 720, 690] },
+    { name: "Transport",     color: "#2e6b8a", values: [210, 240, 195, 280, 230, 260] },
+    { name: "Dining",        color: "#b5541a", values: [380, 420, 360, 440, 390, 510] },
+    { name: "Entertainment", color: "#7b5ea7", values: [150, 90, 200, 130, 180, 220] },
+    { name: "Utilities",     color: "#c07a1a", values: [310, 310, 295, 320, 315, 308] },
+  ];
+
+  // Top category
+  const totals = categories.map(c => ({ ...c, total: c.values.reduce((a, b) => a + b, 0) }));
+  totals.sort((a, b) => b.total - a.total);
+  const topCat = totals[0];
+  const top5 = totals.slice(0, 5);
+
+  const W = 700, H = 130;
+  const padT = 10, padB = 28;
+  const chartH = H - padT - padB;
+  const chartW = W;
+
+  const allVals = categories.flatMap(c => c.values);
+  const maxVal = Math.max(...allVals) * 1.1;
+
+  function xOf(i) { return (i / (months.length - 1)) * chartW; }
+  function yOf(v) { return padT + chartH - (v / maxVal) * chartH; }
+  function makePath(values) {
+    return values.map((v, i) => `${i === 0 ? "M" : "L"}${xOf(i).toFixed(1)},${yOf(v).toFixed(1)}`).join(" ");
+  }
+
+  let hoveredCat = null;
+
+  function renderChart() {
+    const svg = document.getElementById("chartSvg");
+    let c = "";
+
+    // Grid
+    [0.25, 0.5, 0.75].forEach(frac => {
+      const y = (padT + chartH * (1 - frac)).toFixed(1);
+      c += `<line x1="0" y1="${y}" x2="${W}" y2="${y}" stroke="#ede8e2" stroke-width="1"/>`;
+    });
+
+    // Gradient fill for top category
+    const td = makePath(topCat.values);
+    const bottom = padT + chartH;
+    c += `<defs>
+      <linearGradient id="topGrad" x1="0" y1="0" x2="0" y2="1">
+        <stop offset="0%" stop-color="${topCat.color}" stop-opacity="0.2"/>
+        <stop offset="100%" stop-color="${topCat.color}" stop-opacity="0"/>
+      </linearGradient>
+    </defs>
+    <path d="${td} L${xOf(months.length-1).toFixed(1)},${bottom} L${xOf(0).toFixed(1)},${bottom} Z" fill="url(#topGrad)"/>`;
+
+    // Lines (non-top first so top renders on top)
+    const order = [...top5].reverse(); // draw top cat last
+    order.forEach(cat => {
+      const isHovered = hoveredCat === cat.name;
+      const anyHovered = hoveredCat !== null;
+      const isTop = cat.name === topCat.name;
+      const opacity = anyHovered ? (isHovered ? 1 : 0.15) : 1;
+      const sw = isHovered ? 3 : (isTop ? 2.5 : 2);
+      c += `<path d="${makePath(cat.values)}" fill="none" stroke="${cat.color}" stroke-width="${sw}" stroke-linecap="round" stroke-linejoin="round" stroke-opacity="${opacity}" style="transition:stroke-opacity 0.15s" data-cat="${cat.name}" class="cat-line"/>`;
+    });
+
+    // Highlight dots for hovered category
+    if (hoveredCat) {
+      const cat = top5.find(c => c.name === hoveredCat);
+      if (cat) {
+        cat.values.forEach((v, i) => {
+          c += `<circle cx="${xOf(i).toFixed(1)}" cy="${yOf(v).toFixed(1)}" r="4" fill="${cat.color}" stroke="#fff" stroke-width="1.5" pointer-events="none"/>`;
+        });
+      }
+    }
+
+    // X-axis labels
+    c += months.map((m, i) =>
+      `<text x="${xOf(i).toFixed(1)}" y="${H - 4}" text-anchor="middle" font-size="10" fill="#7a8074" font-family="Nunito,sans-serif" font-weight="600">${m}</text>`
+    ).join("");
+
+    svg.innerHTML = c;
+
+    // Re-attach hover to lines
+    svg.querySelectorAll(".cat-line").forEach(path => {
+      path.addEventListener("mouseenter", () => {
+        hoveredCat = path.dataset.cat;
+        renderChart();
+        updateLegendHighlight();
+      });
+      path.addEventListener("mouseleave", () => {
+        hoveredCat = null;
+        renderChart();
+        updateLegendHighlight();
+      });
+    });
+  }
+
+  // ── Legend ────────────────────────────────────────────────────────────────
+  const legendCol = document.getElementById("legendCol");
+  const fmt = new Intl.NumberFormat("en-NZ", { style: "currency", currency: "NZD", minimumFractionDigits: 0, maximumFractionDigits: 0 });
+
+  top5.forEach(cat => {
+    const item = document.createElement("div");
+    item.className = "legend-item";
+    item.dataset.cat = cat.name;
+    const totalAmt = fmt.format(cat.total);
+    item.innerHTML = `
+      <span class="legend-swatch" style="background:${cat.color}"></span>
+      <div>
+        <div class="legend-label">${cat.name}</div>
+        <div class="legend-amount">${totalAmt}</div>
+      </div>`;
+    item.addEventListener("mouseenter", () => {
+      hoveredCat = cat.name;
+      renderChart();
+      updateLegendHighlight();
+    });
+    item.addEventListener("mouseleave", () => {
+      hoveredCat = null;
+      renderChart();
+      updateLegendHighlight();
+    });
+    legendCol.appendChild(item);
+  });
+
+  function updateLegendHighlight() {
+    document.querySelectorAll(".legend-item").forEach(item => {
+      item.classList.toggle("highlighted", item.dataset.cat === hoveredCat);
+    });
+  }
+
+  renderChart();
+
+  // ── Tooltip — single-category focus on hover ───────────────────────────────
+  const tooltip = document.getElementById("tooltip");
+  const tooltipDot = document.getElementById("tooltipDot");
+  const tooltipCat = document.getElementById("tooltipCat");
+  const tooltipMonth = document.getElementById("tooltipMonth");
+  const tooltipAmount = document.getElementById("tooltipAmount");
+  const chartCol = document.getElementById("chartCol");
+  const svg = document.getElementById("chartSvg");
+
+  chartCol.addEventListener("mousemove", (e) => {
+    if (!hoveredCat) { tooltip.classList.remove("visible"); return; }
+
+    const rect = svg.getBoundingClientRect();
+    const relX = (e.clientX - rect.left) / rect.width * W;
+    const idx = Math.max(0, Math.min(months.length - 1, Math.round(relX / (chartW / (months.length - 1)))));
+
+    const cat = top5.find(c => c.name === hoveredCat);
+    if (!cat) { tooltip.classList.remove("visible"); return; }
+
+    tooltip.classList.add("visible");
+    tooltipDot.style.background = cat.color;
+    tooltipCat.textContent = cat.name;
+    tooltipMonth.textContent = months[idx];
+    tooltipAmount.textContent = fmt.format(cat.values[idx]);
+    tooltipAmount.style.color = cat.color;
+
+    tooltip.style.left = Math.min(e.clientX + 16, window.innerWidth - 180) + "px";
+    tooltip.style.top = (e.clientY - 30) + "px";
+  });
+
+  chartCol.addEventListener("mouseleave", () => {
+    tooltip.classList.remove("visible");
+  });
+</script>
+</body>
+</html>

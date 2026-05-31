@@ -1,0 +1,280 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Option B — Active Dot Ring + Button Context</title>
+<style>
+  :root {
+    --bg: #060d1a;
+    --surface: #0c1526;
+    --card: #111e33;
+    --border: #1a2d4a;
+    --accent: #10b981;
+    --accent-dim: #065f46;
+    --text: #e2e8f0;
+    --muted: #64748b;
+    --subtle: #94a3b8;
+    --red: #f87171;
+    --motion-fast: 150ms;
+    --radius-md: 8px;
+    --radius-sm: 4px;
+    --radius-full: 9999px;
+  }
+
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: "Sora", "Inter", system-ui, sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    display: flex;
+    min-height: 100vh;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  .demo-banner {
+    position: fixed;
+    top: 0; left: 0; right: 0;
+    background: var(--accent);
+    color: #fff;
+    font-size: 11px;
+    font-weight: 700;
+    text-align: center;
+    padding: 5px;
+    letter-spacing: 0.05em;
+    z-index: 100;
+  }
+
+  .sidebar {
+    width: 224px;
+    background: var(--surface);
+    border-right: 1px solid var(--border);
+    display: flex;
+    flex-direction: column;
+    height: 100vh;
+    position: sticky;
+    top: 0;
+    flex-shrink: 0;
+    overflow-y: auto;
+    padding-top: 24px;
+  }
+
+  .sidebar-brand { padding: 28px 20px 16px; }
+  .sidebar-brand-label {
+    font-size: 11px; color: var(--accent); letter-spacing: 0.15em;
+    font-weight: 700; text-transform: uppercase;
+  }
+  .sidebar-brand-title { font-size: 22px; font-weight: 700; color: var(--text); line-height: 1.1; margin-top: 2px; }
+  .sidebar-brand-count { font-size: 11px; color: var(--muted); margin-top: 4px; }
+
+  /* ── Accounts ── */
+  .sidebar-accounts { padding: 0 16px 14px; border-bottom: 1px solid var(--border); }
+  .section-header {
+    display: flex; align-items: center; justify-content: space-between; margin-bottom: 8px;
+  }
+  .section-label { font-size: 10px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.1em; font-weight: 600; }
+  .add-btn {
+    background: none; border: none; cursor: pointer; color: var(--muted);
+    font-size: 14px; padding: 2px 4px; border-radius: 4px;
+    transition: color var(--motion-fast), background var(--motion-fast);
+  }
+  .add-btn:hover { color: var(--accent); background: color-mix(in srgb, var(--accent) 8%, transparent); }
+
+  /* ── Option B: minimal dot ring, no background highlight ── */
+  .account-row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 5px 0;
+    cursor: pointer;
+    margin-bottom: 4px;
+    /* no border-radius background — selection is communicated purely through the dot */
+  }
+  .account-row:hover .account-name { color: var(--text); }
+
+  /* The dot is the hero indicator */
+  .dot-wrap {
+    width: 18px;
+    height: 18px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+  }
+  .dot-inner {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    transition: box-shadow var(--motion-fast), transform var(--motion-fast);
+  }
+  /* Active: ring around the dot */
+  .account-row.active .dot-inner {
+    box-shadow: 0 0 0 2px var(--surface), 0 0 0 4px currentcolor;
+    transform: scale(1.1);
+  }
+
+  .account-name {
+    flex: 1;
+    font-size: 12px;
+    color: var(--subtle);
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    transition: color var(--motion-fast);
+  }
+  .account-row.active .account-name { color: var(--text); font-weight: 500; }
+
+  .edit-btn {
+    background: none; border: none; cursor: pointer; color: var(--muted);
+    font-size: 11px; padding: 1px 3px; opacity: 0;
+    transition: opacity var(--motion-fast), color var(--motion-fast); flex-shrink: 0;
+  }
+  .account-row:hover .edit-btn { opacity: 1; }
+
+  /* ── Upload: button embeds account name ── */
+  .sidebar-upload { padding: 12px 14px; border-bottom: 1px solid var(--border); }
+
+  .upload-btn {
+    width: 100%;
+    background: var(--accent);
+    color: #fff;
+    border: none;
+    border-radius: var(--radius-md);
+    padding: 0;
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+    font-family: inherit;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 1px;
+    overflow: hidden;
+    transition: opacity var(--motion-fast);
+  }
+  .upload-btn:hover { opacity: 0.9; }
+  .upload-btn-main {
+    padding: 9px 12px 4px;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+  /* The account name sits in a subtle sub-label inside the button */
+  .upload-btn-account {
+    width: 100%;
+    font-size: 10px;
+    font-weight: 500;
+    padding: 3px 12px 8px;
+    color: rgba(255,255,255,0.75);
+    text-align: center;
+    letter-spacing: 0.02em;
+    border-top: 1px solid rgba(255,255,255,0.15);
+  }
+
+  .upload-helper {
+    font-size: 10px;
+    color: var(--muted);
+    margin-top: 6px;
+    line-height: 1.4;
+  }
+
+  /* ── Nav ── */
+  .sidebar-nav { flex: 1; padding: 6px 10px; }
+  .nav-item {
+    width: 100%;
+    display: flex; align-items: center; gap: 10px;
+    padding: 9px 10px; border-radius: var(--radius-md);
+    color: var(--subtle); font-size: 13px; cursor: pointer;
+    transition: background var(--motion-fast), color var(--motion-fast);
+    margin-bottom: 2px; background: none; border: none;
+    text-align: left; font-family: inherit;
+  }
+  .nav-item:hover { background: color-mix(in srgb, var(--accent) 8%, transparent); color: var(--text); }
+  .nav-item.active { background: color-mix(in srgb, var(--accent) 15%, transparent); color: var(--accent); font-weight: 600; }
+
+  .sidebar-footer { padding: 14px 20px; font-size: 11px; color: var(--muted); border-top: 1px solid var(--border); }
+
+  .main { flex: 1; display: flex; align-items: center; justify-content: center; color: var(--muted); font-size: 14px; }
+
+  @media (max-width: 480px) {
+    .sidebar { width: 100%; height: auto; position: relative; }
+    .main { display: none; }
+    body { flex-direction: column; }
+  }
+</style>
+</head>
+<body>
+<div class="demo-banner">Option B — Active Dot Ring + Account Name in Upload Button (click accounts)</div>
+
+<aside class="sidebar">
+  <div class="sidebar-brand">
+    <div class="sidebar-brand-label">Finance</div>
+    <div class="sidebar-brand-title">Analyser</div>
+    <div class="sidebar-brand-count">3,204 transactions</div>
+  </div>
+
+  <div class="sidebar-accounts">
+    <div class="section-header">
+      <span class="section-label">Accounts</span>
+      <button class="add-btn">+</button>
+    </div>
+
+    <div class="account-row active" data-name="ASB Cheque" onclick="selectAccount(this)">
+      <div class="dot-wrap">
+        <div class="dot-inner" style="color:#10b981; background:#10b981;"></div>
+      </div>
+      <span class="account-name">ASB Cheque</span>
+      <button class="edit-btn" onclick="event.stopPropagation()">✎</button>
+    </div>
+    <div class="account-row" data-name="Credit Card" onclick="selectAccount(this)">
+      <div class="dot-wrap">
+        <div class="dot-inner" style="color:#3b82f6; background:#3b82f6;"></div>
+      </div>
+      <span class="account-name">Credit Card</span>
+      <button class="edit-btn" onclick="event.stopPropagation()">✎</button>
+    </div>
+    <div class="account-row" data-name="Savings" onclick="selectAccount(this)">
+      <div class="dot-wrap">
+        <div class="dot-inner" style="color:#a78bfa; background:#a78bfa;"></div>
+      </div>
+      <span class="account-name">Savings</span>
+      <button class="edit-btn" onclick="event.stopPropagation()">✎</button>
+    </div>
+  </div>
+
+  <div class="sidebar-upload">
+    <button class="upload-btn">
+      <div class="upload-btn-main">
+        <span>↑</span> Upload CSV
+      </div>
+      <div class="upload-btn-account" id="upload-account-label">→ ASB Cheque</div>
+    </button>
+    <div class="upload-helper">Select multiple files to import all accounts at once</div>
+  </div>
+
+  <nav class="sidebar-nav">
+    <button class="nav-item active">⬡ &nbsp;Dashboard</button>
+    <button class="nav-item">≡ &nbsp;Transactions</button>
+    <button class="nav-item">◎ &nbsp;AI Chat</button>
+    <button class="nav-item">◈ &nbsp;Net Worth</button>
+    <button class="nav-item">◉ &nbsp;Goals</button>
+    <button class="nav-item">◧ &nbsp;Budget</button>
+    <button class="nav-item">⚙ &nbsp;Settings</button>
+  </nav>
+
+  <div class="sidebar-footer">ASB Bank · NZD</div>
+</aside>
+
+<main class="main">Main content area</main>
+
+<script>
+  function selectAccount(row) {
+    document.querySelectorAll('.account-row').forEach(r => r.classList.remove('active'));
+    row.classList.add('active');
+    document.getElementById('upload-account-label').textContent = '→ ' + row.dataset.name;
+  }
+</script>
+</body>
+</html>

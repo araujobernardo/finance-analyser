@@ -1,0 +1,353 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Option C — Month Summary Rows</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Nunito:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg: #f4f1ed;
+  --surface: #faf8f5;
+  --card: #ffffff;
+  --border: #ede8e2;
+  --border-strong: #d9d2c8;
+  --accent: #0f9d8a;
+  --accent-light: #e8f5f3;
+  --text: #1e2a22;
+  --text-2: #3d4a40;
+  --muted: #7a8074;
+  --subtle: #a09890;
+  --red: #c53030;
+  --red-light: #fff5f5;
+  --shadow-sm: 0 1px 4px rgba(30,42,34,0.07);
+}
+
+* { box-sizing: border-box; margin: 0; padding: 0; }
+
+body {
+  font-family: 'Nunito', sans-serif;
+  background: var(--bg);
+  color: var(--text);
+  -webkit-font-smoothing: antialiased;
+  min-height: 100vh;
+  padding: 24px;
+}
+
+.option-badge {
+  background: var(--accent);
+  color: #fff;
+  text-align: center;
+  padding: 10px 20px;
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  border-radius: 8px;
+  margin-bottom: 24px;
+}
+
+.card {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  box-shadow: var(--shadow-sm);
+  padding: 20px;
+  max-width: 380px;
+}
+
+.card-header {
+  margin-bottom: 16px;
+}
+
+.card-title {
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--text);
+}
+
+.card-subtitle {
+  font-size: 11px;
+  color: var(--muted);
+  font-weight: 500;
+  margin-top: 2px;
+}
+
+/* Month rows */
+.month-rows {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.month-row {
+  display: grid;
+  grid-template-columns: 52px 1fr;
+  gap: 10px;
+  align-items: center;
+  padding: 8px 10px;
+  border-radius: 8px;
+  transition: background 0.12s ease;
+  cursor: default;
+}
+
+.month-row:hover {
+  background: var(--surface);
+}
+
+.month-row--current {
+  background: var(--accent-light);
+  border: 1px solid #c0e0db;
+}
+
+.month-row--current:hover {
+  background: var(--accent-light);
+}
+
+.month-name {
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--muted);
+  line-height: 1;
+}
+
+.month-row--current .month-name {
+  color: var(--accent);
+}
+
+.bars-col {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.bar-row {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.bar-row-label {
+  font-size: 10px;
+  color: var(--muted);
+  font-weight: 600;
+  width: 14px;
+  flex-shrink: 0;
+  text-align: right;
+}
+
+.bar-track {
+  flex: 1;
+  height: 8px;
+  background: var(--border);
+  border-radius: 4px;
+  overflow: hidden;
+}
+
+.bar-fill {
+  height: 100%;
+  border-radius: 4px;
+  transition: width 0.4s cubic-bezier(0.22, 0.61, 0.36, 1);
+}
+
+.bar-fill--income { background: var(--accent); }
+.bar-fill--expense { background: var(--red); }
+
+.bar-amount {
+  font-size: 10px;
+  font-weight: 700;
+  color: var(--text-2);
+  white-space: nowrap;
+  width: 54px;
+  text-align: right;
+  flex-shrink: 0;
+}
+
+.bar-amount--income { color: var(--accent); }
+.bar-amount--expense { color: var(--red); }
+
+/* Net indicator */
+.net-badge {
+  font-size: 9px;
+  font-weight: 800;
+  padding: 2px 5px;
+  border-radius: 4px;
+  margin-top: 4px;
+  display: inline-block;
+}
+
+.net-badge--positive {
+  background: var(--accent-light);
+  color: var(--accent);
+}
+
+.net-badge--negative {
+  background: var(--red-light);
+  color: var(--red);
+}
+
+/* Legend */
+.legend {
+  display: flex;
+  gap: 16px;
+  justify-content: center;
+  margin-top: 14px;
+  padding-top: 14px;
+  border-top: 1px solid var(--border);
+}
+
+.legend-item {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 11px;
+  color: var(--text-2);
+  font-weight: 500;
+}
+
+.legend-swatch {
+  width: 16px;
+  height: 4px;
+  border-radius: 2px;
+}
+
+.legend-swatch--income { background: var(--accent); }
+.legend-swatch--expense { background: var(--red); }
+
+/* Context */
+.context {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 20px;
+  max-width: 380px;
+  margin-top: 24px;
+}
+
+.context h3 {
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--muted);
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  margin-bottom: 8px;
+}
+
+.context p {
+  font-size: 12px;
+  color: var(--text-2);
+  line-height: 1.6;
+  margin-bottom: 6px;
+}
+
+.tradeoff {
+  background: var(--accent-light);
+  border: 1px solid #c0e0db;
+  border-radius: 6px;
+  padding: 8px 10px;
+  font-size: 11px;
+  color: var(--text-2);
+  margin-top: 10px;
+}
+</style>
+</head>
+<body>
+
+<div class="option-badge">Option C — Month Summary Rows</div>
+
+<div class="card">
+  <div class="card-header">
+    <div class="card-title">Income vs Expenses</div>
+    <div class="card-subtitle">Last 5 months</div>
+  </div>
+
+  <div class="month-rows" id="rows"></div>
+
+  <div class="legend">
+    <div class="legend-item">
+      <div class="legend-swatch legend-swatch--income"></div>
+      Income
+    </div>
+    <div class="legend-item">
+      <div class="legend-swatch legend-swatch--expense"></div>
+      Expenses
+    </div>
+  </div>
+</div>
+
+<div class="context">
+  <h3>Option C — Month Summary Rows</h3>
+  <p>Instead of a vertical bar chart, each month gets a compact horizontal row with two track bars (income teal, expenses red). The track bar widths are proportional to the max value across all months. Each bar shows its exact NZD amount on the right. A net badge (+/- saved) appears below each row's bars.</p>
+  <p>The current month row has a subtle teal-tinted background. Hover any row for a light background highlight. No separate chart area is needed — the list IS the chart.</p>
+  <div class="tradeoff">Tradeoff: Horizontal bars are less immediately comparable than vertical grouped bars. Month-over-month trend direction is harder to read at a glance than with vertical bars.</div>
+</div>
+
+<script>
+const data = [
+  { month: "Jan '25", income: 4200, expense: 3100 },
+  { month: "Feb '25", income: 4200, expense: 3680 },
+  { month: "Mar '25", income: 4500, expense: 2900 },
+  { month: "Apr '25", income: 4200, expense: 4010 },
+  { month: "May '25", income: 5100, expense: 3450 },
+];
+
+const maxVal = Math.max(...data.flatMap(d => [d.income, d.expense]));
+const container = document.getElementById('rows');
+
+data.forEach((d, i) => {
+  const isCurrent = i === data.length - 1;
+  const net = d.income - d.expense;
+  const incomeW = Math.round((d.income / maxVal) * 100);
+  const expenseW = Math.round((d.expense / maxVal) * 100);
+
+  const row = document.createElement('div');
+  row.className = 'month-row' + (isCurrent ? ' month-row--current' : '');
+
+  const monthLabel = document.createElement('div');
+  monthLabel.className = 'month-name';
+  monthLabel.textContent = d.month;
+
+  const barsCol = document.createElement('div');
+  barsCol.className = 'bars-col';
+
+  const mkBarRow = (label, width, fillClass, amount, amountClass) => {
+    const br = document.createElement('div');
+    br.className = 'bar-row';
+
+    const lbl = document.createElement('div');
+    lbl.className = 'bar-row-label';
+    lbl.textContent = label;
+
+    const track = document.createElement('div');
+    track.className = 'bar-track';
+
+    const fill = document.createElement('div');
+    fill.className = `bar-fill ${fillClass}`;
+    fill.style.width = width + '%';
+    track.appendChild(fill);
+
+    const amt = document.createElement('div');
+    amt.className = `bar-amount ${amountClass}`;
+    amt.textContent = '$' + amount.toLocaleString('en-NZ');
+
+    br.appendChild(lbl);
+    br.appendChild(track);
+    br.appendChild(amt);
+    return br;
+  };
+
+  barsCol.appendChild(mkBarRow('I', incomeW, 'bar-fill--income', d.income, 'bar-amount--income'));
+  barsCol.appendChild(mkBarRow('E', expenseW, 'bar-fill--expense', d.expense, 'bar-amount--expense'));
+
+  const badge = document.createElement('div');
+  badge.className = 'net-badge ' + (net >= 0 ? 'net-badge--positive' : 'net-badge--negative');
+  badge.textContent = (net >= 0 ? '+' : '') + '$' + Math.abs(net).toLocaleString('en-NZ') + ' saved';
+  barsCol.appendChild(badge);
+
+  row.appendChild(monthLabel);
+  row.appendChild(barsCol);
+  container.appendChild(row);
+});
+</script>
+</body>
+</html>

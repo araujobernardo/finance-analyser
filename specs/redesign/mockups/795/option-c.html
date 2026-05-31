@@ -1,0 +1,621 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Option C — Full-Screen Overlay Nav</title>
+<style>
+  /* ── Design Tokens (Warm Intelligence palette from src/index.css) ── */
+  :root {
+    --bg: #f4f1ed;
+    --surface: #faf8f5;
+    --sidebar-bg: #f9f7f4;
+    --sidebar-border: #e8e2da;
+    --card: #ffffff;
+    --border: #ede8e2;
+    --border-strong: #d9d2c8;
+    --accent: #0f9d8a;
+    --accent-light: #e8f5f3;
+    --accent-mid: #7dc8c0;
+    --text: #1e2a22;
+    --text-2: #3d4a40;
+    --muted: #7a8074;
+    --subtle: #a09890;
+    --red: #c53030;
+    --shadow-sm: 0 1px 3px rgba(30,42,34,0.08);
+    --shadow-md: 0 4px 12px rgba(30,42,34,0.12);
+    --shadow-lg: 0 8px 24px rgba(30,42,34,0.22);
+    --motion-fast: 150ms;
+    --motion-slow: 350ms;
+  }
+
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: "Nunito", system-ui, sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    -webkit-font-smoothing: antialiased;
+  }
+
+  /* ── Option Banner ── */
+  .option-banner {
+    background: var(--accent);
+    color: #fff;
+    text-align: center;
+    font-size: 12px;
+    font-weight: 800;
+    padding: 6px 12px;
+    letter-spacing: 0.04em;
+  }
+
+  /* ── Demo Frame ── */
+  .demo-frame {
+    display: flex;
+    justify-content: center;
+    align-items: flex-start;
+    gap: 40px;
+    padding: 24px;
+    min-height: 100vh;
+    background: #e8e4de;
+    flex-wrap: wrap;
+  }
+
+  .device-label {
+    font-size: 11px;
+    font-weight: 700;
+    color: var(--muted);
+    text-align: center;
+    letter-spacing: 0.06em;
+    margin-bottom: 8px;
+    text-transform: uppercase;
+  }
+
+  /* ── Desktop simulation ── */
+  .desktop-sim {
+    width: 860px;
+    height: 560px;
+    border-radius: 12px;
+    overflow: hidden;
+    box-shadow: var(--shadow-lg);
+    display: flex;
+    background: var(--bg);
+    border: 1px solid var(--border-strong);
+    flex-shrink: 0;
+  }
+
+  /* ── Mobile simulation ── */
+  .mobile-sim {
+    width: 375px;
+    height: 780px;
+    border-radius: 36px;
+    overflow: hidden;
+    box-shadow: var(--shadow-lg);
+    background: var(--bg);
+    border: 8px solid #2a2a2a;
+    position: relative;
+    flex-shrink: 0;
+  }
+
+  .mobile-inner {
+    width: 100%;
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    position: relative;
+    background: var(--bg);
+  }
+
+  /* ── DESKTOP Sidebar ── */
+  .sidebar {
+    width: 228px;
+    min-width: 228px;
+    background: var(--sidebar-bg);
+    border-right: 1px solid var(--sidebar-border);
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+    overflow-y: auto;
+  }
+
+  .sidebar-brand { padding: 22px 20px 16px; }
+  .sidebar-brand-label {
+    font-size: 11px; color: var(--accent); letter-spacing: 0.08em;
+    font-weight: 800; text-transform: uppercase; display: flex;
+    align-items: center; gap: 6px; margin-bottom: 3px;
+  }
+  .sidebar-brand-dot { width: 8px; height: 8px; border-radius: 50%; background: var(--accent); }
+  .sidebar-brand-title { font-size: 20px; font-weight: 800; color: var(--text); line-height: 1.1; }
+  .sidebar-brand-count { font-size: 11px; color: var(--muted); margin-top: 4px; font-weight: 500; }
+  .sidebar-divider { height: 1px; background: var(--border); margin: 0 16px; }
+
+  .sidebar-accounts { padding: 14px 16px 10px; }
+  .sidebar-section-label {
+    font-size: 11px; font-weight: 700; color: var(--subtle);
+    letter-spacing: 0.04em; padding: 0 6px; margin-bottom: 8px;
+  }
+  .sidebar-account-row {
+    display: flex; align-items: center; gap: 9px;
+    padding: 7px 10px; border-radius: 10px; cursor: pointer;
+    transition: background 0.15s; margin-bottom: 3px;
+  }
+  .sidebar-account-row:hover { background: rgba(15,157,138,0.07); }
+  .sidebar-account-row--active { background: var(--accent-light); }
+  .sidebar-account-dot { width: 9px; height: 9px; border-radius: 3px; flex-shrink: 0; }
+  .sidebar-account-name { flex: 1; font-size: 13px; color: var(--text-2); font-weight: 500; }
+  .sidebar-account-row--active .sidebar-account-name { color: var(--accent); font-weight: 700; }
+
+  .sidebar-upload { padding: 12px 16px 14px; border-top: 1px solid var(--border); border-bottom: 1px solid var(--border); }
+  .sidebar-upload-btn {
+    width: 100%; background: var(--accent); color: #fff; border: none;
+    border-radius: 10px; padding: 10px 0; font-size: 13px; font-weight: 700;
+    cursor: pointer; display: flex; align-items: center; justify-content: center;
+    gap: 7px; font-family: inherit; box-shadow: 0 2px 8px rgba(15,157,138,0.25);
+  }
+
+  .sidebar-nav { flex: 1; padding: 12px 10px; }
+  .sidebar-nav-btn {
+    width: 100%; display: flex; align-items: center; gap: 10px;
+    padding: 10px 12px; border-radius: 10px; border: none; cursor: pointer;
+    background: transparent; color: var(--muted); font-size: 13px;
+    font-weight: 500; margin-bottom: 2px; font-family: inherit;
+    text-decoration: none; transition: background 0.14s, color 0.14s;
+  }
+  .sidebar-nav-btn:hover { background: rgba(15,157,138,0.08); color: var(--text); }
+  .sidebar-nav-btn.active { background: var(--accent-light); color: var(--accent); font-weight: 700; }
+  .sidebar-nav-icon { font-size: 15px; width: 18px; text-align: center; }
+
+  .sidebar-footer {
+    padding: 14px 20px; font-size: 11px; color: var(--subtle); font-weight: 500;
+    border-top: 1px solid var(--border); display: flex; justify-content: space-between; align-items: center;
+  }
+  .sidebar-signout { background: none; border: none; color: var(--muted); font-size: 11px; font-family: inherit; cursor: pointer; }
+
+  /* ── Desktop main ── */
+  .desktop-main { flex: 1; overflow-y: auto; padding: 24px; display: flex; flex-direction: column; gap: 16px; }
+  .page-title { font-size: 22px; font-weight: 800; color: var(--text); margin-bottom: 4px; }
+  .page-subtitle { font-size: 13px; color: var(--muted); }
+  .stat-row { display: flex; gap: 12px; }
+  .stat-card {
+    flex: 1; background: var(--card); border: 1px solid var(--border);
+    border-radius: 10px; padding: 16px 18px; box-shadow: var(--shadow-sm);
+  }
+  .stat-label { font-size: 11px; color: var(--muted); font-weight: 600; text-transform: uppercase; letter-spacing: 0.06em; }
+  .stat-value { font-size: 22px; font-weight: 700; color: var(--text); margin-top: 4px; }
+  .stat-value.positive { color: #27ae60; }
+  .stat-value.negative { color: var(--red); }
+  .pills-row { display: flex; gap: 8px; flex-wrap: wrap; }
+  .pill {
+    padding: 5px 14px; border-radius: 20px; border: 1px solid var(--border);
+    background: var(--card); font-size: 12px; font-weight: 600; color: var(--muted); cursor: pointer; white-space: nowrap;
+  }
+  .pill.active { background: var(--accent-light); color: var(--accent); border-color: var(--accent-mid); }
+  .chart-row { display: flex; gap: 12px; }
+  .chart-card {
+    flex: 1; background: var(--card); border: 1px solid var(--border);
+    border-radius: 10px; padding: 16px; box-shadow: var(--shadow-sm); height: 140px;
+    display: flex; flex-direction: column;
+  }
+  .chart-title { font-size: 12px; font-weight: 700; color: var(--text); margin-bottom: 8px; }
+  .chart-placeholder {
+    flex: 1; display: flex; align-items: center; justify-content: center;
+    background: var(--surface); border-radius: 6px; font-size: 11px; color: var(--subtle);
+  }
+
+  /* ── MOBILE: compact top bar with embedded account chip ── */
+  .mobile-topbar {
+    height: 56px; background: var(--card);
+    border-bottom: 1px solid var(--border);
+    display: flex; align-items: center; padding: 0 14px; gap: 10px;
+    flex-shrink: 0;
+    box-shadow: var(--shadow-sm);
+  }
+
+  .m-brand { display: flex; align-items: center; gap: 8px; flex: 1; }
+  .m-brand-dot { width: 8px; height: 8px; border-radius: 50%; background: var(--accent); flex-shrink: 0; }
+  .m-brand-text { font-size: 15px; font-weight: 800; color: var(--text); }
+
+  /* Account selector chip — shows active account inline */
+  .m-account-chip {
+    height: 30px; background: var(--surface); border: 1px solid var(--border);
+    border-radius: 99px; padding: 0 10px; font-size: 11px; font-weight: 700;
+    color: var(--text-2); cursor: pointer; display: flex; align-items: center; gap: 6px;
+    flex-shrink: 0; white-space: nowrap;
+  }
+  .m-account-chip-dot { width: 6px; height: 6px; border-radius: 50%; background: var(--accent-mid); flex-shrink: 0; }
+  .m-account-chip-caret { font-size: 9px; color: var(--subtle); }
+
+  /* Hamburger → full-screen menu trigger */
+  .m-menu-btn {
+    width: 36px; height: 36px; border-radius: 8px;
+    border: 1px solid var(--border); background: var(--surface);
+    display: flex; flex-direction: column; align-items: center; justify-content: center;
+    gap: 4px; cursor: pointer; flex-shrink: 0;
+  }
+  .m-menu-line { width: 14px; height: 1.5px; background: var(--text-2); border-radius: 2px; }
+
+  /* ── MOBILE content scroll ── */
+  .mobile-scroll { flex: 1; overflow-y: auto; padding: 14px; }
+  .mobile-section-title { font-size: 16px; font-weight: 800; color: var(--text); margin-bottom: 4px; }
+  .mobile-section-sub { font-size: 12px; color: var(--muted); margin-bottom: 14px; }
+
+  /* CSV upload bar — inline, collapsible strip below topbar */
+  .mobile-csv-strip {
+    background: var(--accent-light); border-bottom: 1px solid var(--accent-mid);
+    padding: 7px 14px; display: flex; align-items: center; justify-content: space-between;
+    flex-shrink: 0;
+  }
+  .csv-strip-label { font-size: 11px; font-weight: 600; color: var(--accent); }
+  .csv-strip-btn {
+    height: 26px; background: var(--accent); color: #fff; border: none;
+    border-radius: 6px; padding: 0 10px; font-size: 11px; font-weight: 700;
+    cursor: pointer; font-family: inherit;
+  }
+
+  /* Pills */
+  .mobile-pills-wrap { overflow-x: auto; margin-bottom: 14px; padding-bottom: 4px; }
+  .mobile-pills-row { display: flex; gap: 8px; flex-wrap: nowrap; }
+  .mobile-pill {
+    padding: 5px 13px; border-radius: 20px; border: 1px solid var(--border);
+    background: var(--card); font-size: 12px; font-weight: 600; color: var(--muted);
+    cursor: pointer; white-space: nowrap; flex-shrink: 0;
+  }
+  .mobile-pill.active { background: var(--accent-light); color: var(--accent); border-color: var(--accent-mid); }
+
+  /* Stats 2×2 */
+  .mobile-stat-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 14px; }
+  .mobile-stat-card {
+    background: var(--card); border: 1px solid var(--border); border-radius: 10px;
+    padding: 12px 14px; box-shadow: var(--shadow-sm);
+  }
+  .mobile-stat-card.net-span { grid-column: span 2; }
+  .mobile-stat-label { font-size: 10px; color: var(--muted); font-weight: 600; text-transform: uppercase; letter-spacing: 0.06em; }
+  .mobile-stat-value { font-size: 18px; font-weight: 700; color: var(--text); margin-top: 2px; }
+  .mobile-stat-value.positive { color: #27ae60; }
+  .mobile-stat-value.negative { color: var(--red); }
+
+  /* Charts */
+  .mobile-chart-col { display: flex; flex-direction: column; gap: 10px; }
+  .mobile-chart-card {
+    background: var(--card); border: 1px solid var(--border); border-radius: 10px;
+    padding: 14px; box-shadow: var(--shadow-sm); height: 110px; display: flex; flex-direction: column;
+  }
+  .mobile-chart-title { font-size: 12px; font-weight: 700; color: var(--text); margin-bottom: 8px; }
+  .mobile-chart-body {
+    flex: 1; background: var(--surface); border-radius: 6px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 11px; color: var(--subtle);
+  }
+
+  /* ── FULL-SCREEN NAV OVERLAY ── */
+  /* Triggered by hamburger. Full-screen menu with big nav links + account list */
+  .fullscreen-overlay {
+    position: absolute; inset: 0; z-index: 200;
+    display: flex; flex-direction: column;
+    background: var(--sidebar-bg);
+    transform: translateY(-100%);
+    transition: transform 0.35s cubic-bezier(0,0,0.2,1);
+    overflow-y: auto;
+  }
+  .fullscreen-overlay.open { transform: translateY(0); }
+
+  .overlay-header {
+    display: flex; align-items: center; padding: 20px 18px 14px;
+    justify-content: space-between;
+  }
+  .overlay-brand { display: flex; flex-direction: column; gap: 2px; }
+  .overlay-brand-label { font-size: 10px; color: var(--accent); font-weight: 800; text-transform: uppercase; letter-spacing: 0.08em; }
+  .overlay-brand-title { font-size: 22px; font-weight: 800; color: var(--text); }
+  .overlay-brand-count { font-size: 11px; color: var(--muted); font-weight: 500; }
+
+  .overlay-close-btn {
+    width: 36px; height: 36px; border-radius: 8px; border: 1px solid var(--border);
+    background: var(--card); font-size: 16px; color: var(--muted);
+    display: flex; align-items: center; justify-content: center; cursor: pointer;
+  }
+
+  .overlay-divider { height: 1px; background: var(--border); margin: 0 18px 16px; }
+
+  /* Big nav items */
+  .overlay-nav { padding: 0 12px; display: flex; flex-direction: column; gap: 2px; }
+
+  .overlay-nav-item {
+    display: flex; align-items: center; gap: 14px;
+    padding: 13px 14px; border-radius: 12px; border: none;
+    background: transparent; color: var(--muted); font-size: 16px;
+    font-weight: 600; cursor: pointer; font-family: inherit; text-align: left;
+    transition: background 0.14s, color 0.14s; width: 100%;
+  }
+  .overlay-nav-item:hover { background: rgba(15,157,138,0.08); color: var(--text); }
+  .overlay-nav-item.active {
+    background: var(--accent-light); color: var(--accent);
+    font-weight: 800;
+  }
+  .overlay-nav-icon {
+    font-size: 20px; width: 28px; text-align: center; flex-shrink: 0;
+  }
+
+  .overlay-accounts-section {
+    padding: 16px 18px 14px; margin-top: 8px;
+    border-top: 1px solid var(--border);
+  }
+  .overlay-accounts-label {
+    font-size: 11px; font-weight: 700; color: var(--subtle);
+    letter-spacing: 0.04em; margin-bottom: 10px;
+  }
+
+  .overlay-account-row {
+    display: flex; align-items: center; gap: 10px;
+    padding: 8px 6px; border-radius: 10px; cursor: pointer;
+    transition: background 0.15s; margin-bottom: 4px;
+  }
+  .overlay-account-row:hover { background: rgba(15,157,138,0.07); }
+  .overlay-account-row.active { background: var(--accent-light); }
+  .overlay-account-dot { width: 9px; height: 9px; border-radius: 3px; flex-shrink: 0; }
+  .overlay-account-name { font-size: 14px; color: var(--text-2); font-weight: 500; }
+  .overlay-account-row.active .overlay-account-name { color: var(--accent); font-weight: 700; }
+
+  .overlay-upload-btn {
+    width: 100%; margin-top: 12px; background: var(--accent); color: #fff;
+    border: none; border-radius: 10px; padding: 12px; font-size: 14px;
+    font-weight: 700; cursor: pointer; font-family: inherit;
+    display: flex; align-items: center; justify-content: center; gap: 6px;
+    box-shadow: 0 2px 8px rgba(15,157,138,0.25);
+  }
+
+  .overlay-footer {
+    margin-top: auto; padding: 16px 18px; border-top: 1px solid var(--border);
+    display: flex; justify-content: space-between; align-items: center;
+  }
+  .overlay-footer-text { font-size: 11px; color: var(--subtle); }
+  .overlay-signout { background: none; border: none; font-size: 12px; font-weight: 700; color: var(--muted); cursor: pointer; font-family: inherit; }
+
+  ::-webkit-scrollbar { width: 4px; height: 4px; }
+  ::-webkit-scrollbar-track { background: transparent; }
+  ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+</style>
+</head>
+<body>
+
+<div class="option-banner">Option C — Full-Screen Overlay Nav &nbsp;|&nbsp; Mobile Responsive Layout #795</div>
+
+<div class="demo-frame">
+
+  <!-- DESKTOP -->
+  <div>
+    <div class="device-label">Desktop (860px+) — Sidebar unchanged</div>
+    <div class="desktop-sim">
+      <aside class="sidebar">
+        <div class="sidebar-brand">
+          <div class="sidebar-brand-label"><span class="sidebar-brand-dot"></span>FINANCE</div>
+          <div class="sidebar-brand-title">Analyser</div>
+          <div class="sidebar-brand-count">1,248 transactions</div>
+        </div>
+        <div class="sidebar-divider"></div>
+        <div class="sidebar-accounts">
+          <div class="sidebar-section-label">Accounts</div>
+          <div class="sidebar-account-row sidebar-account-row--active">
+            <div class="sidebar-account-dot" style="background:conic-gradient(#6c8ebf 0deg 120deg,#82b366 120deg 240deg,#d79b00 240deg 360deg)"></div>
+            <span class="sidebar-account-name" style="color:var(--accent);font-weight:700">All Accounts</span>
+          </div>
+          <div class="sidebar-account-row" style="padding-left:20px">
+            <div class="sidebar-account-dot" style="background:#6c8ebf"></div>
+            <span class="sidebar-account-name">ASB Everyday</span>
+          </div>
+          <div class="sidebar-account-row" style="padding-left:20px">
+            <div class="sidebar-account-dot" style="background:#82b366"></div>
+            <span class="sidebar-account-name">ASB Savings</span>
+          </div>
+        </div>
+        <div class="sidebar-upload">
+          <div style="font-size:10px;color:var(--muted);margin-bottom:7px">Upload to: <span style="color:var(--accent);font-weight:700">(select an account)</span></div>
+          <div class="sidebar-upload-btn"><span>↑</span> Upload CSV</div>
+        </div>
+        <nav class="sidebar-nav">
+          <a class="sidebar-nav-btn active"><span class="sidebar-nav-icon">⬡</span>Dashboard</a>
+          <a class="sidebar-nav-btn"><span class="sidebar-nav-icon">≡</span>Transactions</a>
+          <a class="sidebar-nav-btn"><span class="sidebar-nav-icon">◎</span>AI Chat</a>
+          <a class="sidebar-nav-btn"><span class="sidebar-nav-icon">◈</span>Net Worth</a>
+          <a class="sidebar-nav-btn"><span class="sidebar-nav-icon">◉</span>Goals</a>
+          <a class="sidebar-nav-btn"><span class="sidebar-nav-icon">◧</span>Budget</a>
+          <a class="sidebar-nav-btn"><span class="sidebar-nav-icon">⚙</span>Settings</a>
+        </nav>
+        <div class="sidebar-footer">
+          <span>ASB Bank · NZD</span>
+          <button class="sidebar-signout">Sign out</button>
+        </div>
+      </aside>
+      <div class="desktop-main">
+        <div><div class="page-title">Dashboard</div><div class="page-subtitle">May 2026</div></div>
+        <div class="pills-row">
+          <div class="pill">Jan</div><div class="pill">Feb</div><div class="pill">Mar</div><div class="pill">Apr</div><div class="pill active">May</div><div class="pill">Jun</div>
+        </div>
+        <div class="stat-row">
+          <div class="stat-card"><div class="stat-label">Income</div><div class="stat-value positive">$7,450</div></div>
+          <div class="stat-card"><div class="stat-label">Expenses</div><div class="stat-value negative">-$4,210</div></div>
+          <div class="stat-card"><div class="stat-label">Savings</div><div class="stat-value positive">$1,800</div></div>
+          <div class="stat-card"><div class="stat-label">Net</div><div class="stat-value">$3,240</div></div>
+        </div>
+        <div class="chart-row">
+          <div class="chart-card"><div class="chart-title">Income vs Expenses</div><div class="chart-placeholder">Bar chart</div></div>
+          <div class="chart-card"><div class="chart-title">Spending by Category</div><div class="chart-placeholder">Donut chart</div></div>
+          <div class="chart-card"><div class="chart-title">Spending Trends</div><div class="chart-placeholder">Line chart</div></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- MOBILE -->
+  <div>
+    <div class="device-label">Mobile (375px) — Tap ☰ for full-screen nav</div>
+    <div class="mobile-sim">
+      <div class="mobile-inner">
+
+        <!-- Compact top bar: brand + account chip + menu button -->
+        <div class="mobile-topbar">
+          <div class="m-brand">
+            <div class="m-brand-dot"></div>
+            <div class="m-brand-text">Finance Analyser</div>
+          </div>
+          <div class="m-account-chip" id="acct-chip">
+            <div class="m-account-chip-dot"></div>
+            All Accounts
+            <div class="m-account-chip-caret">▾</div>
+          </div>
+          <button class="m-menu-btn" id="menu-btn" aria-label="Open navigation">
+            <div class="m-menu-line"></div>
+            <div class="m-menu-line"></div>
+            <div class="m-menu-line"></div>
+          </button>
+        </div>
+
+        <!-- Upload strip (dismissable, teal accent) -->
+        <div class="mobile-csv-strip">
+          <div class="csv-strip-label">↑ Tap to upload bank CSV</div>
+          <button class="csv-strip-btn">Upload CSV</button>
+        </div>
+
+        <!-- Scroll area -->
+        <div class="mobile-scroll">
+          <div class="mobile-section-title">Dashboard</div>
+          <div class="mobile-section-sub">All Accounts · May 2026</div>
+
+          <div class="mobile-pills-wrap">
+            <div class="mobile-pills-row">
+              <div class="mobile-pill">Jan</div>
+              <div class="mobile-pill">Feb</div>
+              <div class="mobile-pill">Mar</div>
+              <div class="mobile-pill">Apr</div>
+              <div class="mobile-pill active">May</div>
+              <div class="mobile-pill">Jun</div>
+              <div class="mobile-pill">Jul</div>
+              <div class="mobile-pill">Aug</div>
+            </div>
+          </div>
+
+          <div class="mobile-stat-grid">
+            <div class="mobile-stat-card">
+              <div class="mobile-stat-label">Income</div>
+              <div class="mobile-stat-value positive">$7,450</div>
+            </div>
+            <div class="mobile-stat-card">
+              <div class="mobile-stat-label">Expenses</div>
+              <div class="mobile-stat-value negative">-$4,210</div>
+            </div>
+            <div class="mobile-stat-card">
+              <div class="mobile-stat-label">Savings</div>
+              <div class="mobile-stat-value positive">$1,800</div>
+            </div>
+            <div class="mobile-stat-card net-span">
+              <div class="mobile-stat-label">Net (this month)</div>
+              <div class="mobile-stat-value">$3,240</div>
+            </div>
+          </div>
+
+          <div class="mobile-chart-col">
+            <div class="mobile-chart-card">
+              <div class="mobile-chart-title">Income vs Expenses</div>
+              <div class="mobile-chart-body">Bar chart</div>
+            </div>
+            <div class="mobile-chart-card">
+              <div class="mobile-chart-title">Spending by Category</div>
+              <div class="mobile-chart-body">Donut · legend below</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Full-screen nav overlay (slides down from top) -->
+        <div class="fullscreen-overlay" id="fullscreen-nav">
+
+          <div class="overlay-header">
+            <div class="overlay-brand">
+              <div class="overlay-brand-label">Finance</div>
+              <div class="overlay-brand-title">Analyser</div>
+              <div class="overlay-brand-count">1,248 transactions</div>
+            </div>
+            <button class="overlay-close-btn" id="overlay-close">✕</button>
+          </div>
+
+          <div class="overlay-divider"></div>
+
+          <nav class="overlay-nav">
+            <button class="overlay-nav-item active">
+              <span class="overlay-nav-icon">⬡</span>Dashboard
+            </button>
+            <button class="overlay-nav-item">
+              <span class="overlay-nav-icon">≡</span>Transactions
+            </button>
+            <button class="overlay-nav-item">
+              <span class="overlay-nav-icon">◎</span>AI Chat
+            </button>
+            <button class="overlay-nav-item">
+              <span class="overlay-nav-icon">◈</span>Net Worth
+            </button>
+            <button class="overlay-nav-item">
+              <span class="overlay-nav-icon">◉</span>Goals
+            </button>
+            <button class="overlay-nav-item">
+              <span class="overlay-nav-icon">◧</span>Budget
+            </button>
+            <button class="overlay-nav-item">
+              <span class="overlay-nav-icon">⚙</span>Settings
+            </button>
+          </nav>
+
+          <div class="overlay-accounts-section">
+            <div class="overlay-accounts-label">Accounts</div>
+            <div class="overlay-account-row active">
+              <div class="overlay-account-dot" style="background:conic-gradient(#6c8ebf 0deg 120deg,#82b366 120deg 240deg,#d79b00 240deg 360deg)"></div>
+              <span class="overlay-account-name" style="color:var(--accent);font-weight:700">All Accounts</span>
+            </div>
+            <div class="overlay-account-row">
+              <div class="overlay-account-dot" style="background:#6c8ebf"></div>
+              <span class="overlay-account-name">ASB Everyday</span>
+            </div>
+            <div class="overlay-account-row">
+              <div class="overlay-account-dot" style="background:#82b366"></div>
+              <span class="overlay-account-name">ASB Savings</span>
+            </div>
+
+            <button class="overlay-upload-btn">↑ Upload CSV</button>
+          </div>
+
+          <div class="overlay-footer">
+            <span class="overlay-footer-text">ASB Bank · NZD</span>
+            <button class="overlay-signout">Sign out</button>
+          </div>
+
+        </div>
+
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<script>
+  const menuBtn = document.getElementById('menu-btn');
+  const acctChip = document.getElementById('acct-chip');
+  const overlay = document.getElementById('fullscreen-nav');
+  const overlayClose = document.getElementById('overlay-close');
+
+  function openNav() { overlay.classList.add('open'); }
+  function closeNav() { overlay.classList.remove('open'); }
+
+  menuBtn.addEventListener('click', openNav);
+  acctChip.addEventListener('click', openNav);
+  overlayClose.addEventListener('click', closeNav);
+
+  document.querySelectorAll('.overlay-nav-item').forEach(btn => {
+    btn.addEventListener('click', closeNav);
+  });
+  document.querySelectorAll('.overlay-account-row').forEach(row => {
+    row.addEventListener('click', function() {
+      document.querySelectorAll('.overlay-account-row').forEach(r => r.classList.remove('active'));
+      this.classList.add('active');
+    });
+  });
+</script>
+</body>
+</html>
