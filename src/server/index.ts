@@ -20,6 +20,7 @@ import {
   transactionOpsRouter,
 } from "./routes/transactions.ts";
 import { categoriesRouter } from "./routes/categories.ts";
+import { akahuSyncRouter } from "./routes/akahuSync.ts";
 
 const app = express();
 const PORT = process.env.PORT ?? 3001;
@@ -48,6 +49,7 @@ app.use("/api/budget-defaults", budgetDefaultsRouter);
 app.use("/api/preferences", userPreferencesRouter);
 app.use("/api/net-worth", netWorthRouter);
 app.use("/api/jobs", jobsRouter);
+app.use("/api/bank", akahuSyncRouter);
 
 app.use((_req, res) => {
   res.status(404).json({ error: "Not Found", status: 404 });
