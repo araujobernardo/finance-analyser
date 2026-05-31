@@ -1,4 +1,8 @@
-# UX Brief — FA-BANK-003 T002: Add Bank Connection nav item to Sidebar
+# UX Brief — FA-BANK-003: Bank Connection UI
+
+---
+
+## T002: Add Bank Connection nav item to Sidebar
 
 **Chosen option:** Inline Nav Entry (spec-constrained)
 **Date:** 2026-06-01
@@ -36,3 +40,63 @@ Add one entry to the existing `NAV` array in `src/components/Sidebar.tsx`, posit
 After implementation, run:
 
 - `npx impeccable detect src/components/Sidebar.tsx --format summary` — verify no new design regressions
+
+---
+
+## T004: Create BankConnectionPage with connect/disconnect UI
+
+**Chosen option:** Single-page split (spec-constrained)
+**Date:** 2026-06-01
+**Design decision:** Spec provides exact component structure. Visual styling uses existing app design tokens.
+
+### Layout & Structure
+
+Two mutually exclusive states in a single page (`src/pages/BankConnectionPage.tsx`):
+
+**When disconnected** — show `ConnectForm`:
+
+- Page title: "Bank Connection"
+- Two controlled text inputs: "Akahu User ID" and "User Token"
+- Help text below inputs: "Get these from my.akahu.nz/developers"
+- Privacy note (always visible): "Your bank credentials are never stored. Only your Akahu tokens are saved, and you can revoke access at any time from my.akahu.nz."
+- Submit button (disabled while `isLoading`)
+
+**When connected** — show `ConnectionStatusCard`:
+
+- Display `connection.connectedAt` as a readable date
+- Display `connection.lastSyncedAt` or "Never synced"
+- Disconnect button (triggers `window.confirm` before calling `disconnect()`)
+- Loading state while `isLoading`
+
+### Component Decisions
+
+- Use `var(--card)` background and `var(--shadow-sm)` for card containers (matches existing Settings pattern)
+- Use existing button classes: `btn btn-primary` for submit, `btn btn-danger` for Disconnect
+- Text inputs: use existing `.input` class from the app's design system
+- Error display: inline error message above the form using `var(--red)` text color
+
+### Interaction Model
+
+- `error` from `useBankContext()` shown at the top of the page if set
+- `ConnectForm` inputs are controlled (local state); `onSubmit` calls `connect(akahuUserId, userToken)`
+- Disconnect button: `window.confirm(...)` guard before calling `disconnect()`
+- Loading state: submit button disabled + cursor-not-allowed when `isLoading`
+
+### Copy
+
+- Page title: "Bank Connection"
+- Help text: "Get these from my.akahu.nz/developers"
+- Privacy note: "Your bank credentials are never stored. Only your Akahu tokens are saved, and you can revoke access at any time from my.akahu.nz."
+- Disconnect confirm: "Disconnect your Akahu account? This will remove all account links."
+
+### Constraints
+
+- Do not use any hardcoded hex values — use CSS custom properties exclusively
+- Privacy note must be visible without scrolling on a standard viewport
+- No CSS file needed — use existing utility classes from the app
+
+### Impeccable Commands for Developer
+
+After implementation, run:
+
+- `npx impeccable detect src/pages/BankConnectionPage.tsx --format summary` — verify no design regressions
