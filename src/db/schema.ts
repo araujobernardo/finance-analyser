@@ -283,6 +283,48 @@ export const akahuConnections = pgTable(
 export type AkahuConnection = typeof akahuConnections.$inferSelect;
 export type NewAkahuConnection = typeof akahuConnections.$inferInsert;
 
+export const akahuAccountLinks = pgTable(
+  "akahu_account_links",
+  {
+    id: uuid("id").defaultRandom().primaryKey(),
+    userId: uuid("user_id")
+      .notNull()
+      .references(() => users.id, { onDelete: "cascade" }),
+    akahuAccountId: varchar("akahu_account_id", { length: 50 }).notNull(),
+    financeAccountId: uuid("finance_account_id")
+      .notNull()
+      .references(() => accounts.id, { onDelete: "cascade" }),
+    akahuAccountName: varchar("akahu_account_name", { length: 200 }).notNull(),
+    akahuAccountType: varchar("akahu_account_type", { length: 50 }),
+    lastBalance: numeric("last_balance", { precision: 15, scale: 2 }), // postgres-js returns numeric as string; call parseFloat() before arithmetic
+    lastTransactionSyncedAt: timestamp("last_transaction_synced_at", {
+      withTimezone: true,
+    }),
+    syncStatus: varchar("sync_status", { length: 20 })
+      .notNull()
+      .default("active"),
+    syncError: text("sync_error"),
+    createdAt: timestamp("created_at", { withTimezone: true })
+      .defaultNow()
+      .notNull(),
+    updatedAt: timestamp("updated_at", { withTimezone: true })
+      .defaultNow()
+      .notNull(),
+  },
+  (t) => ({
+    userAkahuUniq: uniqueIndex("akahu_account_links_user_akahu_idx").on(
+      t.userId,
+      t.akahuAccountId,
+    ),
+    financeAccountUniq: uniqueIndex(
+      "akahu_account_links_finance_account_idx",
+    ).on(t.financeAccountId),
+  }),
+);
+
+export type AkahuAccountLink = typeof akahuAccountLinks.$inferSelect;
+export type NewAkahuAccountLink = typeof akahuAccountLinks.$inferInsert;
+
 // Inferred types — tsc -b verified 0 errors (FA-GOAL-001 T008, 2026-05-17)
 // Goal includes: categoryName: string | null, currentAmount: string | null, updatedAt: Date
 export type User = typeof users.$inferSelect;
