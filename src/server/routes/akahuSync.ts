@@ -4,7 +4,7 @@
 //         DELETE /api/bank/accounts/link/:akahuAccountId
 
 import { Router } from "express";
-import { eq } from "drizzle-orm";
+import { and, eq } from "drizzle-orm";
 import { z } from "zod";
 import {
   authenticateToken,
@@ -45,12 +45,10 @@ akahuSyncRouter.post("/connect", async (req, res, next) => {
     const userId = (res.locals as AuthLocals).user.userId;
     const parsed = connectBodySchema.safeParse(req.body);
     if (!parsed.success) {
-      res
-        .status(400)
-        .json({
-          error: "Invalid request body",
-          details: parsed.error.flatten(),
-        });
+      res.status(400).json({
+        error: "Invalid request body",
+        details: parsed.error.flatten(),
+      });
       return;
     }
     const { akahuUserId, userToken } = parsed.data;
@@ -116,3 +114,76 @@ akahuSyncRouter.delete("/connection", async (_req, res, next) => {
     next(err);
   }
 });
+
+// POST /api/bank/accounts/link — create or update an Akahu account link
+const linkAccountBodySchema = z.object({
+  akahuAccountId: z.string().min(1),
+  financeAccountId: z.string().uuid(),
+  akahuAccountName: z.string().min(1),
+});
+
+akahuSyncRouter.post("/accounts/link", async (req, res, next) => {
+  try {
+    const userId = (res.locals as AuthLocals).user.userId;
+    const parsed = linkAccountBodySchema.safeParse(req.body);
+    if (!parsed.success) {
+      res
+        .status(400)
+        .json({
+          error: "Invalid request body",
+          details: parsed.error.flatten(),
+        });
+      return;
+    }
+    const { akahuAccountId, financeAccountId, akahuAccountName } = parsed.data;
+
+    const rows = await db
+      .insert(akahuAccountLinks)
+      .values({
+        userId,
+        akahuAccountId,
+        financeAccountId,
+        akahuAccountName,
+        syncStatus: "active",
+      })
+      .onConflictDoUpdate({
+        target: [akahuAccountLinks.userId, akahuAccountLinks.akahuAccountId],
+        set: { financeAccountId, akahuAccountName, updatedAt: new Date() },
+      })
+      .returning();
+
+    res.status(201).json(rows[0]);
+  } catch (err: unknown) {
+    next(err);
+  }
+});
+
+// DELETE /api/bank/accounts/link/:akahuAccountId — remove an account link
+akahuSyncRouter.delete(
+  "/accounts/link/:akahuAccountId",
+  async (req, res, next) => {
+    try {
+      const userId = (res.locals as AuthLocals).user.userId;
+      const { akahuAccountId } = req.params;
+
+      const deleted = await db
+        .delete(akahuAccountLinks)
+        .where(
+          and(
+            eq(akahuAccountLinks.userId, userId),
+            eq(akahuAccountLinks.akahuAccountId, akahuAccountId),
+          ),
+        )
+        .returning();
+
+      if (deleted.length === 0) {
+        res.status(404).json({ error: "Account link not found" });
+        return;
+      }
+
+      res.status(204).send();
+    } catch (err: unknown) {
+      next(err);
+    }
+  },
+);
