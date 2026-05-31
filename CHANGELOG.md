@@ -1,5 +1,6 @@
 # Changelog
 
+- **2026-06-01** | #829 | FA-BANK-002 T005 [US1]: Add POST /api/bank/sync endpoint | Added the POST /api/bank/sync Express handler to akahuSyncRouter, calling syncUserAccounts and returning the SyncResult JSON; returns 404 when no Akahu connection exists.
 - **2026-05-31** | #824 | FA-BANK-001 T005: Generate Drizzle migration for Akahu tables | Generated 0009_lying_midnight.sql via npm run db:generate; migration creates akahu_connections (8 cols) and akahu_account_links (12 cols) with 3 unique indexes and 2 cascade FK constraints.
 - **2026-05-31** | #823 | FA-BANK-001 T004: Add akahuAccountLinks table and types to schema | Added akahuAccountLinks pgTable with 12 columns (2 unique indexes: userId+akahuAccountId, financeAccountId; 2 cascade FKs), plus AkahuAccountLink and NewAkahuAccountLink inferred types.
 - **2026-05-31** | #822 | FA-BANK-001 T003: Add akahuConnections table and types to schema | Added akahuConnections pgTable definition with 8 columns (uniqueIndex on userId, FK cascade to users), plus AkahuConnection and NewAkahuConnection inferred types — encryptedUserToken stores ciphertext only.
