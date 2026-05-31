@@ -6,6 +6,7 @@
 import { Router } from "express";
 import { and, eq } from "drizzle-orm";
 import { z } from "zod";
+import { AkahuClient } from "akahu";
 import {
   authenticateToken,
   type AuthLocals,
@@ -34,24 +35,26 @@ akahuSyncRouter.post("/sync", async (_req, res, next) => {
   }
 });
 
-// POST /api/bank/connect — store encrypted Akahu user token
-const connectBodySchema = z.object({
-  akahuUserId: z.string().min(1),
-  userToken: z.string().min(1),
-});
-
-akahuSyncRouter.post("/connect", async (req, res, next) => {
+// POST /api/bank/connect — read Akahu credentials from server env and store encrypted token
+akahuSyncRouter.post("/connect", async (_req, res, next) => {
   try {
     const userId = (res.locals as AuthLocals).user.userId;
-    const parsed = connectBodySchema.safeParse(req.body);
-    if (!parsed.success) {
-      res.status(400).json({
-        error: "Invalid request body",
-        details: parsed.error.flatten(),
-      });
+
+    const userToken = process.env.AKAHU_USER_TOKEN;
+    const appToken = process.env.AKAHU_APP_TOKEN;
+
+    if (!userToken || !appToken) {
+      res
+        .status(503)
+        .json({ error: "Akahu credentials not configured on the server" });
       return;
     }
-    const { akahuUserId, userToken } = parsed.data;
+
+    // Fetch the Akahu user ID server-side — never submitted from the browser
+    const akahu = new AkahuClient({ appToken });
+    const akahuUser = await akahu.users.get(userToken);
+    const akahuUserId = akahuUser._id;
+
     const encryptedUserToken = encrypt(userToken);
 
     const rows = await db
@@ -127,12 +130,10 @@ akahuSyncRouter.post("/accounts/link", async (req, res, next) => {
     const userId = (res.locals as AuthLocals).user.userId;
     const parsed = linkAccountBodySchema.safeParse(req.body);
     if (!parsed.success) {
-      res
-        .status(400)
-        .json({
-          error: "Invalid request body",
-          details: parsed.error.flatten(),
-        });
+      res.status(400).json({
+        error: "Invalid request body",
+        details: parsed.error.flatten(),
+      });
       return;
     }
     const { akahuAccountId, financeAccountId, akahuAccountName } = parsed.data;

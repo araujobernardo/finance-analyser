@@ -3,11 +3,12 @@
  *
  * T005 (POST /sync): 200 success, 404 no connection, 401 no auth, 500 unexpected error
  * T006 (POST /connect, GET /connection, DELETE /connection):
- *   - connect: 201 success (no encryptedUserToken in response), 400 bad body
+ *   - connect: 201 success (reads env vars, no request body, no encryptedUserToken in response)
+ *   - connect: 503 when env vars are missing
  *   - connection: 200 with connection + links, 404 when none
  *   - delete connection: 204 success
  */
-import { describe, it, expect, vi, beforeEach } from "vitest";
+import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 import express from "express";
 import request from "supertest";
 
@@ -43,6 +44,14 @@ vi.mock("../utils/encryption.ts", () => ({
   encrypt: (...args: unknown[]) => mockEncrypt(...args),
 }));
 
+const mockUsersGet = vi.fn();
+vi.mock("akahu", () => ({
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  AkahuClient: function MockAkahuClient(this: any) {
+    this.users = { get: (...args: unknown[]) => mockUsersGet(...args) };
+  },
+}));
+
 const mockSyncUserAccounts = vi.fn();
 vi.mock("../services/akahuSync.ts", () => ({
   syncUserAccounts: (...args: unknown[]) => mockSyncUserAccounts(...args),
@@ -73,6 +82,7 @@ beforeEach(async () => {
   mockDbSelect.mockReset();
   mockDbDelete.mockReset();
   mockEncrypt.mockReset();
+  mockUsersGet.mockReset();
 
   const { akahuSyncRouter } = await import("./akahuSync.ts");
   app = express();
@@ -173,6 +183,9 @@ describe("POST /api/bank/connect", () => {
   };
 
   function setupConnectMock() {
+    process.env.AKAHU_USER_TOKEN = "raw-user-token";
+    process.env.AKAHU_APP_TOKEN = "raw-app-token";
+    mockUsersGet.mockResolvedValue({ _id: "user_abc123" });
     mockEncrypt.mockReturnValue("encrypted-secret");
     mockDbInsert.mockReturnValue({
       values: vi.fn().mockReturnValue({
@@ -183,50 +196,52 @@ describe("POST /api/bank/connect", () => {
     });
   }
 
-  it("returns 201 with connection row excluding encryptedUserToken", async () => {
+  afterEach(() => {
+    delete process.env.AKAHU_USER_TOKEN;
+    delete process.env.AKAHU_APP_TOKEN;
+  });
+
+  it("returns 201 with connection row excluding encryptedUserToken (no request body needed)", async () => {
     setupConnectMock();
 
-    const res = await request(app)
-      .post("/api/bank/connect")
-      .send({ akahuUserId: "user_abc123", userToken: "user_token_secret" });
+    const res = await request(app).post("/api/bank/connect");
 
     expect(res.status).toBe(201);
     expect(res.body).not.toHaveProperty("encryptedUserToken");
     expect(res.body.id).toBe("conn-001");
     expect(res.body.akahuUserId).toBe("user_abc123");
-    expect(mockEncrypt).toHaveBeenCalledWith("user_token_secret");
+    expect(mockEncrypt).toHaveBeenCalledWith("raw-user-token");
+    expect(mockUsersGet).toHaveBeenCalledWith("raw-user-token");
   });
 
-  it("returns 400 when akahuUserId is missing", async () => {
-    const res = await request(app)
-      .post("/api/bank/connect")
-      .send({ userToken: "user_token_secret" });
+  it("returns 503 when AKAHU_USER_TOKEN is not set", async () => {
+    delete process.env.AKAHU_USER_TOKEN;
+    process.env.AKAHU_APP_TOKEN = "raw-app-token";
 
-    expect(res.status).toBe(400);
-    expect(res.body.error).toBe("Invalid request body");
+    const res = await request(app).post("/api/bank/connect");
+
+    expect(res.status).toBe(503);
+    expect(res.body.error).toBe(
+      "Akahu credentials not configured on the server",
+    );
   });
 
-  it("returns 400 when userToken is missing", async () => {
-    const res = await request(app)
-      .post("/api/bank/connect")
-      .send({ akahuUserId: "user_abc123" });
+  it("returns 503 when AKAHU_APP_TOKEN is not set", async () => {
+    process.env.AKAHU_USER_TOKEN = "raw-user-token";
+    delete process.env.AKAHU_APP_TOKEN;
 
-    expect(res.status).toBe(400);
-    expect(res.body.error).toBe("Invalid request body");
-  });
+    const res = await request(app).post("/api/bank/connect");
 
-  it("returns 400 when body is empty", async () => {
-    const res = await request(app).post("/api/bank/connect").send({});
-
-    expect(res.status).toBe(400);
+    expect(res.status).toBe(503);
+    expect(res.body.error).toBe(
+      "Akahu credentials not configured on the server",
+    );
   });
 
   it("never includes encryptedUserToken in the response even on reconnect", async () => {
     setupConnectMock();
 
-    const res = await request(app)
-      .post("/api/bank/connect")
-      .send({ akahuUserId: "user_abc123", userToken: "new_token" });
+    const res = await request(app).post("/api/bank/connect");
 
     expect(res.status).toBe(201);
     expect(Object.keys(res.body)).not.toContain("encryptedUserToken");
