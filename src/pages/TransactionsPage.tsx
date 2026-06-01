@@ -328,7 +328,12 @@ export function TransactionsPage() {
     setIsAutoCategorising(true);
     try {
       const results = await categoriseTransactions(
-        targets.map((t) => ({ description: t.payee, category: undefined })),
+        targets.map((t) => ({
+          date: new Date(t.date),
+          description: t.payee,
+          amount: t.amount,
+          category: undefined,
+        })),
       );
 
       // Pair each result with the target txn it corresponds to (same index).
