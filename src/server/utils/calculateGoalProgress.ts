@@ -2,9 +2,15 @@
 // Server-side only — do not import from React components or Vite browser code.
 // FA-GOAL-003 T019 (Polish): tsc --noEmit exits 0, npm run lint exits 0, all tests pass.
 
-import { and, eq, gte, lt, sql } from "drizzle-orm";
+import { and, eq, gte, isNotNull, lt, sql } from "drizzle-orm";
 import type { db as DbInstance } from "../../db/index.ts";
-import { goals, assets, liabilities, transactions } from "../../db/schema.ts";
+import {
+  goals,
+  assets,
+  liabilities,
+  transactions,
+  akahuAccountLinks,
+} from "../../db/schema.ts";
 import type { Goal } from "../../db/schema.ts";
 import { computeAccountBalance } from "./accountBalance.ts";
 
@@ -16,10 +22,13 @@ type Db = typeof DbInstance;
  * skipped immediately — no DB write is performed.
  *
  * Supported types
- *   savings_target      — derives currentAmount from the linked account balance
- *   debt_payoff         — stub, no-op until a later task
- *   net_worth_milestone — stub, no-op until a later task
- *   spending_limit      — stub, no-op until a later task
+ *   savings_target      — derives currentAmount from akahu_account_links.lastBalance
+ *                         (balance-based, not income-flow). If no Akahu link with a
+ *                         lastBalance exists for the linked account, the goal is left
+ *                         unchanged (currentAmount stays null).
+ *   debt_payoff         — derives currentAmount from computeAccountBalance (transaction sum)
+ *   net_worth_milestone — derives currentAmount from total assets minus total liabilities
+ *   spending_limit      — derives currentAmount from monthly spend in the goal category
  */
 export async function calculateGoalProgress(
   goal: Goal,
@@ -38,13 +47,26 @@ export async function calculateGoalProgress(
         return;
       }
 
-      const rawBalance = await computeAccountBalance(
-        goal.linkedAccountId,
-        userId,
-        db,
-      );
+      // Use lastBalance from akahu_account_links — balance-based progress, not income flow.
+      // Only update if an Akahu link with a non-null lastBalance exists for this account.
+      const [linkRow] = await db
+        .select({ lastBalance: akahuAccountLinks.lastBalance })
+        .from(akahuAccountLinks)
+        .where(
+          and(
+            eq(akahuAccountLinks.financeAccountId, goal.linkedAccountId),
+            eq(akahuAccountLinks.userId, userId),
+            isNotNull(akahuAccountLinks.lastBalance),
+          ),
+        );
+
+      if (!linkRow || linkRow.lastBalance == null) {
+        // No Akahu link or balance not yet synced; leave goal unchanged
+        return;
+      }
 
       // Clamp negative balances to 0 (savings can't be negative)
+      const rawBalance = parseFloat(linkRow.lastBalance);
       const currentAmount = Math.max(0, rawBalance);
 
       const targetAmount = parseFloat(goal.targetAmount);
@@ -69,6 +91,7 @@ export async function calculateGoalProgress(
         return;
       }
 
+      // debt_payoff uses transaction-sum balance
       const rawBalance = await computeAccountBalance(
         goal.linkedAccountId,
         userId,

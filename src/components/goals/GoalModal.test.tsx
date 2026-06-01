@@ -295,6 +295,41 @@ describe("GoalModal — validation", () => {
       ).toBe(false),
     );
   });
+
+  it("#898: shows account error for savings_target when accounts exist but none selected", async () => {
+    // Override mock to return one account so validation triggers
+    mockApiFetch.mockResolvedValue({
+      ok: true,
+      status: 200,
+      json: async () => ({
+        accounts: [
+          {
+            id: "acct-1",
+            nickname: "Main",
+            accountType: "Checking",
+            colour: "#aaa",
+            userId: "u1",
+            createdAt: "2026-01-01T00:00:00Z",
+          },
+        ],
+        goals: [],
+      }),
+    });
+    renderModal();
+    await userEvent.type(
+      screen.getByTestId("goal-modal-name-input"),
+      "My Savings",
+    );
+    await userEvent.click(screen.getByTestId("goal-tile-savings_target"));
+    await userEvent.type(screen.getByTestId("goal-modal-amount-input"), "5000");
+    await userEvent.click(screen.getByRole("button", { name: /save goal/i }));
+    await waitFor(() => {
+      const alerts = screen.queryAllByRole("alert");
+      expect(
+        alerts.some((a) => /select an account/i.test(a.textContent ?? "")),
+      ).toBe(true);
+    });
+  });
 });
 
 // ── Successful save ────────────────────────────────────────────────────────

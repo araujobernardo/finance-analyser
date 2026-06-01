@@ -70,6 +70,14 @@ interface GoalCardProps {
    * GoalsPage handles the confirmation prompt in T018.
    */
   onDelete?: (id: string) => void;
+  /**
+   * For savings_target goals: whether the linked account has a valid Akahu
+   * balance (i.e. an akahu_account_links row with a non-null lastBalance exists).
+   * When false and linkedAccountId is set, the card shows a "No balance data"
+   * warning instead of the standard "Link an account" placeholder.
+   * Defaults to false (safest default — no balance assumed until confirmed).
+   */
+  hasAkahuBalance?: boolean;
 }
 
 export function GoalCard({
@@ -77,6 +85,7 @@ export function GoalCard({
   onEdit,
   onStatusChange,
   onDelete,
+  hasAkahuBalance = false,
 }: GoalCardProps) {
   const percent = goalPercent(goal);
   const overTarget = isOverTarget(goal);
@@ -213,13 +222,17 @@ export function GoalCard({
                 data-testid={`goal-card-auto-note-${goal.id}`}
               >
                 {/* FA-GOAL-003 T018: actionable placeholder text */}
-                {(goal.type === "savings_target" ||
-                  goal.type === "debt_payoff") &&
-                !goal.linkedAccountId
+                {goal.type === "savings_target" && !goal.linkedAccountId
                   ? "Link an account to track progress"
-                  : goal.type === "spending_limit" && !goal.categoryName
-                    ? "Link a category to track spending"
-                    : "Calculating..."}
+                  : goal.type === "savings_target" &&
+                      goal.linkedAccountId &&
+                      !hasAkahuBalance
+                    ? "No balance data — connect this account to Akahu"
+                    : goal.type === "debt_payoff" && !goal.linkedAccountId
+                      ? "Link an account to track progress"
+                      : goal.type === "spending_limit" && !goal.categoryName
+                        ? "Link a category to track spending"
+                        : "Calculating..."}
               </span>
               <span
                 className="goal-card__target-amount"
