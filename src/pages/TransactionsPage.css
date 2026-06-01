@@ -99,6 +99,33 @@
   white-space: nowrap;
 }
 
+/* ── Auto-categorise button ─────────────────────────────────────────────────── */
+
+.txn-btn-auto-categorise {
+  background: transparent;
+  color: var(--accent);
+  border: 1px solid color-mix(in srgb, var(--accent) 40%, transparent);
+  border-radius: 10px;
+  padding: 8px 16px;
+  font-size: 12px;
+  font-weight: 600;
+  font-family: inherit;
+  cursor: pointer;
+  white-space: nowrap;
+  transition:
+    background 140ms ease,
+    opacity 140ms ease;
+}
+
+.txn-btn-auto-categorise:hover:not(:disabled) {
+  background: color-mix(in srgb, var(--accent) 10%, transparent);
+}
+
+.txn-btn-auto-categorise:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
 /* ── Toast notification ─────────────────────────────────────────────────────── */
 
 .txn-toast {
@@ -109,6 +136,12 @@
   border-radius: 7px;
   padding: 7px 14px;
   flex-shrink: 0;
+}
+
+.txn-toast--error {
+  color: var(--red);
+  background: color-mix(in srgb, var(--red) 8%, transparent);
+  border-color: color-mix(in srgb, var(--red) 25%, transparent);
 }
 
 /* ── Transfer flagging mode banner ──────────────────────────────────────────── */
