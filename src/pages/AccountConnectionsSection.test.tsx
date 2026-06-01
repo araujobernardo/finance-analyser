@@ -135,11 +135,13 @@ describe("AccountConnectionsSection — rows", () => {
     renderSection();
     const rows = screen.getAllByTestId("account-connection-row");
 
+    // First account: nickname "Cheque", type "Checking" — distinct text
     expect(within(rows[0]).getByText("Cheque")).toBeInTheDocument();
     expect(within(rows[0]).getByText("Checking")).toBeInTheDocument();
 
-    expect(within(rows[1]).getByText("Savings")).toBeInTheDocument();
-    expect(within(rows[1]).getByText("Savings")).toBeInTheDocument();
+    // Second account: nickname "Savings", type "Savings" — both appear, so use getAllByText
+    const savingsMatches = within(rows[1]).getAllByText("Savings");
+    expect(savingsMatches).toHaveLength(2); // nickname + accountType both say "Savings"
   });
 });
 
@@ -287,8 +289,12 @@ describe("AccountConnectionsSection — summary row", () => {
     };
     renderSection();
     const summary = screen.getByTestId("account-connections-summary");
+    // Should say "1 of 1 account linked" (singular), not "1 of 1 accounts linked"
     expect(summary).toHaveTextContent("1 of 1 account linked");
-    expect(summary.textContent).not.toMatch(/accounts/);
+    // The count portion must not say "accounts" — note the copy also says "link accounts"
+    // so we check that the count phrase specifically uses singular form
+    expect(summary.textContent).toMatch(/1 of 1 account linked/);
+    expect(summary.textContent).not.toMatch(/1 of 1 accounts linked/);
   });
 
   it("mentions the link location in the summary", () => {
