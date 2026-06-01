@@ -366,14 +366,15 @@ describe("SyncControls — rendering", () => {
     expect(screen.getByTestId("sync-controls")).toBeInTheDocument();
   });
 
-  it("does not show SyncControls when connected but no linked accounts", () => {
+  it("shows SyncControls when connected but no linked accounts yet (initial discovery)", () => {
     currentContext = {
       ...DEFAULT_CONTEXT,
       connection: MOCK_CONNECTION,
       accountLinks: [],
     };
     renderSection();
-    expect(screen.queryByTestId("sync-controls")).not.toBeInTheDocument();
+    expect(screen.getByTestId("sync-controls")).toBeInTheDocument();
+    expect(screen.getByTestId("sync-now-btn")).toBeInTheDocument();
   });
 
   it("does not show SyncControls when not connected", () => {
