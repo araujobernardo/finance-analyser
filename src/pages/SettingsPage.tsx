@@ -937,77 +937,75 @@ export function BankConnectionSection() {
             )}
           </div>
 
-          {/* Sync controls — only when there are linked accounts */}
-          {accountLinks.length > 0 && (
-            <div data-testid="sync-controls">
-              <div className="settings-bank-sync-row">
-                <button
-                  type="button"
-                  className="btn-accent"
-                  onClick={() => void syncNow()}
-                  disabled={isSyncing}
-                  data-testid="sync-now-btn"
-                >
-                  {isSyncing ? (
-                    <>
-                      <span
-                        className="settings-bank-spinner"
-                        data-testid="sync-spinner"
-                        aria-label="Syncing"
-                      />
-                      Syncing…
-                    </>
-                  ) : (
-                    "Sync now"
-                  )}
-                </button>
-              </div>
-
-              {lastSyncResult !== null && (
-                <div
-                  className="settings-bank-sync-result"
-                  data-testid="sync-result"
-                >
-                  {lastSyncResult.transactionsAdded > 0 ? (
-                    <p data-testid="sync-result-text">
-                      Synced {lastSyncResult.transactionsAdded} new transaction
-                      {lastSyncResult.transactionsAdded !== 1
-                        ? "s"
-                        : ""} across {lastSyncResult.accountsSynced} account
-                      {lastSyncResult.accountsSynced !== 1 ? "s" : ""}
-                    </p>
-                  ) : (
-                    <p data-testid="sync-result-text">
-                      No new transactions found
-                    </p>
-                  )}
-                  {lastSyncResult.errors.length > 0 && (
-                    <ul
-                      className="settings-bank-sync-errors"
-                      data-testid="sync-error-list"
-                    >
-                      {lastSyncResult.errors.map((e, i) => (
-                        <li key={i}>
-                          {e.accountId}: {e.error}
-                        </li>
-                      ))}
-                    </ul>
-                  )}
-                </div>
-              )}
-
-              <p
-                className="settings-bank-security-note"
-                data-testid="security-note"
+          {/* Sync controls — shown whenever connected, even with no linked accounts yet */}
+          <div data-testid="sync-controls">
+            <div className="settings-bank-sync-row">
+              <button
+                type="button"
+                className="btn-accent"
+                onClick={() => void syncNow()}
+                disabled={isSyncing}
+                data-testid="sync-now-btn"
               >
-                Finance Analyser connects to your bank via Akahu, New Zealand's
-                regulated open finance platform. Your bank login credentials are
-                never shared with or stored by Finance Analyser. You can
-                disconnect at any time by clicking Disconnect above or by
-                visiting my.akahu.nz.
-              </p>
+                {isSyncing ? (
+                  <>
+                    <span
+                      className="settings-bank-spinner"
+                      data-testid="sync-spinner"
+                      aria-label="Syncing"
+                    />
+                    Syncing…
+                  </>
+                ) : (
+                  "Sync now"
+                )}
+              </button>
             </div>
-          )}
+
+            {lastSyncResult !== null && (
+              <div
+                className="settings-bank-sync-result"
+                data-testid="sync-result"
+              >
+                {lastSyncResult.transactionsAdded > 0 ? (
+                  <p data-testid="sync-result-text">
+                    Synced {lastSyncResult.transactionsAdded} new transaction
+                    {lastSyncResult.transactionsAdded !== 1
+                      ? "s"
+                      : ""} across {lastSyncResult.accountsSynced} account
+                    {lastSyncResult.accountsSynced !== 1 ? "s" : ""}
+                  </p>
+                ) : (
+                  <p data-testid="sync-result-text">
+                    No new transactions found
+                  </p>
+                )}
+                {lastSyncResult.errors.length > 0 && (
+                  <ul
+                    className="settings-bank-sync-errors"
+                    data-testid="sync-error-list"
+                  >
+                    {lastSyncResult.errors.map((e, i) => (
+                      <li key={i}>
+                        {e.accountId}: {e.error}
+                      </li>
+                    ))}
+                  </ul>
+                )}
+              </div>
+            )}
+
+            <p
+              className="settings-bank-security-note"
+              data-testid="security-note"
+            >
+              Finance Analyser connects to your bank via Akahu, New Zealand's
+              regulated open finance platform. Your bank login credentials are
+              never shared with or stored by Finance Analyser. You can
+              disconnect at any time by clicking Disconnect above or by visiting
+              my.akahu.nz.
+            </p>
+          </div>
         </>
       ) : (
         /* Disconnected state */
