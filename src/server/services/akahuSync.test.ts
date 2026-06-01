@@ -340,6 +340,62 @@ describe("syncUserAccounts", () => {
     expect(result.accountsSynced).toBe(1);
   });
 
+  it("follows cursor pagination to collect all transaction pages", async () => {
+    // Three select calls: connection, linked accounts, then two dedup checks (one per tx)
+    setupSelectSpy([
+      [makeConnectionRow()], // connection
+      [makeLinkRow()], // links
+      [], // dedup for page-1 tx
+      [], // dedup for page-2 tx
+    ]);
+    setupUpdateSpy();
+    setupInsertSpy();
+
+    mockAccountsList.mockResolvedValue([makeAkahuAccount()]);
+
+    // First call returns page 1 with cursor pointing to page 2;
+    // second call returns page 2 with a null cursor (end of results).
+    let listCallCount = 0;
+    mockTransactionsList.mockImplementation(() => {
+      listCallCount++;
+      if (listCallCount === 1) {
+        return Promise.resolve({
+          items: [
+            {
+              _id: "tx-1",
+              _account: "akahu-acc-1",
+              _user: "u1",
+              date: "2025-07-01",
+              amount: -10,
+              description: "Page 1 tx",
+            },
+          ],
+          cursor: { next: "cursor-page-2" },
+        });
+      }
+      return Promise.resolve({
+        items: [
+          {
+            _id: "tx-2",
+            _account: "akahu-acc-1",
+            _user: "u1",
+            date: "2025-08-01",
+            amount: -20,
+            description: "Page 2 tx",
+          },
+        ],
+        cursor: { next: null },
+      });
+    });
+
+    const result = await syncUserAccounts("user-1");
+
+    // Both pages fetched — 2 transactions added
+    expect(mockTransactionsList).toHaveBeenCalledTimes(2);
+    expect(result.transactionsAdded).toBe(2);
+    expect(result.accountsSynced).toBe(1);
+  });
+
   it("skips transaction sync for unlinked accounts (financeAccountId is null)", async () => {
     // linkRows returns empty (all accounts unlinked) — no transaction processing
     setupSelectSpy([
