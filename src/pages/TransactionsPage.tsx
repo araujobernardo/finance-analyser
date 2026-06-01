@@ -83,6 +83,20 @@ export function TransactionsPage() {
       .catch(() => {});
   }, [apiFetch]);
 
+  // ── Identify Transfers state ──────────────────────────────────────────────
+  const [identifyStripOpen, setIdentifyStripOpen] = useState(false);
+  const [isIdentifying, setIsIdentifying] = useState(false);
+
+  interface TransferPair {
+    txnA: AdaptedTxn; // debit side
+    txnB: AdaptedTxn; // credit side
+    isConfirmed: boolean;
+    id: string; // stable key: `${txnA.id}:${txnB.id}`
+  }
+  const [transferPairs, setTransferPairs] = useState<TransferPair[]>([]);
+  const [checkedPairs, setCheckedPairs] = useState<Set<string>>(new Set());
+  const [isMarkingTransfers, setIsMarkingTransfers] = useState(false);
+
   // ── Transfer flagging local state ─────────────────────────────────────────
   // preFlagMap: txnId → category that was set before manual transfer flagging
   const [preFlagMap, setPreFlagMap] = useState<Map<string, string | null>>(
@@ -126,15 +140,19 @@ export function TransactionsPage() {
   const candidates = flagMode ? getCandidates(txns, flagMode.initiatingId) : [];
   const candidateIds = new Set(candidates.map((c) => c.id));
 
-  // Dismiss flagging mode / unflag panel on Escape
+  // Dismiss flagging mode / unflag panel / identify strip on Escape
   const handleEscape = useCallback(
     (e: KeyboardEvent) => {
       if (e.key === "Escape") {
+        if (identifyStripOpen) {
+          setIdentifyStripOpen(false);
+          return;
+        }
         if (flagMode) setFlagMode(null);
         if (unflagTarget) setUnflagTarget(null);
       }
     },
-    [flagMode, unflagTarget],
+    [identifyStripOpen, flagMode, unflagTarget],
   );
 
   useEffect(() => {
@@ -367,6 +385,138 @@ export function TransactionsPage() {
     }
   };
 
+  // ── Identify Transfers handler ─────────────────────────────────────────────
+
+  // Keywords that indicate a confirmed transfer description match
+  const TRANSFER_KEYWORDS = [
+    "transfer",
+    "trf",
+    "tfr",
+    "internet banking",
+    "direct credit",
+    "direct debit",
+  ];
+
+  const handleIdentifyTransfers = async () => {
+    // Toggle off if already open
+    if (identifyStripOpen) {
+      setIdentifyStripOpen(false);
+      setTransferPairs([]);
+      setCheckedPairs(new Set());
+      return;
+    }
+
+    // Cancel manual flagging mode if active
+    if (flagMode) setFlagMode(null);
+
+    setIsIdentifying(true);
+    try {
+      // Scan all transactions (not filtered) for candidate pairs
+      const unpaired = txns.filter((t) => !t.isTransfer);
+      const pairs: TransferPair[] = [];
+      const usedIds = new Set<string>();
+
+      for (let i = 0; i < unpaired.length; i++) {
+        const a = unpaired[i];
+        if (usedIds.has(a.id)) continue;
+
+        for (let j = i + 1; j < unpaired.length; j++) {
+          const b = unpaired[j];
+          if (usedIds.has(b.id)) continue;
+
+          // Must be same date, same absolute amount, debit↔credit, different accounts
+          if (
+            a.date !== b.date ||
+            Math.abs(a.amount) !== Math.abs(b.amount) ||
+            a.isCredit === b.isCredit ||
+            a.accountShort === b.accountShort
+          )
+            continue;
+
+          // Determine debit/credit sides
+          const debitTxn = a.isCredit ? b : a;
+          const creditTxn = a.isCredit ? a : b;
+
+          // Determine if confirmed: payee/memo match or transfer keyword present
+          const payeeA = a.payee.toLowerCase();
+          const payeeB = b.payee.toLowerCase();
+          const hasKeyword = (s: string) =>
+            TRANSFER_KEYWORDS.some((kw) => s.includes(kw));
+          const isConfirmed =
+            payeeA === payeeB ||
+            payeeA.includes(payeeB) ||
+            payeeB.includes(payeeA) ||
+            hasKeyword(payeeA) ||
+            hasKeyword(payeeB);
+
+          pairs.push({
+            txnA: debitTxn,
+            txnB: creditTxn,
+            isConfirmed,
+            id: `${debitTxn.id}:${creditTxn.id}`,
+          });
+          usedIds.add(a.id);
+          usedIds.add(b.id);
+          break; // Only match each transaction once
+        }
+      }
+
+      if (pairs.length === 0) {
+        setToast({ message: "No transfer pairs found." });
+        setTimeout(() => setToast(null), 4000);
+        return;
+      }
+
+      // Pre-check confirmed pairs only
+      const initialChecked = new Set(
+        pairs.filter((p) => p.isConfirmed).map((p) => p.id),
+      );
+      setTransferPairs(pairs);
+      setCheckedPairs(initialChecked);
+      setIdentifyStripOpen(true);
+    } finally {
+      setIsIdentifying(false);
+    }
+  };
+
+  const handleMarkTransfers = async () => {
+    const pairsToMark = transferPairs.filter((p) => checkedPairs.has(p.id));
+    if (pairsToMark.length === 0) return;
+
+    setIsMarkingTransfers(true);
+    try {
+      const txnIds = pairsToMark.flatMap((p) => [p.txnA.id, p.txnB.id]);
+      const results = await Promise.all(
+        txnIds.map((id) =>
+          apiFetch(`/api/transactions/${id}`, {
+            method: "PATCH",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ isTransfer: true }),
+          }),
+        ),
+      );
+      const anyFailed = results.some((r) => !r.ok);
+      if (anyFailed) throw new Error("One or more PATCH requests failed");
+
+      await refetch();
+      setIdentifyStripOpen(false);
+      setTransferPairs([]);
+      setCheckedPairs(new Set());
+      setToast({
+        message: `Marked ${pairsToMark.length} transfer pair(s).`,
+      });
+      setTimeout(() => setToast(null), 4000);
+    } catch {
+      setToast({
+        message: "Failed to mark transfers — please try again.",
+        isError: true,
+      });
+      setTimeout(() => setToast(null), 4000);
+    } finally {
+      setIsMarkingTransfers(false);
+    }
+  };
+
   // ── Empty state ────────────────────────────────────────────────────────────
   if (txns.length === 0) {
     return (
@@ -458,10 +608,117 @@ export function TransactionsPage() {
         >
           {isAutoCategorising ? "Categorising…" : "Auto-Categorise"}
         </button>
+        <button
+          className={`txn-btn-identify-transfers${identifyStripOpen ? " txn-btn-identify-transfers--active" : ""}`}
+          onClick={() => void handleIdentifyTransfers()}
+          disabled={isIdentifying}
+          aria-expanded={identifyStripOpen}
+          data-testid="identify-transfers-btn"
+        >
+          {isIdentifying ? "Identifying…" : "⇄ Identify Transfers"}
+        </button>
         <span className="txn-row-count" data-testid="txn-row-count">
           {filtered.length} rows
         </span>
       </div>
+
+      {/* Identify Transfers inline strip */}
+      {identifyStripOpen && (
+        <div
+          className="txn-identify-strip"
+          data-testid="identify-transfers-strip"
+        >
+          <div className="txn-identify-strip__header">
+            <div>
+              <div className="txn-identify-strip__title">
+                Identified Transfer Pairs — {transferPairs.length} found
+              </div>
+              <div className="txn-identify-strip__subtitle">
+                Review both memos before confirming. Ambiguous pairs are
+                pre-unchecked.
+              </div>
+            </div>
+            <div className="txn-identify-strip__actions">
+              <button
+                className="txn-identify-strip__btn-cancel"
+                onClick={() => {
+                  setIdentifyStripOpen(false);
+                  setTransferPairs([]);
+                  setCheckedPairs(new Set());
+                }}
+                data-testid="identify-transfers-cancel"
+              >
+                Cancel
+              </button>
+              <button
+                className="txn-identify-strip__btn-mark"
+                onClick={() => void handleMarkTransfers()}
+                disabled={checkedPairs.size === 0 || isMarkingTransfers}
+                data-testid="identify-transfers-mark"
+              >
+                {isMarkingTransfers ? "Marking…" : "Mark as Transfers"}
+              </button>
+            </div>
+          </div>
+          <div
+            className="txn-identify-strip__list"
+            role="region"
+            aria-label="Transfer pairs list"
+          >
+            {transferPairs.map((pair) => (
+              <div key={pair.id} className="txn-identify-strip__pair-row">
+                <input
+                  type="checkbox"
+                  className="txn-identify-strip__pair-check"
+                  checked={checkedPairs.has(pair.id)}
+                  onChange={(e) => {
+                    const next = new Set(checkedPairs);
+                    if (e.target.checked) {
+                      next.add(pair.id);
+                    } else {
+                      next.delete(pair.id);
+                    }
+                    setCheckedPairs(next);
+                  }}
+                  aria-label={`Transfer pair: ${fmt(pair.txnA.amount)} on ${pair.txnA.date} — ${pair.txnA.account} and ${pair.txnB.account}`}
+                />
+                <div className="txn-identify-strip__pair-meta">
+                  <span className="txn-identify-strip__pair-date">
+                    {pair.txnA.date}
+                  </span>
+                  <span className="txn-identify-strip__pair-amount">
+                    {fmt(Math.abs(pair.txnA.amount))}
+                  </span>
+                </div>
+                <div className="txn-identify-strip__pair-memos">
+                  <div className="txn-identify-strip__pair-memo-line">
+                    <span className="txn-identify-strip__pair-memo-account">
+                      {pair.txnA.account}
+                    </span>
+                    <span className="txn-identify-strip__pair-memo-text">
+                      {pair.txnA.payee || "—"}
+                    </span>
+                  </div>
+                  <div className="txn-identify-strip__pair-connector">↓</div>
+                  <div className="txn-identify-strip__pair-memo-line">
+                    <span className="txn-identify-strip__pair-memo-account">
+                      {pair.txnB.account}
+                    </span>
+                    <span className="txn-identify-strip__pair-memo-text">
+                      {pair.txnB.payee || "—"}
+                    </span>
+                  </div>
+                </div>
+                <span
+                  className={`txn-identify-strip__badge ${pair.isConfirmed ? "txn-identify-strip__badge--confirmed" : "txn-identify-strip__badge--ambiguous"}`}
+                >
+                  {pair.isConfirmed ? "Confirmed" : "Ambiguous"}
+                </span>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
 
       {toast && (
         <div className={`txn-toast${toast.isError ? " txn-toast--error" : ""}`}>
