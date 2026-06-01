@@ -1,5 +1,6 @@
 # Changelog
 
+- **2026-06-01** | #885 | Settings: Add Account Connections card — Finance Analyser accounts with linked Akahu account | Added read-only AccountConnectionsSection card between Bank Connection and Danger Zone in Settings, showing each account, its linked Akahu bank account, balance, and Linked/Not linked pill badge; uses only existing CSS classes and reuses BankContext data.
 - **2026-06-01** | #884 | FA-BANK-002: Auto-discover Akahu accounts on sync — upsert unlinked entries into akahu_account_links | Made `financeAccountId` nullable, added an upsert step that creates discovery rows for every Akahu account on sync, and filtered transaction import to only mapped accounts.
 - **2026-06-01** | #832 | FA-BANK-002 T008: Add AKAHU_APP_TOKEN and ENCRYPTION_KEY to Render | Documented AKAHU_APP_TOKEN, AKAHU_USER_TOKEN, and ENCRYPTION_KEY in architecture docs; env vars confirmed set on Render backend; FA-BANK-002 deployment verified healthy.
 - **2026-06-01** | #879 | FA-BANK-003: Embed bank connection UI in Settings page | Removed standalone BankConnectionPage and /settings/bank route; embedded BankConnectionSection between Categories and Danger Zone in SettingsPage; updated connect() signature to take no arguments (credentials from server env); removed Bank Connection sidebar nav item.
