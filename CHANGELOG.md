@@ -1,5 +1,6 @@
 # Changelog
 
+- **2026-06-01** | #894 | Transactions: Add Auto-Categorise button for uncategorised transactions | Added an Auto-Categorise button to the Transactions filter bar that calls the Claude-powered categorisation service against all uncategorised non-transfer rows in the current filtered view, persists results via PATCH, and shows success/error toasts with 4 s auto-dismiss.
 - **2026-06-01** | #893 | fix: Sync Now fails to pull transactions from last 12 months | Replaced single `transactions.list()` call with a `do-while` pagination loop that follows `cursor.next` until null, collecting all transaction pages and eliminating silent data loss for accounts with more than one page of history.
 - **2026-06-01** | #890 | bug: Sync Now button hidden when no accounts linked | Removed the accountLinks.length > 0 guard from SyncControls so the Sync Now button is always visible when connected, enabling initial account discovery on first use.
 - **2026-06-01** | #885 | Settings: Add Account Connections card — Finance Analyser accounts with linked Akahu account | Added read-only AccountConnectionsSection card between Bank Connection and Danger Zone in Settings, showing each account, its linked Akahu bank account, balance, and Linked/Not linked pill badge; uses only existing CSS classes and reuses BankContext data.
