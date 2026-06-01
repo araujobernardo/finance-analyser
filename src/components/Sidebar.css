@@ -76,7 +76,7 @@
 /* "All Accounts" row */
 .sidebar-all-accounts-row {
   display: flex;
-  align-items: center;
+  align-items: flex-start;
   gap: 9px;
   padding: 7px 10px;
   border-radius: 10px;
@@ -99,6 +99,7 @@
   height: 9px;
   border-radius: 3px;
   flex-shrink: 0;
+  margin-top: 3px;
   background: conic-gradient(
     #6c8ebf 0deg 120deg,
     #82b366 120deg 240deg,
@@ -107,10 +108,13 @@
 }
 
 .sidebar-all-accounts-label {
-  flex: 1;
   font-size: 13px;
   color: var(--text);
   font-weight: 700;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  display: block;
 }
 
 .sidebar-all-accounts-row--active .sidebar-all-accounts-label {
@@ -148,7 +152,7 @@
 /* Individual account rows */
 .sidebar-account-row {
   display: flex;
-  align-items: center;
+  align-items: flex-start;
   gap: 9px;
   margin-bottom: 3px;
   padding: 7px 10px;
@@ -175,16 +179,17 @@
   height: 9px;
   border-radius: 3px;
   flex-shrink: 0;
+  margin-top: 3px;
 }
 
 .sidebar-account-name {
-  flex: 1;
   font-size: 13px;
   color: var(--text-2);
   font-weight: 500;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
+  display: block;
 }
 
 .sidebar-account-row--active .sidebar-account-name {
@@ -217,6 +222,34 @@
 
 .sidebar-account-edit:hover {
   color: var(--subtle);
+}
+
+/* Two-line stacked account info wrapper — used in both account rows and All Accounts row */
+.sidebar-account-info,
+.sidebar-all-accounts-info {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+/* Balance sub-line — second line below account name / label */
+.sidebar-balance-sub {
+  font-size: 11px;
+  color: var(--subtle);
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+  margin-top: 1px;
+  display: block;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* Active state: balance sub shifts to accent-mid */
+.sidebar-all-accounts-row--active .sidebar-balance-sub,
+.sidebar-account-row--active .sidebar-balance-sub {
+  color: var(--accent-mid);
 }
 
 /* ── Upload section ──────────────────────────────────────────────────────── */

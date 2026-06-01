@@ -20,6 +20,30 @@ vi.mock("../context/AuthContext", () => ({
   useAuth: () => ({ logout: vi.fn() }),
 }));
 
+// ── Mock BankContext ──────────────────────────────────────────────────────────
+
+let mockAccountLinks: {
+  financeAccountId: string;
+  lastBalance: string | null;
+}[] = [];
+
+vi.mock("../context/BankContext", () => ({
+  useBankContext: () => ({
+    connection: null,
+    accountLinks: mockAccountLinks,
+    isLoading: false,
+    isSyncing: false,
+    lastSyncResult: null,
+    error: null,
+    connect: vi.fn(),
+    disconnect: vi.fn(),
+    linkAccount: vi.fn(),
+    unlinkAccount: vi.fn(),
+    syncNow: vi.fn(),
+    refetch: vi.fn(),
+  }),
+}));
+
 // ── Mock useFileUpload ────────────────────────────────────────────────────────
 
 const mockHandleFile = vi.fn();
@@ -69,6 +93,8 @@ beforeEach(() => {
     status: 200,
     json: async () => ({ accounts: [] }),
   });
+  // Reset bank account links so balance tests are isolated
+  mockAccountLinks = [];
   vi.clearAllMocks();
   // Re-apply the default mock after clearAllMocks.
   mockApiFetch.mockResolvedValue({
@@ -527,3 +553,131 @@ describe("Sidebar — mobile drawer (#795)", () => {
 
 // Bank Connection nav item was removed in #879 — bank connection is now
 // embedded in the Settings page, not a separate route.
+
+describe("Sidebar — account balances (#899)", () => {
+  const ACCOUNTS_WITH_LINKS = [
+    {
+      id: "acc-1",
+      nickname: "Cheque",
+      accountType: "cheque",
+      accountNumber: "",
+      userId: "u1",
+      createdAt: "2026-01-01T00:00:00Z",
+    },
+    {
+      id: "acc-2",
+      nickname: "Savings",
+      accountType: "savings",
+      accountNumber: "",
+      userId: "u1",
+      createdAt: "2026-01-01T00:00:00Z",
+    },
+    {
+      id: "acc-3",
+      nickname: "Credit Card",
+      accountType: "credit",
+      accountNumber: "",
+      userId: "u1",
+      createdAt: "2026-01-01T00:00:00Z",
+    },
+  ];
+
+  it("shows balance beside linked accounts (data-testid=account-balance)", async () => {
+    mockAccountLinks = [
+      { financeAccountId: "acc-1", lastBalance: "1234.56" },
+      { financeAccountId: "acc-2", lastBalance: "8450.00" },
+    ];
+    mockApiFetch.mockResolvedValue({
+      ok: true,
+      status: 200,
+      json: async () => ({ accounts: ACCOUNTS_WITH_LINKS }),
+    });
+    renderSidebar();
+
+    const balanceEls = await screen.findAllByTestId("account-balance");
+    // Two linked accounts → two balance elements
+    expect(balanceEls).toHaveLength(2);
+    expect(balanceEls[0]).toHaveTextContent("$1,234.56");
+    expect(balanceEls[1]).toHaveTextContent("$8,450.00");
+  });
+
+  it("does not render a balance element for unlinked accounts", async () => {
+    mockAccountLinks = [{ financeAccountId: "acc-1", lastBalance: "500.00" }];
+    mockApiFetch.mockResolvedValue({
+      ok: true,
+      status: 200,
+      json: async () => ({ accounts: ACCOUNTS_WITH_LINKS }),
+    });
+    renderSidebar();
+
+    // Wait for accounts to render
+    await screen.findAllByTestId("account-item");
+
+    const balanceEls = screen.queryAllByTestId("account-balance");
+    // Only one linked account (acc-1), acc-2 and acc-3 have no link
+    expect(balanceEls).toHaveLength(1);
+  });
+
+  it("does not render a balance element when lastBalance is null", async () => {
+    mockAccountLinks = [{ financeAccountId: "acc-1", lastBalance: null }];
+    mockApiFetch.mockResolvedValue({
+      ok: true,
+      status: 200,
+      json: async () => ({ accounts: ACCOUNTS_WITH_LINKS }),
+    });
+    renderSidebar();
+
+    await screen.findAllByTestId("account-item");
+    expect(screen.queryAllByTestId("account-balance")).toHaveLength(0);
+  });
+
+  it("shows summed total in the All Accounts row (data-testid=all-accounts-balance)", async () => {
+    mockAccountLinks = [
+      { financeAccountId: "acc-1", lastBalance: "1234.56" },
+      { financeAccountId: "acc-2", lastBalance: "8450.00" },
+    ];
+    mockApiFetch.mockResolvedValue({
+      ok: true,
+      status: 200,
+      json: async () => ({ accounts: ACCOUNTS_WITH_LINKS }),
+    });
+    renderSidebar();
+
+    const totalEl = await screen.findByTestId("all-accounts-balance");
+    // 1234.56 + 8450.00 = 9684.56
+    expect(totalEl).toHaveTextContent("$9,684.56 total");
+  });
+
+  it("does not render All Accounts balance when no account has a balance", async () => {
+    mockAccountLinks = [];
+    mockApiFetch.mockResolvedValue({
+      ok: true,
+      status: 200,
+      json: async () => ({ accounts: ACCOUNTS_WITH_LINKS }),
+    });
+    renderSidebar();
+
+    await screen.findAllByTestId("account-item");
+    expect(
+      screen.queryByTestId("all-accounts-balance"),
+    ).not.toBeInTheDocument();
+  });
+
+  it("does not render All Accounts balance when all linked accounts have null balance", async () => {
+    mockAccountLinks = [
+      { financeAccountId: "acc-1", lastBalance: null },
+      { financeAccountId: "acc-2", lastBalance: null },
+    ];
+    mockApiFetch.mockResolvedValue({
+      ok: true,
+      status: 200,
+      json: async () => ({ accounts: ACCOUNTS_WITH_LINKS }),
+    });
+    renderSidebar();
+
+    await screen.findAllByTestId("account-item");
+    expect(
+      screen.queryByTestId("all-accounts-balance"),
+    ).not.toBeInTheDocument();
+  });
+});
