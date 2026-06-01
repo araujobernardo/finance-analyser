@@ -1,5 +1,6 @@
 # Changelog
 
+- **2026-06-01** | #893 | fix: Sync Now fails to pull transactions from last 12 months | Replaced single `transactions.list()` call with a `do-while` pagination loop that follows `cursor.next` until null, collecting all transaction pages and eliminating silent data loss for accounts with more than one page of history.
 - **2026-06-01** | #890 | bug: Sync Now button hidden when no accounts linked | Removed the accountLinks.length > 0 guard from SyncControls so the Sync Now button is always visible when connected, enabling initial account discovery on first use.
 - **2026-06-01** | #885 | Settings: Add Account Connections card — Finance Analyser accounts with linked Akahu account | Added read-only AccountConnectionsSection card between Bank Connection and Danger Zone in Settings, showing each account, its linked Akahu bank account, balance, and Linked/Not linked pill badge; uses only existing CSS classes and reuses BankContext data.
 - **2026-06-01** | #884 | FA-BANK-002: Auto-discover Akahu accounts on sync — upsert unlinked entries into akahu_account_links | Made `financeAccountId` nullable, added an upsert step that creates discovery rows for every Akahu account on sync, and filtered transaction import to only mapped accounts.
