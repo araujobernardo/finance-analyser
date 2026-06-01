@@ -456,3 +456,59 @@ describe("GoalCard — spending_limit warning and over states", () => {
     expect(fill.className).not.toContain("goal-card__progress-fill--over");
   });
 });
+
+// ── #898: hasAkahuBalance prop — savings_target auto-note ──────────────────
+
+describe("GoalCard — #898 hasAkahuBalance (savings_target)", () => {
+  it("shows 'No balance data' warning when linkedAccountId is set but hasAkahuBalance is false", () => {
+    const goal = makeGoal({
+      type: "savings_target",
+      linkedAccountId: "acc-123",
+      currentAmount: null,
+    });
+    render(<GoalCard goal={goal} hasAkahuBalance={false} />);
+    expect(screen.getByTestId("goal-card-auto-note-g1").textContent).toContain(
+      "No balance data — connect this account to Akahu",
+    );
+  });
+
+  it("shows 'Link an account' when linkedAccountId is null regardless of hasAkahuBalance", () => {
+    const goal = makeGoal({
+      type: "savings_target",
+      linkedAccountId: null,
+      currentAmount: null,
+    });
+    render(<GoalCard goal={goal} hasAkahuBalance={false} />);
+    expect(screen.getByTestId("goal-card-auto-note-g1").textContent).toContain(
+      "Link an account to track progress",
+    );
+  });
+
+  it("shows balance amount (not auto-note) when hasAkahuBalance is true and currentAmount is set", () => {
+    const goal = makeGoal({
+      type: "savings_target",
+      linkedAccountId: "acc-123",
+      currentAmount: "3241.50",
+      targetAmount: "5000.00",
+    });
+    render(<GoalCard goal={goal} hasAkahuBalance={true} />);
+    // Should render the amount display, not the auto-note
+    expect(
+      screen.queryByTestId("goal-card-auto-note-g1"),
+    ).not.toBeInTheDocument();
+    expect(screen.getByTestId("goal-card-current-g1")).toBeInTheDocument();
+  });
+
+  it("hasAkahuBalance defaults to false (no warning when linkedAccountId is null)", () => {
+    // Default prop: no warning shown, just 'Link an account'
+    const goal = makeGoal({
+      type: "savings_target",
+      linkedAccountId: null,
+      currentAmount: null,
+    });
+    render(<GoalCard goal={goal} />);
+    expect(screen.getByTestId("goal-card-auto-note-g1").textContent).toContain(
+      "Link an account to track progress",
+    );
+  });
+});

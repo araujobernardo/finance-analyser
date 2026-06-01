@@ -92,6 +92,7 @@ export function GoalModal({ onClose, goal }: GoalModalProps) {
 
   const [nameError, setNameError] = useState("");
   const [amountError, setAmountError] = useState("");
+  const [accountError, setAccountError] = useState("");
 
   const adaptiveRef = useRef<HTMLDivElement>(null);
 
@@ -133,10 +134,17 @@ export function GoalModal({ onClose, goal }: GoalModalProps) {
   async function handleSave() {
     const nErr = validateName(name);
     const aErr = typeSelected ? validateAmount(targetAmount) : "";
+    // Require an account for savings_target only when at least one account exists
+    // (if there are no accounts yet, the user cannot link one — let them save anyway)
+    const acctErr =
+      type === "savings_target" && accounts.length > 0 && !linkedAccountId
+        ? "Select an account to track this savings goal."
+        : "";
 
     if (nErr) setNameError(nErr);
     if (aErr) setAmountError(aErr);
-    if (nErr || aErr || !typeSelected) return;
+    if (acctErr) setAccountError(acctErr);
+    if (nErr || aErr || acctErr || !typeSelected) return;
 
     setIsSubmitting(true);
 
@@ -403,16 +411,23 @@ export function GoalModal({ onClose, goal }: GoalModalProps) {
                 htmlFor="goal-account-select"
               >
                 Linked Account
-                <span className="goal-modal__label-badge">(optional)</span>
+                {type !== "savings_target" && (
+                  <span className="goal-modal__label-badge">(optional)</span>
+                )}
               </label>
               <div className="goal-modal__select-wrap">
                 <select
                   id="goal-account-select"
-                  className="goal-modal__input"
+                  className={`goal-modal__input${accountError ? " goal-modal__input--error" : ""}`}
                   value={linkedAccountId}
-                  onChange={(e) => setLinkedAccountId(e.target.value)}
+                  onChange={(e) => {
+                    setLinkedAccountId(e.target.value);
+                    if (accountError) setAccountError("");
+                  }}
                 >
-                  <option value="">None</option>
+                  <option value="">
+                    {type === "savings_target" ? "Select account…" : "None"}
+                  </option>
                   {accounts.map((acct) => (
                     <option key={acct.id} value={acct.id}>
                       {acct.nickname} — {acct.accountType}
@@ -420,9 +435,15 @@ export function GoalModal({ onClose, goal }: GoalModalProps) {
                   ))}
                 </select>
               </div>
-              {type === "savings_target" && (
+              {accountError && (
+                <span className="goal-modal__error" role="alert">
+                  {accountError}
+                </span>
+              )}
+              {type === "savings_target" && !accountError && (
                 <span className="goal-modal__hint">
-                  Progress will reflect this account&apos;s balance.
+                  Progress will reflect this account&apos;s balance after each
+                  Sync.
                 </span>
               )}
             </div>

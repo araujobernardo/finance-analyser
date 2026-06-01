@@ -30,12 +30,14 @@ const mockComputeAccountBalance = vi.mocked(computeAccountBalance);
  *   - db.select(...).from(t).where(...)  — returns selectResults in sequence
  *
  * @param onUpdate   callback invoked with the args passed to .set()
- * @param selectResults  ordered list of values to return from consecutive
- *                       db.select() calls (each resolves to [{ total: value }])
+ * @param selectResults  ordered list of row objects (or arrays of row objects)
+ *                       to return from consecutive db.select() calls.
+ *                       Pass `[{ lastBalance: "1200" }]` for savings_target,
+ *                       or `[{ total: "1200" }]` for spending_limit / net_worth.
  */
 function makeMockDb(
   onUpdate?: (args: Record<string, unknown>) => void,
-  selectResults: string[] = [],
+  selectResults: Array<Record<string, unknown>> = [],
 ) {
   // UPDATE chain
   const whereUpdate = { where: vi.fn().mockResolvedValue(undefined) };
@@ -47,12 +49,13 @@ function makeMockDb(
   };
   const updateFn = vi.fn().mockReturnValue(setChain);
 
-  // SELECT chain — each call to .select() consumes the next selectResults entry
+  // SELECT chain — each call to .select() consumes the next selectResults entry.
+  // Each entry is returned as-is (already a row object).
   let selectCallCount = 0;
   const makeSelectChain = () => {
     const idx = selectCallCount++;
     const resolvedValue =
-      idx < selectResults.length ? [{ total: selectResults[idx] }] : [{}];
+      idx < selectResults.length ? [selectResults[idx]] : [{}];
     const whereSelect = { where: vi.fn().mockResolvedValue(resolvedValue) };
     const fromChain = { from: vi.fn().mockReturnValue(whereSelect) };
     return fromChain;
@@ -120,34 +123,31 @@ describe("calculateGoalProgress — terminal status guard", () => {
 });
 
 describe("calculateGoalProgress — savings_target", () => {
-  beforeEach(() => {
-    mockComputeAccountBalance.mockReset();
-  });
+  // savings_target now reads lastBalance from akahu_account_links via db.select()
+  // rather than calling computeAccountBalance.
 
-  it("writes currentAmount from the account balance", async () => {
-    mockComputeAccountBalance.mockResolvedValue(1200);
-
+  it("writes currentAmount from the Akahu lastBalance", async () => {
     const capturedSet: Record<string, unknown>[] = [];
-    const db = makeMockDb((args) => capturedSet.push(args));
+    const db = makeMockDb(
+      (args) => capturedSet.push(args),
+      [{ lastBalance: "1200.00" }],
+    );
     const goal = makeGoal({ targetAmount: "5000.00" });
 
     await calculateGoalProgress(goal, db, USER_ID);
 
-    expect(mockComputeAccountBalance).toHaveBeenCalledWith(
-      "acct-001",
-      USER_ID,
-      db,
-    );
+    expect(mockComputeAccountBalance).not.toHaveBeenCalled();
     expect(capturedSet).toHaveLength(1);
     expect(capturedSet[0].currentAmount).toBe("1200");
     expect(capturedSet[0].status).toBe("active");
   });
 
-  it("clamps a negative balance to 0", async () => {
-    mockComputeAccountBalance.mockResolvedValue(-300);
-
+  it("clamps a negative lastBalance to 0", async () => {
     const capturedSet: Record<string, unknown>[] = [];
-    const db = makeMockDb((args) => capturedSet.push(args));
+    const db = makeMockDb(
+      (args) => capturedSet.push(args),
+      [{ lastBalance: "-300.00" }],
+    );
     const goal = makeGoal({ targetAmount: "5000.00" });
 
     await calculateGoalProgress(goal, db, USER_ID);
@@ -156,11 +156,12 @@ describe("calculateGoalProgress — savings_target", () => {
     expect(capturedSet[0].status).toBe("active");
   });
 
-  it("sets status to 'achieved' when currentAmount >= targetAmount", async () => {
-    mockComputeAccountBalance.mockResolvedValue(5000);
-
+  it("sets status to 'achieved' when lastBalance >= targetAmount", async () => {
     const capturedSet: Record<string, unknown>[] = [];
-    const db = makeMockDb((args) => capturedSet.push(args));
+    const db = makeMockDb(
+      (args) => capturedSet.push(args),
+      [{ lastBalance: "5000.00" }],
+    );
     const goal = makeGoal({ targetAmount: "5000.00" });
 
     await calculateGoalProgress(goal, db, USER_ID);
@@ -169,11 +170,12 @@ describe("calculateGoalProgress — savings_target", () => {
     expect(capturedSet[0].currentAmount).toBe("5000");
   });
 
-  it("sets status to 'achieved' when currentAmount exceeds targetAmount", async () => {
-    mockComputeAccountBalance.mockResolvedValue(7500);
-
+  it("sets status to 'achieved' when lastBalance exceeds targetAmount", async () => {
     const capturedSet: Record<string, unknown>[] = [];
-    const db = makeMockDb((args) => capturedSet.push(args));
+    const db = makeMockDb(
+      (args) => capturedSet.push(args),
+      [{ lastBalance: "7500.00" }],
+    );
     const goal = makeGoal({ targetAmount: "5000.00" });
 
     await calculateGoalProgress(goal, db, USER_ID);
@@ -189,6 +191,20 @@ describe("calculateGoalProgress — savings_target", () => {
     await calculateGoalProgress(goal, db, USER_ID);
 
     expect(mockComputeAccountBalance).not.toHaveBeenCalled();
+    expect(
+      (db as unknown as { update: ReturnType<typeof vi.fn> }).update,
+    ).not.toHaveBeenCalled();
+  });
+
+  it("does not write when no Akahu link row is found (select returns empty)", async () => {
+    // makeMockDb with empty selectResults → returns [{}] which has no lastBalance
+    const capturedSet: Record<string, unknown>[] = [];
+    const db = makeMockDb((args) => capturedSet.push(args));
+    const goal = makeGoal({ targetAmount: "5000.00" });
+
+    await calculateGoalProgress(goal, db, USER_ID);
+
+    expect(capturedSet).toHaveLength(0);
     expect(
       (db as unknown as { update: ReturnType<typeof vi.fn> }).update,
     ).not.toHaveBeenCalled();
@@ -290,7 +306,10 @@ describe("calculateGoalProgress — net_worth_milestone", () => {
     // assets = 50000, liabilities = 30000 → net worth = 20000
     // target = 100000 → still active
     const capturedSet: Record<string, unknown>[] = [];
-    const db = makeMockDb((args) => capturedSet.push(args), ["50000", "30000"]);
+    const db = makeMockDb(
+      (args) => capturedSet.push(args),
+      [{ total: "50000" }, { total: "30000" }],
+    );
     const goal = makeGoal({
       type: "net_worth_milestone",
       targetAmount: "100000.00",
@@ -307,7 +326,10 @@ describe("calculateGoalProgress — net_worth_milestone", () => {
   it("auto-achieves when net worth equals targetAmount", async () => {
     // assets = 100000, liabilities = 0 → net worth = 100000 = target
     const capturedSet: Record<string, unknown>[] = [];
-    const db = makeMockDb((args) => capturedSet.push(args), ["100000", "0"]);
+    const db = makeMockDb(
+      (args) => capturedSet.push(args),
+      [{ total: "100000" }, { total: "0" }],
+    );
     const goal = makeGoal({
       type: "net_worth_milestone",
       targetAmount: "100000.00",
@@ -325,7 +347,7 @@ describe("calculateGoalProgress — net_worth_milestone", () => {
     const capturedSet: Record<string, unknown>[] = [];
     const db = makeMockDb(
       (args) => capturedSet.push(args),
-      ["150000", "20000"],
+      [{ total: "150000" }, { total: "20000" }],
     );
     const goal = makeGoal({
       type: "net_worth_milestone",
@@ -342,7 +364,10 @@ describe("calculateGoalProgress — net_worth_milestone", () => {
   it("stores negative net worth as-is (no clamping)", async () => {
     // assets = 5000, liabilities = 20000 → net worth = -15000
     const capturedSet: Record<string, unknown>[] = [];
-    const db = makeMockDb((args) => capturedSet.push(args), ["5000", "20000"]);
+    const db = makeMockDb(
+      (args) => capturedSet.push(args),
+      [{ total: "5000" }, { total: "20000" }],
+    );
     const goal = makeGoal({
       type: "net_worth_milestone",
       targetAmount: "100000.00",
@@ -358,7 +383,10 @@ describe("calculateGoalProgress — net_worth_milestone", () => {
   it("works with zero assets and zero liabilities (new user)", async () => {
     // assets = 0, liabilities = 0 → net worth = 0
     const capturedSet: Record<string, unknown>[] = [];
-    const db = makeMockDb((args) => capturedSet.push(args), ["0", "0"]);
+    const db = makeMockDb(
+      (args) => capturedSet.push(args),
+      [{ total: "0" }, { total: "0" }],
+    );
     const goal = makeGoal({
       type: "net_worth_milestone",
       targetAmount: "50000.00",
@@ -374,7 +402,10 @@ describe("calculateGoalProgress — net_worth_milestone", () => {
   it("does not require linkedAccountId — works for any user", async () => {
     // linkedAccountId is null but the goal still processes
     const capturedSet: Record<string, unknown>[] = [];
-    const db = makeMockDb((args) => capturedSet.push(args), ["80000", "10000"]);
+    const db = makeMockDb(
+      (args) => capturedSet.push(args),
+      [{ total: "80000" }, { total: "10000" }],
+    );
     const goal = makeGoal({
       type: "net_worth_milestone",
       targetAmount: "100000.00",
@@ -393,7 +424,10 @@ describe("calculateGoalProgress — spending_limit", () => {
   it("writes currentAmount as abs(sum of negative transactions) for partial spend", async () => {
     // Expenses this month = -300 (negative in DB); currentAmount = 300
     const capturedSet: Record<string, unknown>[] = [];
-    const db = makeMockDb((args) => capturedSet.push(args), ["-300"]);
+    const db = makeMockDb(
+      (args) => capturedSet.push(args),
+      [{ total: "-300" }],
+    );
     const goal = makeGoal({
       type: "spending_limit",
       targetAmount: "500.00",
@@ -412,7 +446,10 @@ describe("calculateGoalProgress — spending_limit", () => {
   it("writes currentAmount > targetAmount when spending exceeds limit (not clamped)", async () => {
     // Expenses = -600; target = 500 → currentAmount = 600 (>100%, not clamped)
     const capturedSet: Record<string, unknown>[] = [];
-    const db = makeMockDb((args) => capturedSet.push(args), ["-600"]);
+    const db = makeMockDb(
+      (args) => capturedSet.push(args),
+      [{ total: "-600" }],
+    );
     const goal = makeGoal({
       type: "spending_limit",
       targetAmount: "500.00",
@@ -429,7 +466,7 @@ describe("calculateGoalProgress — spending_limit", () => {
   it("writes currentAmount = 0 when no expenses in category this month", async () => {
     // No matching transactions → COALESCE returns '0' → currentAmount = 0
     const capturedSet: Record<string, unknown>[] = [];
-    const db = makeMockDb((args) => capturedSet.push(args), ["0"]);
+    const db = makeMockDb((args) => capturedSet.push(args), [{ total: "0" }]);
     const goal = makeGoal({
       type: "spending_limit",
       targetAmount: "500.00",
@@ -460,7 +497,10 @@ describe("calculateGoalProgress — spending_limit", () => {
   it("never sets status to 'achieved' regardless of spending amount", async () => {
     // spending = 500, target = 500 → currentAmount = 500 but status is NOT set to 'achieved'
     const capturedSet: Record<string, unknown>[] = [];
-    const db = makeMockDb((args) => capturedSet.push(args), ["-500"]);
+    const db = makeMockDb(
+      (args) => capturedSet.push(args),
+      [{ total: "-500" }],
+    );
     const goal = makeGoal({
       type: "spending_limit",
       targetAmount: "500.00",
