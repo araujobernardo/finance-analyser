@@ -918,3 +918,439 @@ describe("TransactionsPage — Auto-Categorise button", () => {
     });
   });
 });
+
+// ── TransactionsPage — Identify Transfers button ──────────────────────────────
+
+describe("TransactionsPage — Identify Transfers button", () => {
+  afterEach(() => {
+    cleanup();
+    mockApiFetch.mockReset();
+    mockRefetch.mockReset();
+    mockApiFetch.mockImplementation(makeApiFetchImpl());
+    mockRefetch.mockResolvedValue(undefined);
+  });
+
+  // AC-1: button is present when transactions exist
+  it("AC-1: Identify Transfers button is rendered when transactions exist", () => {
+    mockRawTransactions = [
+      makeApiTxn({ id: "t1", description: "Amazon", category: null }),
+    ];
+    renderPage();
+    expect(screen.getByTestId("identify-transfers-btn")).toBeInTheDocument();
+  });
+
+  it("AC-1: Identify Transfers button is not rendered in the empty state", () => {
+    mockRawTransactions = [];
+    renderPage();
+    expect(
+      screen.queryByTestId("identify-transfers-btn"),
+    ).not.toBeInTheDocument();
+  });
+
+  // AC-6: no pairs found → toast, no strip
+  it("AC-6: shows toast when no transfer pairs are found", async () => {
+    const user = userEvent.setup();
+    // Single transaction — cannot form a pair
+    mockRawTransactions = [
+      makeApiTxn({
+        id: "t1",
+        description: "Amazon",
+        amount: -50,
+        category: null,
+      }),
+    ];
+    const { container } = renderPage();
+    await user.click(screen.getByTestId("identify-transfers-btn"));
+
+    await vi.waitFor(() =>
+      expect(container.querySelector(".txn-toast")).not.toBeNull(),
+    );
+    expect(container.querySelector(".txn-toast")!.textContent).toContain(
+      "No transfer pairs found.",
+    );
+    expect(
+      screen.queryByTestId("identify-transfers-strip"),
+    ).not.toBeInTheDocument();
+  });
+
+  // AC-7: strip opens when pairs are found
+  it("AC-7: strip opens when transfer pairs are found", async () => {
+    const user = userEvent.setup();
+    // Two accounts: debit from acc-1, credit to acc-2 — same date, same absolute amount
+    mockRawTransactions = [
+      makeApiTxn({
+        id: "t1",
+        accountId: "acc-1",
+        amount: -100,
+        date: "2026-03-15",
+        description: "INTERNET BANKING TRANSFER TO SAVINGS",
+        isTransfer: false,
+        category: null,
+      }),
+      makeApiTxn({
+        id: "t2",
+        accountId: "acc-2",
+        amount: 100,
+        date: "2026-03-15",
+        description: "INTERNET BANKING TRANSFER FROM MAIN",
+        isTransfer: false,
+        category: null,
+      }),
+    ];
+    renderPage();
+    await user.click(screen.getByTestId("identify-transfers-btn"));
+
+    await vi.waitFor(() =>
+      expect(
+        screen.queryByTestId("identify-transfers-strip"),
+      ).toBeInTheDocument(),
+    );
+  });
+
+  // AC-4: confirmed pairs are pre-checked
+  it("AC-4: confirmed pairs (payee match) are pre-checked", async () => {
+    const user = userEvent.setup();
+    mockRawTransactions = [
+      makeApiTxn({
+        id: "t1",
+        accountId: "acc-1",
+        amount: -100,
+        date: "2026-03-15",
+        description: "INTERNET BANKING TRANSFER",
+        isTransfer: false,
+        category: null,
+      }),
+      makeApiTxn({
+        id: "t2",
+        accountId: "acc-2",
+        amount: 100,
+        date: "2026-03-15",
+        description: "INTERNET BANKING TRANSFER",
+        isTransfer: false,
+        category: null,
+      }),
+    ];
+    renderPage();
+    await user.click(screen.getByTestId("identify-transfers-btn"));
+
+    await vi.waitFor(() =>
+      expect(
+        screen.queryByTestId("identify-transfers-strip"),
+      ).toBeInTheDocument(),
+    );
+
+    const checkboxes = screen.getAllByRole("checkbox");
+    // Filter to pair checkboxes (not the show-transfers checkbox)
+    const pairCheckboxes = checkboxes.filter((cb) =>
+      cb.classList.contains("txn-identify-strip__pair-check"),
+    );
+    expect(pairCheckboxes[0]).toBeChecked();
+  });
+
+  // AC-5: ambiguous pairs are pre-unchecked
+  it("AC-5: ambiguous pairs (no payee match) are pre-unchecked", async () => {
+    const user = userEvent.setup();
+    mockRawTransactions = [
+      makeApiTxn({
+        id: "t1",
+        accountId: "acc-1",
+        amount: -100,
+        date: "2026-03-15",
+        description: "PAYMENT",
+        isTransfer: false,
+        category: null,
+      }),
+      makeApiTxn({
+        id: "t2",
+        accountId: "acc-2",
+        amount: 100,
+        date: "2026-03-15",
+        description: "DIRECT FUNDS RECEIVED",
+        isTransfer: false,
+        category: null,
+      }),
+    ];
+    renderPage();
+    await user.click(screen.getByTestId("identify-transfers-btn"));
+
+    await vi.waitFor(() =>
+      expect(
+        screen.queryByTestId("identify-transfers-strip"),
+      ).toBeInTheDocument(),
+    );
+
+    const checkboxes = screen.getAllByRole("checkbox");
+    const pairCheckboxes = checkboxes.filter((cb) =>
+      cb.classList.contains("txn-identify-strip__pair-check"),
+    );
+    expect(pairCheckboxes[0]).not.toBeChecked();
+  });
+
+  // AC-11: Cancel closes the strip with no API calls
+  it("AC-11: Cancel closes the strip without making API calls", async () => {
+    const user = userEvent.setup();
+    mockRawTransactions = [
+      makeApiTxn({
+        id: "t1",
+        accountId: "acc-1",
+        amount: -100,
+        date: "2026-03-15",
+        description: "INTERNET BANKING TRANSFER",
+        isTransfer: false,
+        category: null,
+      }),
+      makeApiTxn({
+        id: "t2",
+        accountId: "acc-2",
+        amount: 100,
+        date: "2026-03-15",
+        description: "INTERNET BANKING TRANSFER",
+        isTransfer: false,
+        category: null,
+      }),
+    ];
+    renderPage();
+    await user.click(screen.getByTestId("identify-transfers-btn"));
+    await vi.waitFor(() =>
+      expect(
+        screen.queryByTestId("identify-transfers-strip"),
+      ).toBeInTheDocument(),
+    );
+
+    // Reset mock call count after opening (categories call may have fired)
+    mockApiFetch.mockClear();
+
+    await user.click(screen.getByTestId("identify-transfers-cancel"));
+
+    expect(
+      screen.queryByTestId("identify-transfers-strip"),
+    ).not.toBeInTheDocument();
+    // No PATCH calls should have been made
+    const patchCalls = mockApiFetch.mock.calls.filter(
+      (call: unknown[]) =>
+        typeof call[1] === "object" &&
+        call[1] !== null &&
+        (call[1] as { method?: string }).method === "PATCH",
+    );
+    expect(patchCalls).toHaveLength(0);
+  });
+
+  // AC-14: Mark as Transfers button disabled when 0 pairs checked
+  it("AC-14: Mark as Transfers is disabled when no pairs are checked", async () => {
+    const user = userEvent.setup();
+    mockRawTransactions = [
+      makeApiTxn({
+        id: "t1",
+        accountId: "acc-1",
+        amount: -100,
+        date: "2026-03-15",
+        description: "PAYMENT",
+        isTransfer: false,
+        category: null,
+      }),
+      makeApiTxn({
+        id: "t2",
+        accountId: "acc-2",
+        amount: 100,
+        date: "2026-03-15",
+        description: "DIRECT FUNDS RECEIVED",
+        isTransfer: false,
+        category: null,
+      }),
+    ];
+    renderPage();
+    await user.click(screen.getByTestId("identify-transfers-btn"));
+
+    await vi.waitFor(() =>
+      expect(
+        screen.queryByTestId("identify-transfers-strip"),
+      ).toBeInTheDocument(),
+    );
+
+    // All pairs are ambiguous (pre-unchecked), so Mark button should be disabled
+    expect(screen.getByTestId("identify-transfers-mark")).toBeDisabled();
+  });
+
+  // AC-8/AC-9: marking transfers calls PATCH and refetch
+  it("AC-8/AC-9: marking calls PATCH for each txn in checked pairs then calls refetch", async () => {
+    const user = userEvent.setup();
+    mockRawTransactions = [
+      makeApiTxn({
+        id: "t1",
+        accountId: "acc-1",
+        amount: -100,
+        date: "2026-03-15",
+        description: "INTERNET BANKING TRANSFER",
+        isTransfer: false,
+        category: null,
+      }),
+      makeApiTxn({
+        id: "t2",
+        accountId: "acc-2",
+        amount: 100,
+        date: "2026-03-15",
+        description: "INTERNET BANKING TRANSFER",
+        isTransfer: false,
+        category: null,
+      }),
+    ];
+    mockApiFetch.mockImplementation(makeApiFetchImpl({ ok: true } as Response));
+
+    renderPage();
+    await user.click(screen.getByTestId("identify-transfers-btn"));
+    await vi.waitFor(() =>
+      expect(
+        screen.queryByTestId("identify-transfers-strip"),
+      ).toBeInTheDocument(),
+    );
+
+    mockApiFetch.mockClear();
+    mockRefetch.mockClear();
+
+    await user.click(screen.getByTestId("identify-transfers-mark"));
+
+    await vi.waitFor(() => expect(mockRefetch).toHaveBeenCalled());
+
+    const patchCalls = mockApiFetch.mock.calls.filter(
+      (call: unknown[]) =>
+        typeof call[1] === "object" &&
+        call[1] !== null &&
+        (call[1] as { method?: string }).method === "PATCH",
+    );
+    expect(patchCalls).toHaveLength(2);
+    for (const call of patchCalls) {
+      expect(JSON.parse((call[1] as { body: string }).body)).toEqual({
+        isTransfer: true,
+      });
+    }
+  });
+
+  // AC-9: success toast shown after marking
+  it("AC-9: success toast shown after marking transfers", async () => {
+    const user = userEvent.setup();
+    mockRawTransactions = [
+      makeApiTxn({
+        id: "t1",
+        accountId: "acc-1",
+        amount: -100,
+        date: "2026-03-15",
+        description: "INTERNET BANKING TRANSFER",
+        isTransfer: false,
+        category: null,
+      }),
+      makeApiTxn({
+        id: "t2",
+        accountId: "acc-2",
+        amount: 100,
+        date: "2026-03-15",
+        description: "INTERNET BANKING TRANSFER",
+        isTransfer: false,
+        category: null,
+      }),
+    ];
+    mockApiFetch.mockImplementation(makeApiFetchImpl({ ok: true } as Response));
+
+    renderPage();
+    await user.click(screen.getByTestId("identify-transfers-btn"));
+    await vi.waitFor(() =>
+      expect(
+        screen.queryByTestId("identify-transfers-strip"),
+      ).toBeInTheDocument(),
+    );
+    await user.click(screen.getByTestId("identify-transfers-mark"));
+
+    await vi.waitFor(() =>
+      expect(screen.getByText(/Marked 1 transfer pair/)).toBeInTheDocument(),
+    );
+  });
+
+  // AC-10: error toast on PATCH failure
+  it("AC-10: error toast shown when PATCH fails; strip remains open", async () => {
+    const user = userEvent.setup();
+    mockRawTransactions = [
+      makeApiTxn({
+        id: "t1",
+        accountId: "acc-1",
+        amount: -100,
+        date: "2026-03-15",
+        description: "INTERNET BANKING TRANSFER",
+        isTransfer: false,
+        category: null,
+      }),
+      makeApiTxn({
+        id: "t2",
+        accountId: "acc-2",
+        amount: 100,
+        date: "2026-03-15",
+        description: "INTERNET BANKING TRANSFER",
+        isTransfer: false,
+        category: null,
+      }),
+    ];
+    // Return failure for PATCH calls
+    mockApiFetch.mockImplementation(async (url: string) => {
+      if (url === "/api/categories") {
+        return {
+          ok: true,
+          json: () => Promise.resolve({ categories: MOCK_API_CATEGORIES }),
+        } as unknown as Response;
+      }
+      return { ok: false, status: 500 } as Response;
+    });
+
+    const { container } = renderPage();
+    await user.click(screen.getByTestId("identify-transfers-btn"));
+    await vi.waitFor(() =>
+      expect(
+        screen.queryByTestId("identify-transfers-strip"),
+      ).toBeInTheDocument(),
+    );
+    await user.click(screen.getByTestId("identify-transfers-mark"));
+
+    await vi.waitFor(() =>
+      expect(container.querySelector(".txn-toast--error")).not.toBeNull(),
+    );
+    expect(container.querySelector(".txn-toast--error")!.textContent).toContain(
+      "Failed to mark transfers",
+    );
+    // Strip stays open on error
+    expect(
+      screen.queryByTestId("identify-transfers-strip"),
+    ).toBeInTheDocument();
+  });
+
+  // AC-16: existing transactions already marked isTransfer are excluded from scan
+  it("AC-16: already-marked transfers are excluded from the scan", async () => {
+    const user = userEvent.setup();
+    mockRawTransactions = [
+      // This pair looks like a match but t1 is already a transfer → should be excluded
+      makeApiTxn({
+        id: "t1",
+        accountId: "acc-1",
+        amount: -100,
+        date: "2026-03-15",
+        description: "INTERNET BANKING TRANSFER",
+        isTransfer: true, // already marked
+        category: null,
+      }),
+      makeApiTxn({
+        id: "t2",
+        accountId: "acc-2",
+        amount: 100,
+        date: "2026-03-15",
+        description: "INTERNET BANKING TRANSFER",
+        isTransfer: false,
+        category: null,
+      }),
+    ];
+    const { container } = renderPage();
+    await user.click(screen.getByTestId("identify-transfers-btn"));
+
+    await vi.waitFor(() =>
+      expect(container.querySelector(".txn-toast")).not.toBeNull(),
+    );
+    expect(container.querySelector(".txn-toast")!.textContent).toContain(
+      "No transfer pairs found.",
+    );
+  });
+});
