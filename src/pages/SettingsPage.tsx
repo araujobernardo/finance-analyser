@@ -1041,8 +1041,113 @@ export function BankConnectionSection() {
   );
 }
 
+// ── AccountConnectionsSection ─────────────────────────────────────────────────
+// Read-only overview card: Finance Analyser accounts with their linked Akahu
+// bank account name, balance, and linked/not-linked status.
+// Only rendered when the user has at least one Finance Analyser account.
+
+export function AccountConnectionsSection() {
+  const { accounts } = useAccount();
+  const { accountLinks } = useBankContext();
+
+  if (accounts.length === 0) return null;
+
+  const linkedCount = accounts.filter((account) =>
+    accountLinks.some((link) => link.financeAccountId === account.id),
+  ).length;
+
+  const totalCount = accounts.length;
+
+  function getLink(accountId: string): ApiAkahuAccountLink | undefined {
+    return accountLinks.find((link) => link.financeAccountId === accountId);
+  }
+
+  function formatBalance(lastBalance: string | null): string {
+    if (lastBalance === null) return "—";
+    const n = parseFloat(lastBalance);
+    return `NZD ${n.toLocaleString("en-NZ", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+  }
+
+  return (
+    <div
+      className="card settings-section"
+      data-testid="account-connections-section"
+    >
+      <div className="settings-section-title">Account Connections</div>
+      <div className="settings-section-sub">
+        Your Finance Analyser accounts and their linked bank accounts.
+      </div>
+
+      <table className="settings-bank-mapping-table">
+        <thead>
+          <tr>
+            <th>Your account</th>
+            <th>Bank account</th>
+            <th>Balance</th>
+            <th>Status</th>
+          </tr>
+        </thead>
+        <tbody>
+          {accounts.map((account) => {
+            const link = getLink(account.id);
+            const isLinked = link !== undefined;
+            return (
+              <tr
+                key={account.id}
+                className="settings-bank-mapping-row"
+                data-testid="account-connection-row"
+              >
+                <td>
+                  <div className="settings-bank-mapping-name">
+                    {account.nickname}
+                  </div>
+                  <div className="settings-bank-mapping-type">
+                    {account.accountType}
+                  </div>
+                </td>
+                <td data-testid="connection-bank-account">
+                  {isLinked ? link.akahuAccountName : "—"}
+                </td>
+                <td data-testid="connection-balance">
+                  {isLinked ? formatBalance(link.lastBalance) : "—"}
+                </td>
+                <td>
+                  {isLinked ? (
+                    <span
+                      className="settings-bank-badge settings-bank-badge--active"
+                      data-testid="connection-linked-badge"
+                    >
+                      Linked
+                    </span>
+                  ) : (
+                    <span
+                      className="settings-bank-badge settings-bank-badge--disconnected"
+                      data-testid="connection-not-linked-badge"
+                    >
+                      Not linked
+                    </span>
+                  )}
+                </td>
+              </tr>
+            );
+          })}
+        </tbody>
+        <tfoot>
+          <tr data-testid="account-connections-summary">
+            <td colSpan={4} className="settings-section-sub">
+              {linkedCount} of {totalCount} account
+              {totalCount !== 1 ? "s" : ""} linked — link accounts in Bank
+              Connection above
+            </td>
+          </tr>
+        </tfoot>
+      </table>
+    </div>
+  );
+}
+
 // ── SettingsPage ─────────────────────────────────────────────────────────────
-// Layout (top to bottom): Alert Preferences → Categories → Bank Connection → Danger Zone.
+// Layout (top to bottom): Alert Preferences → Categories → Bank Connection → Account Connections → Danger Zone.
 // The top info card was removed per user decision (#769 UX brief, Option A).
 
 export function SettingsPage() {
@@ -1052,6 +1157,7 @@ export function SettingsPage() {
       <AlertPreferencesSection />
       <CategoriesSection />
       <BankConnectionSection />
+      <AccountConnectionsSection />
       <DangerZoneSection />
     </div>
   );
