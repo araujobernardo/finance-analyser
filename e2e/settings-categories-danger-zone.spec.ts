@@ -88,6 +88,75 @@ test("#879: Bank Connection disconnected state shows Connect button with no text
   }
 });
 
+// ── #885: Account Connections card ───────────────────────────────────────────
+
+test("#885: Account Connections card is visible on Settings page when user has accounts", async ({
+  authenticatedPage: page,
+}) => {
+  await page.getByRole("link", { name: /settings/i }).click();
+  await page.waitForURL(/\/settings/);
+
+  // The card is visible (the test user always has at least one account)
+  await expect(page.getByTestId("account-connections-section")).toBeVisible();
+});
+
+test("#885: Account Connections card appears after Bank Connection and before Danger Zone", async ({
+  authenticatedPage: page,
+}) => {
+  await page.getByRole("link", { name: /settings/i }).click();
+  await page.waitForURL(/\/settings/);
+
+  const sections = page.locator(
+    '[data-testid="bank-connection-section"], [data-testid="account-connections-section"], [data-testid="danger-zone-section"]',
+  );
+  await expect(sections.nth(0)).toHaveAttribute(
+    "data-testid",
+    "bank-connection-section",
+  );
+  await expect(sections.nth(1)).toHaveAttribute(
+    "data-testid",
+    "account-connections-section",
+  );
+  await expect(sections.nth(2)).toHaveAttribute(
+    "data-testid",
+    "danger-zone-section",
+  );
+});
+
+test("#885: Account Connections card uses card settings-section style", async ({
+  authenticatedPage: page,
+}) => {
+  await page.getByRole("link", { name: /settings/i }).click();
+  await page.waitForURL(/\/settings/);
+
+  const section = page.getByTestId("account-connections-section");
+  await expect(section).toBeVisible();
+  await expect(section).toHaveClass(/card/);
+  await expect(section).toHaveClass(/settings-section/);
+});
+
+test("#885: Account Connections card shows at least one account-connection-row", async ({
+  authenticatedPage: page,
+}) => {
+  await page.getByRole("link", { name: /settings/i }).click();
+  await page.waitForURL(/\/settings/);
+
+  // The test user has at least one Finance Analyser account
+  const rows = page.getByTestId("account-connection-row");
+  await expect(rows.first()).toBeVisible();
+});
+
+test("#885: Account Connections summary row mentions Bank Connection", async ({
+  authenticatedPage: page,
+}) => {
+  await page.getByRole("link", { name: /settings/i }).click();
+  await page.waitForURL(/\/settings/);
+
+  const summary = page.getByTestId("account-connections-summary");
+  await expect(summary).toBeVisible();
+  await expect(summary).toContainText("Bank Connection");
+});
+
 // ── #769: Settings — category management and danger zone ──────────────────────
 
 test("Settings page does not show the top info card", async ({
