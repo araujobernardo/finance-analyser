@@ -1,5 +1,6 @@
 # Changelog
 
+- **2026-06-01** | #890 | bug: Sync Now button hidden when no accounts linked | Removed the accountLinks.length > 0 guard from SyncControls so the Sync Now button is always visible when connected, enabling initial account discovery on first use.
 - **2026-06-01** | #885 | Settings: Add Account Connections card — Finance Analyser accounts with linked Akahu account | Added read-only AccountConnectionsSection card between Bank Connection and Danger Zone in Settings, showing each account, its linked Akahu bank account, balance, and Linked/Not linked pill badge; uses only existing CSS classes and reuses BankContext data.
 - **2026-06-01** | #884 | FA-BANK-002: Auto-discover Akahu accounts on sync — upsert unlinked entries into akahu_account_links | Made `financeAccountId` nullable, added an upsert step that creates discovery rows for every Akahu account on sync, and filtered transaction import to only mapped accounts.
 - **2026-06-01** | #832 | FA-BANK-002 T008: Add AKAHU_APP_TOKEN and ENCRYPTION_KEY to Render | Documented AKAHU_APP_TOKEN, AKAHU_USER_TOKEN, and ENCRYPTION_KEY in architecture docs; env vars confirmed set on Render backend; FA-BANK-002 deployment verified healthy.
