@@ -90,6 +90,16 @@ vi.mock("../lib/api", () => ({
   API_BASE: "",
 }));
 
+// ── Mock categoriseTransactions ───────────────────────────────────────────────
+
+const mockCategoriseTransactions = vi.fn();
+
+vi.mock("../services/categorisation", () => ({
+  categoriseTransactions: (
+    ...args: Parameters<typeof mockCategoriseTransactions>
+  ) => mockCategoriseTransactions(...args),
+}));
+
 // ── Fixtures ─────────────────────────────────────────────────────────────────
 
 function makeApiTxn(overrides: Partial<ApiTransaction> = {}): ApiTransaction {
@@ -750,5 +760,161 @@ describe("TransactionsPage -- T013: 'Savings & Transfers' never appears in rende
     ];
     renderPage();
     expect(screen.queryByText("Savings & Transfers")).not.toBeInTheDocument();
+  });
+});
+
+// ── TransactionsPage — Auto-Categorise button ─────────────────────────────────
+
+describe("TransactionsPage — Auto-Categorise button", () => {
+  afterEach(() => {
+    cleanup();
+    mockApiFetch.mockReset();
+    mockRefetch.mockReset();
+    mockCategoriseTransactions.mockReset();
+    mockApiFetch.mockImplementation(makeApiFetchImpl());
+    mockRefetch.mockResolvedValue(undefined);
+  });
+
+  it("AC-1: button is rendered when transactions exist", () => {
+    mockRawTransactions = [
+      makeApiTxn({ id: "t1", description: "Amazon", category: null }),
+    ];
+    renderPage();
+    expect(screen.getByTestId("auto-categorise-btn")).toBeInTheDocument();
+  });
+
+  it("AC-1: button is not rendered in the empty state (no transactions)", () => {
+    mockRawTransactions = [];
+    renderPage();
+    expect(screen.queryByTestId("auto-categorise-btn")).not.toBeInTheDocument();
+  });
+
+  it("AC-2: button is disabled when all visible non-transfer transactions are already categorised", () => {
+    mockRawTransactions = [
+      makeApiTxn({ id: "t1", description: "Tesco", category: "Groceries" }),
+      makeApiTxn({ id: "t2", description: "Bus", category: "Transport" }),
+    ];
+    renderPage();
+    expect(screen.getByTestId("auto-categorise-btn")).toBeDisabled();
+  });
+
+  it("AC-2: button is enabled when at least one uncategorised non-transfer transaction exists", () => {
+    mockRawTransactions = [
+      makeApiTxn({ id: "t1", description: "Unknown", category: null }),
+      makeApiTxn({ id: "t2", description: "Tesco", category: "Groceries" }),
+    ];
+    renderPage();
+    expect(screen.getByTestId("auto-categorise-btn")).not.toBeDisabled();
+  });
+
+  it("AC-5: success toast appears after successful auto-categorisation", async () => {
+    const user = userEvent.setup();
+    mockRawTransactions = [
+      makeApiTxn({ id: "t1", description: "Amazon", category: null }),
+    ];
+    mockCategoriseTransactions.mockResolvedValue([
+      { description: "Amazon", category: "Shopping" },
+    ]);
+    mockApiFetch.mockImplementation(makeApiFetchImpl({ ok: true } as Response));
+
+    renderPage();
+
+    await user.click(screen.getByTestId("auto-categorise-btn"));
+
+    await vi.waitFor(() =>
+      expect(
+        screen.getByText(/Auto-categorised 1 transaction/),
+      ).toBeInTheDocument(),
+    );
+  });
+
+  it("AC-6: refetch is called after successful auto-categorisation", async () => {
+    const user = userEvent.setup();
+    mockRawTransactions = [
+      makeApiTxn({ id: "t1", description: "Amazon", category: null }),
+    ];
+    mockCategoriseTransactions.mockResolvedValue([
+      { description: "Amazon", category: "Shopping" },
+    ]);
+    mockApiFetch.mockImplementation(makeApiFetchImpl({ ok: true } as Response));
+
+    renderPage();
+    await user.click(screen.getByTestId("auto-categorise-btn"));
+    await vi.waitFor(() => expect(mockRefetch).toHaveBeenCalled());
+  });
+
+  it("AC-7: error toast appears on failure", async () => {
+    const user = userEvent.setup();
+    mockRawTransactions = [
+      makeApiTxn({ id: "t1", description: "Amazon", category: null }),
+    ];
+    mockCategoriseTransactions.mockRejectedValue(new Error("API down"));
+
+    renderPage();
+    await user.click(screen.getByTestId("auto-categorise-btn"));
+
+    await vi.waitFor(() =>
+      expect(
+        screen.getByText(/Auto-categorisation failed/),
+      ).toBeInTheDocument(),
+    );
+  });
+
+  it("AC-7: error toast has txn-toast--error class", async () => {
+    const user = userEvent.setup();
+    mockRawTransactions = [
+      makeApiTxn({ id: "t1", description: "Amazon", category: null }),
+    ];
+    mockCategoriseTransactions.mockRejectedValue(new Error("API down"));
+
+    const { container } = renderPage();
+    await user.click(screen.getByTestId("auto-categorise-btn"));
+
+    await vi.waitFor(() =>
+      expect(container.querySelector(".txn-toast--error")).not.toBeNull(),
+    );
+  });
+
+  it("AC-9: already-categorised transactions are not sent to categorisation service", async () => {
+    const user = userEvent.setup();
+    mockRawTransactions = [
+      makeApiTxn({ id: "t1", description: "Amazon", category: null }),
+      makeApiTxn({ id: "t2", description: "Tesco", category: "Groceries" }),
+    ];
+    mockCategoriseTransactions.mockResolvedValue([
+      { description: "Amazon", category: "Shopping" },
+    ]);
+    mockApiFetch.mockImplementation(makeApiFetchImpl({ ok: true } as Response));
+
+    renderPage();
+    await user.click(screen.getByTestId("auto-categorise-btn"));
+
+    await vi.waitFor(() =>
+      expect(mockCategoriseTransactions).toHaveBeenCalled(),
+    );
+    const callArg = mockCategoriseTransactions.mock.calls[0][0] as Array<{
+      description: string;
+    }>;
+    expect(callArg).toHaveLength(1);
+    expect(callArg[0].description).toBe("Amazon");
+  });
+
+  it("AC-3/AC-4: button is disabled and shows loading label while request is in-flight", async () => {
+    const user = userEvent.setup();
+    mockRawTransactions = [
+      makeApiTxn({ id: "t1", description: "Amazon", category: null }),
+    ];
+
+    // Never resolves so button stays in-flight
+    mockCategoriseTransactions.mockReturnValue(new Promise(() => {}));
+
+    renderPage();
+    await user.click(screen.getByTestId("auto-categorise-btn"));
+
+    await vi.waitFor(() => {
+      const btn = screen.getByTestId("auto-categorise-btn");
+      expect(btn).toBeDisabled();
+      expect(btn).toHaveTextContent("Categorising…");
+    });
   });
 });

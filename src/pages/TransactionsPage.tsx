@@ -5,6 +5,7 @@ import { getCandidates } from "../utils/transferFlagging";
 import { fmt, fmtMonth, getCatColor } from "../utils/transactionFormatters";
 import { useAccount, useAllTransactions } from "../context/AccountContext";
 import { useApi } from "../lib/api";
+import { categoriseTransactions } from "../services/categorisation";
 import "./TransactionsPage.css";
 
 // ── Local adapter type ────────────────────────────────────────────────────────
@@ -65,7 +66,11 @@ export function TransactionsPage() {
   const [filterMonth, setFilterMonth] = useState("all");
   const [filterAccount, setFilterAccount] = useState("all");
   const [showTransfers, setShowTransfers] = useState(false);
-  const [toast, setToast] = useState<string | null>(null);
+  const [toast, setToast] = useState<{
+    message: string;
+    isError?: boolean;
+  } | null>(null);
+  const [isAutoCategorising, setIsAutoCategorising] = useState(false);
 
   // ── Categories from API ────────────────────────────────────────────────────
   const [apiCategories, setApiCategories] = useState<string[]>([]);
@@ -183,9 +188,9 @@ export function TransactionsPage() {
     setLocalCategory(newLocalCategory);
 
     if (matchedIds.length > 1) {
-      setToast(
-        `Updated ${matchedIds.length} transactions matching "${source.payee}"`,
-      );
+      setToast({
+        message: `Updated ${matchedIds.length} transactions matching "${source.payee}"`,
+      });
       setTimeout(() => setToast(null), 4000);
     }
 
@@ -210,7 +215,10 @@ export function TransactionsPage() {
       } catch {
         // Revert optimistic update on any error.
         setLocalCategory(previousCategory);
-        setToast("Failed to save category — please try again.");
+        setToast({
+          message: "Failed to save category — please try again.",
+          isError: true,
+        });
         setTimeout(() => setToast(null), 4000);
       }
     })();
@@ -250,7 +258,7 @@ export function TransactionsPage() {
       setLocalIsTransfer(newIsTransfer);
       setLocalCategory(newCategory);
       setFlagMode(null);
-      setToast("Transfer pair flagged.");
+      setToast({ message: "Transfer pair flagged." });
       setTimeout(() => setToast(null), 4000);
     } else {
       setFlagMode(null);
@@ -302,13 +310,57 @@ export function TransactionsPage() {
     setLocalIsTransfer(newIsTransfer);
     setLocalCategory(newCategory);
     setUnflagTarget(null);
-    setToast("Transfer pair un-flagged.");
+    setToast({ message: "Transfer pair un-flagged." });
     setTimeout(() => setToast(null), 4000);
   };
 
   const initiatingTxn = flagMode
     ? txns.find((t) => t.id === flagMode.initiatingId)
     : null;
+
+  // ── Auto-categorise handler ────────────────────────────────────────────────
+  const handleAutoCategorise = async () => {
+    const targets = filtered.filter(
+      (t) => !t.isTransfer && (!t.category || t.category === ""),
+    );
+    if (targets.length === 0) return;
+
+    setIsAutoCategorising(true);
+    try {
+      const results = await categoriseTransactions(
+        targets.map((t) => ({ description: t.payee, category: undefined })),
+      );
+
+      // Pair each result with the target txn it corresponds to (same index).
+      const patches = results
+        .map((r, i) => ({ txnId: targets[i].id, category: r.category }))
+        .filter((p) => p.category && p.category !== "Uncategorised");
+
+      await Promise.all(
+        patches.map((p) =>
+          apiFetch(`/api/transactions/${p.txnId}`, {
+            method: "PATCH",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ category: p.category }),
+          }),
+        ),
+      );
+
+      await refetch();
+      setToast({
+        message: `Auto-categorised ${patches.length} transaction(s).`,
+      });
+      setTimeout(() => setToast(null), 4000);
+    } catch {
+      setToast({
+        message: "Auto-categorisation failed — please try again.",
+        isError: true,
+      });
+      setTimeout(() => setToast(null), 4000);
+    } finally {
+      setIsAutoCategorising(false);
+    }
+  };
 
   // ── Empty state ────────────────────────────────────────────────────────────
   if (txns.length === 0) {
@@ -389,12 +441,28 @@ export function TransactionsPage() {
           />
           Show transfers
         </label>
+        <button
+          className="txn-btn-auto-categorise"
+          onClick={() => void handleAutoCategorise()}
+          disabled={
+            filtered.filter(
+              (t) => !t.isTransfer && (!t.category || t.category === ""),
+            ).length === 0 || isAutoCategorising
+          }
+          data-testid="auto-categorise-btn"
+        >
+          {isAutoCategorising ? "Categorising…" : "Auto-Categorise"}
+        </button>
         <span className="txn-row-count" data-testid="txn-row-count">
           {filtered.length} rows
         </span>
       </div>
 
-      {toast && <div className="txn-toast">&#10003; {toast}</div>}
+      {toast && (
+        <div className={`txn-toast${toast.isError ? " txn-toast--error" : ""}`}>
+          {toast.isError ? "✕" : "✓"} {toast.message}
+        </div>
+      )}
 
       {/* Flag mode banner */}
       {flagMode && (
