@@ -1,6 +1,7 @@
 import { useState } from "react";
 import type { ApiGoal } from "../types/api";
 import { useGoals } from "../context/GoalsContext";
+import { useBankContext } from "../context/BankContext";
 import { GoalCard } from "../components/goals/GoalCard";
 import { GoalModal } from "../components/goals/GoalModal";
 import "./GoalsPage.css";
@@ -10,6 +11,7 @@ type ModalState = ApiGoal | "add" | null;
 
 export function GoalsPage() {
   const { goals, isLoading, updateGoal, removeGoal } = useGoals();
+  const { accountLinks } = useBankContext();
   const [modalState, setModalState] = useState<ModalState>(null);
   const [completedOpen, setCompletedOpen] = useState(false);
   const [pendingDeleteId, setPendingDeleteId] = useState<string | null>(null);
@@ -19,6 +21,19 @@ export function GoalsPage() {
 
   const editGoal =
     modalState !== null && modalState !== "add" ? modalState : undefined;
+
+  /**
+   * Returns true when the given Finance Analyser account ID has an Akahu link
+   * with a non-null lastBalance. Used to distinguish "linked but no balance data"
+   * from "linked with balance data" on savings_target GoalCards.
+   */
+  function accountHasAkahuBalance(financeAccountId: string | null): boolean {
+    if (!financeAccountId) return false;
+    return accountLinks.some(
+      (link) =>
+        link.financeAccountId === financeAccountId && link.lastBalance != null,
+    );
+  }
 
   function handleConfirmDelete() {
     if (pendingDeleteId) {
@@ -100,6 +115,9 @@ export function GoalsPage() {
                         void updateGoal(id, { status })
                       }
                       onDelete={(id) => setPendingDeleteId(id)}
+                      hasAkahuBalance={accountHasAkahuBalance(
+                        goal.linkedAccountId,
+                      )}
                     />
                   </li>
                 ))}
@@ -139,6 +157,9 @@ export function GoalsPage() {
                         goal={goal}
                         onEdit={(g) => setModalState(g)}
                         onDelete={(id) => setPendingDeleteId(id)}
+                        hasAkahuBalance={accountHasAkahuBalance(
+                          goal.linkedAccountId,
+                        )}
                       />
                     </li>
                   ))}
