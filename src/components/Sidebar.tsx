@@ -2,6 +2,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { NavLink, useNavigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
 import { useAccount } from "../context/AccountContext";
+import { useBankContext } from "../context/BankContext";
 import { useFileUpload } from "../hooks/useFileUpload";
 import { Skeleton } from "./Skeleton";
 import { AddAccountModal } from "./AddAccountModal";
@@ -43,7 +44,42 @@ export function Sidebar({
     error: accountsError,
     refetch,
   } = useAccount();
+  const { accountLinks } = useBankContext();
   const navigate = useNavigate();
+
+  // Format a lastBalance string from the API (postgres-js returns numeric as string)
+  // as a NZD currency string. Returns null when the value is absent or non-numeric.
+  function formatBalance(raw: string | null): string | null {
+    if (raw === null) return null;
+    const n = parseFloat(raw);
+    if (isNaN(n)) return null;
+    return new Intl.NumberFormat("en-NZ", {
+      style: "currency",
+      currency: "NZD",
+      minimumFractionDigits: 2,
+      maximumFractionDigits: 2,
+    }).format(n);
+  }
+
+  // Compute the sum of all linked account balances for the "All Accounts" row.
+  // Returns null when no linked account has a balance.
+  const allAccountsTotalFormatted = (() => {
+    const validBalances = accountLinks
+      .map((l) => l.lastBalance)
+      .filter((b): b is string => b !== null)
+      .map((b) => parseFloat(b))
+      .filter((n) => !isNaN(n));
+    if (validBalances.length === 0) return null;
+    const total = validBalances.reduce((sum, n) => sum + n, 0);
+    return (
+      new Intl.NumberFormat("en-NZ", {
+        style: "currency",
+        currency: "NZD",
+        minimumFractionDigits: 2,
+        maximumFractionDigits: 2,
+      }).format(total) + " total"
+    );
+  })();
   const fileRef = useRef<HTMLInputElement>(null);
   const mobileFileRef = useRef<HTMLInputElement>(null);
   const [editingShort, setEditingShort] = useState<string | null>(null);
@@ -183,7 +219,17 @@ export function Sidebar({
           }}
         >
           <div className="sidebar-all-accounts-dot" />
-          <span className="sidebar-all-accounts-label">All Accounts</span>
+          <div className="sidebar-all-accounts-info">
+            <span className="sidebar-all-accounts-label">All Accounts</span>
+            {allAccountsTotalFormatted !== null && (
+              <span
+                className="sidebar-balance-sub"
+                data-testid="all-accounts-balance"
+              >
+                {allAccountsTotalFormatted}
+              </span>
+            )}
+          </div>
           <button
             className="sidebar-add-account-btn"
             title="Add account"
@@ -249,7 +295,25 @@ export function Sidebar({
                     onClick={(e) => e.stopPropagation()}
                   />
                 ) : (
-                  <span className="sidebar-account-name">{acct.display}</span>
+                  <div className="sidebar-account-info">
+                    <span className="sidebar-account-name">{acct.display}</span>
+                    {(() => {
+                      const link = accountLinks.find(
+                        (l) => l.financeAccountId === acct.short,
+                      );
+                      const formatted = link
+                        ? formatBalance(link.lastBalance)
+                        : null;
+                      return formatted !== null ? (
+                        <span
+                          className="sidebar-balance-sub"
+                          data-testid="account-balance"
+                        >
+                          {formatted}
+                        </span>
+                      ) : null;
+                    })()}
+                  </div>
                 )}
                 {editingShort !== acct.short && (
                   <button
