@@ -134,9 +134,23 @@ export async function syncUserAccounts(userId: string): Promise<SyncResult> {
       const start = startDate.toISOString();
       const end = now.toISOString();
 
-      // Step 6d — fetch transactions from Akahu
-      const txResult = await akahu.transactions.list(userToken, { start, end });
-      const txList = txResult.items ?? [];
+      // Step 6d — fetch all transaction pages from Akahu.
+      // The API returns small batches (paginated); we must follow cursor.next
+      // until null to retrieve the full date range — otherwise only the first
+      // page arrives and historical transactions are silently dropped.
+      const txList: Awaited<
+        ReturnType<typeof akahu.transactions.list>
+      >["items"] = [];
+      let cursor: string | null | undefined = undefined;
+      do {
+        const page = await akahu.transactions.list(userToken, {
+          start,
+          end,
+          cursor,
+        });
+        txList.push(...(page.items ?? []));
+        cursor = page.cursor.next;
+      } while (cursor !== null);
 
       // Filter to transactions for this specific account
       const accountTxList = txList.filter(
