@@ -1,8 +1,9 @@
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import { useApi } from "../lib/api";
 import { useBankContext } from "../context/BankContext";
 import { useAccount, useAllTransactions } from "../context/AccountContext";
 import { useToast } from "../hooks/useToast";
+import { useFileUpload } from "../hooks/useFileUpload";
 import { runAutoCategorise } from "../utils/runAutoCategorise";
 import type { ApiAkahuAccountLink } from "../types/api";
 import "./SettingsPage.css";
@@ -1166,8 +1167,190 @@ export function AccountConnectionsSection() {
   );
 }
 
+// ── ImportTransactionsSection ─────────────────────────────────────────────────
+// Allows the user to pick an account and upload one or more CSV files.
+// Reuses the same useFileUpload hook and queue-drain pattern from the old sidebar.
+
+export function ImportTransactionsSection() {
+  const { accounts, refetch } = useAccount();
+
+  // Account selection is self-contained: user must explicitly pick an account
+  // before uploading. No default — avoids silently uploading to the wrong account.
+  const [selectedAccountId, setSelectedAccountId] = useState<
+    string | undefined
+  >(undefined);
+
+  const fileRef = useRef<HTMLInputElement>(null);
+  const fileQueueRef = useRef<File[]>([]);
+
+  const {
+    isCategorising,
+    importedCount,
+    skippedCount,
+    isDuplicate,
+    duplicateMonth,
+    parseErrors,
+    uploadError,
+    handleFile,
+    confirmReplace,
+    cancelReplace,
+  } = useFileUpload({
+    accountId: selectedAccountId,
+    onImportComplete: () => void refetch(),
+  });
+
+  // Drain the queue when a file finishes categorising.
+  useEffect(() => {
+    if (isCategorising) return;
+    const remaining = fileQueueRef.current.slice(1);
+    fileQueueRef.current = remaining;
+    if (remaining.length > 0) {
+      const next = remaining[0];
+      const id = setTimeout(() => handleFile(next), 0);
+      return () => clearTimeout(id);
+    }
+    // handleFile identity is stable; isCategorising drives the drain.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isCategorising]);
+
+  const onFilesSelected = (files: File[]) => {
+    if (files.length === 0) return;
+    fileQueueRef.current = files;
+    handleFile(files[0]);
+  };
+
+  // Derive upload status message.
+  let uploadStatusMsg: string | null = null;
+  let uploadStatusColor = "var(--muted)";
+
+  if (isCategorising) {
+    uploadStatusMsg = "Categorising & uploading…";
+    uploadStatusColor = "var(--muted)";
+  } else if (uploadError) {
+    uploadStatusMsg = uploadError;
+    uploadStatusColor = "var(--red)";
+  } else if (parseErrors.length > 0) {
+    uploadStatusMsg = `Parse error: ${parseErrors[0].message}`;
+    uploadStatusColor = "var(--red)";
+  } else if (importedCount > 0 || skippedCount > 0) {
+    const parts: string[] = [];
+    if (importedCount > 0) parts.push(`${importedCount} imported`);
+    if (skippedCount > 0) parts.push(`${skippedCount} duplicates skipped`);
+    uploadStatusMsg = parts.join(", ");
+    uploadStatusColor = "var(--accent)";
+  }
+
+  return (
+    <div
+      className="card settings-section"
+      data-testid="import-transactions-section"
+    >
+      <div className="settings-section-title">Import Transactions</div>
+      <div className="settings-section-sub">
+        Select an account and upload one or more CSV files to import
+        transactions. Select multiple files to import all accounts at once.
+      </div>
+
+      {/* Account selector */}
+      <div className="settings-import-row">
+        <label
+          htmlFor="import-account-select"
+          className="settings-import-label"
+        >
+          Import to:
+        </label>
+        <select
+          id="import-account-select"
+          className="settings-input settings-import-account-select"
+          value={selectedAccountId ?? ""}
+          onChange={(e) => setSelectedAccountId(e.target.value || undefined)}
+          data-testid="import-account-select"
+          aria-label="Select account to import into"
+        >
+          <option value="">(select an account)</option>
+          {accounts.map((a) => (
+            <option key={a.id} value={a.id}>
+              {a.nickname}
+            </option>
+          ))}
+        </select>
+      </div>
+
+      {/* Upload button */}
+      <div>
+        <button
+          type="button"
+          className="btn-accent"
+          disabled={isCategorising || !selectedAccountId}
+          onClick={() => fileRef.current?.click()}
+          data-testid="import-upload-btn"
+        >
+          {isCategorising ? "Uploading…" : "Upload CSV"}
+        </button>
+        <input
+          ref={fileRef}
+          type="file"
+          accept=".csv"
+          multiple
+          style={{ display: "none" }}
+          data-testid="import-csv-file-input"
+          onChange={(e) => {
+            if (e.target.files?.length) {
+              onFilesSelected(Array.from(e.target.files));
+              e.target.value = "";
+            }
+          }}
+        />
+      </div>
+
+      {/* Duplicate month confirmation modal */}
+      {isDuplicate && duplicateMonth && (
+        <div
+          className="settings-import-duplicate"
+          data-testid="import-duplicate-warning"
+        >
+          <p>
+            Data for <strong>{duplicateMonth}</strong> already exists. Replace
+            it?
+          </p>
+          <div className="settings-import-duplicate-actions">
+            <button
+              type="button"
+              className="btn-danger"
+              onClick={confirmReplace}
+              data-testid="import-confirm-replace"
+            >
+              Replace
+            </button>
+            <button
+              type="button"
+              className="btn-ghost"
+              onClick={cancelReplace}
+              data-testid="import-cancel-replace"
+            >
+              Cancel
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* Status message */}
+      {uploadStatusMsg && (
+        <div
+          className="settings-import-status"
+          style={{ color: uploadStatusColor }}
+          data-testid="import-upload-status"
+        >
+          {uploadStatusMsg}
+        </div>
+      )}
+    </div>
+  );
+}
+
 // ── SettingsPage ─────────────────────────────────────────────────────────────
-// Layout (top to bottom): Alert Preferences → Categories → Bank Connection → Account Connections → Danger Zone.
+// Layout (top to bottom): Alert Preferences → Categories → Import Transactions
+//   → Bank Connection → Account Connections → Danger Zone.
 // The top info card was removed per user decision (#769 UX brief, Option A).
 
 export function SettingsPage() {
@@ -1176,6 +1359,7 @@ export function SettingsPage() {
       <h1 className="settings-title">Settings</h1>
       <AlertPreferencesSection />
       <CategoriesSection />
+      <ImportTransactionsSection />
       <BankConnectionSection />
       <AccountConnectionsSection />
       <DangerZoneSection />
