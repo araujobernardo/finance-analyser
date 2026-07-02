@@ -1,10 +1,12 @@
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { NavLink, useNavigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
-import { useAccount } from "../context/AccountContext";
+import { useAccount, useAllTransactions } from "../context/AccountContext";
 import { useBankContext } from "../context/BankContext";
 import { useFileUpload } from "../hooks/useFileUpload";
 import { useAutoSync } from "../hooks/useAutoSync";
+import { useToast } from "../hooks/useToast";
+import { useApi } from "../lib/api";
 import { Skeleton } from "./Skeleton";
 import { AddAccountModal } from "./AddAccountModal";
 import { ACCOUNT_COLORS } from "../constants/colors";
@@ -53,9 +55,26 @@ export function Sidebar({
     syncNow,
   } = useBankContext();
   const navigate = useNavigate();
+  const { addToast } = useToast();
+  const { apiFetch } = useApi();
+  const rawTransactions = useAllTransactions();
+
+  // Build stable categorise options for useAutoSync (memoised to keep the
+  // effect dep-array stable and avoid re-triggering the auto-sync).
+  const categoriseOptions = useMemo(
+    () => ({
+      transactions: rawTransactions,
+      apiFetch,
+      refetch,
+      onError: (message: string) => addToast(message),
+    }),
+
+    [rawTransactions, apiFetch, refetch, addToast],
+  );
 
   // Trigger an automatic sync on load if last sync was >24 h ago (or never).
-  useAutoSync(connection, bankLoading, syncNow);
+  // On success, auto-categorise uncategorised transactions.
+  useAutoSync(connection, bankLoading, syncNow, categoriseOptions);
 
   // Format a lastBalance string from the API (postgres-js returns numeric as string)
   // as a NZD currency string. Returns null when the value is absent or non-numeric.
