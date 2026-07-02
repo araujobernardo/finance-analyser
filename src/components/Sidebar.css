@@ -58,6 +58,41 @@
   margin: 0 16px;
 }
 
+/* ── Sync status indicator ───────────────────────────────────────────────── */
+
+.sidebar-sync-status {
+  font-size: 11px;
+  color: var(--accent);
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  padding: 6px 22px 2px;
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  animation: sidebar-sync-pulse 1.4s ease-in-out infinite;
+}
+
+.sidebar-sync-status::before {
+  content: "";
+  display: inline-block;
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--accent);
+  flex-shrink: 0;
+  animation: sidebar-sync-pulse 1.4s ease-in-out infinite;
+}
+
+@keyframes sidebar-sync-pulse {
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.35;
+  }
+}
+
 /* ── Accounts section ────────────────────────────────────────────────────── */
 
 .sidebar-accounts {
