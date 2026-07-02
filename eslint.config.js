@@ -24,6 +24,11 @@ export default defineConfig([
         "error",
         { argsIgnorePattern: "^_", varsIgnorePattern: "^_" },
       ],
+      // These rules were introduced in eslint-plugin-react-hooks 7.1.1 and are
+      // too strict for our async data-fetching pattern (calling fetch fns from
+      // useEffect). Disabled until we adopt a dedicated data-fetching library.
+      "react-hooks/set-state-in-effect": "off",
+      "react-hooks/preserve-manual-memoization": "off",
     },
   },
 ])
