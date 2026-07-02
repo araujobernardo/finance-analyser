@@ -1,5 +1,6 @@
 # Changelog
 
+- **2026-07-03** | #919 | feat(#900): move CSV upload from sidebar to Settings page | Removed CSV upload section and styles from Sidebar; added ImportTransactionsSection to SettingsPage with account selector, Upload CSV button, status message, and duplicate-handling modal, reusing the existing useFileUpload hook and queue-drain pattern.
 - **2026-07-02** | #918 | feat(#900): auto-categorise transactions after every sync | Extracted shared `runAutoCategorise` utility from TransactionsPage; chained auto-categorisation after every successful sync in `useAutoSync` and the manual "Sync Now" button in Settings; categorisation failures show a non-blocking toast without marking the sync as failed.
 - **2026-07-02** | #917 | feat(#900): auto-sync on login if last sync was >24 hours ago | Created `useAutoSync` hook that checks `lastSyncedAt` on app load and triggers `POST /api/bank/sync` automatically if the threshold is exceeded, with a "Syncing…" indicator in the Sidebar while in progress.
 - **2026-07-02** | #914 | fix: resolve react-hooks/set-state-in-effect lint errors from eslint-plugin-react-hooks 7.1.1 | Replaced all 9 `void asyncFn()` patterns inside useEffect/useCallback bodies with `asyncFn().catch(console.error)` across 7 files to satisfy the new lint rule.
