@@ -22,6 +22,12 @@ vi.mock("../utils/encryption.ts", () => ({
   decrypt: vi.fn().mockReturnValue("user_token_testtoken"),
 }));
 
+// ── Mock detectTransfers — sync tests focus on Akahu/DB integration, not transfer logic ──
+
+vi.mock("../utils/detectTransfers.ts", () => ({
+  detectTransfers: vi.fn().mockResolvedValue(undefined),
+}));
+
 // ── Mock Akahu SDK ────────────────────────────────────────────────────────────
 
 const mockAccountsList = vi.fn();
@@ -129,23 +135,21 @@ function setupUpdateSpy() {
 }
 
 /**
- * Sets up the db.insert spy supporting both:
- *   - upsert chain: .insert().values().onConflictDoUpdate()
- *   - plain insert chain: .insert().values()
- *
- * Returns the mockValues fn so tests can assert on transaction inserts.
+ * Sets up the db.insert spy supporting:
+ *   - upsert chain:       .insert().values().onConflictDoUpdate()
+ *   - returning chain:    .insert().values().returning()  ← used by transaction inserts
  */
 function setupInsertSpy() {
   const mockOnConflictDoUpdate = vi.fn().mockResolvedValue([]);
+  const mockReturning = vi.fn().mockResolvedValue([{ id: "mock-inserted-id" }]);
   const mockValues = vi.fn().mockReturnValue({
     onConflictDoUpdate: mockOnConflictDoUpdate,
-    // also resolves directly when no chaining (plain insert)
-    then: (resolve: (v: unknown[]) => void) => resolve([]),
+    returning: mockReturning,
   });
   vi.spyOn(db, "insert").mockReturnValue({
     values: mockValues,
   } as unknown as ReturnType<typeof db.insert>);
-  return { mockValues, mockOnConflictDoUpdate };
+  return { mockValues, mockOnConflictDoUpdate, mockReturning };
 }
 
 // ── Tests ─────────────────────────────────────────────────────────────────────
