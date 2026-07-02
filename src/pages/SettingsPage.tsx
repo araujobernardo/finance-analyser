@@ -1172,13 +1172,13 @@ export function AccountConnectionsSection() {
 // Reuses the same useFileUpload hook and queue-drain pattern from the old sidebar.
 
 export function ImportTransactionsSection() {
-  const { accounts, activeAccountId, refetch } = useAccount();
+  const { accounts, refetch } = useAccount();
 
-  // Use the sidebar's active account as the default, but let the user override
-  // within this section via a local dropdown.
+  // Account selection is self-contained: user must explicitly pick an account
+  // before uploading. No default — avoids silently uploading to the wrong account.
   const [selectedAccountId, setSelectedAccountId] = useState<
     string | undefined
-  >(activeAccountId === "all" ? undefined : activeAccountId);
+  >(undefined);
 
   const fileRef = useRef<HTMLInputElement>(null);
   const fileQueueRef = useRef<File[]>([]);
