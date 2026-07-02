@@ -1,10 +1,35 @@
-// Tests for useAutoSync — FA-BANK-017
-// Verifies: 24-hour check, null lastSyncedAt, no-connection guard, single-fire guard
+// Tests for useAutoSync — FA-BANK-017 / FA-BANK-018
+// Verifies: 24-hour check, null lastSyncedAt, no-connection guard, single-fire guard,
+//           auto-categorise chaining after successful sync, and non-fatal error handling.
 
 import { describe, it, expect, vi, beforeEach } from "vitest";
-import { renderHook } from "@testing-library/react";
+import { renderHook, act } from "@testing-library/react";
 import { useAutoSync } from "./useAutoSync";
-import type { ApiAkahuConnection } from "../types/api";
+import type { ApiAkahuConnection, ApiTransaction } from "../types/api";
+
+// ── mock runAutoCategorise ────────────────────────────────────────────────────
+
+const mockRunAutoCategorise = vi.fn();
+
+vi.mock("../utils/runAutoCategorise", () => ({
+  runAutoCategorise: (...args: unknown[]) => mockRunAutoCategorise(...args),
+}));
+
+// ── helper: minimal categoriseOptions ────────────────────────────────────────
+
+function makeCategoriseOptions(
+  overrides: {
+    transactions?: ApiTransaction[];
+    onError?: (msg: string) => void;
+  } = {},
+) {
+  return {
+    transactions: overrides.transactions ?? [],
+    apiFetch: vi.fn().mockResolvedValue(new Response("{}", { status: 200 })),
+    refetch: vi.fn().mockResolvedValue(undefined),
+    onError: overrides.onError ?? vi.fn(),
+  };
+}
 
 // ── helpers ───────────────────────────────────────────────────────────────────
 
@@ -188,5 +213,77 @@ describe("useAutoSync — syncNow rejection handling", () => {
 
     // Allow rejection to propagate through the catch silently
     await new Promise((r) => setTimeout(r, 10));
+  });
+});
+
+// ── FA-BANK-018: categoriseOptions — auto-categorise after successful sync ────
+
+describe("useAutoSync — auto-categorise after sync (categoriseOptions)", () => {
+  it("calls runAutoCategorise after a successful syncNow when options are provided", async () => {
+    const syncNow = vi.fn().mockResolvedValue(undefined);
+    mockRunAutoCategorise.mockResolvedValue({
+      categorised: 2,
+      hadError: false,
+    });
+
+    const opts = makeCategoriseOptions();
+    const connection = makeConnection(null);
+
+    renderHook(() => useAutoSync(connection, false, syncNow, opts));
+
+    // Allow the promise chain to resolve
+    await act(async () => {
+      await new Promise((r) => setTimeout(r, 20));
+    });
+
+    expect(syncNow).toHaveBeenCalledTimes(1);
+    expect(mockRunAutoCategorise).toHaveBeenCalledTimes(1);
+    expect(mockRunAutoCategorise).toHaveBeenCalledWith(opts);
+  });
+
+  it("does NOT call runAutoCategorise when categoriseOptions is not provided", async () => {
+    const syncNow = vi.fn().mockResolvedValue(undefined);
+    const connection = makeConnection(null);
+
+    renderHook(() => useAutoSync(connection, false, syncNow));
+
+    await act(async () => {
+      await new Promise((r) => setTimeout(r, 20));
+    });
+
+    expect(syncNow).toHaveBeenCalledTimes(1);
+    expect(mockRunAutoCategorise).not.toHaveBeenCalled();
+  });
+
+  it("does NOT call runAutoCategorise when syncNow fails", async () => {
+    const syncNow = vi.fn().mockRejectedValue(new Error("Sync failed"));
+    const opts = makeCategoriseOptions();
+    const connection = makeConnection(null);
+
+    renderHook(() => useAutoSync(connection, false, syncNow, opts));
+
+    await act(async () => {
+      await new Promise((r) => setTimeout(r, 20));
+    });
+
+    expect(syncNow).toHaveBeenCalledTimes(1);
+    // Auto-categorise must NOT be triggered when sync itself failed
+    expect(mockRunAutoCategorise).not.toHaveBeenCalled();
+  });
+
+  it("does NOT call runAutoCategorise when sync is skipped (recent lastSyncedAt)", async () => {
+    const syncNow = vi.fn();
+    const opts = makeCategoriseOptions();
+    // Last sync was 1 hour ago — within the 24 h threshold
+    const connection = makeConnection(makeTimestamp(1));
+
+    renderHook(() => useAutoSync(connection, false, syncNow, opts));
+
+    await act(async () => {
+      await new Promise((r) => setTimeout(r, 20));
+    });
+
+    expect(syncNow).not.toHaveBeenCalled();
+    expect(mockRunAutoCategorise).not.toHaveBeenCalled();
   });
 });

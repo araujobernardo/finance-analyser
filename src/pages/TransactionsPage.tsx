@@ -5,7 +5,7 @@ import { getCandidates } from "../utils/transferFlagging";
 import { fmt, fmtMonth, getCatColor } from "../utils/transactionFormatters";
 import { useAccount, useAllTransactions } from "../context/AccountContext";
 import { useApi } from "../lib/api";
-import { categoriseTransactions } from "../services/categorisation";
+import { runAutoCategorise } from "../utils/runAutoCategorise";
 import "./TransactionsPage.css";
 
 // ── Local adapter type ────────────────────────────────────────────────────────
@@ -337,49 +337,44 @@ export function TransactionsPage() {
     : null;
 
   // ── Auto-categorise handler ────────────────────────────────────────────────
+  // Delegates to the shared runAutoCategorise utility so the same logic is
+  // reused by the auto-sync path (useAutoSync) and this manual button.
   const handleAutoCategorise = async () => {
-    const targets = filtered.filter(
-      (t) => !t.isTransfer && (!t.category || t.category === ""),
-    );
-    if (targets.length === 0) return;
+    // Only process transactions visible in the current filtered view.
+    const visibleTransactions: ApiTransaction[] = filtered
+      .filter((t) => !t.isTransfer && (!t.category || t.category === ""))
+      .map((t) => ({
+        id: t.id,
+        userId: "",
+        accountId: t.accountShort,
+        date: t.date,
+        amount: t.amount,
+        description: t.payee,
+        category: t.category,
+        isTransfer: t.isTransfer,
+        isManualTransfer: false,
+        createdAt: "",
+      }));
+
+    if (visibleTransactions.length === 0) return;
 
     setIsAutoCategorising(true);
     try {
-      const results = await categoriseTransactions(
-        targets.map((t) => ({
-          date: new Date(t.date),
-          description: t.payee,
-          amount: t.amount,
-          category: undefined,
-        })),
-      );
-
-      // Pair each result with the target txn it corresponds to (same index).
-      const patches = results
-        .map((r, i) => ({ txnId: targets[i].id, category: r.category }))
-        .filter((p) => p.category && p.category !== "Uncategorised");
-
-      await Promise.all(
-        patches.map((p) =>
-          apiFetch(`/api/transactions/${p.txnId}`, {
-            method: "PATCH",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ category: p.category }),
-          }),
-        ),
-      );
-
-      await refetch();
-      setToast({
-        message: `Auto-categorised ${patches.length} transaction(s).`,
+      const { categorised, hadError } = await runAutoCategorise({
+        transactions: visibleTransactions,
+        apiFetch,
+        refetch,
+        onError: (message) => {
+          setToast({ message, isError: true });
+          setTimeout(() => setToast(null), 4000);
+        },
       });
-      setTimeout(() => setToast(null), 4000);
-    } catch {
-      setToast({
-        message: "Auto-categorisation failed — please try again.",
-        isError: true,
-      });
-      setTimeout(() => setToast(null), 4000);
+      if (!hadError) {
+        setToast({
+          message: `Auto-categorised ${categorised} transaction(s).`,
+        });
+        setTimeout(() => setToast(null), 4000);
+      }
     } finally {
       setIsAutoCategorising(false);
     }
