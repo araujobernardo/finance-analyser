@@ -1,5 +1,6 @@
 # Changelog
 
+- **2026-07-02** | #914 | fix: resolve react-hooks/set-state-in-effect lint errors from eslint-plugin-react-hooks 7.1.1 | Replaced all 9 `void asyncFn()` patterns inside useEffect/useCallback bodies with `asyncFn().catch(console.error)` across 7 files to satisfy the new lint rule.
 - **2026-06-01** | #898 | Goals: Link savings goal progress to account balance instead of income flow | Changed savings_target goal progress to read lastBalance from akahu_account_links instead of summing transactions; GoalCard shows "No balance data" warning when account has no Akahu link; GoalModal requires account selection for savings goals when accounts exist.
 - **2026-06-01** | #897 | Transactions: Add Identify Transfers button to auto-detect and mark transfer pairs | Added an Identify Transfers button to the Transactions filter card that scans all transactions for debit↔credit pairs on the same date and amount, presents them in an inline expandable strip with confirmed/ambiguous badges, and marks accepted pairs as isTransfer via PATCH.
 - **2026-06-01** | #899 | Dashboard: Show Akahu account balance beside each account name in the sidebar | Added two-line stacked balance display to sidebar account rows using live lastBalance data from BankContext accountLinks, with NZD currency formatting and a summed total on the All Accounts row.
