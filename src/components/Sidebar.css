@@ -287,84 +287,6 @@
   color: var(--accent-mid);
 }
 
-/* ── Upload section ──────────────────────────────────────────────────────── */
-
-.sidebar-upload {
-  padding: 12px 16px 14px;
-  border-top: 1px solid var(--border);
-  border-bottom: 1px solid var(--border);
-}
-
-.sidebar-upload-to {
-  font-size: 10px;
-  margin-bottom: 7px;
-  line-height: 1.4;
-  color: var(--muted);
-  font-weight: 600;
-}
-
-.sidebar-upload-to-prefix {
-  color: var(--muted);
-}
-
-.sidebar-upload-to-account {
-  color: var(--accent);
-  font-weight: 700;
-}
-
-.sidebar-upload-to--none .sidebar-upload-to-account {
-  color: var(--muted);
-  font-weight: 400;
-  font-style: italic;
-}
-
-.sidebar-upload-btn {
-  width: 100%;
-  background: var(--accent);
-  color: white;
-  border: none;
-  border-radius: 10px;
-  padding: 10px 0;
-  font-size: 13px;
-  font-weight: 700;
-  cursor: pointer;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 7px;
-  font-family: inherit;
-  box-shadow: 0 2px 8px rgba(15, 157, 138, 0.25);
-  transition:
-    opacity 0.14s,
-    transform 0.1s;
-}
-
-.sidebar-upload-btn:hover {
-  opacity: 0.9;
-  transform: translateY(-1px);
-}
-
-.sidebar-upload-btn:active {
-  transform: translateY(0);
-}
-
-.sidebar-upload-icon {
-  font-size: 15px;
-}
-
-.sidebar-upload-status {
-  margin-top: 8px;
-  font-size: 12px;
-  line-height: 1.4;
-}
-
-.sidebar-upload-helper {
-  font-size: 10px;
-  color: var(--muted);
-  margin-top: 6px;
-  line-height: 1.4;
-}
-
 /* ── Nav section ─────────────────────────────────────────────────────────── */
 
 .sidebar-nav {
@@ -501,29 +423,6 @@
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
-}
-
-.mobile-topbar-csv {
-  height: 32px;
-  background: var(--accent);
-  color: #fff;
-  border: none;
-  border-radius: 8px;
-  padding: 0 12px;
-  font-size: 12px;
-  font-weight: 700;
-  cursor: pointer;
-  display: flex;
-  align-items: center;
-  gap: 5px;
-  font-family: inherit;
-  flex-shrink: 0;
-  white-space: nowrap;
-}
-
-.mobile-topbar-csv:disabled {
-  opacity: 0.6;
-  cursor: not-allowed;
 }
 
 /* ── Drawer overlay (visible only at ≤768px) ─────────────────────────────── */
