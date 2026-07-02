@@ -54,7 +54,22 @@ const MOCK_FINANCE_ACCOUNTS = [
 ];
 
 vi.mock("../context/AccountContext", () => ({
-  useAccount: () => ({ accounts: MOCK_FINANCE_ACCOUNTS }),
+  useAccount: () => ({ accounts: MOCK_FINANCE_ACCOUNTS, refetch: vi.fn() }),
+  useAllTransactions: () => [],
+}));
+
+// ── Mock useToast ───────────────────────────────────────────────────────────────
+
+vi.mock("../hooks/useToast", () => ({
+  useToast: () => ({ addToast: vi.fn() }),
+}));
+
+// ── Mock runAutoCategorise ─────────────────────────────────────────────────────
+
+vi.mock("../utils/runAutoCategorise", () => ({
+  runAutoCategorise: vi
+    .fn()
+    .mockResolvedValue({ categorised: 0, hadError: false }),
 }));
 
 // ── Mock useApi (SettingsPage imports it for other sections) ───────────────────

@@ -1,7 +1,9 @@
 import { useState, useEffect, useCallback } from "react";
 import { useApi } from "../lib/api";
 import { useBankContext } from "../context/BankContext";
-import { useAccount } from "../context/AccountContext";
+import { useAccount, useAllTransactions } from "../context/AccountContext";
+import { useToast } from "../hooks/useToast";
+import { runAutoCategorise } from "../utils/runAutoCategorise";
 import type { ApiAkahuAccountLink } from "../types/api";
 import "./SettingsPage.css";
 
@@ -821,8 +823,28 @@ export function BankConnectionSection() {
     disconnect,
     syncNow,
   } = useBankContext();
+  const { apiFetch } = useApi();
+  const { refetch } = useAccount();
+  const { addToast } = useToast();
+  const rawTransactions = useAllTransactions();
 
   const [connectError, setConnectError] = useState<string | null>(null);
+
+  // Wraps syncNow so that a successful sync automatically categorises any
+  // uncategorised transactions.  Categorisation failures show a non-blocking
+  // toast but do NOT mark the sync as failed.
+  async function handleSyncNow() {
+    await syncNow();
+    // syncNow surfaces its own success/failure toasts; run categorise regardless
+    // of whether syncNow had partial errors — it only throws on network failure,
+    // in which case we never reach here.
+    await runAutoCategorise({
+      transactions: rawTransactions,
+      apiFetch,
+      refetch,
+      onError: (message) => addToast(message),
+    });
+  }
 
   function formatDate(iso: string | null): string {
     if (!iso) return "Never synced";
@@ -943,7 +965,7 @@ export function BankConnectionSection() {
               <button
                 type="button"
                 className="btn-accent"
-                onClick={() => void syncNow()}
+                onClick={() => void handleSyncNow()}
                 disabled={isSyncing}
                 data-testid="sync-now-btn"
               >
