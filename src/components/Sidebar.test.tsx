@@ -44,26 +44,6 @@ vi.mock("../context/BankContext", () => ({
   }),
 }));
 
-// ── Mock useFileUpload ────────────────────────────────────────────────────────
-
-const mockHandleFile = vi.fn();
-vi.mock("../hooks/useFileUpload", () => ({
-  useFileUpload: () => ({
-    selectedFile: null,
-    parseErrors: [],
-    isDuplicate: false,
-    duplicateMonth: null,
-    isCategorising: false,
-    savedMonthKey: null,
-    savedMonthCount: 0,
-    importedCount: 0,
-    skippedCount: 0,
-    handleFile: mockHandleFile,
-    confirmReplace: vi.fn(),
-    cancelReplace: vi.fn(),
-  }),
-}));
-
 // ── Helpers ───────────────────────────────────────────────────────────────────
 
 const FAKE_TOKEN = "test.jwt.token";
@@ -111,58 +91,6 @@ afterEach(() => {
 
 // ── Tests ─────────────────────────────────────────────────────────────────────
 
-describe("Sidebar — upload wiring", () => {
-  it("renders the Upload CSV button", async () => {
-    renderSidebar();
-    expect(screen.getByTestId("upload-csv-btn")).toBeInTheDocument();
-  });
-
-  it("renders the hidden file input", async () => {
-    renderSidebar();
-    const input = screen.getByTestId("csv-file-input") as HTMLInputElement;
-    expect(input.type).toBe("file");
-    expect(input.accept).toBe(".csv");
-    expect(input.multiple).toBe(true);
-  });
-
-  it("calls handleFile from useFileUpload when a CSV file is selected", async () => {
-    const user = userEvent.setup();
-    renderSidebar();
-
-    const input = screen.getByTestId("csv-file-input") as HTMLInputElement;
-    const file = new File(
-      ["date,desc,amount\n2026-01-01,Test,100"],
-      "test.csv",
-      {
-        type: "text/csv",
-      },
-    );
-
-    await user.upload(input, file);
-
-    await waitFor(() => expect(mockHandleFile).toHaveBeenCalledWith(file));
-  });
-
-  it("does not accept the onUpload prop — Sidebar manages uploads internally", () => {
-    // Sidebar's prop interface must not include onUpload.
-    // Verify by checking that passing an unknown prop does not reach handleFile logic.
-    // (TypeScript enforces this at compile time; here we just confirm the upload
-    // path uses handleFile from the hook, not an external callback.)
-    const user = userEvent.setup();
-    renderSidebar();
-    // Passes if the component renders without error.
-    expect(screen.getByTestId("csv-file-input")).toBeInTheDocument();
-    void user; // suppress unused-variable lint for async user in sync test
-  });
-});
-
-describe("Sidebar — upload status display", () => {
-  it("shows no status message when no file has been selected", () => {
-    renderSidebar();
-    expect(screen.queryByTestId("upload-status")).not.toBeInTheDocument();
-  });
-});
-
 describe("Sidebar — account selection (issue #748)", () => {
   it("renders account rows with role=button", async () => {
     mockApiFetch.mockResolvedValue({
@@ -197,7 +125,7 @@ describe("Sidebar — account selection (issue #748)", () => {
     }
   });
 
-  it("marks first account as active by default and renders Upload to label", async () => {
+  it("marks first account as active by default", async () => {
     mockApiFetch.mockResolvedValue({
       ok: true,
       status: 200,
@@ -223,21 +151,14 @@ describe("Sidebar — account selection (issue #748)", () => {
       }),
     });
     renderSidebar();
-    // findByTestId resolves when the element appears (may still show the fallback
-    // while the async account fetch is in flight). Use waitFor to wait until the
-    // context has loaded accounts and resolved the active account to "acc-1".
-    await waitFor(
-      () => {
-        const label = screen.getByTestId("upload-to-label");
-        expect(label).toHaveTextContent("Cheque");
-      },
-      { timeout: 3000 },
-    );
-    const label = screen.getByTestId("upload-to-label");
-    expect(label).toHaveTextContent("Upload to:");
+    const rows = await screen.findAllByTestId("account-item");
+    // First account row should be active by default
+    await waitFor(() => {
+      expect(rows[0]).toHaveClass("sidebar-account-row--active");
+    });
   });
 
-  it("clicking an account row selects it and updates Upload to label", async () => {
+  it("clicking an account row selects it", async () => {
     mockApiFetch.mockResolvedValue({
       ok: true,
       status: 200,
@@ -269,22 +190,11 @@ describe("Sidebar — account selection (issue #748)", () => {
     // Click second row (Credit)
     await user.click(rows[1]);
 
-    await waitFor(() => {
-      const label = screen.getByTestId("upload-to-label");
-      expect(label).toHaveTextContent("Credit");
-    });
-
     // Second row should now have the active class
-    expect(rows[1]).toHaveClass("sidebar-account-row--active");
-    expect(rows[0]).not.toHaveClass("sidebar-account-row--active");
-  });
-
-  it("shows fallback label when no accounts exist", async () => {
-    renderSidebar();
-    const label = await screen.findByTestId("upload-to-label");
-    expect(label).toHaveTextContent("Upload to:");
-    // No accounts loaded — shows the fallback
-    expect(label).toHaveTextContent("(select an account)");
+    await waitFor(() => {
+      expect(rows[1]).toHaveClass("sidebar-account-row--active");
+      expect(rows[0]).not.toHaveClass("sidebar-account-row--active");
+    });
   });
 });
 
@@ -343,7 +253,7 @@ describe("Sidebar — All Accounts row (issue #755 Option C)", () => {
     });
   });
 
-  it("clicking All Accounts row selects all accounts (upload-to label shows fallback)", async () => {
+  it("clicking All Accounts row selects all accounts", async () => {
     mockApiFetch.mockResolvedValue({
       ok: true,
       status: 200,
@@ -371,10 +281,6 @@ describe("Sidebar — All Accounts row (issue #755 Option C)", () => {
     await waitFor(() => {
       expect(allAccountsRow).toHaveAttribute("aria-pressed", "true");
     });
-
-    // Upload label should now show the "select an account" fallback
-    const label = screen.getByTestId("upload-to-label");
-    expect(label).toHaveTextContent("(select an account)");
   });
 
   it("clicking + button inside All Accounts row does NOT select All Accounts", async () => {
@@ -416,12 +322,15 @@ describe("Sidebar — All Accounts row (issue #755 Option C)", () => {
 });
 
 describe("Sidebar — mobile drawer (#795)", () => {
-  it("renders the mobile top bar with hamburger, title, and CSV button", () => {
+  it("renders the mobile top bar with hamburger and title", () => {
     renderSidebar();
     expect(screen.getByTestId("mobile-topbar")).toBeInTheDocument();
     expect(screen.getByTestId("hamburger-btn")).toBeInTheDocument();
-    expect(screen.getByTestId("mobile-upload-csv-btn")).toBeInTheDocument();
     expect(screen.getByText("Finance Analyser")).toBeInTheDocument();
+    // CSV upload button has moved to Settings page — should not be in topbar
+    expect(
+      screen.queryByTestId("mobile-upload-csv-btn"),
+    ).not.toBeInTheDocument();
   });
 
   it("hamburger button has aria-label='Open menu' and aria-expanded=false by default", () => {
@@ -515,34 +424,6 @@ describe("Sidebar — mobile drawer (#795)", () => {
     expect(screen.getByTestId("mobile-drawer")).not.toHaveClass(
       "drawer-overlay--open",
     );
-  });
-
-  it("mobile CSV button triggers the mobile file input", async () => {
-    const user = userEvent.setup();
-    renderSidebar();
-
-    const csvBtn = screen.getByTestId("mobile-upload-csv-btn");
-    const mobileInput = screen.getByTestId(
-      "mobile-csv-file-input",
-    ) as HTMLInputElement;
-
-    // Click the mobile CSV button — it should trigger click on the hidden file input.
-    // We verify the input is present with correct attributes.
-    expect(mobileInput.type).toBe("file");
-    expect(mobileInput.accept).toBe(".csv");
-    expect(mobileInput.multiple).toBe(true);
-    expect(csvBtn).toBeInTheDocument();
-
-    // Upload a file via the mobile input
-    const file = new File(
-      ["date,desc,amount\n2026-01-01,Test,100"],
-      "test.csv",
-      {
-        type: "text/csv",
-      },
-    );
-    await user.upload(mobileInput, file);
-    await waitFor(() => expect(mockHandleFile).toHaveBeenCalledWith(file));
   });
 
   it("desktop sidebar is present in DOM (hidden via CSS on mobile)", () => {
