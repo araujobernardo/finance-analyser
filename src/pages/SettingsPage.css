@@ -655,3 +655,47 @@
   border-radius: 6px;
   border-left: 2px solid var(--border);
 }
+
+/* ── Import Transactions section ─────────────────────────────────────────── */
+
+.settings-import-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.settings-import-label {
+  font-size: 13px;
+  color: var(--subtle);
+  flex-shrink: 0;
+  font-weight: 500;
+}
+
+.settings-import-account-select {
+  min-width: 200px;
+}
+
+.settings-import-duplicate {
+  background: color-mix(in srgb, var(--red) 6%, transparent);
+  border: 1px solid color-mix(in srgb, var(--red) 30%, transparent);
+  border-radius: 9px;
+  padding: 12px 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  font-size: 13px;
+  color: var(--subtle);
+}
+
+.settings-import-duplicate-actions {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  flex-wrap: wrap;
+}
+
+.settings-import-status {
+  font-size: 12px;
+  line-height: 1.4;
+}
