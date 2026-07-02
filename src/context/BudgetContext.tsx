@@ -137,7 +137,7 @@ export function BudgetProvider({ children }: { children: ReactNode }) {
     (year: number, month: number) => {
       setSelectedYear(year);
       setSelectedMonthState(month);
-      void fetchBudgets(year, month);
+      fetchBudgets(year, month).catch(console.error);
     },
     [fetchBudgets],
   );
@@ -320,7 +320,7 @@ export function BudgetProvider({ children }: { children: ReactNode }) {
         const updated = (await res.json()) as ApiUserPreferences;
         setPreferences(updated);
         // Re-fetch budgets so spend totals recalculate with new monthStartDay
-        void fetchBudgets(selectedYear, selectedMonth);
+        fetchBudgets(selectedYear, selectedMonth).catch(console.error);
       } catch {
         addToast("Failed to update preferences. Please try again.");
       }

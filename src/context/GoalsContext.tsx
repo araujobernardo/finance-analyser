@@ -70,7 +70,7 @@ export function GoalsProvider({ children }: { children: ReactNode }) {
       }
     }
 
-    void fetchGoals();
+    fetchGoals().catch(console.error);
     return () => {
       cancelled = true;
     };

@@ -91,7 +91,7 @@ export function BankProvider({ children }: { children: ReactNode }) {
 
   // Load on mount
   useEffect(() => {
-    void refetch();
+    refetch().catch(console.error);
   }, [refetch]);
 
   const syncNow = useCallback(async () => {
