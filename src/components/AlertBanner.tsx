@@ -45,7 +45,7 @@ export function AlertBanner() {
       }
     }
 
-    void fetchAlerts();
+    fetchAlerts().catch(console.error);
 
     return () => {
       cancelled = true;

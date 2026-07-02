@@ -235,7 +235,7 @@ export function CategoriesSection() {
   }, []);
 
   useEffect(() => {
-    void load();
+    load().catch(console.error);
   }, [load]);
 
   const handleAdd = async () => {

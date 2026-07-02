@@ -135,7 +135,7 @@ export function AccountProvider({ children }: { children: ReactNode }) {
   }, [apiFetch]);
 
   useEffect(() => {
-    void fetchAccounts();
+    fetchAccounts().catch(console.error);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
@@ -179,7 +179,7 @@ export function AccountProvider({ children }: { children: ReactNode }) {
       }
     }
 
-    void fetchTransactions();
+    fetchTransactions().catch(console.error);
 
     return () => {
       cancelled = true;

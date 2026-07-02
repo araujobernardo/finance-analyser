@@ -100,7 +100,7 @@ export function NetWorthProvider({ children }: { children: ReactNode }) {
       }
     }
 
-    void fetchAll();
+    fetchAll().catch(console.error);
     return () => {
       cancelled = true;
     };
