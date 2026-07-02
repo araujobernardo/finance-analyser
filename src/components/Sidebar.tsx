@@ -4,6 +4,7 @@ import { useAuth } from "../context/AuthContext";
 import { useAccount } from "../context/AccountContext";
 import { useBankContext } from "../context/BankContext";
 import { useFileUpload } from "../hooks/useFileUpload";
+import { useAutoSync } from "../hooks/useAutoSync";
 import { Skeleton } from "./Skeleton";
 import { AddAccountModal } from "./AddAccountModal";
 import { ACCOUNT_COLORS } from "../constants/colors";
@@ -44,8 +45,17 @@ export function Sidebar({
     error: accountsError,
     refetch,
   } = useAccount();
-  const { accountLinks } = useBankContext();
+  const {
+    connection,
+    accountLinks,
+    isLoading: bankLoading,
+    isSyncing,
+    syncNow,
+  } = useBankContext();
   const navigate = useNavigate();
+
+  // Trigger an automatic sync on load if last sync was >24 h ago (or never).
+  useAutoSync(connection, bankLoading, syncNow);
 
   // Format a lastBalance string from the API (postgres-js returns numeric as string)
   // as a NZD currency string. Returns null when the value is absent or non-numeric.
@@ -198,6 +208,11 @@ export function Sidebar({
   // Shared account list JSX — used in both desktop sidebar and mobile drawer
   const accountListJsx = (opts: { onSelect?: () => void } = {}) => (
     <>
+      {isSyncing && (
+        <div className="sidebar-sync-status" data-testid="sync-status">
+          Syncing…
+        </div>
+      )}
       <div className="sidebar-accounts">
         <div className="sidebar-section-label">Accounts</div>
         <div
