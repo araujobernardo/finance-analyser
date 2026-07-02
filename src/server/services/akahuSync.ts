@@ -8,6 +8,7 @@ import {
   transactions,
 } from "../../db/schema.ts";
 import { decrypt } from "../utils/encryption.ts";
+import { detectTransfers } from "../utils/detectTransfers.ts";
 import { eq, and, isNotNull } from "drizzle-orm";
 
 export interface SyncResult {
@@ -159,6 +160,7 @@ export async function syncUserAccounts(userId: string): Promise<SyncResult> {
 
       let latestTxDate: string | null = null;
       let addedForAccount = 0;
+      const insertedIds: string[] = [];
 
       // Step 6e — for each transaction, dedup then insert
       for (const tx of accountTxList) {
@@ -183,24 +185,41 @@ export async function syncUserAccounts(userId: string): Promise<SyncResult> {
           continue;
         }
 
-        // Insert the transaction
-        await db.insert(transactions).values({
-          userId,
-          accountId: financeAccountId,
-          date: txDate,
-          amount: txAmount,
-          description: txDesc,
-          category: null,
-          isTransfer: false,
-          isManualTransfer: false,
-        });
+        // Insert the transaction and capture its ID for transfer detection below.
+        const [inserted] = await db
+          .insert(transactions)
+          .values({
+            userId,
+            accountId: financeAccountId,
+            date: txDate,
+            amount: txAmount,
+            description: txDesc,
+            category: null,
+            isTransfer: false,
+            isManualTransfer: false,
+          })
+          .returning({ id: transactions.id });
 
+        if (inserted) insertedIds.push(inserted.id);
         addedForAccount++;
         transactionsAdded++;
 
         // Track latest transaction date for lastTransactionSyncedAt update
         if (latestTxDate === null || txDate > latestTxDate) {
           latestTxDate = txDate;
+        }
+      }
+
+      // Detect inter-account transfer pairs among newly-inserted transactions.
+      // Non-fatal: detection failures must not roll back a successful sync.
+      if (insertedIds.length > 0) {
+        try {
+          await detectTransfers(userId, financeAccountId, insertedIds, db);
+        } catch (transferErr) {
+          console.error(
+            "[sync] detectTransfers failed (non-fatal):",
+            transferErr,
+          );
         }
       }
 
@@ -245,6 +264,39 @@ export async function syncUserAccounts(userId: string): Promise<SyncResult> {
 
       errors.push({ accountId: link.akahuAccountId, error: errMsg });
       // continue to next account
+    }
+  }
+
+  // Step 6h — repair pass: run detectTransfers over all existing non-transfer
+  // transactions for each linked account. This corrects any transfers that were
+  // imported before detectTransfers was wired into the sync path. Idempotent —
+  // already-flagged rows are skipped inside detectTransfers.
+  for (const link of linkRows) {
+    if (!link.financeAccountId) continue;
+    try {
+      const existingIds = await db
+        .select({ id: transactions.id })
+        .from(transactions)
+        .where(
+          and(
+            eq(transactions.userId, userId),
+            eq(transactions.accountId, link.financeAccountId),
+            eq(transactions.isTransfer, false),
+          ),
+        );
+      if (existingIds.length > 0) {
+        await detectTransfers(
+          userId,
+          link.financeAccountId,
+          existingIds.map((r) => r.id),
+          db,
+        );
+      }
+    } catch (repairErr) {
+      console.error(
+        "[sync] repair detectTransfers failed (non-fatal):",
+        repairErr,
+      );
     }
   }
 
