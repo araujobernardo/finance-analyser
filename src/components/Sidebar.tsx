@@ -3,7 +3,6 @@ import { NavLink, useNavigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
 import { useAccount, useAllTransactions } from "../context/AccountContext";
 import { useBankContext } from "../context/BankContext";
-import { useFileUpload } from "../hooks/useFileUpload";
 import { useAutoSync } from "../hooks/useAutoSync";
 import { useToast } from "../hooks/useToast";
 import { useApi } from "../lib/api";
@@ -109,8 +108,6 @@ export function Sidebar({
       }).format(total) + " total"
     );
   })();
-  const fileRef = useRef<HTMLInputElement>(null);
-  const mobileFileRef = useRef<HTMLInputElement>(null);
   const [editingShort, setEditingShort] = useState<string | null>(null);
   const [editVal, setEditVal] = useState("");
   const [showAddAccountModal, setShowAddAccountModal] = useState(false);
@@ -142,50 +139,6 @@ export function Sidebar({
     };
   }, [drawerOpen]);
 
-  // Ref-based queue for sequential multi-file uploads (no re-renders needed).
-  const fileQueueRef = useRef<File[]>([]);
-
-  const {
-    isCategorising,
-    importedCount,
-    skippedCount,
-    isDuplicate,
-    duplicateMonth,
-    parseErrors,
-    uploadError,
-    handleFile,
-    confirmReplace,
-    cancelReplace,
-  } = useFileUpload({
-    accountId: activeAccountId === "all" ? undefined : activeAccountId,
-    onImportComplete: () => void refetch(),
-  });
-
-  // Drain the queue when a file finishes categorising.
-  useEffect(() => {
-    if (isCategorising) return;
-    // Pop the completed head; if more files remain, schedule the next one.
-    const remaining = fileQueueRef.current.slice(1);
-    fileQueueRef.current = remaining;
-    if (remaining.length > 0) {
-      // Defer so we're not calling handleFile synchronously inside an effect.
-      const next = remaining[0];
-      const id = setTimeout(() => handleFile(next), 0);
-      return () => clearTimeout(id);
-    }
-    // handleFile identity is stable; isCategorising drives the drain.
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [isCategorising]);
-
-  const onFilesSelected = (files: File[]) => {
-    if (files.length === 0) return;
-    // Guard: block upload when "All Accounts" is selected — useFileUpload has
-    // no accountId and will surface the error via uploadError state.
-    fileQueueRef.current = files;
-    // Start with first file immediately (handleFile guards internally).
-    handleFile(files[0]);
-  };
-
   const startEdit = (short: string, display: string) => {
     setEditingShort(short);
     setEditVal(display);
@@ -196,27 +149,6 @@ export function Sidebar({
     if (v) onRenameAccount(short, v);
     setEditingShort(null);
   };
-
-  // Derive upload status from hook state.
-  let uploadStatusMsg: string | null = null;
-  let uploadStatusColor = "var(--muted)";
-
-  if (isCategorising) {
-    uploadStatusMsg = "Categorising & uploading…";
-    uploadStatusColor = "var(--muted)";
-  } else if (uploadError) {
-    uploadStatusMsg = uploadError;
-    uploadStatusColor = "var(--red)";
-  } else if (parseErrors.length > 0) {
-    uploadStatusMsg = `Parse error: ${parseErrors[0].message}`;
-    uploadStatusColor = "var(--red)";
-  } else if (importedCount > 0 || skippedCount > 0) {
-    const parts: string[] = [];
-    if (importedCount > 0) parts.push(`${importedCount} Imported`);
-    if (skippedCount > 0) parts.push(`${skippedCount} duplicates skipped`);
-    uploadStatusMsg = parts.join(", ");
-    uploadStatusColor = "var(--accent)";
-  }
 
   // Determine which accounts to display. Prefer API accounts; fall back to prop-passed list.
   const displayAccounts =
@@ -405,29 +337,6 @@ export function Sidebar({
           <span className="hamburger-line" />
         </button>
         <span className="mobile-topbar-title">Finance Analyser</span>
-        <button
-          className="mobile-topbar-csv"
-          disabled={isCategorising}
-          aria-label="Upload CSV"
-          onClick={() => mobileFileRef.current?.click()}
-          data-testid="mobile-upload-csv-btn"
-        >
-          {isCategorising ? "⟳" : "↑"} CSV
-        </button>
-        <input
-          ref={mobileFileRef}
-          type="file"
-          accept=".csv"
-          multiple
-          style={{ display: "none" }}
-          data-testid="mobile-csv-file-input"
-          onChange={(e) => {
-            if (e.target.files?.length) {
-              onFilesSelected(Array.from(e.target.files));
-              e.target.value = "";
-            }
-          }}
-        />
       </div>
 
       {/* ── Mobile drawer overlay (hidden on desktop) ────────────────────── */}
@@ -515,86 +424,6 @@ export function Sidebar({
         )}
 
         {accountListJsx()}
-
-        <div className="sidebar-upload">
-          {(() => {
-            const activeAccount = displayAccounts.find(
-              (a) => a.short === activeAccountId,
-            );
-            return (
-              <div
-                className={`sidebar-upload-to${!activeAccount ? " sidebar-upload-to--none" : ""}`}
-                data-testid="upload-to-label"
-              >
-                <span className="sidebar-upload-to-prefix">Upload to: </span>
-                <span className="sidebar-upload-to-account">
-                  {activeAccount
-                    ? activeAccount.display
-                    : "(select an account)"}
-                </span>
-              </div>
-            );
-          })()}
-          <button
-            className="sidebar-upload-btn"
-            disabled={isCategorising}
-            onClick={() => fileRef.current?.click()}
-            data-testid="upload-csv-btn"
-          >
-            <span className="sidebar-upload-icon">
-              {isCategorising ? "⟳" : "↑"}
-            </span>{" "}
-            {isCategorising ? "Uploading…" : "Upload CSV"}
-          </button>
-          <input
-            ref={fileRef}
-            type="file"
-            accept=".csv"
-            multiple
-            style={{ display: "none" }}
-            data-testid="csv-file-input"
-            onChange={(e) => {
-              if (e.target.files?.length) {
-                onFilesSelected(Array.from(e.target.files));
-                e.target.value = "";
-              }
-            }}
-          />
-
-          {/* Duplicate month confirmation */}
-          {isDuplicate && duplicateMonth && (
-            <div
-              className="sidebar-upload-duplicate"
-              data-testid="duplicate-warning"
-            >
-              <p>
-                Data for <strong>{duplicateMonth}</strong> already exists.
-                Replace it?
-              </p>
-              <div className="sidebar-upload-duplicate-actions">
-                <button onClick={confirmReplace} data-testid="confirm-replace">
-                  Replace
-                </button>
-                <button onClick={cancelReplace} data-testid="cancel-replace">
-                  Cancel
-                </button>
-              </div>
-            </div>
-          )}
-
-          {uploadStatusMsg && (
-            <div
-              className="sidebar-upload-status"
-              style={{ color: uploadStatusColor }}
-              data-testid="upload-status"
-            >
-              {uploadStatusMsg}
-            </div>
-          )}
-          <div className="sidebar-upload-helper">
-            Select multiple files to import all accounts at once
-          </div>
-        </div>
 
         {navJsx()}
 
