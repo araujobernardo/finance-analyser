@@ -227,7 +227,7 @@
   gap: 16px;
 }
 
-/* Spending by Category — left-legend / right-donut layout (spec 007 FR-004) */
+/* Spending by Category — left-legend / right-bar-chart layout */
 .dash-cat-body {
   display: flex;
   flex-direction: row;
@@ -239,21 +239,16 @@
 }
 
 .dash-cat-legend-col {
-  flex: 1;
+  flex: 0 0 auto;
   min-width: 0;
 }
 
 .dash-cat-chart-col {
-  flex: 0 0 148px;
+  flex: 1 1 0;
+  min-width: 80px;
   display: flex;
-  align-items: center;
+  flex-direction: column;
   justify-content: center;
-}
-
-.dash-cat-donut-wrap {
-  width: 148px;
-  height: 148px;
-  flex-shrink: 0;
 }
 
 .dash-cat-legend {
@@ -442,15 +437,15 @@
     gap: 12px;
   }
 
-  /* Donut chart: stack legend below the donut (reverse column order) */
+  /* Bar chart: stack legend above bars on mobile */
   .dash-cat-body {
-    flex-direction: column-reverse;
+    flex-direction: column;
     align-items: stretch;
   }
 
   .dash-cat-chart-col {
-    flex: 0 0 auto;
-    justify-content: center;
+    flex: 1 1 0;
+    min-width: 0;
   }
 
   .dash-cat-legend-col {

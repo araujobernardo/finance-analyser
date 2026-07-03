@@ -1,4 +1,12 @@
 import { useState, useMemo } from "react";
+import {
+  BarChart,
+  Bar,
+  XAxis,
+  YAxis,
+  Cell,
+  ResponsiveContainer,
+} from "recharts";
 import type { ApiTransaction } from "../types/api";
 import {
   useAccount,
@@ -437,6 +445,7 @@ export function DashboardPage() {
                   {catData.slice(0, 7).map((d) => (
                     <div
                       key={d.name}
+                      data-testid={`cat-legend-item-${d.name}`}
                       className={`dash-cat-legend-item${selectedCategory === d.name ? " dash-cat-legend-item--active" : ""}`}
                       style={{
                         opacity:
@@ -470,20 +479,52 @@ export function DashboardPage() {
                   ))}
                 </div>
               </div>
-              {/* Right: SVG donut chart */}
-              <div className="dash-cat-chart-col">
-                <DonutChart
-                  data={catData}
-                  total={catTotal}
-                  selectedCategory={selectedCategory}
-                  onSelect={(name) =>
-                    setSelectedCategory(name === selectedCategory ? null : name)
-                  }
-                />
+              {/* Right: horizontal bar chart */}
+              <div className="dash-cat-chart-col" data-testid="cat-bar-chart">
+                <ResponsiveContainer
+                  width="100%"
+                  height={catData.length * 32 + 8}
+                >
+                  <BarChart
+                    layout="vertical"
+                    data={catData}
+                    margin={{ top: 0, right: 6, bottom: 0, left: 0 }}
+                    barSize={14}
+                  >
+                    <XAxis type="number" hide domain={[0, catTotal || 1]} />
+                    <YAxis type="category" dataKey="name" hide width={0} />
+                    <Bar
+                      dataKey="value"
+                      radius={[0, 4, 4, 0]}
+                      isAnimationActive={false}
+                      onClick={(_data: unknown, index: number) =>
+                        setSelectedCategory(
+                          catData[index].name === selectedCategory
+                            ? null
+                            : catData[index].name,
+                        )
+                      }
+                      style={{ cursor: "pointer" }}
+                    >
+                      {catData.map((d) => (
+                        <Cell
+                          key={d.name}
+                          fill={d.color}
+                          opacity={
+                            selectedCategory === null ||
+                            selectedCategory === d.name
+                              ? 1
+                              : 0.3
+                          }
+                        />
+                      ))}
+                    </Bar>
+                  </BarChart>
+                </ResponsiveContainer>
               </div>
             </div>
           ) : (
-            <div className="dash-empty-chart">
+            <div className="dash-empty-chart" data-testid="spending-cat-empty">
               No expense data for selected period
             </div>
           )}
@@ -504,117 +545,6 @@ export function DashboardPage() {
           selectedCategory={selectedCategory}
         />
       </div>
-    </div>
-  );
-}
-
-// ── DonutChart ───────────────────────────────────────────────────────────────
-// Pure SVG donut using stroke-dasharray rings.
-// viewBox: 148×148, centre 74×74, r=48 (stroke-width 22) → circ ≈ 301.6
-
-const DONUT_R = 48;
-const DONUT_CIRC = 2 * Math.PI * DONUT_R;
-const DONUT_SIZE = 148;
-const DONUT_CX = DONUT_SIZE / 2;
-const DONUT_CY = DONUT_SIZE / 2;
-const DONUT_SW = 22;
-
-interface DonutSlice {
-  name: string;
-  color: string;
-  value: number;
-}
-
-function DonutChart({
-  data,
-  total,
-  selectedCategory,
-  onSelect,
-}: {
-  data: DonutSlice[];
-  total: number;
-  selectedCategory: string | null;
-  onSelect: (name: string) => void;
-}) {
-  // Build slices with cumulative offsets using reduce to avoid let-mutation.
-  const slices = data.reduce<
-    Array<DonutSlice & { dashLen: number; offset: number }>
-  >((acc, d) => {
-    const prevCumulative = acc.reduce(
-      (s, sl) => s + sl.dashLen / DONUT_CIRC,
-      0,
-    );
-    const pct = total > 0 ? d.value / total : 0;
-    const dashLen = pct * DONUT_CIRC;
-    // stroke-dashoffset: start from top (CIRC/4), then subtract cumulative arc.
-    const offset = DONUT_CIRC / 4 - prevCumulative * DONUT_CIRC;
-    return [...acc, { ...d, dashLen, offset }];
-  }, []);
-
-  return (
-    <div className="dash-cat-donut-wrap" data-testid="donut-svg-wrapper">
-      <svg
-        viewBox={`0 0 ${DONUT_SIZE} ${DONUT_SIZE}`}
-        width={DONUT_SIZE}
-        height={DONUT_SIZE}
-        style={{ display: "block", margin: "0 auto" }}
-        aria-label="Spending by category donut chart"
-      >
-        {/* Grey base ring */}
-        <circle
-          cx={DONUT_CX}
-          cy={DONUT_CY}
-          r={DONUT_R}
-          fill="none"
-          stroke="var(--border)"
-          strokeWidth={DONUT_SW}
-        />
-        {/* Category slices */}
-        {slices.map((s) => (
-          <circle
-            key={s.name}
-            cx={DONUT_CX}
-            cy={DONUT_CY}
-            r={DONUT_R}
-            fill="none"
-            stroke={s.color}
-            strokeWidth={DONUT_SW}
-            strokeDasharray={`${s.dashLen} ${DONUT_CIRC - s.dashLen}`}
-            strokeDashoffset={s.offset}
-            opacity={
-              selectedCategory === null || selectedCategory === s.name ? 1 : 0.3
-            }
-            style={{ cursor: "pointer", transition: "opacity 130ms ease" }}
-            onClick={() => onSelect(s.name)}
-            role="button"
-            aria-label={s.name}
-          />
-        ))}
-        {/* Centre label */}
-        <text
-          x={DONUT_CX}
-          y={DONUT_CY - 8}
-          textAnchor="middle"
-          fontSize="10"
-          fill="var(--muted)"
-          fontWeight="700"
-          letterSpacing="0.08em"
-          style={{ textTransform: "uppercase" }}
-        >
-          TOTAL
-        </text>
-        <text
-          x={DONUT_CX}
-          y={DONUT_CY + 12}
-          textAnchor="middle"
-          fontSize="16"
-          fill="var(--text)"
-          fontWeight="800"
-          fontFamily="JetBrains Mono, monospace"
-        >
-          {total > 0 ? `$${Math.round(total).toLocaleString("en-NZ")}` : "$0"}
-        </text>
-      </svg>
     </div>
   );
 }
