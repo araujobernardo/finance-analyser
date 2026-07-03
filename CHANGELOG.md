@@ -1,5 +1,6 @@
 # Changelog
 
+- **2026-07-03** | #925 | feat(#924): remove redundant dashboard sections | Removed GoalsSummaryWidget, per-account in/out breakdown cards, RecentTransactions, SpendingTrendsLineChart, and WeeklyTrendChart from DashboardPage, along with their corresponding useMemo hooks, unused imports, and orphaned CSS classes.
 - **2026-07-03** | #919 | feat(#900): move CSV upload from sidebar to Settings page | Removed CSV upload section and styles from Sidebar; added ImportTransactionsSection to SettingsPage with account selector, Upload CSV button, status message, and duplicate-handling modal, reusing the existing useFileUpload hook and queue-drain pattern.
 - **2026-07-02** | #918 | feat(#900): auto-categorise transactions after every sync | Extracted shared `runAutoCategorise` utility from TransactionsPage; chained auto-categorisation after every successful sync in `useAutoSync` and the manual "Sync Now" button in Settings; categorisation failures show a non-blocking toast without marking the sync as failed.
 - **2026-07-02** | #917 | feat(#900): auto-sync on login if last sync was >24 hours ago | Created `useAutoSync` hook that checks `lastSyncedAt` on app load and triggers `POST /api/bank/sync` automatically if the threshold is exceeded, with a "Syncing…" indicator in the Sidebar while in progress.
