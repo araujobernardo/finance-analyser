@@ -1,22 +1,14 @@
 import { useState, useMemo } from "react";
-import { ACCOUNT_COLORS } from "../constants/colors";
 import type { ApiTransaction } from "../types/api";
 import {
   useAccount,
   useAllTransactions,
   ALL_ACCOUNTS_ID,
 } from "../context/AccountContext";
-import {
-  buildWeeklyTotals,
-  buildWeeklyCategoryTotals,
-} from "../utils/weeklyAggregation";
-import { WeeklyTrendChart } from "../components/WeeklyTrendChart";
-import { RecentTransactions } from "../components/RecentTransactions";
+import { buildWeeklyCategoryTotals } from "../utils/weeklyAggregation";
 import { IncomeExpenseChart } from "../components/IncomeExpenseChart";
 import { SpendingTrendsByCategoryChart } from "../components/SpendingTrendsByCategoryChart";
-import { GoalsSummaryWidget } from "../components/goals/GoalsSummaryWidget";
 import { BudgetSummaryWidget } from "../components/budgets/BudgetSummaryWidget";
-import { SpendingTrendsLineChart } from "../components/SpendingTrendsLineChart";
 import "./DashboardPage.css";
 
 // ── Local adapter type ────────────────────────────────────────────────────────
@@ -270,31 +262,6 @@ export function DashboardPage() {
     [catData],
   );
 
-  // Per-account breakdown.
-  const acctBreakdown = useMemo(
-    () =>
-      accounts.map((acct, i) => {
-        const at = adapted.filter(
-          (t) =>
-            selectedMonths.includes(t.month) &&
-            t.accountShort === acct.id &&
-            !t.isTransfer,
-        );
-        return {
-          short: acct.id,
-          display: acct.nickname,
-          color: ACCOUNT_COLORS[i % ACCOUNT_COLORS.length],
-          income: at
-            .filter((t) => t.isCredit)
-            .reduce((s, t) => s + t.amount, 0),
-          spend: at
-            .filter((t) => !t.isCredit)
-            .reduce((s, t) => s + Math.abs(t.amount), 0),
-        };
-      }),
-    [accounts, adapted, selectedMonths],
-  );
-
   // Resolve the nickname for the weekly aggregation utilities, which filter
   // by t.account (nickname). When "all" is selected pass "all" unchanged.
   const weeklyAccountFilter = useMemo(() => {
@@ -305,35 +272,10 @@ export function DashboardPage() {
     );
   }, [activeAccountId, accounts]);
 
-  const weeklyBuckets = useMemo(
-    () => buildWeeklyTotals(adapted, weeklyAccountFilter),
-    [adapted, weeklyAccountFilter],
-  );
   const weeklyCategoryBuckets = useMemo(
     () => buildWeeklyCategoryTotals(adapted, weeklyAccountFilter),
     [adapted, weeklyAccountFilter],
   );
-
-  // ApiTransaction rows filtered by selected months and active account —
-  // passed to RecentTransactions (which handles transfer exclusion internally).
-  const recentTxns = useMemo(
-    () =>
-      rawTransactions.filter(
-        (t) =>
-          selectedMonths.includes(t.date.slice(0, 7)) &&
-          (activeAccountId === ALL_ACCOUNTS_ID ||
-            t.accountId === activeAccountId),
-      ),
-    [rawTransactions, selectedMonths, activeAccountId],
-  );
-
-  // Month label for the Recent Transactions widget subtitle.
-  const recentTxnsMonthLabel = useMemo(() => {
-    if (selectedMonths.length === 0) return "";
-    if (selectedMonths.length === 1) return fmtMonthSh(selectedMonths[0]);
-    const sorted = [...selectedMonths].sort();
-    return `${fmtMonthSh(sorted[0])} – ${fmtMonthSh(sorted[sorted.length - 1])}`;
-  }, [selectedMonths]);
 
   // Loading state — shown only while initial fetch is running with no data yet.
   if (isLoading && adapted.length === 0) {
@@ -472,9 +414,6 @@ export function DashboardPage() {
         />
       </div>
 
-      {/* Goals Summary Widget */}
-      <GoalsSummaryWidget />
-
       {/* Budget Summary Widget */}
       <BudgetSummaryWidget />
 
@@ -483,43 +422,6 @@ export function DashboardPage() {
         <div className="dash-transfer-notice" data-testid="transfer-notice">
           ↔ {fmt(transferAmt)} in inter-account transfers detected and excluded
           from all totals.
-        </div>
-      )}
-
-      {/* Per-account breakdown */}
-      {activeAccountId === ALL_ACCOUNTS_ID && accounts.length > 1 && (
-        <div className="dash-acct-grid">
-          {acctBreakdown.map(
-            ({ short, display, color, income: ai, spend: as_ }) => (
-              <div
-                key={short}
-                className="card dash-acct-card"
-                style={{ borderColor: `${color}33` }}
-              >
-                <div className="dash-acct-name" style={{ color }}>
-                  <span
-                    className="dash-acct-dot"
-                    style={{ background: color }}
-                  />
-                  {display}
-                </div>
-                <div className="dash-acct-rows">
-                  <div className="dash-acct-row">
-                    <span className="dash-acct-row-label">In</span>
-                    <span className="mono" style={{ color: "var(--accent)" }}>
-                      {fmt(ai)}
-                    </span>
-                  </div>
-                  <div className="dash-acct-row">
-                    <span className="dash-acct-row-label">Out</span>
-                    <span className="mono" style={{ color: "var(--red)" }}>
-                      {fmt(as_)}
-                    </span>
-                  </div>
-                </div>
-              </div>
-            ),
-          )}
         </div>
       )}
 
@@ -595,32 +497,12 @@ export function DashboardPage() {
         </div>
       </div>
 
-      {/* Recent Transactions */}
-      <div className="card">
-        <RecentTransactions
-          transactions={recentTxns}
-          monthLabel={recentTxnsMonthLabel}
-        />
-      </div>
-
       {/* Spending Trends by Category */}
       <div className="card">
         <SpendingTrendsByCategoryChart
           data={weeklyCategoryBuckets}
           selectedCategory={selectedCategory}
         />
-      </div>
-
-      {/* Spending Trends Line Chart — Option B: Focus and Fade */}
-      <SpendingTrendsLineChart
-        transactions={rawTransactions}
-        activeAccountId={activeAccountId}
-      />
-
-      {/* Weekly Trends */}
-      <div className="card dash-trends">
-        <div className="card-title">Weekly Trends</div>
-        <WeeklyTrendChart data={weeklyBuckets} />
       </div>
     </div>
   );

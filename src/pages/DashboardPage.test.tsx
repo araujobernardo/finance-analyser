@@ -1,13 +1,8 @@
-import { describe, it, expect, vi } from "vitest";
+import { describe, it, expect, vi, beforeEach } from "vitest";
 import { render, fireEvent } from "@testing-library/react";
 import { MemoryRouter } from "react-router-dom";
 import { DashboardPage } from "./DashboardPage";
 import type { ApiTransaction } from "../types/api";
-
-// GoalsSummaryWidget uses <Link> and useGoals — stub it for DashboardPage tests
-vi.mock("../components/goals/GoalsSummaryWidget", () => ({
-  GoalsSummaryWidget: () => null,
-}));
 
 // ── Mock AccountContext ───────────────────────────────────────────────────────
 
@@ -412,5 +407,38 @@ describe("DashboardPage — SVG donut chart (issue #788)", () => {
     expect(
       container.querySelector(".dash-cat-chart-col"),
     ).not.toBeInTheDocument();
+  });
+});
+
+describe("DashboardPage — removed sections are absent (issue #925)", () => {
+  beforeEach(() => {
+    mockRawTransactions = [makeApiTxn()];
+    mockIsLoading = false;
+  });
+
+  it("GoalsSummaryWidget is NOT present on the dashboard", () => {
+    const { queryByTestId } = renderDashboard();
+    expect(queryByTestId("goals-summary-widget")).not.toBeInTheDocument();
+  });
+
+  it("per-account in/out breakdown cards are NOT present on the dashboard", () => {
+    const { container } = renderDashboard();
+    expect(container.querySelector(".dash-acct-grid")).not.toBeInTheDocument();
+  });
+
+  it("RecentTransactions list is NOT present on the dashboard", () => {
+    const { queryByTestId } = renderDashboard();
+    expect(queryByTestId("recent-transactions-widget")).not.toBeInTheDocument();
+  });
+
+  it("SpendingTrendsLineChart is NOT present on the dashboard", () => {
+    const { queryByTestId } = renderDashboard();
+    expect(queryByTestId("spending-trends-line-chart")).not.toBeInTheDocument();
+  });
+
+  it("WeeklyTrendChart is NOT present on the dashboard", () => {
+    const { queryByText, container } = renderDashboard();
+    expect(queryByText("Weekly Trends")).not.toBeInTheDocument();
+    expect(container.querySelector(".dash-trends")).not.toBeInTheDocument();
   });
 });
