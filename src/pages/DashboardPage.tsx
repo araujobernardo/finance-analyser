@@ -445,6 +445,7 @@ export function DashboardPage() {
                   {catData.slice(0, 7).map((d) => (
                     <div
                       key={d.name}
+                      data-testid={`cat-legend-item-${d.name}`}
                       className={`dash-cat-legend-item${selectedCategory === d.name ? " dash-cat-legend-item--active" : ""}`}
                       style={{
                         opacity:
@@ -523,7 +524,7 @@ export function DashboardPage() {
               </div>
             </div>
           ) : (
-            <div className="dash-empty-chart">
+            <div className="dash-empty-chart" data-testid="spending-cat-empty">
               No expense data for selected period
             </div>
           )}
