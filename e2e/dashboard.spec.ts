@@ -220,3 +220,40 @@ test("multi-select pills show range heading and count subtitle", async ({
     "click to deselect",
   );
 });
+
+// ── Chart card order (issue #928) ─────────────────────────────────────────────
+// Verifies that Spending by Category card precedes Income vs Expenses in DOM
+// order inside the dash-charts-grid. DOM-state check — qualifies for E2E
+// automation under the decision tree.
+
+test("Spending by Category card precedes Income vs Expenses in DOM order (#928)", async ({
+  authenticatedPage: page,
+}) => {
+  await uploadFixtures(page);
+  await page.goto("/dashboard");
+  await page.waitForURL(/\/dashboard/);
+
+  // Wait for charts to be present
+  await expect(page.locator('[data-testid="spending-cat-card"]')).toBeVisible({
+    timeout: 15_000,
+  });
+  await expect(
+    page.locator('[data-testid="income-expense-chart"]'),
+  ).toBeVisible({ timeout: 15_000 });
+
+  // Spending by Category must precede Income vs Expenses in DOM order
+  const spendingFirst = await page.evaluate(() => {
+    const spending = document.querySelector(
+      '[data-testid="spending-cat-card"]',
+    );
+    const income = document.querySelector(
+      '[data-testid="income-expense-chart"]',
+    );
+    if (!spending || !income) return false;
+    return Boolean(
+      spending.compareDocumentPosition(income) &
+      Node.DOCUMENT_POSITION_FOLLOWING,
+    );
+  });
+  expect(spendingFirst).toBe(true);
+});

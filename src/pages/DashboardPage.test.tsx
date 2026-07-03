@@ -372,6 +372,30 @@ describe("DashboardPage — Spending by Category bar chart (issue #926)", () => 
   });
 });
 
+describe("DashboardPage — chart card order (issue #928)", () => {
+  it("Spending by Category card appears before Income vs Expenses card in DOM order", () => {
+    mockRawTransactions = [makeApiTxn()];
+    mockIsLoading = false;
+    const { container } = renderDashboard();
+
+    // .card-title is the Spending by Category heading inside dash-charts-grid
+    const spendingTitle = container.querySelector(".card-title") as HTMLElement;
+    // .ie-title is rendered by IncomeExpenseChart
+    const incomeTitle = container.querySelector(".ie-title") as HTMLElement;
+
+    expect(spendingTitle).toBeInTheDocument();
+    expect(incomeTitle).toBeInTheDocument();
+    expect(spendingTitle.textContent).toBe("Spending by Category");
+    expect(incomeTitle.textContent).toBe("Income vs Expenses");
+
+    // Spending by Category must precede Income vs Expenses in DOM order
+    expect(
+      spendingTitle.compareDocumentPosition(incomeTitle) &
+        Node.DOCUMENT_POSITION_FOLLOWING,
+    ).toBeTruthy();
+  });
+});
+
 describe("DashboardPage — removed sections are absent (issue #925)", () => {
   beforeEach(() => {
     mockRawTransactions = [makeApiTxn()];

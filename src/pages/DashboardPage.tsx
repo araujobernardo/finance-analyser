@@ -417,7 +417,7 @@ export function DashboardPage() {
 
       {/* Charts row */}
       <div className="dash-charts-grid">
-        <div className="card">
+        <div className="card" data-testid="spending-cat-card">
           <div className="card-title">Spending by Category</div>
           {catData.length ? (
             <div className="dash-cat-body">
