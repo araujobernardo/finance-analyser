@@ -257,3 +257,39 @@ test("Spending by Category card precedes Income vs Expenses in DOM order (#928)"
   });
   expect(spendingFirst).toBe(true);
 });
+
+// ── Chart layout stacking (issue #933) ───────────────────────────────────────
+// Verifies that Income vs Expenses is stacked BELOW (not beside) Spending by
+// Category. Uses bounding-box positions to confirm the cards are in a single
+// column rather than side-by-side. DOM-state check — qualifies for E2E
+// automation under the decision tree.
+
+test("Income vs Expenses is stacked below Spending by Category, not side-by-side (#933)", async ({
+  authenticatedPage: page,
+}) => {
+  await uploadFixtures(page);
+  await page.goto("/dashboard");
+  await page.waitForURL(/\/dashboard/);
+
+  // Wait for both chart cards to be visible
+  await expect(page.locator('[data-testid="spending-cat-card"]')).toBeVisible({
+    timeout: 15_000,
+  });
+  await expect(
+    page.locator('[data-testid="income-expense-chart"]'),
+  ).toBeVisible({ timeout: 15_000 });
+
+  const spendingBox = await page
+    .locator('[data-testid="spending-cat-card"]')
+    .boundingBox();
+  const incomeBox = await page
+    .locator('[data-testid="income-expense-chart"]')
+    .boundingBox();
+
+  expect(spendingBox).not.toBeNull();
+  expect(incomeBox).not.toBeNull();
+
+  // Income vs Expenses top edge must be below Spending by Category bottom edge
+  // (i.e. stacked vertically, not side-by-side)
+  expect(incomeBox!.y).toBeGreaterThan(spendingBox!.y + spendingBox!.height);
+});
