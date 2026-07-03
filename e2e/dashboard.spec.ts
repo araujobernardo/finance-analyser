@@ -70,40 +70,77 @@ test("income vs expenses chart shows empty state when all transactions are trans
   ).toContainText("No data for selected account", { timeout: 15_000 });
 });
 
-test("recent transactions widget is present below the charts row", async ({
+// ── Removed sections (issue #925) ────────────────────────────────────────────
+// These five tests assert that components removed in #925 are absent from the
+// dashboard. All criteria are deterministic DOM-state checks (element absent)
+// and qualify for Playwright automation under the E2E decision tree.
+
+test("GoalsSummaryWidget is absent from the dashboard (#925)", async ({
   authenticatedPage: page,
 }) => {
   await uploadFixtures(page);
-
-  // RecentTransactions replaced LargestTransactions (#791)
+  await page.goto("/dashboard");
+  await page.waitForURL(/\/dashboard/);
+  // Wait for dashboard content to load before asserting absence
+  await expect(page.locator('[data-testid="summary-stats"]')).toBeVisible({
+    timeout: 15_000,
+  });
   await expect(
-    page.locator('[data-testid="recent-transactions-widget"]'),
-  ).toBeVisible({ timeout: 15_000 });
+    page.locator('[data-testid="goals-summary-widget"]'),
+  ).not.toBeVisible();
 });
 
-test("recent transactions widget shows empty state when all transactions are transfers", async ({
+test("per-account in/out breakdown cards are absent from the dashboard (#925)", async ({
   authenticatedPage: page,
 }) => {
-  // Fixture data only has transfer transactions — widget should show empty state
   await uploadFixtures(page);
-
-  await expect(
-    page.locator('[data-testid="recent-transactions-widget"]'),
-  ).toContainText("No transactions for this period.", { timeout: 15_000 });
+  await page.goto("/dashboard");
+  await page.waitForURL(/\/dashboard/);
+  await expect(page.locator('[data-testid="summary-stats"]')).toBeVisible({
+    timeout: 15_000,
+  });
+  await expect(page.locator(".dash-acct-grid")).not.toBeVisible();
 });
 
-test("recent transactions widget 'View all' link navigates to /transactions", async ({
+test("RecentTransactions widget is absent from the dashboard (#925)", async ({
   authenticatedPage: page,
 }) => {
   await uploadFixtures(page);
-
+  await page.goto("/dashboard");
+  await page.waitForURL(/\/dashboard/);
+  await expect(page.locator('[data-testid="summary-stats"]')).toBeVisible({
+    timeout: 15_000,
+  });
   await expect(
     page.locator('[data-testid="recent-transactions-widget"]'),
-  ).toBeVisible({ timeout: 15_000 });
+  ).not.toBeVisible();
+});
 
-  // Click the "View all" link in the header
-  await page.getByRole("link", { name: "View all" }).click();
-  await expect(page).toHaveURL(/\/transactions/);
+test("SpendingTrendsLineChart is absent from the dashboard (#925)", async ({
+  authenticatedPage: page,
+}) => {
+  await uploadFixtures(page);
+  await page.goto("/dashboard");
+  await page.waitForURL(/\/dashboard/);
+  await expect(page.locator('[data-testid="summary-stats"]')).toBeVisible({
+    timeout: 15_000,
+  });
+  await expect(
+    page.locator('[data-testid="spending-trends-line-chart"]'),
+  ).not.toBeVisible();
+});
+
+test("WeeklyTrendChart is absent from the dashboard (#925)", async ({
+  authenticatedPage: page,
+}) => {
+  await uploadFixtures(page);
+  await page.goto("/dashboard");
+  await page.waitForURL(/\/dashboard/);
+  await expect(page.locator('[data-testid="summary-stats"]')).toBeVisible({
+    timeout: 15_000,
+  });
+  await expect(page.locator(".dash-trends")).not.toBeVisible();
+  await expect(page.getByText("Weekly Trends")).not.toBeVisible();
 });
 
 test("multi-select pills show range heading and count subtitle", async ({
