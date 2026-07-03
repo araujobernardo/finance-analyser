@@ -16,6 +16,7 @@ import {
 import { IncomeExpenseChart } from "../components/IncomeExpenseChart";
 import { SpendingTrendsByCategoryChart } from "../components/SpendingTrendsByCategoryChart";
 import { BudgetSummaryWidget } from "../components/budgets/BudgetSummaryWidget";
+import { getCategoryColour } from "../utils/categoryColours";
 import "./DashboardPage.css";
 
 // ── Local adapter type ────────────────────────────────────────────────────────
@@ -71,40 +72,6 @@ const fmtMonthSh = (m: string) => {
     y.slice(2)
   );
 };
-
-// Category colour tokens — maps lowercase category names to --cat-* CSS variables.
-// Falls back to the CAT_COLORS array for categories not in this map.
-const CAT_TOKEN_MAP: Record<string, string> = {
-  groceries: "var(--cat-groceries)",
-  transport: "var(--cat-transport)",
-  entertainment: "var(--cat-entertainment)",
-  utilities: "var(--cat-utilities)",
-  healthcare: "var(--cat-healthcare)",
-  dining: "var(--cat-dining)",
-  shopping: "var(--cat-shopping)",
-};
-
-// Fallback palette for categories not covered by --cat-* tokens.
-const CAT_COLORS = [
-  "#6C8EBF",
-  "#82B366",
-  "#D79B00",
-  "#AE4132",
-  "#9673A6",
-  "#006EAF",
-  "#23850B",
-  "#BD7000",
-  "#6E0023",
-  "#603E8A",
-  "#0E7A8A",
-];
-
-function catColor(name: string, fallbackIndex: number): string {
-  return (
-    CAT_TOKEN_MAP[name.toLowerCase()] ??
-    CAT_COLORS[fallbackIndex % CAT_COLORS.length]
-  );
-}
 
 // ── DashboardPage ────────────────────────────────────────────────────────────
 
@@ -253,7 +220,7 @@ export function DashboardPage() {
       uniqueCategories
         .map((name, i) => ({
           name,
-          color: catColor(name, i),
+          color: getCategoryColour(name, i),
           value: real
             .filter((t) => t.category === name && !t.isCredit)
             .reduce((s, t) => s + Math.abs(t.amount), 0),
