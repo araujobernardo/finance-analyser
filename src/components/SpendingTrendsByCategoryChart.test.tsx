@@ -18,11 +18,8 @@ function txn(
   return {
     id: String(++_txnId),
     userId: "u1",
-    accountId: overrides.accountId ?? "acc-1",
-    date: overrides.date,
-    amount: overrides.amount,
+    accountId: "acc-1",
     description: "test",
-    category: overrides.category,
     isTransfer: false,
     isManualTransfer: false,
     createdAt: "2025-01-01T00:00:00Z",
