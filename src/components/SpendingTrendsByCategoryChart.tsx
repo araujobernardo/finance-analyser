@@ -178,7 +178,7 @@ export function SpendingTrendsByCategoryChart({
 
   if (monthsWithData < 2) {
     return (
-      <div className="spend-trends">
+      <div className="spend-trends" data-testid="spending-trends-cat-empty">
         <div className="card-title">Spending Trends by Category</div>
         <EmptyState
           icon={<BarChartIcon />}
@@ -189,7 +189,7 @@ export function SpendingTrendsByCategoryChart({
   }
 
   return (
-    <div className="spend-trends">
+    <div className="spend-trends" data-testid="spending-trends-cat-chart">
       <div className="card-title">Spending Trends by Category</div>
       <ResponsiveContainer width="100%" height={300}>
         <BarChart
