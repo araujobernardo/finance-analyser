@@ -97,15 +97,11 @@ describe("DashboardPage — Spending by Category layout (spec 007 FR-004)", () =
     expect(legendItem).toBeInTheDocument();
   });
 
-  it("chart column is present and contains the SVG donut wrapper", () => {
+  it("chart column is present and contains the bar chart wrapper", () => {
     mockRawTransactions = [makeApiTxn()];
     mockIsLoading = false;
-    const { container } = renderDashboard();
-    const chartCol = container.querySelector(".dash-cat-chart-col");
-    expect(chartCol).toBeInTheDocument();
-    // SVG donut renders a div.dash-cat-donut-wrap wrapping an <svg>
-    expect(chartCol!.querySelector("div")).toBeInTheDocument();
-    expect(chartCol!.querySelector("svg")).toBeInTheDocument();
+    const { getByTestId } = renderDashboard();
+    expect(getByTestId("cat-bar-chart")).toBeInTheDocument();
   });
 
   it("does not render .dash-cat-body when there is no category spend", () => {
@@ -324,57 +320,22 @@ describe("DashboardPage — stat cards with coloured bar and badge (issue #787)"
   });
 });
 
-describe("DashboardPage — SVG donut chart (issue #788)", () => {
-  it("renders an <svg> element inside the chart column when spend data exists", () => {
-    mockRawTransactions = [makeApiTxn()]; // expense txn → catData has data
-    mockIsLoading = false;
-    const { container } = renderDashboard();
-    const chartCol = container.querySelector(".dash-cat-chart-col");
-    expect(chartCol).toBeInTheDocument();
-    expect(chartCol!.querySelector("svg")).toBeInTheDocument();
-  });
-
-  it("renders the donut-svg-wrapper testid", () => {
+describe("DashboardPage — Spending by Category bar chart (issue #926)", () => {
+  it("renders the bar chart wrapper when spend data exists", () => {
     mockRawTransactions = [makeApiTxn()];
     mockIsLoading = false;
     const { getByTestId } = renderDashboard();
-    expect(getByTestId("donut-svg-wrapper")).toBeInTheDocument();
+    expect(getByTestId("cat-bar-chart")).toBeInTheDocument();
   });
 
-  it("SVG contains a grey base ring circle", () => {
+  it("donut SVG wrapper (data-testid=donut-svg-wrapper) is absent", () => {
     mockRawTransactions = [makeApiTxn()];
     mockIsLoading = false;
-    const { container } = renderDashboard();
-    const svg = container.querySelector(".dash-cat-chart-col svg");
-    expect(svg).toBeInTheDocument();
-    // First circle is the grey base ring
-    const circles = svg!.querySelectorAll("circle");
-    expect(circles.length).toBeGreaterThan(0);
+    const { queryByTestId } = renderDashboard();
+    expect(queryByTestId("donut-svg-wrapper")).not.toBeInTheDocument();
   });
 
-  it("SVG has a category slice circle for each category (1 expense txn → 1 slice)", () => {
-    // 1 expense txn with category "Groceries" → catData has 1 entry → 1 slice + 1 base ring
-    mockRawTransactions = [makeApiTxn({ category: "Groceries" })];
-    mockIsLoading = false;
-    const { container } = renderDashboard();
-    const svg = container.querySelector(".dash-cat-chart-col svg");
-    const circles = svg!.querySelectorAll("circle");
-    // Base ring (1) + 1 category slice = 2 circles
-    expect(circles.length).toBe(2);
-  });
-
-  it("TOTAL label and spend value appear as SVG text elements", () => {
-    mockRawTransactions = [makeApiTxn({ amount: -250 })];
-    mockIsLoading = false;
-    const { container } = renderDashboard();
-    const svg = container.querySelector(".dash-cat-chart-col svg");
-    const texts = svg!.querySelectorAll("text");
-    // First text = "TOTAL", second = total spend value
-    expect(texts.length).toBeGreaterThanOrEqual(2);
-    expect(texts[0].textContent).toBe("TOTAL");
-  });
-
-  it("legend items use the square dot (dash-cat-legend-dot) with 10px dimensions", () => {
+  it("legend items use the square dot (dash-cat-legend-dot)", () => {
     mockRawTransactions = [makeApiTxn({ category: "Groceries" })];
     mockIsLoading = false;
     const { container } = renderDashboard();
@@ -399,11 +360,12 @@ describe("DashboardPage — SVG donut chart (issue #788)", () => {
     );
   });
 
-  it("does not render .dash-cat-chart-col SVG when there is no expense data", () => {
+  it("does not render bar chart or chart column when there is no expense data", () => {
     // Income-only → catData empty → empty state shown
     mockRawTransactions = [makeApiTxn({ amount: 500 })];
     mockIsLoading = false;
-    const { container } = renderDashboard();
+    const { queryByTestId, container } = renderDashboard();
+    expect(queryByTestId("cat-bar-chart")).not.toBeInTheDocument();
     expect(
       container.querySelector(".dash-cat-chart-col"),
     ).not.toBeInTheDocument();
