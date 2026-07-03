@@ -224,7 +224,7 @@
 .dash-charts-grid {
   display: grid;
   grid-template-columns: 1fr;
-  gap: var(--space-4);
+  gap: 16px;
 }
 
 /* Spending by Category — left-legend / right-bar-chart layout */
