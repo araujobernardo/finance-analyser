@@ -1,26 +1,25 @@
-import { useMemo, useState } from "react";
+import { useMemo } from "react";
 import {
-  LineChart,
-  Line,
+  BarChart,
+  Bar,
   XAxis,
   YAxis,
   CartesianGrid,
   Tooltip,
-  ReferenceLine,
+  Legend,
   ResponsiveContainer,
 } from "recharts";
-import type { WeeklyCategoryBucket } from "../types/weeklyData";
+import type { ApiTransaction } from "../types/api";
+import { ALL_ACCOUNTS_ID } from "../context/AccountContext";
 import { EmptyState } from "./ui/EmptyState";
-import { SkeletonCard } from "./ui/SkeletonCard";
 import "./SpendingTrendsByCategoryChart.css";
 
 interface SpendingTrendsByCategoryChartProps {
-  data: WeeklyCategoryBucket[];
-  selectedCategory: string | null;
-  isLoading?: boolean;
+  transactions: ApiTransaction[];
+  activeAccountId: string;
 }
 
-function LineChartIcon() {
+function BarChartIcon() {
   return (
     <svg
       viewBox="0 0 24 24"
@@ -31,7 +30,7 @@ function LineChartIcon() {
       <path
         strokeLinecap="round"
         strokeLinejoin="round"
-        d="M2.25 18 9 11.25l4.306 4.306a11.95 11.95 0 0 1 5.814-5.518l2.74-1.22m0 0-5.94-2.281m5.94 2.28-2.28 5.941"
+        d="M3 13.5V21M9 9.75V21M15 6V21M21 3v18"
       />
     </svg>
   );
@@ -46,11 +45,7 @@ const CATEGORY_COLOURS: Record<string, string> = {
   Healthcare: "#4ade80",
   Shopping: "#fb923c",
   Education: "#a78bfa",
-  Income: "#2dd4bf",
-  Transfer: "#94a3b8",
-  Savings: "#10b981",
   Other: "#e879f9",
-  Uncategorised: "#6b7280",
 };
 
 const FALLBACK_COLOURS = [
@@ -59,11 +54,6 @@ const FALLBACK_COLOURS = [
   "#34d399",
   "#f97316",
   "#f472b6",
-  "#4ade80",
-  "#fb923c",
-  "#a78bfa",
-  "#2dd4bf",
-  "#e879f9",
 ];
 
 function getCategoryColour(category: string, index: number): string {
@@ -98,119 +88,134 @@ function CustomTooltip({ active, payload, label }: any) {
   );
 }
 
+function formatMonthLabel(yyyyMm: string): string {
+  const [y, mo] = yyyyMm.split("-");
+  return (
+    new Date(+y, +mo - 1, 1).toLocaleString("en-NZ", { month: "short" }) +
+    " '" +
+    y.slice(2)
+  );
+}
+
 export function SpendingTrendsByCategoryChart({
-  data,
-  selectedCategory,
-  isLoading,
+  transactions,
+  activeAccountId,
 }: SpendingTrendsByCategoryChartProps) {
-  const [hoveredWeek, setHoveredWeek] = useState<string | null>(null);
-
-  const categories = useMemo(() => {
-    const seen = new Set<string>();
-    for (const bucket of data) {
-      for (const cat of Object.keys(bucket.byCategory)) {
-        seen.add(cat);
-      }
-    }
-    const sorted = [...seen].filter((c) => c !== "Uncategorised").sort();
-    if (seen.has("Uncategorised")) sorted.push("Uncategorised");
-    return sorted;
-  }, [data]);
-
-  const chartData = useMemo(
+  // Account-filtered expense transactions (no transfers, negative amounts only)
+  const expenses = useMemo(
     () =>
-      data.map((bucket) => ({
-        label: bucket.label,
-        ...Object.fromEntries(
-          categories.map((cat) => [cat, bucket.byCategory[cat] ?? 0]),
-        ),
-      })),
-    [data, categories],
+      transactions.filter(
+        (t) =>
+          !t.isTransfer &&
+          t.amount < 0 &&
+          t.category !== null &&
+          (activeAccountId === ALL_ACCOUNTS_ID ||
+            t.accountId === activeAccountId),
+      ),
+    [transactions, activeAccountId],
   );
 
-  if (isLoading) {
-    return (
-      <div className="spend-trends">
-        <div className="card-title">Spending Trends by Category</div>
-        <SkeletonCard rows={4} />
-      </div>
-    );
-  }
+  // Derive 6-month window anchored on the most recent data month
+  const last6Months = useMemo((): string[] => {
+    const monthSet = new Set(expenses.map((t) => t.date.slice(0, 7)));
+    if (monthSet.size === 0) return [];
+    const sorted = Array.from(monthSet).sort();
+    const latest = sorted[sorted.length - 1];
+    const [y, mo] = latest.split("-").map(Number);
+    const result: string[] = [];
+    for (let i = 5; i >= 0; i--) {
+      const d = new Date(y, mo - 1 - i, 1);
+      result.push(
+        `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`,
+      );
+    }
+    return result;
+  }, [expenses]);
 
-  if (data.length < 2) {
+  // Restrict expenses to the 6-month window
+  const windowExpenses = useMemo(() => {
+    const monthSet = new Set(last6Months);
+    return expenses.filter((t) => monthSet.has(t.date.slice(0, 7)));
+  }, [expenses, last6Months]);
+
+  // Top 5 categories by total spend across the window
+  const top5 = useMemo(() => {
+    const totals = new Map<string, number>();
+    for (const t of windowExpenses) {
+      const cat = t.category!;
+      totals.set(cat, (totals.get(cat) ?? 0) + Math.abs(t.amount));
+    }
+    return Array.from(totals.entries())
+      .sort((a, b) => b[1] - a[1])
+      .slice(0, 5)
+      .map(([cat]) => cat);
+  }, [windowExpenses]);
+
+  // Monthly aggregation: one row per month, one key per top-5 category
+  const chartData = useMemo(
+    () =>
+      last6Months.map((month) => {
+        const row: Record<string, number | string> = {
+          month: formatMonthLabel(month),
+        };
+        for (const cat of top5) {
+          row[cat] = windowExpenses
+            .filter((t) => t.date.slice(0, 7) === month && t.category === cat)
+            .reduce((s, t) => s + Math.abs(t.amount), 0);
+        }
+        return row;
+      }),
+    [last6Months, top5, windowExpenses],
+  );
+
+  // Count months with any spending data for the empty-state guard
+  const monthsWithData = useMemo(
+    () =>
+      chartData.filter((row) => top5.some((cat) => (row[cat] as number) > 0))
+        .length,
+    [chartData, top5],
+  );
+
+  if (monthsWithData < 2) {
     return (
-      <div className="spend-trends">
+      <div className="spend-trends" data-testid="spending-trends-cat-empty">
         <div className="card-title">Spending Trends by Category</div>
         <EmptyState
-          icon={<LineChartIcon />}
-          message="Need at least 2 weeks of data to show category trends."
+          icon={<BarChartIcon />}
+          message="Not enough data to show trends — need at least 2 months"
         />
       </div>
     );
   }
 
-  const minWidth = Math.max(480, data.length * 80);
-
   return (
-    <div className="spend-trends">
+    <div className="spend-trends" data-testid="spending-trends-cat-chart">
       <div className="card-title">Spending Trends by Category</div>
-      <div className="spend-trends__scroll">
-        <div style={{ minWidth }}>
-          <ResponsiveContainer width="100%" height={300}>
-            <LineChart
-              data={chartData}
-              margin={{ top: 10, right: 20, left: 10, bottom: 0 }}
-              // eslint-disable-next-line @typescript-eslint/no-explicit-any
-              onMouseMove={(state: any) => {
-                setHoveredWeek(state?.activeLabel ?? null);
-              }}
-              onMouseLeave={() => setHoveredWeek(null)}
-            >
-              <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" />
-              <XAxis
-                dataKey="label"
-                tick={{ fontSize: 12, fill: "var(--text)" }}
-              />
-              <YAxis
-                tickFormatter={(v) => fmt.format(v)}
-                tick={{ fontSize: 11, fill: "var(--text)" }}
-                width={70}
-              />
-              <Tooltip content={<CustomTooltip />} />
-              {hoveredWeek && (
-                <ReferenceLine
-                  x={hoveredWeek}
-                  stroke="var(--accent)"
-                  strokeOpacity={0.4}
-                  strokeWidth={1}
-                />
-              )}
-              {categories.map((cat, i) => {
-                const isSelected =
-                  selectedCategory === null || selectedCategory === cat;
-                return (
-                  <Line
-                    key={cat}
-                    type="monotone"
-                    dataKey={cat}
-                    name={cat}
-                    stroke={getCategoryColour(cat, i)}
-                    strokeWidth={
-                      selectedCategory === null
-                        ? 2
-                        : selectedCategory === cat
-                          ? 3
-                          : 1
-                    }
-                    strokeOpacity={isSelected ? 1 : 0.25}
-                    dot={{ r: 3 }}
-                  />
-                );
-              })}
-            </LineChart>
-          </ResponsiveContainer>
-        </div>
-      </div>
+      <ResponsiveContainer width="100%" height={300}>
+        <BarChart
+          data={chartData}
+          margin={{ top: 10, right: 20, left: 10, bottom: 0 }}
+        >
+          <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" />
+          <XAxis dataKey="month" tick={{ fontSize: 12, fill: "var(--text)" }} />
+          <YAxis
+            tickFormatter={(v) => fmt.format(v)}
+            tick={{ fontSize: 11, fill: "var(--text)" }}
+            width={70}
+          />
+          <Tooltip content={<CustomTooltip />} />
+          <Legend />
+          {top5.map((cat, i) => (
+            <Bar
+              key={cat}
+              dataKey={cat}
+              name={cat}
+              fill={getCategoryColour(cat, i)}
+              isAnimationActive={false}
+            />
+          ))}
+        </BarChart>
+      </ResponsiveContainer>
     </div>
   );
 }

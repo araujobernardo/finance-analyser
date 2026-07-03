@@ -2,11 +2,6 @@
   margin-bottom: 0;
 }
 
-.spend-trends__scroll {
-  overflow-x: auto;
-  margin-bottom: 1.5rem;
-}
-
 .spend-trends-tooltip {
   display: flex;
   flex-direction: column;
@@ -18,32 +13,4 @@
   font-size: 0.85rem;
   box-shadow: var(--shadow);
   color: var(--text-h);
-}
-
-.spend-trends__legend {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 0.5rem 1rem;
-  list-style: none;
-  margin: 0;
-  padding: 0.5rem 0 0;
-  justify-content: center;
-  font-size: 0.85rem;
-}
-
-.spend-trends__legend-item {
-  display: flex;
-  align-items: center;
-  gap: 0.35rem;
-  cursor: pointer;
-  color: var(--text);
-  user-select: none;
-}
-
-.spend-trends__legend-swatch {
-  display: inline-block;
-  width: 10px;
-  height: 10px;
-  border-radius: 2px;
-  flex-shrink: 0;
 }

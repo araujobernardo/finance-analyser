@@ -13,17 +13,14 @@ import {
   useAllTransactions,
   ALL_ACCOUNTS_ID,
 } from "../context/AccountContext";
-import { buildWeeklyCategoryTotals } from "../utils/weeklyAggregation";
 import { IncomeExpenseChart } from "../components/IncomeExpenseChart";
 import { SpendingTrendsByCategoryChart } from "../components/SpendingTrendsByCategoryChart";
 import { BudgetSummaryWidget } from "../components/budgets/BudgetSummaryWidget";
 import "./DashboardPage.css";
 
 // ── Local adapter type ────────────────────────────────────────────────────────
-// Minimal shape required by weeklyAggregation.ts utilities (which still use
-// the PfaTxn-compatible interface internally). DashboardPage uses this local
-// type rather than importing PfaTxn directly, keeping this file free of the
-// old localStorage data model.
+// Used by IncomeExpenseChart and local aggregation. Keeps DashboardPage free
+// of the old localStorage data model (PfaTxn).
 
 interface AdaptedTxn {
   id: string;
@@ -268,21 +265,6 @@ export function DashboardPage() {
   const catTotal = useMemo(
     () => catData.reduce((s, d) => s + d.value, 0),
     [catData],
-  );
-
-  // Resolve the nickname for the weekly aggregation utilities, which filter
-  // by t.account (nickname). When "all" is selected pass "all" unchanged.
-  const weeklyAccountFilter = useMemo(() => {
-    if (activeAccountId === ALL_ACCOUNTS_ID) return ALL_ACCOUNTS_ID;
-    return (
-      accounts.find((a) => a.id === activeAccountId)?.nickname ??
-      ALL_ACCOUNTS_ID
-    );
-  }, [activeAccountId, accounts]);
-
-  const weeklyCategoryBuckets = useMemo(
-    () => buildWeeklyCategoryTotals(adapted, weeklyAccountFilter),
-    [adapted, weeklyAccountFilter],
   );
 
   // Loading state — shown only while initial fetch is running with no data yet.
@@ -541,8 +523,8 @@ export function DashboardPage() {
       {/* Spending Trends by Category */}
       <div className="card">
         <SpendingTrendsByCategoryChart
-          data={weeklyCategoryBuckets}
-          selectedCategory={selectedCategory}
+          transactions={rawTransactions}
+          activeAccountId={activeAccountId}
         />
       </div>
     </div>
