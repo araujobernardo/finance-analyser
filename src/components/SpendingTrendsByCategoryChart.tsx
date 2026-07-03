@@ -11,6 +11,7 @@ import {
 } from "recharts";
 import type { ApiTransaction } from "../types/api";
 import { ALL_ACCOUNTS_ID } from "../context/AccountContext";
+import { getCategoryColour } from "../utils/categoryColours";
 import { EmptyState } from "./ui/EmptyState";
 import "./SpendingTrendsByCategoryChart.css";
 
@@ -33,33 +34,6 @@ function BarChartIcon() {
         d="M3 13.5V21M9 9.75V21M15 6V21M21 3v18"
       />
     </svg>
-  );
-}
-
-const CATEGORY_COLOURS: Record<string, string> = {
-  Groceries: "#c084fc",
-  Transport: "#60a5fa",
-  Utilities: "#34d399",
-  Dining: "#f97316",
-  Entertainment: "#f472b6",
-  Healthcare: "#4ade80",
-  Shopping: "#fb923c",
-  Education: "#a78bfa",
-  Other: "#e879f9",
-};
-
-const FALLBACK_COLOURS = [
-  "#c084fc",
-  "#60a5fa",
-  "#34d399",
-  "#f97316",
-  "#f472b6",
-];
-
-function getCategoryColour(category: string, index: number): string {
-  return (
-    CATEGORY_COLOURS[category] ??
-    FALLBACK_COLOURS[index % FALLBACK_COLOURS.length]
   );
 }
 
