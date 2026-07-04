@@ -41,6 +41,9 @@
   --cat-healthcare: #c53030;
   --cat-dining: #b5541a;
   --cat-shopping: #0f7a7a;
+  --cat-education: #2d7dd2;
+  --cat-other: #6b7280;
+  --cat-income: #059669;
 
   /* Modal tokens (updated for warm palette) */
   --modal-overlay: rgba(30, 42, 34, 0.4);

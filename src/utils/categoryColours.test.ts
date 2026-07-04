@@ -37,6 +37,18 @@ describe("getCategoryColour", () => {
       expect(getCategoryColour("Shopping", 0)).toBe("var(--cat-shopping)");
     });
 
+    it("returns the CSS variable for 'Education' (case-insensitive)", () => {
+      expect(getCategoryColour("Education", 99)).toBe("var(--cat-education)");
+    });
+
+    it("returns the CSS variable for 'Other' (case-insensitive)", () => {
+      expect(getCategoryColour("Other", 99)).toBe("var(--cat-other)");
+    });
+
+    it("returns the CSS variable for 'Income' (case-insensitive)", () => {
+      expect(getCategoryColour("Income", 99)).toBe("var(--cat-income)");
+    });
+
     it("matches regardless of the fallbackIndex when the name is in CAT_TOKEN_MAP", () => {
       expect(getCategoryColour("Groceries", 99)).toBe("var(--cat-groceries)");
     });
@@ -53,12 +65,12 @@ describe("getCategoryColour", () => {
   });
 
   describe("unknown categories — CAT_COLORS fallback", () => {
-    it("returns CAT_COLORS[0] for 'Other' at index 0", () => {
-      expect(getCategoryColour("Other", 0)).toBe(CAT_COLORS[0]);
+    it("returns CAT_COLORS[0] for a truly unknown category at index 0", () => {
+      expect(getCategoryColour("Unknown", 0)).toBe(CAT_COLORS[0]);
     });
 
-    it("returns CAT_COLORS[1] for 'Other' at index 1", () => {
-      expect(getCategoryColour("Other", 1)).toBe(CAT_COLORS[1]);
+    it("returns CAT_COLORS[1] for a truly unknown category at index 1", () => {
+      expect(getCategoryColour("Unknown", 1)).toBe(CAT_COLORS[1]);
     });
 
     it("wraps around when fallbackIndex equals CAT_COLORS.length", () => {
@@ -81,12 +93,24 @@ describe("getCategoryColour", () => {
 
   describe("consistency guarantee — same call always returns the same value", () => {
     it("two calls with the same name and index return identical values", () => {
-      expect(getCategoryColour("Other", 2)).toBe(getCategoryColour("Other", 2));
+      expect(getCategoryColour("Unknown", 2)).toBe(
+        getCategoryColour("Unknown", 2),
+      );
     });
 
     it("two charts resolving 'Groceries' at different indices get the same CSS var", () => {
       expect(getCategoryColour("Groceries", 0)).toBe(
         getCategoryColour("Groceries", 5),
+      );
+    });
+
+    it("two charts resolving 'Other' at different indices get the same CSS var", () => {
+      expect(getCategoryColour("Other", 0)).toBe(getCategoryColour("Other", 7));
+    });
+
+    it("two charts resolving 'Education' at different indices get the same CSS var", () => {
+      expect(getCategoryColour("Education", 0)).toBe(
+        getCategoryColour("Education", 5),
       );
     });
   });
@@ -102,6 +126,9 @@ describe("getCategoryColour", () => {
           "healthcare",
           "dining",
           "shopping",
+          "education",
+          "other",
+          "income",
         ]),
       );
     });
