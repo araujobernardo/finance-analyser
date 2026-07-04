@@ -384,6 +384,13 @@ export function DashboardPage() {
 
       {/* Charts row */}
       <div className="dash-charts-grid">
+        <div className="card">
+          <IncomeExpenseChart
+            adapted={acctAdapted}
+            currentMonth={months[0] ?? ""}
+          />
+        </div>
+
         <div className="card" data-testid="spending-cat-card">
           <div className="card-title">Spending by Category</div>
           {catData.length ? (
@@ -477,13 +484,6 @@ export function DashboardPage() {
               No expense data for selected period
             </div>
           )}
-        </div>
-
-        <div className="card">
-          <IncomeExpenseChart
-            adapted={acctAdapted}
-            currentMonth={months[0] ?? ""}
-          />
         </div>
       </div>
 

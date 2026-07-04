@@ -372,25 +372,25 @@ describe("DashboardPage — Spending by Category bar chart (issue #926)", () => 
   });
 });
 
-describe("DashboardPage — chart card order (issue #928)", () => {
-  it("Spending by Category card appears before Income vs Expenses card in DOM order", () => {
+describe("DashboardPage — chart card order (issue #939)", () => {
+  it("Income vs Expenses card appears before Spending by Category card in DOM order", () => {
     mockRawTransactions = [makeApiTxn()];
     mockIsLoading = false;
     const { container } = renderDashboard();
 
-    // .card-title is the Spending by Category heading inside dash-charts-grid
-    const spendingTitle = container.querySelector(".card-title") as HTMLElement;
     // .ie-title is rendered by IncomeExpenseChart
     const incomeTitle = container.querySelector(".ie-title") as HTMLElement;
+    // .card-title is the Spending by Category heading inside dash-charts-grid
+    const spendingTitle = container.querySelector(".card-title") as HTMLElement;
 
-    expect(spendingTitle).toBeInTheDocument();
     expect(incomeTitle).toBeInTheDocument();
-    expect(spendingTitle.textContent).toBe("Spending by Category");
+    expect(spendingTitle).toBeInTheDocument();
     expect(incomeTitle.textContent).toBe("Income vs Expenses");
+    expect(spendingTitle.textContent).toBe("Spending by Category");
 
-    // Spending by Category must precede Income vs Expenses in DOM order
+    // Income vs Expenses must precede Spending by Category in DOM order
     expect(
-      spendingTitle.compareDocumentPosition(incomeTitle) &
+      incomeTitle.compareDocumentPosition(spendingTitle) &
         Node.DOCUMENT_POSITION_FOLLOWING,
     ).toBeTruthy();
   });
