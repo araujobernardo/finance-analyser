@@ -81,6 +81,7 @@ export function FinancialAdvisorCard({
          */}
         <button
           type="button"
+          data-testid="fac-toggle-btn"
           className={[
             "fac-toggle-btn",
             isError && "fac-toggle-btn--error",
@@ -170,6 +171,7 @@ export function FinancialAdvisorCard({
         {(isContent || isError) && (
           <button
             type="button"
+            data-testid="fac-refresh-btn"
             className="fac-refresh-btn"
             onClick={isError ? onRetry : onRefresh}
             disabled={isGenerating}
