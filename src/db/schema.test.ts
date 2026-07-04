@@ -7,7 +7,12 @@
  * The TypeScript compiler accepting these object shapes is the acceptance signal.
  */
 import { describe, it, expect } from "vitest";
-import type { Goal, NewGoal } from "./schema";
+import type {
+  Goal,
+  NewGoal,
+  FinancialSummary,
+  NewFinancialSummary,
+} from "./schema";
 
 describe("goals schema — optional fields nullable", () => {
   it("NewGoal accepts null for linkedAccountId (net worth milestone goal)", () => {
@@ -95,5 +100,83 @@ describe("goals schema — updatedAt non-nullable with default", () => {
     expect(goal.type).toBe("debt_payoff");
     // updatedAt will be undefined in the insert object (server fills it)
     expect(goal.updatedAt).toBeUndefined();
+  });
+});
+
+// FA-AI-001 / #944 — financial_summaries schema type checks
+
+describe("financialSummaries schema — FinancialSummary inferred types", () => {
+  it("FinancialSummary exposes id as string (UUID)", () => {
+    const mock: FinancialSummary = {
+      id: "550e8400-e29b-41d4-a716-446655440000",
+      userId: "00000000-0000-0000-0000-000000000001",
+      generatedAt: new Date(),
+      content: "Summary text.",
+      previousSummaryId: null,
+    };
+    expect(typeof mock.id).toBe("string");
+  });
+
+  it("FinancialSummary exposes generatedAt as Date (non-nullable)", () => {
+    const now = new Date();
+    const mock: FinancialSummary = {
+      id: "550e8400-e29b-41d4-a716-446655440000",
+      userId: "00000000-0000-0000-0000-000000000001",
+      generatedAt: now,
+      content: "Summary text.",
+      previousSummaryId: null,
+    };
+    expect(mock.generatedAt).toBeInstanceOf(Date);
+  });
+
+  it("FinancialSummary exposes previousSummaryId as string | null (nullable)", () => {
+    // null is valid (no previous summary)
+    const withNull: FinancialSummary = {
+      id: "550e8400-e29b-41d4-a716-446655440000",
+      userId: "00000000-0000-0000-0000-000000000001",
+      generatedAt: new Date(),
+      content: "First summary.",
+      previousSummaryId: null,
+    };
+    expect(withNull.previousSummaryId).toBeNull();
+
+    // A UUID string is valid (references an earlier summary)
+    const withPrev: FinancialSummary = {
+      id: "660e8400-e29b-41d4-a716-446655440001",
+      userId: "00000000-0000-0000-0000-000000000001",
+      generatedAt: new Date(),
+      content: "Second summary.",
+      previousSummaryId: "550e8400-e29b-41d4-a716-446655440000",
+    };
+    expect(typeof withPrev.previousSummaryId).toBe("string");
+  });
+});
+
+describe("financialSummaries schema — NewFinancialSummary insert type", () => {
+  it("NewFinancialSummary requires userId and content; omits server-assigned fields", () => {
+    const insert: NewFinancialSummary = {
+      userId: "00000000-0000-0000-0000-000000000001",
+      content: "AI-generated summary text.",
+      // id, generatedAt omitted — server DEFAULT fills them
+    };
+    expect(insert.userId).toBe("00000000-0000-0000-0000-000000000001");
+    expect(insert.id).toBeUndefined();
+    expect(insert.generatedAt).toBeUndefined();
+  });
+
+  it("NewFinancialSummary accepts previousSummaryId as null or a UUID string", () => {
+    const withNull: NewFinancialSummary = {
+      userId: "00000000-0000-0000-0000-000000000001",
+      content: "First summary.",
+      previousSummaryId: null,
+    };
+    expect(withNull.previousSummaryId).toBeNull();
+
+    const withPrev: NewFinancialSummary = {
+      userId: "00000000-0000-0000-0000-000000000001",
+      content: "Second summary.",
+      previousSummaryId: "550e8400-e29b-41d4-a716-446655440000",
+    };
+    expect(typeof withPrev.previousSummaryId).toBe("string");
   });
 });
