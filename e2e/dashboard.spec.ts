@@ -293,3 +293,57 @@ test("Spending by Category is stacked below Income vs Expenses, not side-by-side
   // (i.e. stacked vertically, not side-by-side)
   expect(spendingBox!.y).toBeGreaterThan(incomeBox!.y + incomeBox!.height);
 });
+
+// ── FinancialAdvisorCard (#946) ───────────────────────────────────────────────
+// AC: Dashboard shows FinancialAdvisorCard above the Income vs Expenses card.
+// The card's data-testid="financial-advisor-card" is always rendered regardless
+// of state (loading / content / error / no-data). DOM-state checks qualify for
+// Playwright automation under the decision tree.
+
+test("FinancialAdvisorCard is present on the dashboard after data loads (#946)", async ({
+  authenticatedPage: page,
+}) => {
+  await uploadFixtures(page);
+  await page.goto("/dashboard");
+  await page.waitForURL(/\/dashboard/);
+
+  // Wait for dashboard content to confirm the page has loaded
+  await expect(page.locator('[data-testid="summary-stats"]')).toBeVisible({
+    timeout: 15_000,
+  });
+
+  // The card must be present in the DOM in any state
+  await expect(
+    page.locator('[data-testid="financial-advisor-card"]'),
+  ).toBeVisible({ timeout: 15_000 });
+});
+
+test("FinancialAdvisorCard is positioned above the dash-charts-grid (#946)", async ({
+  authenticatedPage: page,
+}) => {
+  await uploadFixtures(page);
+  await page.goto("/dashboard");
+  await page.waitForURL(/\/dashboard/);
+
+  // Wait for both elements to be in the DOM
+  await expect(
+    page.locator('[data-testid="financial-advisor-card"]'),
+  ).toBeVisible({ timeout: 15_000 });
+  await expect(page.locator(".dash-charts-grid")).toBeVisible({
+    timeout: 15_000,
+  });
+
+  // The advisor card must precede the charts grid in DOM order
+  const advisorBeforeCharts = await page.evaluate(() => {
+    const advisor = document.querySelector(
+      '[data-testid="financial-advisor-card"]',
+    );
+    const chartsGrid = document.querySelector(".dash-charts-grid");
+    if (!advisor || !chartsGrid) return false;
+    return Boolean(
+      advisor.compareDocumentPosition(chartsGrid) &
+      Node.DOCUMENT_POSITION_FOLLOWING,
+    );
+  });
+  expect(advisorBeforeCharts).toBe(true);
+});

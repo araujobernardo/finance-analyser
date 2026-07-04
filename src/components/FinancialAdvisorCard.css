@@ -1,0 +1,368 @@
+/* FinancialAdvisorCard.css
+   All classes prefixed .fac- (Financial Advisor Card) to avoid collisions
+   with .card, .advisor-* and other namespaces in DashboardPage.css. */
+
+/* ── Card shell ─────────────────────────────────────────────────────────────── */
+
+.fac-card {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  box-shadow: var(--shadow-sm);
+  overflow: hidden;
+}
+
+/* ── Header row ─────────────────────────────────────────────────────────────── */
+
+.fac-header-row {
+  display: flex;
+  align-items: center;
+  padding-right: 12px; /* breathing room for refresh button */
+}
+
+/* ── Toggle button (main expand/collapse trigger) ───────────────────────────── */
+
+.fac-toggle-btn {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 16px 20px;
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  text-align: left;
+  font-family: inherit;
+  color: inherit;
+  min-width: 0;
+  border-radius: 0;
+  transition: background 120ms ease-out;
+}
+
+.fac-toggle-btn:hover:not(:disabled) {
+  background: var(--surface);
+}
+
+.fac-toggle-btn:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: -2px;
+  border-radius: 4px;
+}
+
+.fac-toggle-btn:disabled {
+  cursor: default;
+}
+
+.fac-toggle-btn--no-data {
+  cursor: default;
+}
+
+/* ── Icon ───────────────────────────────────────────────────────────────────── */
+
+.fac-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  border-radius: 7px;
+  background: var(--accent-light);
+  color: var(--accent);
+  font-size: 14px;
+  font-weight: 600;
+  flex-shrink: 0;
+  transition: opacity 150ms ease-out;
+  line-height: 1;
+}
+
+.fac-icon--loading {
+  opacity: 0.4;
+}
+
+.fac-icon--error {
+  background: var(--red-light);
+  color: var(--red);
+  font-weight: 700;
+}
+
+/* ── Label ──────────────────────────────────────────────────────────────────── */
+
+.fac-label {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--subtle);
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+/* ── Preview / loading text ─────────────────────────────────────────────────── */
+
+/* Both .fac-preview and .fac-spacer grow to push date chip + chevron right */
+.fac-preview {
+  font-size: 13px;
+  color: var(--muted);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  flex: 1;
+  min-width: 0;
+  transition: opacity 150ms ease-out;
+}
+
+.fac-preview--loading {
+  font-style: italic;
+}
+
+.fac-preview--faded {
+  opacity: 0.6;
+}
+
+.fac-spacer {
+  flex: 1;
+  min-width: 8px;
+}
+
+/* ── Date chip ──────────────────────────────────────────────────────────────── */
+
+.fac-date-chip {
+  font-size: 11px;
+  color: var(--subtle);
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+/* ── Chevron ────────────────────────────────────────────────────────────────── */
+
+.fac-chevron {
+  display: inline-flex;
+  align-items: center;
+  color: var(--subtle);
+  flex-shrink: 0;
+  transition: transform 250ms cubic-bezier(0, 0, 0.2, 1);
+  transform: rotate(0deg);
+}
+
+.fac-chevron--open {
+  transform: rotate(180deg);
+}
+
+/* ── Refresh / Retry button ─────────────────────────────────────────────────── */
+
+.fac-refresh-btn {
+  flex-shrink: 0;
+  padding: 0 14px;
+  min-height: 44px;
+  min-width: 44px;
+  border: 1.5px solid var(--border-strong);
+  background: transparent;
+  color: var(--text-2);
+  font-family: inherit;
+  font-size: 12px;
+  font-weight: 600;
+  border-radius: 8px;
+  cursor: pointer;
+  transition:
+    background 130ms ease-out,
+    border-color 130ms ease-out,
+    color 130ms ease-out,
+    opacity 130ms ease-out;
+}
+
+.fac-refresh-btn:hover:not(:disabled) {
+  background: var(--surface);
+  border-color: var(--accent);
+  color: var(--accent);
+}
+
+.fac-refresh-btn:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
+.fac-refresh-btn:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+/* ── Separator ──────────────────────────────────────────────────────────────── */
+
+.fac-separator {
+  height: 1px;
+  background: var(--border);
+  margin: 0;
+}
+
+/* ── Collapsible body ───────────────────────────────────────────────────────── */
+
+/*
+ * max-height transition: 0 → 600px, 250ms cubic-bezier(0, 0, 0.2, 1).
+ * overflow: hidden prevents child content from escaping during animation.
+ */
+.fac-body {
+  max-height: 0;
+  overflow: hidden;
+  transition: max-height 250ms cubic-bezier(0, 0, 0.2, 1);
+}
+
+.fac-body--open {
+  max-height: 600px;
+}
+
+/* ── Loading skeleton ───────────────────────────────────────────────────────── */
+
+@keyframes fac-shimmer {
+  0% {
+    background-position: -400px 0;
+  }
+  100% {
+    background-position: 400px 0;
+  }
+}
+
+.fac-skeleton-group {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 20px 24px;
+}
+
+.fac-skeleton {
+  height: 14px;
+  border-radius: 6px;
+  background: linear-gradient(
+    90deg,
+    var(--border) 25%,
+    var(--card) 50%,
+    var(--border) 75%
+  );
+  background-size: 800px 100%;
+  animation: fac-shimmer 1.5s infinite linear;
+}
+
+.fac-skeleton--w100 {
+  width: 100%;
+}
+
+.fac-skeleton--w80 {
+  width: 80%;
+}
+
+.fac-skeleton--w60 {
+  width: 60%;
+}
+
+/* ── Content state ──────────────────────────────────────────────────────────── */
+
+.fac-summary-text {
+  font-size: 14px;
+  line-height: 1.6;
+  color: var(--text-2);
+  white-space: pre-wrap;
+  padding: 20px 24px 0;
+  margin: 0;
+}
+
+/* ── Footer (Ask a question link) ───────────────────────────────────────────── */
+
+.fac-footer {
+  padding: 12px 24px 20px;
+}
+
+.fac-ask-link {
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--accent);
+  text-decoration: none;
+  transition: opacity 130ms ease-out;
+}
+
+.fac-ask-link:hover {
+  opacity: 0.75;
+  text-decoration: underline;
+}
+
+/* ── Error state ────────────────────────────────────────────────────────────── */
+
+.fac-error-wrap {
+  padding: 16px 24px 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.fac-error-banner {
+  background: var(--red-light);
+  border: 1px solid var(--red);
+  color: var(--red);
+  font-size: 13px;
+  font-weight: 500;
+  border-radius: 8px;
+  padding: 10px 14px;
+}
+
+.fac-fallback-text {
+  font-size: 13px;
+  line-height: 1.6;
+  color: var(--muted);
+  opacity: 0.6;
+  white-space: pre-wrap;
+  margin: 0;
+}
+
+.fac-error-wrap .fac-footer {
+  padding: 0;
+}
+
+/* ── No-data state ──────────────────────────────────────────────────────────── */
+
+.fac-no-data {
+  font-size: 13px;
+  color: var(--muted);
+  padding: 20px 24px;
+  margin: 0;
+}
+
+/* ── Responsive (≤600px) ────────────────────────────────────────────────────── */
+
+@media (max-width: 600px) {
+  .fac-toggle-btn {
+    padding: 14px 16px;
+    gap: 8px;
+  }
+
+  /* Hide date chip on mobile — save header space */
+  .fac-date-chip {
+    display: none;
+  }
+
+  /* Reduce body padding */
+  .fac-summary-text {
+    padding: 14px 16px 0;
+  }
+
+  .fac-footer {
+    padding: 10px 16px 14px;
+  }
+
+  .fac-skeleton-group {
+    padding: 14px 16px;
+  }
+
+  .fac-error-wrap {
+    padding: 12px 16px 14px;
+  }
+
+  .fac-no-data {
+    padding: 14px 16px;
+  }
+
+  /* Maintain touch target on mobile */
+  .fac-refresh-btn {
+    min-height: 44px;
+    min-width: 44px;
+  }
+
+  .fac-header-row {
+    padding-right: 8px;
+  }
+}

@@ -13,9 +13,14 @@ import {
   useAllTransactions,
   ALL_ACCOUNTS_ID,
 } from "../context/AccountContext";
+import { useGoals } from "../context/GoalsContext";
+import { useBudgets } from "../context/BudgetContext";
+import { useApi } from "../lib/api";
+import { useAutoSummary } from "../hooks/useAutoSummary";
 import { IncomeExpenseChart } from "../components/IncomeExpenseChart";
 import { SpendingTrendsByCategoryChart } from "../components/SpendingTrendsByCategoryChart";
 import { BudgetSummaryWidget } from "../components/budgets/BudgetSummaryWidget";
+import { FinancialAdvisorCard } from "../components/FinancialAdvisorCard";
 import { getCategoryColour } from "../utils/categoryColours";
 import "./DashboardPage.css";
 
@@ -78,6 +83,21 @@ const fmtMonthSh = (m: string) => {
 export function DashboardPage() {
   const { accounts, activeAccountId, isLoading } = useAccount();
   const rawTransactions = useAllTransactions();
+  const { goals, isLoading: isGoalsLoading } = useGoals();
+  const { budgets, loading: isBudgetsLoading } = useBudgets();
+  const { apiFetch } = useApi();
+
+  // isLoadingData: wait for all upstream data before triggering AI generation.
+  const isLoadingData = isLoading || isGoalsLoading || isBudgetsLoading;
+
+  const { isGenerating, currentSummary, error, refresh } = useAutoSummary(
+    rawTransactions,
+    goals,
+    budgets,
+    null, // net worth snapshot not fetched on this page; hook handles null gracefully
+    isLoadingData,
+    apiFetch,
+  );
 
   // Adapt ApiTransaction rows for chart utilities.
   const adapted = useMemo(() => {
@@ -381,6 +401,19 @@ export function DashboardPage() {
           from all totals.
         </div>
       )}
+
+      {/* AI Financial Advisor Card — positioned above Income vs Expenses */}
+      <FinancialAdvisorCard
+        isGenerating={isGenerating}
+        summary={currentSummary?.content ?? null}
+        generatedAt={
+          currentSummary ? new Date(currentSummary.generatedAt) : null
+        }
+        error={error}
+        previousSummary={null}
+        onRefresh={refresh}
+        onRetry={refresh}
+      />
 
       {/* Charts row */}
       <div className="dash-charts-grid">
