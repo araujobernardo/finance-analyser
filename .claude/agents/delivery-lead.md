@@ -43,10 +43,13 @@ Run this **every time** before finding the next story:
 6. **Recover orphaned in-progress issues** — a previous session may have claimed
    issues without opening a PR. For every open issue labelled `status:in-progress`,
    check whether an open PR references it:
+
    ```bash
    gh issue list --label "status:in-progress" --state open --json number,title
    ```
+
    For each result, check for an open PR:
+
    ```bash
    gh pr list --state open --search "Closes #<number>" --json number,title
    ```
@@ -132,14 +135,60 @@ gh pr view <number> --json body --jq '.body' | grep -oE 'Closes #[0-9]+' | wc -l
   - That the PR must be closed and each story re-implemented individually
     Wait for user instruction before continuing.
 
-### Step 3 — Spawn QA agent
+### Step 3 — Commit docs to feature branch (before QA)
+
+Before spawning QA, commit the CHANGELOG and dev-mentor log entries directly
+onto the feature branch. This ensures they ride the squash-merge to GitHub —
+**never commit these to local `main`**.
+
+1. Switch to the feature branch (it was created by the Developer):
+
+   ```bash
+   git checkout <feature-branch>
+   git pull origin <feature-branch>
+   ```
+
+2. Append one line to `CHANGELOG.md` at the repo root:
+
+   ```
+   - **YYYY-MM-DD** | #<issue> | <story title> | <one sentence summary of what shipped>
+   ```
+
+   If `CHANGELOG.md` does not exist, create it first with this header:
+
+   ```markdown
+   # Changelog
+
+   _Automatically maintained by the Delivery Lead agent._
+   ```
+
+3. Append one row to the Session Log table in `docs/dev-mentor-progress.md`.
+   Find the line `| Date | Topic Covered | Notes |` and insert a new row after
+   the last existing entry in that table, following this format exactly:
+
+   ```
+   | YYYY-MM-DD | #<issue>: <story title> | <one sentence describing what was built and what concept it demonstrates> |
+   ```
+
+   The Notes field should be written from a learning perspective — what skill
+   or concept did this story exercise? (e.g. "Sidebar layout with React Router;
+   practised CSS grid and component decomposition.")
+
+4. Commit and push to the feature branch:
+   ```bash
+   git add CHANGELOG.md docs/dev-mentor-progress.md
+   git commit -m "chore: update CHANGELOG and dev-mentor log for #<issue>"
+   git push origin <feature-branch>
+   ```
+
+### Step 4 — Spawn QA agent
 
 Use the Agent tool. Pass it: issue number, title, PR number, acceptance criteria,
 and: "You are the QA agent. Follow .claude/agents/qa.md exactly."
 
 Wait for the QA agent to return.
 
-### Step 4 — After QA returns
+### Step 5 — After QA returns
 
 - **If QA merged successfully**:
   1. Clean up the feature branch immediately — both remote and local:
@@ -156,34 +205,7 @@ Wait for the QA agent to return.
 
      Log which branch was deleted. The workspace must have only `main` checked out before the next story starts.
 
-  2. Append one line to `CHANGELOG.md` at the repo root:
-
-     ```
-     - **YYYY-MM-DD** | #<issue> | <story title> | <one sentence summary of what shipped>
-     ```
-
-     If `CHANGELOG.md` does not exist, create it first with this header:
-
-     ```markdown
-     # Changelog
-
-     _Automatically maintained by the Delivery Lead agent._
-     ```
-
-  3. Append one row to the Session Log table in `docs/dev-mentor-progress.md`.
-     Find the line `| Date | Topic Covered | Notes |` and insert a new row after
-     the last existing entry in that table, following this format exactly:
-
-     ```
-     | YYYY-MM-DD | #<issue>: <story title> | <one sentence describing what was built and what concept it demonstrates> |
-     ```
-
-     The Notes field should be written from a learning perspective — what skill
-     or concept did this story exercise? (e.g. "Sidebar layout with React Router;
-     practised CSS grid and component decomposition.")
-
-  4. Commit both files together: `chore: update CHANGELOG and dev-mentor log for #<issue>`
-  5. Report "#XX is Done. [X] complete, [Y] remaining in backlog." Then
+  2. Report "#XX is Done. [X] complete, [Y] remaining in backlog." Then
      immediately pick up the next unblocked story — no user prompt needed.
 
 - **If QA stopped** (test loop exhausted or security issue): report findings to
