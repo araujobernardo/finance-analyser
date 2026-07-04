@@ -8,6 +8,9 @@ export const CAT_TOKEN_MAP: Record<string, string> = {
   healthcare: "var(--cat-healthcare)",
   dining: "var(--cat-dining)",
   shopping: "var(--cat-shopping)",
+  education: "var(--cat-education)",
+  other: "var(--cat-other)",
+  income: "var(--cat-income)",
 };
 
 // Fallback palette for categories not covered by --cat-* tokens.
