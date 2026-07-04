@@ -221,12 +221,12 @@ test("multi-select pills show range heading and count subtitle", async ({
   );
 });
 
-// ── Chart card order (issue #928) ─────────────────────────────────────────────
-// Verifies that Spending by Category card precedes Income vs Expenses in DOM
+// ── Chart card order (issue #939) ─────────────────────────────────────────────
+// Verifies that Income vs Expenses card precedes Spending by Category in DOM
 // order inside the dash-charts-grid. DOM-state check — qualifies for E2E
 // automation under the decision tree.
 
-test("Spending by Category card precedes Income vs Expenses in DOM order (#928)", async ({
+test("Income vs Expenses card precedes Spending by Category in DOM order (#939)", async ({
   authenticatedPage: page,
 }) => {
   await uploadFixtures(page);
@@ -241,30 +241,30 @@ test("Spending by Category card precedes Income vs Expenses in DOM order (#928)"
     page.locator('[data-testid="income-expense-chart"]'),
   ).toBeVisible({ timeout: 15_000 });
 
-  // Spending by Category must precede Income vs Expenses in DOM order
-  const spendingFirst = await page.evaluate(() => {
-    const spending = document.querySelector(
-      '[data-testid="spending-cat-card"]',
-    );
+  // Income vs Expenses must precede Spending by Category in DOM order
+  const incomeFirst = await page.evaluate(() => {
     const income = document.querySelector(
       '[data-testid="income-expense-chart"]',
     );
-    if (!spending || !income) return false;
+    const spending = document.querySelector(
+      '[data-testid="spending-cat-card"]',
+    );
+    if (!income || !spending) return false;
     return Boolean(
-      spending.compareDocumentPosition(income) &
+      income.compareDocumentPosition(spending) &
       Node.DOCUMENT_POSITION_FOLLOWING,
     );
   });
-  expect(spendingFirst).toBe(true);
+  expect(incomeFirst).toBe(true);
 });
 
-// ── Chart layout stacking (issue #933) ───────────────────────────────────────
-// Verifies that Income vs Expenses is stacked BELOW (not beside) Spending by
-// Category. Uses bounding-box positions to confirm the cards are in a single
-// column rather than side-by-side. DOM-state check — qualifies for E2E
-// automation under the decision tree.
+// ── Chart layout stacking (issue #933 / #939) ────────────────────────────────
+// Verifies that Spending by Category is stacked BELOW (not beside) Income vs
+// Expenses after the reorder in #939. Uses bounding-box positions to confirm
+// the cards are in a single column rather than side-by-side. DOM-state check —
+// qualifies for E2E automation under the decision tree.
 
-test("Income vs Expenses is stacked below Spending by Category, not side-by-side (#933)", async ({
+test("Spending by Category is stacked below Income vs Expenses, not side-by-side (#933/#939)", async ({
   authenticatedPage: page,
 }) => {
   await uploadFixtures(page);
@@ -279,17 +279,17 @@ test("Income vs Expenses is stacked below Spending by Category, not side-by-side
     page.locator('[data-testid="income-expense-chart"]'),
   ).toBeVisible({ timeout: 15_000 });
 
-  const spendingBox = await page
-    .locator('[data-testid="spending-cat-card"]')
-    .boundingBox();
   const incomeBox = await page
     .locator('[data-testid="income-expense-chart"]')
     .boundingBox();
+  const spendingBox = await page
+    .locator('[data-testid="spending-cat-card"]')
+    .boundingBox();
 
-  expect(spendingBox).not.toBeNull();
   expect(incomeBox).not.toBeNull();
+  expect(spendingBox).not.toBeNull();
 
-  // Income vs Expenses top edge must be below Spending by Category bottom edge
+  // Spending by Category top edge must be below Income vs Expenses bottom edge
   // (i.e. stacked vertically, not side-by-side)
-  expect(incomeBox!.y).toBeGreaterThan(spendingBox!.y + spendingBox!.height);
+  expect(spendingBox!.y).toBeGreaterThan(incomeBox!.y + incomeBox!.height);
 });
