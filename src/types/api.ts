@@ -151,3 +151,11 @@ export interface SyncResult {
   transactionsAdded: number;
   errors: { accountId: string; error: string }[];
 }
+
+// FA-AI-001 — AI-generated financial summaries
+export interface ApiFinancialSummary {
+  id: string;
+  generatedAt: string;
+  content: string;
+  previousSummaryId: string | null;
+}

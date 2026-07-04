@@ -10,6 +10,7 @@ import {
   uniqueIndex,
   uuid,
   varchar,
+  type AnyPgColumn,
 } from "drizzle-orm/pg-core";
 
 export const users = pgTable("users", {
@@ -283,6 +284,31 @@ export const akahuConnections = pgTable(
 export type AkahuConnection = typeof akahuConnections.$inferSelect;
 export type NewAkahuConnection = typeof akahuConnections.$inferInsert;
 
+// FA-AI-001 — AI-generated financial summaries
+
+export const financialSummaries = pgTable(
+  "financial_summaries",
+  {
+    id: uuid("id").defaultRandom().primaryKey(),
+    userId: uuid("user_id")
+      .notNull()
+      .references(() => users.id, { onDelete: "cascade" }),
+    generatedAt: timestamp("generated_at", { withTimezone: true })
+      .defaultNow()
+      .notNull(),
+    content: text("content").notNull(),
+    previousSummaryId: uuid("previous_summary_id").references(
+      (): AnyPgColumn => financialSummaries.id,
+      { onDelete: "set null" },
+    ),
+  },
+  (table) => ({
+    userGeneratedAtIdx: index(
+      "financial_summaries_user_id_generated_at_idx",
+    ).on(table.userId, table.generatedAt),
+  }),
+);
+
 export const akahuAccountLinks = pgTable(
   "akahu_account_links",
   {
@@ -351,3 +377,5 @@ export type NewLiability = typeof liabilities.$inferInsert;
 export type NewGoal = typeof goals.$inferInsert;
 export type NetWorthSnapshot = typeof netWorthSnapshots.$inferSelect;
 export type NewNetWorthSnapshot = typeof netWorthSnapshots.$inferInsert;
+export type FinancialSummary = typeof financialSummaries.$inferSelect;
+export type NewFinancialSummary = typeof financialSummaries.$inferInsert;
