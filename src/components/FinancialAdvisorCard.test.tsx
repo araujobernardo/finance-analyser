@@ -1,6 +1,6 @@
-// QA tests for #946 — FinancialAdvisorCard component
+// QA tests for #946 — FinancialAdvisorCard component (v2 / fac2- redesign)
 // Tests all four prop-driven states: loading, content, error, no-data.
-// Also covers toggle collapse, Refresh/Retry callbacks, and navigation link.
+// The card is no longer collapsible; toggle-related tests are removed.
 
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import { render, screen, fireEvent } from "@testing-library/react";
@@ -40,9 +40,9 @@ describe("FinancialAdvisorCard — card shell", () => {
     expect(screen.getByTestId("financial-advisor-card")).toBeInTheDocument();
   });
 
-  it("always shows the 'Financial Summary' label", () => {
+  it("always shows the 'AI Financial Summary' header label", () => {
     renderCard();
-    expect(screen.getByText("Financial Summary")).toBeInTheDocument();
+    expect(screen.getByText("AI Financial Summary")).toBeInTheDocument();
   });
 });
 
@@ -60,17 +60,9 @@ describe("FinancialAdvisorCard — loading state", () => {
     expect(screen.getByTestId("fac-skeleton")).toBeInTheDocument();
   });
 
-  it("shows the 'Generating your financial summary...' message", () => {
+  it("shows the 'Generating…' status in the header", () => {
     renderCard(loadingProps);
-    expect(
-      screen.getByText("Generating your financial summary..."),
-    ).toBeInTheDocument();
-  });
-
-  it("toggle button is disabled while generating", () => {
-    renderCard(loadingProps);
-    const btn = screen.getByRole("button", { name: /Financial Summary/i });
-    expect(btn).toBeDisabled();
+    expect(screen.getByText("Generating…")).toBeInTheDocument();
   });
 
   it("does not render the Refresh or Retry button while generating", () => {
@@ -108,9 +100,8 @@ describe("FinancialAdvisorCard — content state", () => {
     );
   });
 
-  it("renders the generation date chip", () => {
+  it("renders the generation date in the header", () => {
     renderCard(contentProps);
-    // generatedAt is 2026-07-04 → formatted as "4 Jul 2026"
     const card = screen.getByTestId("financial-advisor-card");
     expect(card.textContent).toMatch(/4 Jul 2026/);
   });
@@ -144,35 +135,6 @@ describe("FinancialAdvisorCard — content state", () => {
   });
 });
 
-// ── Content state — truncate preview ─────────────────────────────────────────
-
-describe("FinancialAdvisorCard — summary truncation in header preview", () => {
-  it("shows preview text of ≤80 chars unchanged in header", () => {
-    const { container } = renderCard({
-      summary: "Short summary",
-      generatedAt: new Date(),
-    });
-    // Both the header preview span and the body paragraph show the short text;
-    // check that the preview span specifically has the content.
-    const previewSpan = container.querySelector(".fac-preview");
-    expect(previewSpan).toBeInTheDocument();
-    expect(previewSpan?.textContent).toBe("Short summary");
-  });
-
-  it("truncates preview to 80 chars with ellipsis in header when summary is long", () => {
-    const long = "A".repeat(100);
-    renderCard({
-      summary: long,
-      generatedAt: new Date(),
-    });
-    // The header preview should show the truncated version
-    const card = screen.getByTestId("financial-advisor-card");
-    expect(card.textContent).toContain("A".repeat(80) + "…");
-    // The body should show the full summary
-    expect(screen.getByTestId("fac-summary-text").textContent).toBe(long);
-  });
-});
-
 // ── Error state ───────────────────────────────────────────────────────────────
 
 describe("FinancialAdvisorCard — error state (no previous summary)", () => {
@@ -199,9 +161,7 @@ describe("FinancialAdvisorCard — error state (no previous summary)", () => {
 
   it("renders the Retry button", () => {
     renderCard(errorProps);
-    const btn = screen.getByRole("button", {
-      name: /Retry generating summary/i,
-    });
+    const btn = screen.getByRole("button", { name: /Retry/i });
     expect(btn).toBeInTheDocument();
     expect(btn).not.toBeDisabled();
   });
@@ -209,9 +169,7 @@ describe("FinancialAdvisorCard — error state (no previous summary)", () => {
   it("Retry button calls onRetry when clicked", () => {
     const onRetry = vi.fn();
     renderCard({ ...errorProps, onRetry });
-    fireEvent.click(
-      screen.getByRole("button", { name: /Retry generating summary/i }),
-    );
+    fireEvent.click(screen.getByRole("button", { name: /Retry/i }));
     expect(onRetry).toHaveBeenCalledTimes(1);
   });
 
@@ -224,6 +182,11 @@ describe("FinancialAdvisorCard — error state (no previous summary)", () => {
     renderCard(errorProps);
     expect(screen.queryByTestId("fac-skeleton")).not.toBeInTheDocument();
     expect(screen.queryByTestId("fac-no-data")).not.toBeInTheDocument();
+  });
+
+  it("header uses the error variant class", () => {
+    const { container } = renderCard(errorProps);
+    expect(container.querySelector(".fac2-header--error")).toBeInTheDocument();
   });
 });
 
@@ -286,111 +249,43 @@ describe("FinancialAdvisorCard — no-data state", () => {
   });
 });
 
-// ── Collapse / expand toggle ──────────────────────────────────────────────────
-
-describe("FinancialAdvisorCard — collapse / expand toggle", () => {
-  const contentProps: Partial<FinancialAdvisorCardProps> = {
-    isGenerating: false,
-    summary: "Summary text for toggle test.",
-    generatedAt: new Date(),
-    error: null,
-  };
-
-  it("body is open by default (fac-body--open class present)", () => {
-    const { container } = renderCard(contentProps);
-    const body = container.querySelector("#advisor-body");
-    expect(body).toHaveClass("fac-body--open");
-  });
-
-  it("clicking the toggle button collapses the body", () => {
-    const { container } = renderCard(contentProps);
-    const toggleBtn = screen.getByRole("button", {
-      name: /Financial Summary/i,
-    });
-    fireEvent.click(toggleBtn);
-    const body = container.querySelector("#advisor-body");
-    expect(body).not.toHaveClass("fac-body--open");
-  });
-
-  it("clicking toggle twice returns to open state", () => {
-    const { container } = renderCard(contentProps);
-    const toggleBtn = screen.getByRole("button", {
-      name: /Financial Summary/i,
-    });
-    fireEvent.click(toggleBtn);
-    fireEvent.click(toggleBtn);
-    const body = container.querySelector("#advisor-body");
-    expect(body).toHaveClass("fac-body--open");
-  });
-
-  it("toggle button has aria-expanded=true when open", () => {
-    renderCard(contentProps);
-    const toggleBtn = screen.getByRole("button", {
-      name: /Financial Summary/i,
-    });
-    expect(toggleBtn).toHaveAttribute("aria-expanded", "true");
-  });
-
-  it("toggle button has aria-expanded=false after collapsing", () => {
-    renderCard(contentProps);
-    const toggleBtn = screen.getByRole("button", {
-      name: /Financial Summary/i,
-    });
-    fireEvent.click(toggleBtn);
-    expect(toggleBtn).toHaveAttribute("aria-expanded", "false");
-  });
-});
-
 // ── Refresh disabled while generating ────────────────────────────────────────
 
-describe("FinancialAdvisorCard — Refresh button disabled while generating", () => {
-  it("Refresh button is disabled when isGenerating=true (shown alongside prior summary)", () => {
-    // Edge case: summary provided but isGenerating=true means the error state
-    // can also show Retry. Here we test with error+isGenerating=true to cover
-    // the disabled path for the Retry button.
-    // Note: isGenerating=true with summary=null, error=null → loading state (no button).
-    // To get the Refresh button visible + disabled, we need isContent=true but
-    // isGenerating=true. However, per logic: isContent = !isGenerating && summary !== null.
-    // So the disabled path for Refresh is covered via the loading state test above
-    // (button not rendered at all). The Retry disabled path requires error + isGenerating.
+describe("FinancialAdvisorCard — buttons absent while generating", () => {
+  it("no Refresh/Retry button when isGenerating=true regardless of error", () => {
     const { queryByRole } = renderCard({
       isGenerating: true,
       summary: null,
       error: "prev error",
       previousSummary: null,
     });
-    // In loading state, neither button is shown (isContent and isError are both false)
     expect(queryByRole("button", { name: /Refresh/i })).not.toBeInTheDocument();
+    expect(queryByRole("button", { name: /Retry/i })).not.toBeInTheDocument();
   });
 });
 
 // ── Accessibility ─────────────────────────────────────────────────────────────
 
 describe("FinancialAdvisorCard — accessibility", () => {
-  it("toggle button has aria-controls pointing to the body region", () => {
-    renderCard({
-      summary: "test",
-      generatedAt: new Date(),
-    });
-    const btn = screen.getByRole("button", { name: /Financial Summary/i });
-    expect(btn).toHaveAttribute("aria-controls", "advisor-body");
-  });
-
-  it("body region has aria-label='Financial summary details'", () => {
+  it("header icon is aria-hidden to avoid duplicate content for screen readers", () => {
     const { container } = renderCard({
       summary: "test",
       generatedAt: new Date(),
     });
-    const body = container.querySelector("#advisor-body");
-    expect(body).toHaveAttribute("aria-label", "Financial summary details");
-  });
-
-  it("icon is aria-hidden to avoid duplicate content for screen readers", () => {
-    const { container } = renderCard({
-      summary: "test",
-      generatedAt: new Date(),
-    });
-    const icon = container.querySelector(".fac-icon");
+    const icon = container.querySelector(".fac2-header-icon");
     expect(icon).toHaveAttribute("aria-hidden", "true");
+  });
+
+  it("skeleton has aria-busy=true and aria-label while generating", () => {
+    renderCard({ isGenerating: true });
+    const skeleton = screen.getByTestId("fac-skeleton");
+    expect(skeleton).toHaveAttribute("aria-busy", "true");
+    expect(skeleton).toHaveAttribute("aria-label", "Generating summary");
+  });
+
+  it("Refresh button has aria-label='Refresh summary'", () => {
+    renderCard({ summary: "test", generatedAt: new Date() });
+    const btn = screen.getByRole("button", { name: "Refresh summary" });
+    expect(btn).toBeInTheDocument();
   });
 });
