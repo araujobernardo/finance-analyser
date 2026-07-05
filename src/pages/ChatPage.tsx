@@ -151,7 +151,9 @@ export function ChatPage() {
     void apiFetch("/api/summaries")
       .then(async (res) => {
         if (!res.ok) throw new Error(`HTTP ${res.status}`);
-        return res.json() as Promise<ApiFinancialSummary[]>;
+        return (
+          res.json() as Promise<{ summaries: ApiFinancialSummary[] }>
+        ).then((d) => d.summaries);
       })
       .then((data) => {
         if (cancelled) return;
