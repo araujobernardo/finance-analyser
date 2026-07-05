@@ -88,9 +88,16 @@
   overflow-y: auto;
 }
 
+/* Header row — wraps the toggle button + generate button */
+.summaries-header-row {
+  display: flex;
+  align-items: center;
+  border-bottom: 1px solid transparent;
+}
+
 /* Section header button */
 .summaries-section-header {
-  width: 100%;
+  flex: 1;
   min-height: 44px;
   display: flex;
   align-items: center;
@@ -110,6 +117,43 @@
 
 .summaries-section-header:disabled {
   cursor: default;
+}
+
+/* Generate new summary button */
+.summaries-gen-btn {
+  flex-shrink: 0;
+  margin-right: 16px;
+  padding: 5px 12px;
+  background: var(--accent-light, rgba(0, 137, 123, 0.1));
+  border: 1px solid var(--accent, #00897b);
+  border-radius: 6px;
+  color: var(--accent, #00897b);
+  font-size: 12px;
+  font-weight: 700;
+  font-family: inherit;
+  cursor: pointer;
+  white-space: nowrap;
+  transition:
+    background 120ms ease,
+    opacity 120ms ease;
+}
+
+.summaries-gen-btn:hover:not(:disabled) {
+  background: var(--accent-light, rgba(0, 137, 123, 0.18));
+}
+
+.summaries-gen-btn--busy,
+.summaries-gen-btn:disabled {
+  opacity: 0.55;
+  cursor: default;
+}
+
+/* Inline error below the header row */
+.summaries-gen-error {
+  font-size: 12px;
+  color: var(--red, #dc2626);
+  padding: 6px 20px 0;
+  margin: 0;
 }
 
 /* Decorative icon — 20×20px square */
