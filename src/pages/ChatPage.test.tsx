@@ -167,7 +167,7 @@ describe("ChatPage Past Summaries — error state", () => {
 
 describe("ChatPage Past Summaries — empty state", () => {
   it("shows empty state message when API returns []", async () => {
-    mockApiFetch.mockReturnValue(makeOkResponse([]));
+    mockApiFetch.mockReturnValue(makeOkResponse({ summaries: [] }));
     renderChatPage();
     await waitFor(() =>
       expect(screen.getByTestId("summaries-empty")).toBeInTheDocument(),
@@ -178,7 +178,7 @@ describe("ChatPage Past Summaries — empty state", () => {
   });
 
   it("shows '0 reports' count label for empty list", async () => {
-    mockApiFetch.mockReturnValue(makeOkResponse([]));
+    mockApiFetch.mockReturnValue(makeOkResponse({ summaries: [] }));
     renderChatPage();
     await waitFor(() =>
       expect(screen.getByText("0 reports")).toBeInTheDocument(),
@@ -208,7 +208,7 @@ describe("ChatPage Past Summaries — with summaries", () => {
   ];
 
   it("renders an entry for each summary", async () => {
-    mockApiFetch.mockReturnValue(makeOkResponse(three));
+    mockApiFetch.mockReturnValue(makeOkResponse({ summaries: three }));
     renderChatPage();
     await waitFor(() =>
       expect(screen.getAllByTestId("summaries-entry")).toHaveLength(3),
@@ -216,7 +216,7 @@ describe("ChatPage Past Summaries — with summaries", () => {
   });
 
   it("first two entries are expanded by default (aria-expanded=true)", async () => {
-    mockApiFetch.mockReturnValue(makeOkResponse(three));
+    mockApiFetch.mockReturnValue(makeOkResponse({ summaries: three }));
     renderChatPage();
     await waitFor(() =>
       expect(screen.getAllByTestId("summaries-entry")).toHaveLength(3),
@@ -227,7 +227,7 @@ describe("ChatPage Past Summaries — with summaries", () => {
   });
 
   it("third entry is collapsed by default (aria-expanded=false)", async () => {
-    mockApiFetch.mockReturnValue(makeOkResponse(three));
+    mockApiFetch.mockReturnValue(makeOkResponse({ summaries: three }));
     renderChatPage();
     await waitFor(() =>
       expect(screen.getAllByTestId("summaries-entry")).toHaveLength(3),
@@ -237,7 +237,7 @@ describe("ChatPage Past Summaries — with summaries", () => {
   });
 
   it("shows '3 reports' in the count label", async () => {
-    mockApiFetch.mockReturnValue(makeOkResponse(three));
+    mockApiFetch.mockReturnValue(makeOkResponse({ summaries: three }));
     renderChatPage();
     await waitFor(() =>
       expect(screen.getByText("3 reports")).toBeInTheDocument(),
@@ -245,7 +245,9 @@ describe("ChatPage Past Summaries — with summaries", () => {
   });
 
   it("shows '1 report' (singular) for a single summary", async () => {
-    mockApiFetch.mockReturnValue(makeOkResponse([makeSummary()]));
+    mockApiFetch.mockReturnValue(
+      makeOkResponse({ summaries: [makeSummary()] }),
+    );
     renderChatPage();
     await waitFor(() =>
       expect(screen.getByText("1 report")).toBeInTheDocument(),
@@ -254,12 +256,14 @@ describe("ChatPage Past Summaries — with summaries", () => {
 
   it("entry content is visible for expanded entries", async () => {
     mockApiFetch.mockReturnValue(
-      makeOkResponse([
-        makeSummary({
-          id: "s1",
-          content: "Your finances look healthy this month.",
-        }),
-      ]),
+      makeOkResponse({
+        summaries: [
+          makeSummary({
+            id: "s1",
+            content: "Your finances look healthy this month.",
+          }),
+        ],
+      }),
     );
     const { container } = renderChatPage();
     await waitFor(() =>
@@ -276,7 +280,7 @@ describe("ChatPage Past Summaries — with summaries", () => {
   it("full content is rendered (not truncated) inside the entry body", async () => {
     const long = "A".repeat(200);
     mockApiFetch.mockReturnValue(
-      makeOkResponse([makeSummary({ id: "s1", content: long })]),
+      makeOkResponse({ summaries: [makeSummary({ id: "s1", content: long })] }),
     );
     renderChatPage();
     await waitFor(() => expect(screen.getByText(long)).toBeInTheDocument());
@@ -287,7 +291,7 @@ describe("ChatPage Past Summaries — with summaries", () => {
 
 describe("ChatPage Past Summaries — toggle section header", () => {
   it("section body starts open (no .closed class)", async () => {
-    mockApiFetch.mockReturnValue(makeOkResponse([]));
+    mockApiFetch.mockReturnValue(makeOkResponse({ summaries: [] }));
     const { container } = renderChatPage();
     await waitFor(() =>
       expect(screen.getByTestId("summaries-empty")).toBeInTheDocument(),
@@ -298,7 +302,7 @@ describe("ChatPage Past Summaries — toggle section header", () => {
   });
 
   it("clicking the section header collapses the body (adds .closed class)", async () => {
-    mockApiFetch.mockReturnValue(makeOkResponse([]));
+    mockApiFetch.mockReturnValue(makeOkResponse({ summaries: [] }));
     const { container } = renderChatPage();
     await waitFor(() =>
       expect(screen.getByTestId("summaries-empty")).toBeInTheDocument(),
@@ -308,7 +312,7 @@ describe("ChatPage Past Summaries — toggle section header", () => {
   });
 
   it("clicking the section header twice returns to open state", async () => {
-    mockApiFetch.mockReturnValue(makeOkResponse([]));
+    mockApiFetch.mockReturnValue(makeOkResponse({ summaries: [] }));
     const { container } = renderChatPage();
     await waitFor(() =>
       expect(screen.getByTestId("summaries-empty")).toBeInTheDocument(),
@@ -322,7 +326,7 @@ describe("ChatPage Past Summaries — toggle section header", () => {
   });
 
   it("section header aria-expanded reflects open/closed state", async () => {
-    mockApiFetch.mockReturnValue(makeOkResponse([]));
+    mockApiFetch.mockReturnValue(makeOkResponse({ summaries: [] }));
     renderChatPage();
     await waitFor(() =>
       expect(screen.getByTestId("summaries-empty")).toBeInTheDocument(),
@@ -356,7 +360,7 @@ describe("ChatPage Past Summaries — toggle individual entry", () => {
   ];
 
   it("clicking an expanded entry collapses it", async () => {
-    mockApiFetch.mockReturnValue(makeOkResponse(summaries));
+    mockApiFetch.mockReturnValue(makeOkResponse({ summaries: summaries }));
     renderChatPage();
     await waitFor(() =>
       expect(
@@ -370,7 +374,7 @@ describe("ChatPage Past Summaries — toggle individual entry", () => {
   });
 
   it("clicking a collapsed entry expands it", async () => {
-    mockApiFetch.mockReturnValue(makeOkResponse(summaries));
+    mockApiFetch.mockReturnValue(makeOkResponse({ summaries: summaries }));
     renderChatPage();
     await waitFor(() =>
       expect(
@@ -384,7 +388,7 @@ describe("ChatPage Past Summaries — toggle individual entry", () => {
   });
 
   it("toggling one entry does not affect the other entries", async () => {
-    mockApiFetch.mockReturnValue(makeOkResponse(summaries));
+    mockApiFetch.mockReturnValue(makeOkResponse({ summaries: summaries }));
     renderChatPage();
     await waitFor(() =>
       expect(
@@ -420,7 +424,7 @@ describe("ChatPage — buildPreview helper (via rendered preview span)", () => {
       makeSummary({ id: "s2", content: "second" }),
       makeSummary({ id: "s3", content: short }),
     ];
-    mockApiFetch.mockReturnValue(makeOkResponse(three));
+    mockApiFetch.mockReturnValue(makeOkResponse({ summaries: three }));
     const { container } = renderChatPage();
     await waitFor(() =>
       expect(screen.getAllByTestId("summaries-entry")).toHaveLength(3),
@@ -438,7 +442,7 @@ describe("ChatPage — buildPreview helper (via rendered preview span)", () => {
       makeSummary({ id: "s2", content: "second" }),
       makeSummary({ id: "s3", content: long }),
     ];
-    mockApiFetch.mockReturnValue(makeOkResponse(three));
+    mockApiFetch.mockReturnValue(makeOkResponse({ summaries: three }));
     const { container } = renderChatPage();
     await waitFor(() =>
       expect(screen.getAllByTestId("summaries-entry")).toHaveLength(3),
@@ -455,9 +459,11 @@ describe("ChatPage — buildPreview helper (via rendered preview span)", () => {
 describe("ChatPage — formatSummaryDate helper (via rendered date label)", () => {
   it("formats ISO timestamp as day-month-year without leading zero", async () => {
     mockApiFetch.mockReturnValue(
-      makeOkResponse([
-        makeSummary({ id: "s1", generatedAt: "2026-07-04T10:00:00.000Z" }),
-      ]),
+      makeOkResponse({
+        summaries: [
+          makeSummary({ id: "s1", generatedAt: "2026-07-04T10:00:00.000Z" }),
+        ],
+      }),
     );
     renderChatPage();
     await waitFor(() =>
@@ -476,7 +482,7 @@ describe("ChatPage — formatSummaryDate helper (via rendered date label)", () =
 describe("ChatPage — empty transactions guard", () => {
   it("shows chat-empty state when rawTransactions is empty", () => {
     mockRawTransactions = [];
-    mockApiFetch.mockReturnValue(makeOkResponse([]));
+    mockApiFetch.mockReturnValue(makeOkResponse({ summaries: [] }));
     renderChatPage();
     expect(screen.getByText("Upload transactions first.")).toBeInTheDocument();
     expect(screen.queryByTestId("summaries-section")).not.toBeInTheDocument();
