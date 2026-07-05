@@ -1,7 +1,13 @@
 import { useState, useEffect, useRef, useMemo } from "react";
 import Anthropic from "@anthropic-ai/sdk";
 import { useAccount, useAllTransactions } from "../context/AccountContext";
+import { useGoals } from "../context/GoalsContext";
+import { useBudgets } from "../context/BudgetContext";
 import { useApi } from "../lib/api";
+import {
+  buildAdvisorPrompt,
+  generateSummary,
+} from "../services/financialAdvisor";
 import type { ApiTransaction, ApiFinancialSummary } from "../types/api";
 import "./ChatPage.css";
 
@@ -117,6 +123,8 @@ const DEFAULT_MESSAGES: ChatMsg[] = [
 export function ChatPage() {
   const { accounts } = useAccount();
   const rawTransactions = useAllTransactions();
+  const { goals } = useGoals();
+  const { budgets } = useBudgets();
   const { apiFetch } = useApi();
 
   const nicknameById = useMemo(
@@ -137,6 +145,45 @@ export function ChatPage() {
   const [sectionOpen, setSectionOpen] = useState(true);
   // Per-entry open state: initialised lazily once summaries load
   const [entryOpenIds, setEntryOpenIds] = useState<Set<string>>(new Set());
+
+  // ── Manual summary generation ──────────────────────────────────────────────
+  const [isGenerating, setIsGenerating] = useState(false);
+  const [generateError, setGenerateError] = useState<string | null>(null);
+
+  const generateNewSummary = async () => {
+    if (isGenerating) return;
+    setIsGenerating(true);
+    setGenerateError(null);
+    try {
+      const latestSummary = summaries[0] ?? null;
+      const prompt = buildAdvisorPrompt(
+        rawTransactions,
+        goals,
+        budgets,
+        null,
+        latestSummary,
+      );
+      const content = await generateSummary(prompt);
+      const res = await apiFetch("/api/summaries", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          content,
+          previousSummaryId: latestSummary?.id ?? null,
+        }),
+      });
+      if (!res.ok) throw new Error(`Server error ${res.status}`);
+      const created = (await res.json()) as ApiFinancialSummary;
+      setSummaries((prev) => [created, ...prev]);
+      setEntryOpenIds((prev) => new Set([created.id, ...prev]));
+      setSectionOpen(true);
+    } catch (e) {
+      setGenerateError(
+        e instanceof Error ? e.message : "Generation failed. Try again.",
+      );
+    }
+    setIsGenerating(false);
+  };
 
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -263,29 +310,48 @@ export function ChatPage() {
         aria-label="Past Summaries"
         data-testid="summaries-section"
       >
-        <button
-          type="button"
-          className="summaries-section-header"
-          data-testid="summaries-section-header"
-          aria-expanded={sectionOpen}
-          aria-controls="summaries-section-body"
-          onClick={() => setSectionOpen((o) => !o)}
-          disabled={summariesLoading}
-        >
-          <span className="summaries-icon" aria-hidden="true">
-            ✦
-          </span>
-          <span className="summaries-label">Past Summaries</span>
-          <span className="summaries-count" aria-live="polite">
-            {summariesLoading ? "..." : countLabel}
-          </span>
-          <span
-            className={`summaries-chevron${sectionOpen ? " open" : ""}`}
-            aria-hidden="true"
+        <div className="summaries-header-row">
+          <button
+            type="button"
+            className="summaries-section-header"
+            data-testid="summaries-section-header"
+            aria-expanded={sectionOpen}
+            aria-controls="summaries-section-body"
+            onClick={() => setSectionOpen((o) => !o)}
+            disabled={summariesLoading}
           >
-            ▾
-          </span>
-        </button>
+            <span className="summaries-icon" aria-hidden="true">
+              ✦
+            </span>
+            <span className="summaries-label">Past Summaries</span>
+            <span className="summaries-count" aria-live="polite">
+              {summariesLoading ? "..." : countLabel}
+            </span>
+            <span
+              className={`summaries-chevron${sectionOpen ? " open" : ""}`}
+              aria-hidden="true"
+            >
+              ▾
+            </span>
+          </button>
+          <button
+            type="button"
+            className={`summaries-gen-btn${isGenerating ? " summaries-gen-btn--busy" : ""}`}
+            data-testid="summaries-generate-btn"
+            onClick={() => void generateNewSummary()}
+            disabled={isGenerating || summariesLoading}
+            aria-label={
+              isGenerating ? "Generating summary…" : "Generate new summary"
+            }
+          >
+            {isGenerating ? "Generating…" : "↻ Generate new"}
+          </button>
+        </div>
+        {generateError && (
+          <p className="summaries-gen-error" data-testid="summaries-gen-error">
+            {generateError}
+          </p>
+        )}
 
         <div
           id="summaries-section-body"
