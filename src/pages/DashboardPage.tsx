@@ -88,7 +88,15 @@ export function DashboardPage() {
   const { apiFetch } = useApi();
 
   // isLoadingData: wait for all upstream data before triggering AI generation.
-  const isLoadingData = isLoading || isGoalsLoading || isBudgetsLoading;
+  // Also hold off when accounts exist but rawTransactions haven't arrived yet —
+  // this closes the race where goals/budgets finish before the per-account
+  // transaction fetch completes, which would otherwise generate the summary
+  // against an empty transactions array.
+  const isLoadingData =
+    isLoading ||
+    isGoalsLoading ||
+    isBudgetsLoading ||
+    (accounts.length > 0 && rawTransactions.length === 0);
 
   const { isGenerating, currentSummary, error, refresh } = useAutoSummary(
     rawTransactions,
