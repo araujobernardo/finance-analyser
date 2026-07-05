@@ -78,6 +78,13 @@
       "when": 1780269784878,
       "tag": "0010_make_finance_account_id_nullable",
       "breakpoints": true
+    },
+    {
+      "idx": 11,
+      "version": "7",
+      "when": 1780800000000,
+      "tag": "0011_financial_summaries",
+      "breakpoints": true
     }
   ]
 }
