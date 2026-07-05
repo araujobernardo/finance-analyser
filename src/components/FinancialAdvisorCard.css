@@ -7,8 +7,9 @@
 .fac-card {
   background: var(--card);
   border: 1px solid var(--border);
+  border-left: 3px solid var(--accent);
   border-radius: 12px;
-  box-shadow: var(--shadow-sm);
+  box-shadow: 0 2px 8px rgba(30, 42, 34, 0.12);
   overflow: hidden;
 }
 
@@ -206,6 +207,7 @@
 
 .fac-body--open {
   max-height: 600px;
+  overflow-y: auto;
 }
 
 /* ── Loading skeleton ───────────────────────────────────────────────────────── */
@@ -231,9 +233,9 @@
   border-radius: 6px;
   background: linear-gradient(
     90deg,
-    var(--border) 25%,
-    var(--card) 50%,
-    var(--border) 75%
+    var(--border-strong) 25%,
+    var(--surface) 50%,
+    var(--border-strong) 75%
   );
   background-size: 800px 100%;
   animation: fac-shimmer 1.5s infinite linear;
