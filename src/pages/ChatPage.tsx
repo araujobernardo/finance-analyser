@@ -256,10 +256,15 @@ export function ChatPage() {
       </div>
 
       {/* ── Past Summaries Section ─────────────────────────────────────────── */}
-      <section className="summaries-section" aria-label="Past Summaries">
+      <section
+        className="summaries-section"
+        aria-label="Past Summaries"
+        data-testid="summaries-section"
+      >
         <button
           type="button"
           className="summaries-section-header"
+          data-testid="summaries-section-header"
           aria-expanded={sectionOpen}
           aria-controls="summaries-section-body"
           onClick={() => setSectionOpen((o) => !o)}
@@ -282,12 +287,14 @@ export function ChatPage() {
 
         <div
           id="summaries-section-body"
+          data-testid="summaries-body"
           className={`summaries-body${sectionOpen ? "" : " closed"}`}
         >
           <div className="summaries-body-inner">
             {summariesLoading && (
               <div
                 className="summaries-skeletons"
+                data-testid="summaries-skeletons"
                 aria-busy="true"
                 aria-label="Loading summaries"
               >
@@ -297,11 +304,13 @@ export function ChatPage() {
             )}
 
             {!summariesLoading && summariesError && (
-              <p className="summaries-error">{summariesError}</p>
+              <p className="summaries-error" data-testid="summaries-error">
+                {summariesError}
+              </p>
             )}
 
             {!summariesLoading && !summariesError && summaries.length === 0 && (
-              <p className="summaries-empty">
+              <p className="summaries-empty" data-testid="summaries-empty">
                 No summaries yet. Come back after your first login.
               </p>
             )}
@@ -315,10 +324,15 @@ export function ChatPage() {
                 const dateLabel = formatSummaryDate(summary.generatedAt);
 
                 return (
-                  <div key={summary.id} className="summaries-entry">
+                  <div
+                    key={summary.id}
+                    className="summaries-entry"
+                    data-testid="summaries-entry"
+                  >
                     <button
                       type="button"
                       className="summaries-entry-toggle"
+                      data-testid={`summaries-entry-toggle-${summary.id}`}
                       aria-expanded={isOpen}
                       aria-controls={entryBodyId}
                       onClick={() => toggleEntry(summary.id)}
