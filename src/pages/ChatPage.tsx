@@ -1,7 +1,8 @@
 import { useState, useEffect, useRef, useMemo } from "react";
 import Anthropic from "@anthropic-ai/sdk";
 import { useAccount, useAllTransactions } from "../context/AccountContext";
-import type { ApiTransaction } from "../types/api";
+import { useApi } from "../lib/api";
+import type { ApiTransaction, ApiFinancialSummary } from "../types/api";
 import "./ChatPage.css";
 
 // ── Types ────────────────────────────────────────────────────────────────────
@@ -9,6 +10,32 @@ import "./ChatPage.css";
 interface ChatMsg {
   role: "user" | "assistant";
   content: string;
+}
+
+// ── Helpers ──────────────────────────────────────────────────────────────────
+
+/**
+ * Formats a summary generatedAt date per the UX brief:
+ * "4 Jul 2026" — day (no leading zero), short month, full year.
+ */
+function formatSummaryDate(generatedAt: string): string {
+  return new Intl.DateTimeFormat("en-NZ", {
+    day: "numeric",
+    month: "short",
+    year: "numeric",
+  }).format(new Date(generatedAt));
+}
+
+/**
+ * Slices content to 80 characters, trimming to the last full word, then
+ * appending "...".
+ */
+function buildPreview(content: string): string {
+  if (content.length <= 80) return content;
+  const sliced = content.slice(0, 80);
+  const lastSpace = sliced.lastIndexOf(" ");
+  const trimmed = lastSpace > 0 ? sliced.slice(0, lastSpace) : sliced;
+  return trimmed + "...";
 }
 
 // ── Context builder ──────────────────────────────────────────────────────────
@@ -90,21 +117,76 @@ const DEFAULT_MESSAGES: ChatMsg[] = [
 export function ChatPage() {
   const { accounts } = useAccount();
   const rawTransactions = useAllTransactions();
+  const { apiFetch } = useApi();
 
   const nicknameById = useMemo(
     () => new Map(accounts.map((a) => [a.id, a.nickname])),
     [accounts],
   );
 
+  // ── Chat state ─────────────────────────────────────────────────────────────
   const [messages, setMessages] = useState<ChatMsg[]>(DEFAULT_MESSAGES);
   const [input, setInput] = useState("");
   const [loading, setLoading] = useState(false);
   const bottomRef = useRef<HTMLDivElement>(null);
 
+  // ── Past summaries state ───────────────────────────────────────────────────
+  const [summaries, setSummaries] = useState<ApiFinancialSummary[]>([]);
+  const [summariesLoading, setSummariesLoading] = useState(true);
+  const [summariesError, setSummariesError] = useState<string | null>(null);
+  const [sectionOpen, setSectionOpen] = useState(true);
+  // Per-entry open state: initialised lazily once summaries load
+  const [entryOpenIds, setEntryOpenIds] = useState<Set<string>>(new Set());
+
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages]);
 
+  // ── Fetch past summaries on mount ──────────────────────────────────────────
+  useEffect(() => {
+    let cancelled = false;
+    setSummariesLoading(true);
+    setSummariesError(null);
+
+    void apiFetch("/api/summaries")
+      .then(async (res) => {
+        if (!res.ok) throw new Error(`HTTP ${res.status}`);
+        return res.json() as Promise<ApiFinancialSummary[]>;
+      })
+      .then((data) => {
+        if (cancelled) return;
+        setSummaries(data);
+        // Open the first two entries by default
+        const defaultOpen = new Set(data.slice(0, 2).map((s) => s.id));
+        setEntryOpenIds(defaultOpen);
+      })
+      .catch(() => {
+        if (cancelled) return;
+        setSummariesError("Could not load summaries.");
+      })
+      .finally(() => {
+        if (!cancelled) setSummariesLoading(false);
+      });
+
+    return () => {
+      cancelled = true;
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  const toggleEntry = (id: string) => {
+    setEntryOpenIds((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) {
+        next.delete(id);
+      } else {
+        next.add(id);
+      }
+      return next;
+    });
+  };
+
+  // ── Chat send ──────────────────────────────────────────────────────────────
   const send = async (text?: string) => {
     const q = (text ?? input).trim();
     if (!q || loading) return;
@@ -154,6 +236,10 @@ export function ChatPage() {
     );
   }
 
+  const summaryCount = summaries.length;
+  const countLabel =
+    summaryCount === 1 ? "1 report" : `${summaryCount} reports`;
+
   return (
     <div className="chat-page">
       {/* Option C — Conversational Soft: branded header with teal avatar + status */}
@@ -168,6 +254,110 @@ export function ChatPage() {
           </div>
         </div>
       </div>
+
+      {/* ── Past Summaries Section ─────────────────────────────────────────── */}
+      <section className="summaries-section" aria-label="Past Summaries">
+        <button
+          type="button"
+          className="summaries-section-header"
+          aria-expanded={sectionOpen}
+          aria-controls="summaries-section-body"
+          onClick={() => setSectionOpen((o) => !o)}
+          disabled={summariesLoading}
+        >
+          <span className="summaries-icon" aria-hidden="true">
+            ✦
+          </span>
+          <span className="summaries-label">Past Summaries</span>
+          <span className="summaries-count" aria-live="polite">
+            {summariesLoading ? "..." : countLabel}
+          </span>
+          <span
+            className={`summaries-chevron${sectionOpen ? " open" : ""}`}
+            aria-hidden="true"
+          >
+            ▾
+          </span>
+        </button>
+
+        <div
+          id="summaries-section-body"
+          className={`summaries-body${sectionOpen ? "" : " closed"}`}
+        >
+          <div className="summaries-body-inner">
+            {summariesLoading && (
+              <div
+                className="summaries-skeletons"
+                aria-busy="true"
+                aria-label="Loading summaries"
+              >
+                <div className="summaries-skeleton" />
+                <div className="summaries-skeleton" />
+              </div>
+            )}
+
+            {!summariesLoading && summariesError && (
+              <p className="summaries-error">{summariesError}</p>
+            )}
+
+            {!summariesLoading && !summariesError && summaries.length === 0 && (
+              <p className="summaries-empty">
+                No summaries yet. Come back after your first login.
+              </p>
+            )}
+
+            {!summariesLoading &&
+              !summariesError &&
+              summaries.map((summary) => {
+                const isOpen = entryOpenIds.has(summary.id);
+                const entryBodyId = `entry-body-${summary.id}`;
+                const preview = buildPreview(summary.content);
+                const dateLabel = formatSummaryDate(summary.generatedAt);
+
+                return (
+                  <div key={summary.id} className="summaries-entry">
+                    <button
+                      type="button"
+                      className="summaries-entry-toggle"
+                      aria-expanded={isOpen}
+                      aria-controls={entryBodyId}
+                      onClick={() => toggleEntry(summary.id)}
+                    >
+                      <span
+                        className={`summaries-entry-dot${isOpen ? " open" : ""}`}
+                        aria-hidden="true"
+                      />
+                      <span className="summaries-entry-date">{dateLabel}</span>
+                      <span
+                        className={`summaries-entry-preview${isOpen ? " hidden" : ""}`}
+                        aria-hidden={isOpen}
+                      >
+                        {preview}
+                      </span>
+                      <span
+                        className={`summaries-entry-chevron${isOpen ? " open" : ""}`}
+                        aria-hidden="true"
+                      >
+                        ▾
+                      </span>
+                    </button>
+
+                    <div
+                      id={entryBodyId}
+                      className={`summaries-entry-body${isOpen ? "" : " closed"}`}
+                    >
+                      <div className="summaries-entry-body-inner">
+                        <p className="summaries-entry-content">
+                          {summary.content}
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+                );
+              })}
+          </div>
+        </div>
+      </section>
 
       <div className="chat-messages" data-testid="chat-messages">
         {messages.map((m, i) => (
